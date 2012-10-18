@@ -1,2 +1,1 @@
-spektrum
-========
+[Go to the wiki](https://github.com/spektrumprojekt/spektrum/wiki)
