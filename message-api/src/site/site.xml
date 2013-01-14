@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Documentation of Communote Exstream Plugin ${project.version}"
+	xmlns="http://maven.apache.org/DECORATION/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/DECORATION/1.0.0 http://maven.apache.org/xsd/decoration-1.0.0.xsd ">
+
+	<publishDate position="left" format="MM/dd/yyyy" />
+	<version position="left" />
+
+	<bannerLeft>
+		<name>Documentation of ${project.name}, version ${project.version}</name>
+	</bannerLeft>
+
+	<body>
+		<menu name="" inherit="top">
+			<item href="./index.html" name="Introduction" />
+			<item href="./guidline.html" name="Guidline" />
+		</menu>
+	</body>
+
+	<custom>
+		<fluidoSkin>
+			<topBarEnabled>false</topBarEnabled>
+		</fluidoSkin>
+	</custom>
+
+	<skin>
+		<groupId>org.apache.maven.skins</groupId>
+		<artifactId>maven-fluido-skin</artifactId>
+		<version>1.2.1</version>
+	</skin>
+
+</project>

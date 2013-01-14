@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<aggregator-configuration>
+	<adapter>
+		<!-- interval for polling adapters (e.g. Feed, Communote) in seconds -->
+		<pollingInterval>1800</pollingInterval>
+		<!-- num of consecutive errors until a subscription is blocked -->
+		<errorsForBlock>5</errorsForBlock>
+		<!-- num of consecutive errors until a warn message is sent -->
+		<errorsForMessage>1</errorsForMessage>
+		<twitter>
+			<consumerKey>qf2ERRTpsYcUIzmh9owBw</consumerKey>
+			<consumerSecret>ZjorsxvXQJWdlK7PsuJL3Dyb4UbBeS3LE1jhLvcsQ
+			</consumerSecret>
+		</twitter>
+	</adapter>
+	<duplicateDetetion>
+		<maxHashes>150</maxHashes>
+		<minHashes>100</minHashes>
+	</duplicateDetetion>
+	<encryption>
+		<password>123456</password>
+	</encryption>
+</aggregator-configuration>

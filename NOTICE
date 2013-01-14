@@ -1,0 +1,33 @@
+SPEKTRUMPROJEKT
+Copyright 2012-2013 Communote GmbH, Chair for Computer Networks at Dresden University of Technology
+
+This product includes software developed at
+Communote GmbH, Dresden, Germany (http://www.communote.com)
+and Chair for Computer Networks at Dresden University of Technology 
+(http://www.inf.tu-dresden.de/index.php?node_id=591&ln=en).
+
+The following libraries are used by SPEKTRUM:
+
+Jar                                         Name                                    Version         License
+=================================================================================================================================================
+commons-configuration-1.6.jar               Commons Configuration                   1.6             Apache License, v2.0
+commons-lang3-3.1.jar                       Commons Lang                            3.1             Apache License, v2.0
+commons-codec-1.4.jar                       Commons Codec                           1.4             Apache License, v2.0
+smack-3.1.0.jar                             Smack                                   3.1.0           Apache License, v2.0
+vysper-core-0.7.jar                         Apache Vysper Core                      0.7             Apache License, v2.0
+smackx-3.1.0.jar                            Smack Extensions                        3.1.0           Apache License, v2.0
+flexjson-2.1.jar                            flexjson                                2.1             Apache License, v2.0
+javax.persistence-2.0.0.jar                 Javax Persistence API 2.0               2.0.0           Eclipse Public License - v 1.0
+eclipselink-2.4.0.jar                       EclipseLink (non-OSGi)                  2.4.0           Eclipse Distribution License v. 1.0
+slf4j-api-1.5.11.jar                        SLF4J API Module                        1.5.11          MIT License
+slf4j-log4j12-1.5.3.jar                     SLF4J LOG4J-12 Binding                  1.5.3           MIT License
+log4j-1.2.12.jar                            log4j                                   1.2.12          Apache License, v2.0
+junit-4.8.1.jar                             JUnit                                   4.8.1           Common Public License Version 1.0
+jackson-mapper-asl-1.8.5.jar                Data Mapper for Jackson                 1.8.5           Apache License, v2.0
+org.restlet-2.0.0.jar                       Restlet Core                            2.0.0           LGPL 3.0 or LGPL 2.1 or CDDL 1.0 or EPL 1.0
+org.restlet.ext.json-2.0.0.jar              Restlet Extension - JSON                2.0.0           LGPL 3.0 or LGPL 2.1 or CDDL 1.0 or EPL 1.0
+httpcore-4.1.1.jar                          HttpCore                                4.1.1           Apache License, v2.0
+twitter4j-stream-2.2.5.jar                  twitter4j-stream                        2.2.5           Apache License, v2.0
+rome-1.0.jar                                ROME, RSS and atOM utilitiEs for Java   1.0             Apache License, v2.0
+httpclient-4.1.1.jar                        HttpClient                              4.1.1           Apache License, v2.0
+jackson-core-asl-1.9.5.jar                  Jackson                                 1.9.5           Apache License, v2.0

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mystream-configuration>
+	<persistenceUnit>de.spektrumprojekt.datamodel.test</persistenceUnit>
+</mystream-configuration>

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.0"
+	xmlns="http://java.sun.com/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd">
+
+	<persistence-unit name="de.spektrumprojekt.datamodel.test"
+		transaction-type="RESOURCE_LOCAL">
+		<provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+
+		<class>de.spektrumprojekt.datamodel.identifiable.Identifiable</class>
+		<class>de.spektrumprojekt.datamodel.subscription.Subscription</class>
+		<class>de.spektrumprojekt.datamodel.message.Message</class>
+		<class>de.spektrumprojekt.datamodel.message.MessagePart</class>
+		<class>de.spektrumprojekt.datamodel.message.ScoredTerm</class>
+		<class>de.spektrumprojekt.datamodel.message.Term</class>
+		<class>de.spektrumprojekt.datamodel.subscription.SubscriptionStatus</class>
+		<class>de.spektrumprojekt.datamodel.common.Property</class>
+		<class>de.spektrumprojekt.datamodel.message.MessageGroup</class>
+		<class>de.spektrumprojekt.datamodel.message.ScoredTerm</class>
+		<class>de.spektrumprojekt.datamodel.common.Property</class>
+		<exclude-unlisted-classes>false</exclude-unlisted-classes>
+		<properties>
+			<property name="eclipselink.jdbc.batch-writing" value="JDBC" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:mem:testdb" />
+			<property name="javax.persistence.jdbc.user" value="sa" />
+			<property name="javax.persistence.jdbc.driver" value="org.hsqldb.jdbcDriver" />
+			<property name="eclipselink.weaving.lazy" value="false" />
+			<property name="eclipselink.ddl-generation" value="drop-and-create-tables" />
+
+			<property name="eclipselink.logging.level" value="SEVERE" />
+			
+			<!--<![CDATA[
+			This should be standard logging
+			<property name="eclipselink.logging.level" value="SEVERE" />
+			
+			In case to go for a specific file  
+			 <property name="eclipselink.logging.file" value="test-output.log" />
+			 
+			
+			This is SQL Logging: 
+			<property name="eclipselink.logging.level" value="FINEST" />
+			<property name="eclipselink.logging.level.sql" value="FINE" />
+			<property name="eclipselink.logging.parameters" value="true" />
+			 ]]>
+			-->
+
+		</properties>
+	</persistence-unit>
+
+
+
+	<persistence-unit name="de.spektrumprojekt.datamodel"
+		transaction-type="RESOURCE_LOCAL">
+		<provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+
+		<class>de.spektrumprojekt.datamodel.common.Property</class>
+
+		<class>de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate</class>
+
+		<class>de.spektrumprojekt.datamodel.identifiable.Identifiable</class>
+
+		<class>de.spektrumprojekt.datamodel.subscription.Subscription</class>
+		<class>de.spektrumprojekt.datamodel.subscription.SubscriptionStatus</class>
+		<class>de.spektrumprojekt.datamodel.subscription.filter.FilterSpecification</class>
+		<class>de.spektrumprojekt.datamodel.subscription.filter.FilterExpression</class>
+		<class>de.spektrumprojekt.datamodel.subscription.filter.FilterExpressionConnector</class>
+
+		<class>de.spektrumprojekt.datamodel.subscription.source.AccessParameter</class>
+		<class>de.spektrumprojekt.datamodel.subscription.source.AccessProtocol</class>
+		<class>de.spektrumprojekt.datamodel.subscription.source.AuthenticationData</class>
+		<class>de.spektrumprojekt.datamodel.subscription.source.CredentialElement</class>
+		<class>de.spektrumprojekt.datamodel.subscription.source.SourceSpecification</class>
+
+		<class>de.spektrumprojekt.datamodel.message.Keyphrase</class>
+		<class>de.spektrumprojekt.datamodel.message.KeyphraseMetaInformation</class>
+		<class>de.spektrumprojekt.datamodel.message.Message</class>
+		<class>de.spektrumprojekt.datamodel.message.MessageGroup</class>
+		<class>de.spektrumprojekt.datamodel.message.MessagePart</class>
+		<class>de.spektrumprojekt.datamodel.message.MessageRank</class>
+		<class>de.spektrumprojekt.datamodel.message.MessageRelation</class>
+		<class>de.spektrumprojekt.datamodel.message.MetaInformation</class>
+		<class>de.spektrumprojekt.datamodel.message.ScoredTerm</class>
+		<class>de.spektrumprojekt.datamodel.message.Term</class>
+		<class>de.spektrumprojekt.datamodel.message.TermMetaInformation</class>
+
+		<class>de.spektrumprojekt.datamodel.user.User</class>
+		<class>de.spektrumprojekt.datamodel.user.UserModel</class>
+		<class>de.spektrumprojekt.datamodel.user.UserModelEntry</class>
+		<class>de.spektrumprojekt.datamodel.user.UserModelEntryTimeBin</class>
+
+		<exclude-unlisted-classes>false</exclude-unlisted-classes>
+		<properties>
+			<property name="eclipselink.jdbc.batch-writing" value="JDBC" />
+			<!-- <property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:mem:testdb" 
+				/> -->
+			<property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:file:~/spektrum.aggregator" />
+			<property name="javax.persistence.jdbc.user" value="sa" />
+			<property name="javax.persistence.jdbc.driver" value="org.hsqldb.jdbcDriver" />
+			<property name="eclipselink.weaving.lazy" value="false" />
+			<!-- <property name="eclipselink.ddl-generation" value="drop-and-create-tables" 
+				/> -->
+			<property name="eclipselink.ddl-generation" value="create-tables" />
+			<property name="eclipselink.logging.level" value="SEVERE" />
+			<!-- <property name="eclipselink.logging.level" value="FINEST" /> --><!-- Possible values: FINEST, SEVERE -->
+
+		</properties>
+	</persistence-unit>
+
+</persistence>

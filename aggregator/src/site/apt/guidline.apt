@@ -1,0 +1,5 @@
+DuplicationDetection
+
+[./images/DuplicationDetection.png]
+
+ The DuplicationDetection is used to eliminate Duplicates. The hash implementation holds the md5 hashes of recent messages and compares them to incoming messages.

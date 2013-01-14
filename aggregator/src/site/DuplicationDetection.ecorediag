@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<notation:Diagram xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:notation="http://www.eclipse.org/gmf/runtime/1.0.2/notation" xmi:id="_yjxF8Au1EeKQqfja-Y_upQ" type="EcoreTools" name="DuplicationDetection" measurementUnit="Pixel">
+  <children xmi:type="notation:Node" xmi:id="_0IHNkAu1EeKQqfja-Y_upQ" type="1001">
+    <children xmi:type="notation:Node" xmi:id="_0IKQ4Au1EeKQqfja-Y_upQ" type="4001"/>
+    <children xmi:type="notation:Node" xmi:id="_0IMGEAu1EeKQqfja-Y_upQ" type="5001">
+      <styles xmi:type="notation:DrawerStyle" xmi:id="_0IMGEQu1EeKQqfja-Y_upQ"/>
+      <styles xmi:type="notation:SortingStyle" xmi:id="_0IMGEgu1EeKQqfja-Y_upQ"/>
+      <styles xmi:type="notation:FilteringStyle" xmi:id="_0IMGEwu1EeKQqfja-Y_upQ"/>
+    </children>
+    <children xmi:type="notation:Node" xmi:id="_0IMtIAu1EeKQqfja-Y_upQ" type="5002">
+      <styles xmi:type="notation:DrawerStyle" xmi:id="_0IMtIQu1EeKQqfja-Y_upQ"/>
+      <styles xmi:type="notation:SortingStyle" xmi:id="_0IMtIgu1EeKQqfja-Y_upQ"/>
+      <styles xmi:type="notation:FilteringStyle" xmi:id="_0IMtIwu1EeKQqfja-Y_upQ"/>
+    </children>
+    <styles xmi:type="notation:ShapeStyle" xmi:id="_0IHNkQu1EeKQqfja-Y_upQ" fontColor="4210752" fontName="Segoe UI" fontHeight="10" fillColor="13761016" lineColor="8421504"/>
+    <element xmi:type="ecore:EClass" href="DuplicationDetection.ecore#//BaseAdapter"/>
+    <layoutConstraint xmi:type="notation:Bounds" xmi:id="_0IHNkgu1EeKQqfja-Y_upQ" x="70" y="95"/>
+  </children>
+  <children xmi:type="notation:Node" xmi:id="_9BuSkAu1EeKQqfja-Y_upQ" type="1001">
+    <children xmi:type="notation:Node" xmi:id="_9BuSkwu1EeKQqfja-Y_upQ" type="4001"/>
+    <children xmi:type="notation:Node" xmi:id="_9Bu5oAu1EeKQqfja-Y_upQ" type="5001">
+      <styles xmi:type="notation:DrawerStyle" xmi:id="_9Bu5oQu1EeKQqfja-Y_upQ"/>
+      <styles xmi:type="notation:SortingStyle" xmi:id="_9Bu5ogu1EeKQqfja-Y_upQ"/>
+      <styles xmi:type="notation:FilteringStyle" xmi:id="_9Bu5owu1EeKQqfja-Y_upQ"/>
+    </children>
+    <children xmi:type="notation:Node" xmi:id="_9Bu5pAu1EeKQqfja-Y_upQ" type="5002">
+      <children xmi:type="notation:Node" xmi:id="_RC0CUAu2EeKQqfja-Y_upQ" type="2002">
+        <element xmi:type="ecore:EOperation" href="DuplicationDetection.ecore#//DuplicationDetection/isDuplicate"/>
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_RC0CUQu2EeKQqfja-Y_upQ"/>
+      </children>
+      <styles xmi:type="notation:DrawerStyle" xmi:id="_9Bu5pQu1EeKQqfja-Y_upQ"/>
+      <styles xmi:type="notation:SortingStyle" xmi:id="_9Bu5pgu1EeKQqfja-Y_upQ"/>
+      <styles xmi:type="notation:FilteringStyle" xmi:id="_9Bu5pwu1EeKQqfja-Y_upQ"/>
+    </children>
+    <styles xmi:type="notation:ShapeStyle" xmi:id="_9BuSkQu1EeKQqfja-Y_upQ" fontColor="4210752" fontName="Segoe UI" fontHeight="10" fillColor="13761016" lineColor="8421504"/>
+    <element xmi:type="ecore:EClass" href="DuplicationDetection.ecore#//DuplicationDetection"/>
+    <layoutConstraint xmi:type="notation:Bounds" xmi:id="_9BuSkgu1EeKQqfja-Y_upQ" x="5" y="225" width="243" height="68"/>
+  </children>
+  <children xmi:type="notation:Node" xmi:id="_Ol57AAu2EeKQqfja-Y_upQ" type="1001">
+    <children xmi:type="notation:Node" xmi:id="_Ol6iEAu2EeKQqfja-Y_upQ" type="4001"/>
+    <children xmi:type="notation:Node" xmi:id="_Ol6iEQu2EeKQqfja-Y_upQ" type="5001">
+      <children xmi:type="notation:Node" xmi:id="_Mn1PUAu3EeKQqfja-Y_upQ" type="2001">
+        <element xmi:type="ecore:EAttribute" href="DuplicationDetection.ecore#//HashDuplicationDetection/maxValue"/>
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_Mn1PUQu3EeKQqfja-Y_upQ"/>
+      </children>
+      <children xmi:type="notation:Node" xmi:id="_LDSTYAu3EeKQqfja-Y_upQ" type="2001">
+        <element xmi:type="ecore:EAttribute" href="DuplicationDetection.ecore#//HashDuplicationDetection/minValue"/>
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_LDSTYQu3EeKQqfja-Y_upQ"/>
+      </children>
+      <styles xmi:type="notation:DrawerStyle" xmi:id="_Ol6iEgu2EeKQqfja-Y_upQ"/>
+      <styles xmi:type="notation:SortingStyle" xmi:id="_Ol6iEwu2EeKQqfja-Y_upQ"/>
+      <styles xmi:type="notation:FilteringStyle" xmi:id="_Ol6iFAu2EeKQqfja-Y_upQ"/>
+    </children>
+    <children xmi:type="notation:Node" xmi:id="_Ol7JIAu2EeKQqfja-Y_upQ" type="5002">
+      <styles xmi:type="notation:DrawerStyle" xmi:id="_Ol7JIQu2EeKQqfja-Y_upQ"/>
+      <styles xmi:type="notation:SortingStyle" xmi:id="_Ol7JIgu2EeKQqfja-Y_upQ"/>
+      <styles xmi:type="notation:FilteringStyle" xmi:id="_Ol7JIwu2EeKQqfja-Y_upQ"/>
+    </children>
+    <styles xmi:type="notation:ShapeStyle" xmi:id="_Ol57AQu2EeKQqfja-Y_upQ" fontColor="4210752" fontName="Segoe UI" fontHeight="10" fillColor="13761016" lineColor="8421504"/>
+    <element xmi:type="ecore:EClass" href="DuplicationDetection.ecore#//HashDuplicationDetection"/>
+    <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Ol57Agu2EeKQqfja-Y_upQ" x="40" y="340"/>
+  </children>
+  <children xmi:type="notation:Node" xmi:id="_TUE6UAu2EeKQqfja-Y_upQ" type="1001">
+    <children xmi:type="notation:Node" xmi:id="_TUFhYAu2EeKQqfja-Y_upQ" type="4001"/>
+    <children xmi:type="notation:Node" xmi:id="_TUGvgAu2EeKQqfja-Y_upQ" type="5001">
+      <styles xmi:type="notation:DrawerStyle" xmi:id="_TUGvgQu2EeKQqfja-Y_upQ"/>
+      <styles xmi:type="notation:SortingStyle" xmi:id="_TUGvggu2EeKQqfja-Y_upQ"/>
+      <styles xmi:type="notation:FilteringStyle" xmi:id="_TUGvgwu2EeKQqfja-Y_upQ"/>
+    </children>
+    <children xmi:type="notation:Node" xmi:id="_TUGvhAu2EeKQqfja-Y_upQ" type="5002">
+      <styles xmi:type="notation:DrawerStyle" xmi:id="_TUGvhQu2EeKQqfja-Y_upQ"/>
+      <styles xmi:type="notation:SortingStyle" xmi:id="_TUGvhgu2EeKQqfja-Y_upQ"/>
+      <styles xmi:type="notation:FilteringStyle" xmi:id="_TUGvhwu2EeKQqfja-Y_upQ"/>
+    </children>
+    <styles xmi:type="notation:ShapeStyle" xmi:id="_TUE6UQu2EeKQqfja-Y_upQ" fontColor="4210752" fontName="Segoe UI" fontHeight="10" fillColor="13761016" lineColor="8421504"/>
+    <element xmi:type="ecore:EClass" href="DuplicationDetection.ecore#//Message"/>
+    <layoutConstraint xmi:type="notation:Bounds" xmi:id="_TUE6Ugu2EeKQqfja-Y_upQ" x="375" y="95"/>
+  </children>
+  <children xmi:type="notation:Node" xmi:id="_rEmwQAu2EeKQqfja-Y_upQ" type="1001">
+    <children xmi:type="notation:Node" xmi:id="_rEnXUAu2EeKQqfja-Y_upQ" type="4001"/>
+    <children xmi:type="notation:Node" xmi:id="_rEnXUQu2EeKQqfja-Y_upQ" type="5001">
+      <children xmi:type="notation:Node" xmi:id="_yxeVUAu2EeKQqfja-Y_upQ" type="2001">
+        <element xmi:type="ecore:EAttribute" href="DuplicationDetection.ecore#//HashWithDate/hash"/>
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_yxeVUQu2EeKQqfja-Y_upQ"/>
+      </children>
+      <children xmi:type="notation:Node" xmi:id="_01dmUAu2EeKQqfja-Y_upQ" type="2001">
+        <element xmi:type="ecore:EAttribute" href="DuplicationDetection.ecore#//HashWithDate/date"/>
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_01dmUQu2EeKQqfja-Y_upQ"/>
+      </children>
+      <children xmi:type="notation:Node" xmi:id="_65-RAAu3EeKQqfja-Y_upQ" type="2001">
+        <element xmi:type="ecore:EAttribute" href="DuplicationDetection.ecore#//HashWithDate/subscriptionGlobalId"/>
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_65-RAQu3EeKQqfja-Y_upQ"/>
+      </children>
+      <styles xmi:type="notation:DrawerStyle" xmi:id="_rEnXUgu2EeKQqfja-Y_upQ"/>
+      <styles xmi:type="notation:SortingStyle" xmi:id="_rEnXUwu2EeKQqfja-Y_upQ"/>
+      <styles xmi:type="notation:FilteringStyle" xmi:id="_rEnXVAu2EeKQqfja-Y_upQ"/>
+    </children>
+    <children xmi:type="notation:Node" xmi:id="_rEn-YAu2EeKQqfja-Y_upQ" type="5002">
+      <styles xmi:type="notation:DrawerStyle" xmi:id="_rEn-YQu2EeKQqfja-Y_upQ"/>
+      <styles xmi:type="notation:SortingStyle" xmi:id="_rEn-Ygu2EeKQqfja-Y_upQ"/>
+      <styles xmi:type="notation:FilteringStyle" xmi:id="_rEn-Ywu2EeKQqfja-Y_upQ"/>
+    </children>
+    <styles xmi:type="notation:ShapeStyle" xmi:id="_rEmwQQu2EeKQqfja-Y_upQ" fontColor="4210752" fontName="Segoe UI" fontHeight="10" fillColor="13761016" lineColor="8421504"/>
+    <element xmi:type="ecore:EClass" href="DuplicationDetection.ecore#//HashWithDate"/>
+    <layoutConstraint xmi:type="notation:Bounds" xmi:id="_rEmwQgu2EeKQqfja-Y_upQ" x="625" y="335"/>
+  </children>
+  <children xmi:type="notation:Node" xmi:id="_MUy9gAyGEeKlZ_H3Nu8dsw" type="1001">
+    <children xmi:type="notation:Node" xmi:id="_MUzkkAyGEeKlZ_H3Nu8dsw" type="4001"/>
+    <children xmi:type="notation:Node" xmi:id="_MUzkkQyGEeKlZ_H3Nu8dsw" type="5001">
+      <styles xmi:type="notation:DrawerStyle" xmi:id="_MUzkkgyGEeKlZ_H3Nu8dsw"/>
+      <styles xmi:type="notation:SortingStyle" xmi:id="_MUzkkwyGEeKlZ_H3Nu8dsw"/>
+      <styles xmi:type="notation:FilteringStyle" xmi:id="_MUzklAyGEeKlZ_H3Nu8dsw"/>
+    </children>
+    <children xmi:type="notation:Node" xmi:id="_MUzklQyGEeKlZ_H3Nu8dsw" type="5002">
+      <styles xmi:type="notation:DrawerStyle" xmi:id="_MUzklgyGEeKlZ_H3Nu8dsw"/>
+      <styles xmi:type="notation:SortingStyle" xmi:id="_MUzklwyGEeKlZ_H3Nu8dsw"/>
+      <styles xmi:type="notation:FilteringStyle" xmi:id="_MUzkmAyGEeKlZ_H3Nu8dsw"/>
+    </children>
+    <styles xmi:type="notation:ShapeStyle" xmi:id="_MUy9gQyGEeKlZ_H3Nu8dsw" fontColor="4210752" fontName="Segoe UI" fontHeight="10" fillColor="13761016" lineColor="8421504"/>
+    <element xmi:type="ecore:EClass" href="DuplicationDetection.ecore#//SubscriptionMessageHashes"/>
+    <layoutConstraint xmi:type="notation:Bounds" xmi:id="_MUy9ggyGEeKlZ_H3Nu8dsw" x="335" y="325"/>
+  </children>
+  <styles xmi:type="notation:DiagramStyle" xmi:id="_yjxF8Qu1EeKQqfja-Y_upQ"/>
+  <element xmi:type="ecore:EPackage" href="DuplicationDetection.ecore#/"/>
+  <edges xmi:type="notation:Edge" xmi:id="_BiFfYAu2EeKQqfja-Y_upQ" type="3002" source="_0IHNkAu1EeKQqfja-Y_upQ" target="_9BuSkAu1EeKQqfja-Y_upQ">
+    <children xmi:type="notation:Node" xmi:id="_BiGtgAu2EeKQqfja-Y_upQ" type="4011">
+      <layoutConstraint xmi:type="notation:Location" xmi:id="_BiGtgQu2EeKQqfja-Y_upQ" x="-64" y="-62"/>
+    </children>
+    <children xmi:type="notation:Node" xmi:id="_BiHUkAu2EeKQqfja-Y_upQ" type="4012">
+      <layoutConstraint xmi:type="notation:Location" xmi:id="_BiHUkQu2EeKQqfja-Y_upQ" x="1" y="13"/>
+    </children>
+    <styles xmi:type="notation:ConnectorStyle" xmi:id="_BiFfYQu2EeKQqfja-Y_upQ" lineColor="4210752"/>
+    <styles xmi:type="notation:FontStyle" xmi:id="_BiFfYgu2EeKQqfja-Y_upQ" fontColor="4210752" fontName="Segoe UI" fontHeight="10"/>
+    <element xmi:type="ecore:EReference" href="DuplicationDetection.ecore#//BaseAdapter/duplicationDetection"/>
+    <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_BiFfYwu2EeKQqfja-Y_upQ" points="[9, 5, -99, 1]$[109, -14, 1, -18]"/>
+    <sourceAnchor xmi:type="notation:IdentityAnchor" xmi:id="_BigWIAu2EeKQqfja-Y_upQ" id="(0.4411764705882353,0.9302325581395349)"/>
+    <targetAnchor xmi:type="notation:IdentityAnchor" xmi:id="_BigWIQu2EeKQqfja-Y_upQ" id="(0.4691358024691358,0.0)"/>
+  </edges>
+  <edges xmi:type="notation:Edge" xmi:id="_gQcDEAu2EeKQqfja-Y_upQ" type="3003" source="_Ol57AAu2EeKQqfja-Y_upQ" target="_9BuSkAu1EeKQqfja-Y_upQ">
+    <styles xmi:type="notation:ConnectorStyle" xmi:id="_gQcDEQu2EeKQqfja-Y_upQ" routing="Rectilinear" lineColor="4210752"/>
+    <styles xmi:type="notation:FontStyle" xmi:id="_gQcDEgu2EeKQqfja-Y_upQ" fontName="Segoe UI"/>
+    <element xsi:nil="true"/>
+    <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_gQcDEwu2EeKQqfja-Y_upQ" points="[-7, -1, -5, 92]$[-7, -60, -5, 33]"/>
+    <sourceAnchor xmi:type="notation:IdentityAnchor" xmi:id="_gQgUgAu2EeKQqfja-Y_upQ" id="(0.52046783625731,0.046511627906976744)"/>
+  </edges>
+  <edges xmi:type="notation:Edge" xmi:id="_MU8HcAyGEeKlZ_H3Nu8dsw" type="3002" source="_MUy9gAyGEeKlZ_H3Nu8dsw" target="_rEmwQAu2EeKQqfja-Y_upQ">
+    <children xmi:type="notation:Node" xmi:id="_MU8HdAyGEeKlZ_H3Nu8dsw" type="4011">
+      <layoutConstraint xmi:type="notation:Location" xmi:id="_MU8HdQyGEeKlZ_H3Nu8dsw" x="-10" y="-10"/>
+    </children>
+    <children xmi:type="notation:Node" xmi:id="_MU8ugAyGEeKlZ_H3Nu8dsw" type="4012">
+      <layoutConstraint xmi:type="notation:Location" xmi:id="_MU8ugQyGEeKlZ_H3Nu8dsw" x="10" y="10"/>
+    </children>
+    <styles xmi:type="notation:ConnectorStyle" xmi:id="_MU8HcQyGEeKlZ_H3Nu8dsw" lineColor="4210752"/>
+    <styles xmi:type="notation:FontStyle" xmi:id="_MU8HcgyGEeKlZ_H3Nu8dsw" fontColor="4210752" fontName="Segoe UI" fontHeight="10"/>
+    <element xmi:type="ecore:EReference" href="DuplicationDetection.ecore#//SubscriptionMessageHashes/"/>
+    <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_MU8HcwyGEeKlZ_H3Nu8dsw" points="[1, 0, -725, -377]$[646, 336, -80, -41]"/>
+  </edges>
+  <edges xmi:type="notation:Edge" xmi:id="_MU9VkAyGEeKlZ_H3Nu8dsw" type="3003" source="_MUy9gAyGEeKlZ_H3Nu8dsw" target="_9BuSkAu1EeKQqfja-Y_upQ">
+    <styles xmi:type="notation:ConnectorStyle" xmi:id="_MU9VkQyGEeKlZ_H3Nu8dsw" routing="Rectilinear" lineColor="4210752"/>
+    <styles xmi:type="notation:FontStyle" xmi:id="_MU9VkgyGEeKlZ_H3Nu8dsw" fontName="Segoe UI"/>
+    <element xsi:nil="true"/>
+    <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_MU9VkwyGEeKlZ_H3Nu8dsw" points="[0, -45, 310, 67]$[0, -120, 310, -8]$[-189, -120, 121, -8]"/>
+  </edges>
+  <edges xmi:type="notation:Edge" xmi:id="_MU-jsAyGEeKlZ_H3Nu8dsw" type="3002" source="_Ol57AAu2EeKQqfja-Y_upQ" target="_MUy9gAyGEeKlZ_H3Nu8dsw">
+    <children xmi:type="notation:Node" xmi:id="_MU_KwAyGEeKlZ_H3Nu8dsw" type="4011">
+      <layoutConstraint xmi:type="notation:Location" xmi:id="_MU_KwQyGEeKlZ_H3Nu8dsw" x="-10" y="-10"/>
+    </children>
+    <children xmi:type="notation:Node" xmi:id="_MU_KwgyGEeKlZ_H3Nu8dsw" type="4012">
+      <layoutConstraint xmi:type="notation:Location" xmi:id="_MU_KwwyGEeKlZ_H3Nu8dsw" x="10" y="10"/>
+    </children>
+    <styles xmi:type="notation:ConnectorStyle" xmi:id="_MU-jsQyGEeKlZ_H3Nu8dsw" lineColor="4210752"/>
+    <styles xmi:type="notation:FontStyle" xmi:id="_MU-jsgyGEeKlZ_H3Nu8dsw" fontColor="4210752" fontName="Segoe UI" fontHeight="10"/>
+    <element xmi:type="ecore:EReference" href="DuplicationDetection.ecore#//HashDuplicationDetection/"/>
+    <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_MU-jswyGEeKlZ_H3Nu8dsw" points="[-11, -33, 114, 341]$[-125, -373, 0, 1]"/>
+  </edges>
+</notation:Diagram>
