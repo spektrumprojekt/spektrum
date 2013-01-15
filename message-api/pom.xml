@@ -11,24 +11,6 @@
 	<name>SpektrumProjekt: Message API</name>
 	<description>This component supplies shared code for all backend components.</description>
 	<dependencies>
-		<!-- for information extraction -->
-		<dependency>
-			<groupId>org.tartarus.snowball</groupId>
-			<artifactId>snowball</artifactId>
-			<version>2010-08-04</version>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>me.champeau.jlangdetect</groupId>
-			<artifactId>jlangdetect-extra</artifactId>
-			<version>0.3</version>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.opennlp</groupId>
-			<artifactId>opennlp-tools</artifactId>
-			<version>1.5.2-incubating</version>
-		</dependency>
 		<dependency>
 			<groupId>de.spektrumprojekt</groupId>
 			<artifactId>spektrumprojekt-commons</artifactId>
