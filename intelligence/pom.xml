@@ -53,10 +53,9 @@
 		</dependency>
 		<!-- for information extraction -->
 		<dependency>
-			<groupId>org.tartarus.snowball</groupId>
-			<artifactId>snowball</artifactId>
-			<version>2010-08-04</version>
-			<scope>compile</scope>
+			<groupId>org.apache.lucene</groupId>
+			<artifactId>lucene-analyzers</artifactId>
+			<version>3.6.2</version>
 		</dependency>
 		<dependency>
 			<groupId>me.champeau.jlangdetect</groupId>

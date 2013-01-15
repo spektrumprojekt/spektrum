@@ -96,8 +96,8 @@ public final class StemmedTokenExtractorCommand implements Command<InformationEx
         }
 
         List<String> tokens = ExtractionUtils.tokenize(text);
-        tokens = ExtractionUtils.stem(language, tokens);
         tokens = removeStopwords(language, tokens);
+        tokens = ExtractionUtils.stem(language, tokens);
         tokens = cleanTokens(tokens);
 
         Bag tokenBag = new HashBag(tokens);

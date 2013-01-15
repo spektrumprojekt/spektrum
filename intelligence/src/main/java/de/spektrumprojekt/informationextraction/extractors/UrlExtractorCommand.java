@@ -29,7 +29,7 @@ import de.spektrumprojekt.informationextraction.InformationExtractionContext;
 
 public class UrlExtractorCommand implements Command<InformationExtractionContext> {
 
-    private static final String EXTRACTED_URL = "meta.info.extracted.url";
+    public static final String EXTRACTED_URL = "meta.info.extracted.url";
 
     private static final Pattern URL_PATTERN = Pattern
             .compile("(?i)\\b((?:[a-z][\\w-]+:(?:/{1,3}|[a-z0-9%])|www\\d{0,3}[.]|[a-z0-9.\\-]+[.][a-z]{2,4}/)(?:[^\\s()<>]+|\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\))+(?:\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\)|[^\\s`!()\\[\\]{};:'\".,<>?Â«Â»â€œâ€�â€˜â€™]))");

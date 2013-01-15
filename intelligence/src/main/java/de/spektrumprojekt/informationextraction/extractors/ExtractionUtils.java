@@ -35,10 +35,10 @@ import opennlp.tools.tokenize.SimpleTokenizer;
 
 import org.apache.commons.lang.Validate;
 import org.apache.log4j.Logger;
-import org.tartarus.snowball.SnowballStemmer;
-import org.tartarus.snowball.ext.englishStemmer;
-import org.tartarus.snowball.ext.frenchStemmer;
-import org.tartarus.snowball.ext.germanStemmer;
+import org.tartarus.snowball.SnowballProgram;
+import org.tartarus.snowball.ext.EnglishStemmer;
+import org.tartarus.snowball.ext.FrenchStemmer;
+import org.tartarus.snowball.ext.GermanStemmer;
 
 /**
  * 
@@ -103,14 +103,14 @@ public final class ExtractionUtils {
      *            the language
      * @return the snowball stemmer
      */
-    private static SnowballStemmer getStemmer(String language) {
-        SnowballStemmer stemmer;
+    private static SnowballProgram getStemmer(String language) {
+        SnowballProgram stemmer;
         if (language.equals("de")) {
-            stemmer = new germanStemmer();
+            stemmer = new GermanStemmer();
         } else if (language.equals("en")) {
-            stemmer = new englishStemmer();
+            stemmer = new EnglishStemmer();
         } else if (language.equals("fr")) {
-            stemmer = new frenchStemmer();
+            stemmer = new FrenchStemmer();
         } else {
             LOGGER.warn("no stemmer for language \"" + language + "\"");
             stemmer = null;
@@ -159,7 +159,7 @@ public final class ExtractionUtils {
      *            the text to stem
      * @return the stemmed text
      */
-    private static String stem(SnowballStemmer stemmer, String text) {
+    private static String stem(SnowballProgram stemmer, String text) {
         String[] textParts = text.split("\\s");
         StringBuilder stemmedResult = new StringBuilder(text.length());
         for (int i = 0; i < textParts.length; i++) {
@@ -186,7 +186,7 @@ public final class ExtractionUtils {
         Validate.notEmpty(language, "language must not be empty");
         Validate.notNull(tokens, "tokens must not be null");
 
-        SnowballStemmer stemmer = getStemmer(language);
+        SnowballProgram stemmer = getStemmer(language);
         if (stemmer == null) {
             return tokens;
         }
@@ -205,7 +205,7 @@ public final class ExtractionUtils {
      * @return
      */
     public static String stem(String language, String text) {
-        SnowballStemmer stemmer = getStemmer(language);
+        SnowballProgram stemmer = getStemmer(language);
         return stem(stemmer, text);
     }
 

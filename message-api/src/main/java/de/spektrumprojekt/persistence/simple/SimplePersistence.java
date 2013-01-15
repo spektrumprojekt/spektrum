@@ -52,7 +52,7 @@ import de.spektrumprojekt.persistence.Statistics;
  */
 public class SimplePersistence implements Persistence {
 
-    private IdGenerator idGenerator;
+    private final IdGenerator idGenerator = new IdGenerator();
 
     private final Map<String, User> users = new HashMap<String, User>();
 
@@ -304,7 +304,6 @@ public class SimplePersistence implements Persistence {
 
     @Override
     public void initialize() {
-        idGenerator = new IdGenerator();
 
     }
 
