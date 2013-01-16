@@ -1,25 +1,24 @@
 /*
-* Licensed to the Apache Software Foundation (ASF) under one
-* or more contributor license agreements.  See the NOTICE file
-* distributed with this work for additional information
-* regarding copyright ownership.  The ASF licenses this file
-* to you under the Apache License, Version 2.0 (the
-* "License"); you may not use this file except in compliance
-* with the License.  You may obtain a copy of the License at
-* 
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package de.spektrumprojekt.i.learner.adaptation;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -30,11 +29,18 @@ import java.util.Map.Entry;
 import de.spektrumprojekt.communication.CommunicationMessage;
 import de.spektrumprojekt.communication.MessageHandler;
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
+import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
+import de.spektrumprojekt.i.ranker.MessageFeatureContext;
+import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
+import de.spektrumprojekt.i.ranker.chain.ComputeMessageRankCommand;
+import de.spektrumprojekt.i.ranker.chain.StoreMessageRankCommand;
+import de.spektrumprojekt.i.ranker.chain.features.TermMatchFeatureCommand;
+import de.spektrumprojekt.i.ranker.chain.features.TermMatchFeatureCommand.TermWeightAggregation;
 import de.spektrumprojekt.persistence.Persistence;
 
 public class DirectedUserModelAdapter implements
@@ -44,8 +50,14 @@ public class DirectedUserModelAdapter implements
 
     private final Persistence persistence;
 
+    private final TermMatchFeatureCommand termMatchFeatureCommand;
+
     public DirectedUserModelAdapter(Persistence persistence) {
         this.persistence = persistence;
+        // TODO this must be provided, better call the ranker directly, or have some form of rerank
+        // on the ranker
+        this.termMatchFeatureCommand = new TermMatchFeatureCommand(this.persistence,
+                TermWeightAggregation.AVG, 0.75f);
     }
 
     @Override
@@ -58,15 +70,15 @@ public class DirectedUserModelAdapter implements
 
         // 2. Find user models to adapt from that contain the missing user terms.
         Collection<UserModel> userModels = persistence
-                .getUsersWithUserModel(new ArrayList<Term>(termsToAdapt));
+                .getUsersWithUserModel(termsToAdapt);
         Map<String, UserModel> userToUserModels = new HashMap<String, UserModel>();
         Collection<String> users = new HashSet<String>();
         for (UserModel userModel : userModels) {
-            users.add(userModel.getGlobalId());
-            userToUserModels.put(userModel.getGlobalId(), userModel);
+            users.add(userModel.getUser().getGlobalId());
+            userToUserModels.put(userModel.getUser().getGlobalId(), userModel);
         }
 
-        String messageGroupGlobalId = null;
+        String messageGroupGlobalId = message.getMessageGroupGlobalId();
 
         // 3. Compute user similarity between the u and the users of the found user models.
         Collection<UserSimilarity> similarities = persistence.getUserSimilarities(
@@ -110,6 +122,7 @@ public class DirectedUserModelAdapter implements
                     if (entry == null) {
                         ScoredTerm scoredTerm = new ScoredTerm(statEntry.getKey(), 0);
                         entry = new UserModelEntry(userModelToAdapt, scoredTerm);
+                        entries.put(scoredTerm.getTerm(), entry);
                     }
                     entry.getScoredTerm().setWeight((float) statEntry.getValue().getValue());
                     entry.setAdapted(true);
@@ -118,6 +131,18 @@ public class DirectedUserModelAdapter implements
 
             persistence.storeOrUpdateUserModelEntries(userModelToAdapt, entries.values());
 
+            // TODO hack. refactor.
+
+            Message messageToRerate = this.persistence.getMessageByGlobalId(message.getMessageId());
+            UserSpecificMessageFeatureContext context = new UserSpecificMessageFeatureContext(
+                    this.persistence, message.getUserGlobalId(), messageToRerate, null);
+
+            termMatchFeatureCommand.process(context);
+            MessageFeatureContext mfContext = new MessageFeatureContext(this.persistence,
+                    messageToRerate, null);
+            mfContext.addUserContext(context);
+            new ComputeMessageRankCommand().process(context);
+            new StoreMessageRankCommand(this.persistence).process(mfContext);
         }
 
     }

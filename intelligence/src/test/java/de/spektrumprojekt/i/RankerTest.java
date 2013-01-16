@@ -47,6 +47,8 @@ import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
 import de.spektrumprojekt.helper.MessageHelper;
+import de.spektrumprojekt.i.learner.Learner;
+import de.spektrumprojekt.i.learner.UserModelEntryIntegrationPlainStrategy;
 import de.spektrumprojekt.i.learner.adaptation.DirectedUserModelAdapter;
 import de.spektrumprojekt.i.learner.similarity.UserSimilarityComputer;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
@@ -70,10 +72,50 @@ public class RankerTest extends MyStreamTest {
     private Communicator communicator;
     private Queue<CommunicationMessage> rankerQueue;
 
+    private void checkUserModelTerms(MessageFeatureContext context, UserModel... userModelsToAssert) {
+        Collection<ScoredTerm> terms = context.getMessage().getMessageParts().iterator().next()
+                .getScoredTerms();
+
+        for (ScoredTerm term : terms) {
+
+            Collection<UserModel> userModels = getPersistence().getUsersWithUserModel(
+                    Arrays.asList(term.getTerm()));
+
+            for (UserModel userModelToAssert : userModelsToAssert) {
+                Assert.assertTrue(
+                        "Must have UserModel " + userModelToAssert + " with term " + term.getTerm()
+                                + "!", userModels.contains(userModelToAssert));
+            }
+
+        }
+    }
+
     private void dump(Collection<UserSimilarity> similarities) {
         for (UserSimilarity sim : similarities) {
             System.out.println(sim);
         }
+    }
+
+    private void runSimilarityComputerAndCheck(User user1, User user2) {
+        UserSimilarityComputer computer = new UserSimilarityComputer(getPersistence());
+        Collection<UserSimilarity> similarities = computer.run();
+
+        dump(similarities);
+
+        // assert that there is a user2 -> user1 similarity
+        similarities = getPersistence().getUserSimilarities(
+                user2.getGlobalId(), Arrays.asList(user1.getGlobalId()),
+                messageGroup.getGlobalId(), 0);
+        UserSimilarity user1sim = null;
+        for (UserSimilarity sim : similarities) {
+            if (sim.getUserGlobalIdTo().equals(user1.getGlobalId())) {
+                user1sim = sim;
+            }
+        }
+
+        Assert.assertNotNull(user1sim);
+        Assert.assertTrue("User Similarity " + user1sim.getSimilarity() + " should be > 0.5 ",
+                user1sim.getSimilarity() > 0.5);
     }
 
     private Ranker setupRanker(RankerConfigurationFlag flags) {
@@ -81,6 +123,7 @@ public class RankerTest extends MyStreamTest {
         Collection<String> userForRanking = new HashSet<String>();
         userForRanking.add("user1");
         userForRanking.add("user2");
+        userForRanking.add("user3");
 
         for (String globalId : userForRanking) {
             UserModel userModel = getPersistence().getOrCreateUserModelByUser(globalId);
@@ -88,13 +131,18 @@ public class RankerTest extends MyStreamTest {
             userModels.add(userModel);
         }
 
+        Learner learner = new Learner(getPersistence(),
+                new UserModelEntryIntegrationPlainStrategy());
+
         rankerQueue = new LinkedBlockingQueue<CommunicationMessage>();
 
         communicator = new VirtualMachineCommunicator(rankerQueue, rankerQueue);
 
         Ranker ranker = new Ranker(getPersistence(), communicator,
                 new SimpleMessageGroupMemberRunner<MessageFeatureContext>(userForRanking), flags);
+
         communicator.registerMessageHandler(ranker);
+        communicator.registerMessageHandler(learner);
 
         if (ranker.getFlags().contains(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)) {
             DirectedUserModelAdapter adapter = new DirectedUserModelAdapter(getPersistence());
@@ -180,7 +228,9 @@ public class RankerTest extends MyStreamTest {
         User user2 = getPersistence().getOrCreateUser("user2");
         User user3 = getPersistence().getOrCreateUser("user3");
 
-        UserSimilarityComputer computer = new UserSimilarityComputer(getPersistence());
+        UserModel userModel1 = getPersistence().getOrCreateUserModelByUser(user1.getGlobalId());
+        UserModel userModel2 = getPersistence().getOrCreateUserModelByUser(user2.getGlobalId());
+        UserModel userModel3 = getPersistence().getOrCreateUserModelByUser(user3.getGlobalId());
 
         Ranker ranker = setupRanker(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION);
 
@@ -193,24 +243,11 @@ public class RankerTest extends MyStreamTest {
         // 1st rank just the mention
         MessageFeatureContext context = ranker.rank(message, messageRelation, null, false);
 
-        Collection<UserSimilarity> similarities = computer.run();
+        waitForCommunicatorToDelivierMessages();
 
-        dump(similarities);
+        checkUserModelTerms(context, userModel1, userModel2);
 
-        // assert that there is a user2 -> user1 similarity
-        similarities = getPersistence().getUserSimilarities(
-                user2.getGlobalId(), Arrays.asList(user1.getGlobalId()),
-                messageGroup.getGlobalId(), 0);
-        UserSimilarity user1sim = null;
-        for (UserSimilarity sim : similarities) {
-            if (sim.getUserGlobalIdTo().equals(user1.getGlobalId())) {
-                user1sim = sim;
-            }
-        }
-
-        Assert.assertNotNull(user1sim);
-        Assert.assertTrue("User Similarity " + user1sim.getSimilarity() + " should be > 0.5 ",
-                user1sim.getSimilarity() > 0.5);
+        runSimilarityComputerAndCheck(user1, user2);
 
         // here user1 is mentioned again, that should learn the content into the profile
         message = createPlainTextMessage(
@@ -222,6 +259,10 @@ public class RankerTest extends MyStreamTest {
         // model should be adapted by the just learned items for user 1
         context = ranker.rank(message, messageRelation, null, false);
 
+        waitForCommunicatorToDelivierMessages();
+
+        checkUserModelTerms(context, userModel1, userModel3);
+
         // here user1 writes a message, and that should learn the words "software", and
         // "engineering" from user 1 and adapt it to user 2
         message = createPlainTextMessage(
@@ -231,6 +272,17 @@ public class RankerTest extends MyStreamTest {
         // here again a rank should exist for user 2
         context = ranker.rank(message, messageRelation, null, false);
 
+        waitForCommunicatorToDelivierMessages();
+        checkUserModelTerms(context, userModel1);
+
+        MessageRank rankForUser2 = context.getUserContext(user2.getGlobalId()).getMessageRank();
+        Assert.assertNotNull(rankForUser2);
+        // Assert.assertTrue("rankForUser2 should positive if adaption run, but it is: " +
+        // rankForUser2.getRank(), rankForUser2.getRank() > 0.5);
+
+    }
+
+    private void waitForCommunicatorToDelivierMessages() throws InterruptedException {
         int wait = 10;
         while (!rankerQueue.isEmpty()) {
             Thread.sleep(500);
@@ -240,12 +292,5 @@ public class RankerTest extends MyStreamTest {
                         + rankerQueue.size());
             }
         }
-
-        MessageRank rankForUser2 = context.getUserContext(user2.getGlobalId()).getMessageRank();
-        // TODO
-        // Assert.assertNotNull(rankForUser2);
-        // Assert.assertTrue("rankForUser2 should positive if adaption run, but it is: " +
-        // rankForUser2.getRank(), rankForUser2.getRank() > 0.5);
-
     }
 }

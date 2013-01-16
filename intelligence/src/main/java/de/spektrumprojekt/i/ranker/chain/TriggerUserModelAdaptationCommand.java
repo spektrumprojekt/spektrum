@@ -72,11 +72,9 @@ public class TriggerUserModelAdaptationCommand implements
 
         if (messageRank.getRank() < rankThreshold) {
 
-            String authorId = context.getMessage().getAuthorGlobalId();
-            String messageGroupId = context.getMessage().getMessageGroup().getGlobalId();
+            String messageGroupGlobalId = context.getMessage().getMessageGroup().getGlobalId();
 
-            if (context.getMatchingUserModelEntries() != null && authorId != null
-                    && messageGroupId != null) {
+            if (context.getMatchingUserModelEntries() != null && messageGroupGlobalId != null) {
 
                 Collection<Term> allTerms = MessageHelper.getAllTerms(context.getMessage());
                 int messageTerms = allTerms.size();
@@ -94,7 +92,8 @@ public class TriggerUserModelAdaptationCommand implements
 
                     if (termsToAdaptArray.length > 0) {
                         DirectedUserModelAdaptationMessage adaptationMessage = new DirectedUserModelAdaptationMessage(
-                                authorId, messageGroupId, termsToAdaptArray);
+                                context.getUserGlobalId(), context.getMessage().getGlobalId(),
+                                messageGroupGlobalId, termsToAdaptArray);
                         communicator.sendMessage(adaptationMessage);
                     }
                 }

@@ -31,5 +31,5 @@ twitter4j-stream-2.2.5.jar                  twitter4j-stream                    
 rome-1.0.jar                                ROME, RSS and atOM utilitiEs for Java   1.0             Apache License, v2.0
 httpclient-4.1.1.jar                        HttpClient                              4.1.1           Apache License, v2.0
 jackson-core-asl-1.9.5.jar                  Jackson                                 1.9.5           Apache License, v2.0
-snowball                                    Snowball                                                BSD License
-jlangdetect                                 JLLangdetect
+jlangdetect                                 JLangdetect
+lucene-analyzers                            Lucene Analyzers                        3.6.2           Apache License, v2.0
