@@ -1,21 +1,21 @@
 /*
-* Licensed to the Apache Software Foundation (ASF) under one
-* or more contributor license agreements.  See the NOTICE file
-* distributed with this work for additional information
-* regarding copyright ownership.  The ASF licenses this file
-* to you under the Apache License, Version 2.0 (the
-* "License"); you may not use this file except in compliance
-* with the License.  You may obtain a copy of the License at
-* 
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package de.spektrumprojekt.i.learner.similarity;
 
@@ -55,7 +55,7 @@ public class UserSimilarityComputer implements ConfigurationDescriptable {
         return this.getClass().getSimpleName() + " intervall: " + intervall;
     }
 
-    public void run() {
+    public Collection<UserSimilarity> run() {
 
         Map<String, UserSimilarityStat> similarities = new HashMap<String, UserSimilarityStat>();
 
@@ -86,7 +86,6 @@ public class UserSimilarityComputer implements ConfigurationDescriptable {
         }
 
         // 4th iterate over message of last month (or whatever)
-
         Date now = new Date();
         Date goingBack = new Date(now.getTime() - intervall);
         for (MessageGroup messageGroup : messageGroups) {
@@ -106,6 +105,8 @@ public class UserSimilarityComputer implements ConfigurationDescriptable {
         Collection<UserSimilarity> userSimilarities = new HashSet<UserSimilarity>(
                 similarities.values());
         persistence.deleteAndCreateUserSimilarities(userSimilarities);
+
+        return userSimilarities;
     }
 
     private void updateUserSimilarities(Map<String, UserSimilarityStat> similarities,
@@ -114,16 +115,16 @@ public class UserSimilarityComputer implements ConfigurationDescriptable {
 
         String messageGroupId = message.getMessageGroup() != null ? message.getMessageGroup()
                 .getGlobalId() : null;
-        from: for (String from : mentionUserGlobalIds) {
-            to: for (String to : mentionUserGlobalIds) {
-                if (from.equals(to)) {
-                    break to;
-                }
-                UserSimilarityStat stat = similarities.get(UserSimilarityStat.getKey(from, to,
-                        messageGroupId));
-                assert stat != null;
-                stat.incrementNumberOfMentions();
+        String from = message.getAuthorGlobalId();
+
+        to: for (String to : mentionUserGlobalIds) {
+            if (from.equals(to)) {
+                break to;
             }
+            UserSimilarityStat stat = similarities.get(UserSimilarityStat.getKey(from, to,
+                    messageGroupId));
+            assert stat != null;
+            stat.incrementNumberOfMentions();
         }
 
     }

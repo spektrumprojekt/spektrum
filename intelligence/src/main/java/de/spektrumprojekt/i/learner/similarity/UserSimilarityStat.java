@@ -45,7 +45,7 @@ public class UserSimilarityStat extends UserSimilarity {
     }
 
     public void consolidate() {
-        // TODO set the similarity
+        this.setSimilarity(Math.min(numberOfMentions, 1));
     }
 
     public String getKey() {
