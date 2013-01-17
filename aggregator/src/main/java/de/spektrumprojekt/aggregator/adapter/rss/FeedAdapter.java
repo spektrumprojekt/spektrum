@@ -20,6 +20,7 @@
 package de.spektrumprojekt.aggregator.adapter.rss;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -75,6 +76,7 @@ import de.spektrumprojekt.persistence.Persistence;
  * 
  * @author Marius Feldmann
  * @author Philipp Katz
+ * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  */
 public final class FeedAdapter extends BasePollingAdapter {
 
@@ -83,8 +85,6 @@ public final class FeedAdapter extends BasePollingAdapter {
 
     /** The source type of this adapter. */
     public static final String SOURCE_TYPE = "RSS";
-
-    private HttpClient httpClient;
 
     /** The key for the access parameter specifying the feed's URL. */
     public static final String ACCESS_PARAMETER_URI = "feeduri";
@@ -113,6 +113,39 @@ public final class FeedAdapter extends BasePollingAdapter {
         super(communicator, persistence, aggregatorConfiguration, aggregatorConfiguration
                 .getPollingInterval(), THREAD_POOL_SIZE);
 
+    }
+
+    /**
+     * Abort the request due to an error before
+     * 
+     * @param get
+     */
+    private void abortRequest(HttpGet get) {
+        try {
+            get.abort();
+        } catch (Exception e) {
+            LOGGER.warn("Error in aborting request: " + e.getMessage());
+            LOGGER.debug("Error in aborting request: " + e.getMessage(), e);
+        }
+    }
+
+    private void cleanUpResources(InputStream in, HttpGet get, boolean success) {
+        try {
+            if (in != null) {
+                in.close();
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Error closing feed input stream " + e.getMessage());
+            LOGGER.debug("Error closing feed input stream " + e.getMessage(), e);
+        }
+        try {
+            if (!success && get != null) {
+                this.abortRequest(get);
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Error aborting request " + e.getMessage());
+            LOGGER.debug("Error aborting request " + e.getMessage(), e);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -174,6 +207,14 @@ public final class FeedAdapter extends BasePollingAdapter {
         return message;
     }
 
+    private HttpGet createHttpGetRequest(String uri, String base64EncodedCredentials) {
+        HttpGet get = new HttpGet(uri);
+        if (SpektrumUtils.notNullOrEmpty(base64EncodedCredentials)) {
+            get.setHeader("Authorization", "Basic " + base64EncodedCredentials);
+        }
+        return get;
+    }
+
     @Override
     public String getSourceType() {
         return SOURCE_TYPE;
@@ -220,9 +261,18 @@ public final class FeedAdapter extends BasePollingAdapter {
             }
         }
         if (SpektrumUtils.notNullOrEmpty(uri)) {
+            HttpGet get = null;
+            HttpResponse httpResult = null;
+            InputStream in = null;
+            HttpClient httpClient = null;
+
             try {
-                HttpResponse httpResult = retrieveHttpResult(uri, base64EncodedCredentials);
+
+                httpClient = new ContentEncodingHttpClient();
+                get = createHttpGetRequest(uri, base64EncodedCredentials);
+                httpResult = httpClient.execute(get);
                 int statusCode = httpResult.getStatusLine().getStatusCode();
+
                 if (statusCode >= 400) {
                     throw new AdapterException("HTTP error code " + statusCode,
                             StatusType.ERROR_NETWORK);
@@ -230,7 +280,8 @@ public final class FeedAdapter extends BasePollingAdapter {
                 HttpEntity httpEntity = httpResult.getEntity();
                 if (httpEntity != null) {
                     SyndFeedInput feedInput = new SyndFeedInput();
-                    SyndFeed syndFeed = feedInput.build(new InputSource(httpEntity.getContent()));
+                    in = httpEntity.getContent();
+                    SyndFeed syndFeed = feedInput.build(new InputSource(in));
                     LOGGER.debug("retrieved {} items from {}", syndFeed.getEntries().size(), uri);
                     messages = processMessages(syndFeed, subscriptionStatus);
                     success = true;
@@ -255,6 +306,8 @@ public final class FeedAdapter extends BasePollingAdapter {
             } catch (FeedException e) {
                 throw new AdapterException("FeedException " + e.getMessage(), e,
                         StatusType.ERROR_PROCESSING_CONTENT);
+            } finally {
+                cleanUpResources(in, get, success);
             }
         }
         LOGGER.trace("<handleSubscription, success {}", success);
@@ -293,16 +346,6 @@ public final class FeedAdapter extends BasePollingAdapter {
         LOGGER.debug("# new items in subscription {}: {}", subscription.getGlobalId(),
                 messages.size());
         return messages;
-    }
-
-    private HttpResponse retrieveHttpResult(String uri, String base64EncodedCredentials)
-            throws ClientProtocolException, IOException {
-        HttpGet get = new HttpGet(uri);
-        httpClient = new ContentEncodingHttpClient();
-        if (SpektrumUtils.notNullOrEmpty(base64EncodedCredentials)) {
-            get.setHeader("Authorization", "Basic " + base64EncodedCredentials);
-        }
-        return httpClient.execute(get);
     }
 
 }
