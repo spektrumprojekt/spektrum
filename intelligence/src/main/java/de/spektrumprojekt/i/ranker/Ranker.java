@@ -19,7 +19,6 @@
 
 package de.spektrumprojekt.i.ranker;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -65,35 +64,16 @@ import de.spektrumprojekt.persistence.Persistence;
  */
 public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         ConfigurationDescriptable {
-    public enum RankerConfigurationFlag {
-        ONLY_USE_TERM_MATCHER_FEATURE,
-        DO_NOT_USE_DISCUSSION_FEATURES,
-        USE_DIRECTED_USER_MODEL_ADAPTATION;
-    }
 
     private final static Logger LOGGER = LoggerFactory.getLogger(Ranker.class);
 
-    /**
-     * TODO move {@link ConfigurationDescriptable} to spektrum and let {@link CommandChain}
-     * implement this
-     * 
-     * @param chain
-     * @return
-     */
-    public static String getCommandsToString(CommandChain<?> chain) {
-        Collection<String> names = new ArrayList<String>(chain.getCommands().size());
-        for (Command<?> command : chain.getCommands()) {
-            names.add(command.getClass().getSimpleName());
-        }
-        return StringUtils.join(names, ", ");
-    }
+    private final Collection<RankerConfigurationFlag> flags = new HashSet<RankerConfigurationFlag>();
 
     private final Persistence persistence;
-
     private final Communicator communicator;
-    private CommandChain<MessageFeatureContext> rankerChain;
 
-    private final Collection<RankerConfigurationFlag> flags = new HashSet<RankerConfigurationFlag>();
+    private CommandChain<MessageFeatureContext> rankerChain;
+    private CommandChain<MessageFeatureContext> rerankerChain;
 
     /**
      * 
@@ -118,46 +98,75 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         this.communicator = communicator;
 
         rankerChain = new CommandChain<MessageFeatureContext>();
+        rerankerChain = new CommandChain<MessageFeatureContext>();
+
+        // create the commands
+        UserFeatureCommand userFeatureCommand = new UserFeatureCommand(memberRunner);
+        UserFeatureCommand reRankUserFeatureCommand = new UserFeatureCommand(memberRunner);
+
         InformationExtractionCommand<MessageFeatureContext> ieCommand = InformationExtractionCommand
                 .createDefaultGermanEnglish(this.persistence, false, false);
-        UserFeatureCommand userFeatureCommand = new UserFeatureCommand(memberRunner);
 
+        StoreMessageCommand storeMessageCommand = new StoreMessageCommand(persistence);
+        DiscussionRootFeatureCommand discussionRootFeatureCommand = new DiscussionRootFeatureCommand();
+        AuthorFeatureCommand authorFeatureCommand = new AuthorFeatureCommand();
+        MentionFeatureCommand mentionFeatureCommand = new MentionFeatureCommand();
+        DiscussionParticipationFeatureCommand discussionParticipationFeatureCommand = new DiscussionParticipationFeatureCommand();
+        DiscussionMentionFeatureCommand discussionMentionFeatureCommand = new DiscussionMentionFeatureCommand();
+        TermMatchFeatureCommand termMatchFeatureCommand = new TermMatchFeatureCommand(persistence,
+                TermWeightAggregation.AVG, 0.75f);
+        ComputeMessageRankCommand computeMessageRankCommand = new ComputeMessageRankCommand();
+        InvokeLearnerCommand invokeLearnerCommand = new InvokeLearnerCommand(this.persistence,
+                this.communicator);
+        TriggerUserModelAdaptationCommand triggerUserModelAdaptationCommand = new TriggerUserModelAdaptationCommand(
+                this.communicator);
+        StoreMessageRankCommand storeMessageRankCommand = new StoreMessageRankCommand(persistence);
+
+        // add the commands to the chain
         rankerChain.addCommand(ieCommand);
 
         // store the message after the terms have been extracted
-        rankerChain.addCommand(new StoreMessageCommand(persistence));
+        rankerChain.addCommand(storeMessageCommand);
 
         if (!this.flags.contains(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE)
                 && !this.flags.contains(RankerConfigurationFlag.DO_NOT_USE_DISCUSSION_FEATURES)) {
-            rankerChain.addCommand(new DiscussionRootFeatureCommand());
+
+            rankerChain.addCommand(discussionRootFeatureCommand);
         }
         rankerChain.addCommand(userFeatureCommand);
 
         if (!this.flags.contains(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE)) {
-            userFeatureCommand.getUserSpecificCommandChain().addCommand(new AuthorFeatureCommand());
-            userFeatureCommand.getUserSpecificCommandChain()
-                    .addCommand(new MentionFeatureCommand());
+
+            userFeatureCommand.addCommand(authorFeatureCommand);
+            userFeatureCommand.addCommand(mentionFeatureCommand);
         }
 
         if (!this.flags.contains(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE) &&
                 !this.flags.contains(RankerConfigurationFlag.DO_NOT_USE_DISCUSSION_FEATURES)) {
+
             userFeatureCommand.getUserSpecificCommandChain().addCommand(
-                    new DiscussionParticipationFeatureCommand());
+                    discussionParticipationFeatureCommand);
             userFeatureCommand.getUserSpecificCommandChain().addCommand(
-                    new DiscussionMentionFeatureCommand());
+                    discussionMentionFeatureCommand);
         }
 
-        userFeatureCommand.getUserSpecificCommandChain().addCommand(
-                new TermMatchFeatureCommand(persistence, TermWeightAggregation.AVG, 0.75f));
-        userFeatureCommand.getUserSpecificCommandChain().addCommand(
-                new ComputeMessageRankCommand());
-        userFeatureCommand.getUserSpecificCommandChain().addCommand(
-                new InvokeLearnerCommand(this.persistence, this.communicator));
+        userFeatureCommand.addCommand(termMatchFeatureCommand);
+        userFeatureCommand.addCommand(computeMessageRankCommand);
+        userFeatureCommand.addCommand(invokeLearnerCommand);
+
         if (this.flags.contains(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)) {
-            userFeatureCommand.getUserSpecificCommandChain().addCommand(
-                    new TriggerUserModelAdaptationCommand(this.communicator));
+
+            userFeatureCommand.addCommand(triggerUserModelAdaptationCommand);
         }
-        rankerChain.addCommand(new StoreMessageRankCommand(persistence));
+
+        rankerChain.addCommand(storeMessageRankCommand);
+
+        // setup the reranker chain. the reranker only uses the term match feature and assumes the
+        // message has been ranked before
+        rerankerChain.addCommand(reRankUserFeatureCommand);
+        reRankUserFeatureCommand.addCommand(termMatchFeatureCommand);
+        reRankUserFeatureCommand.addCommand(computeMessageRankCommand);
+        rerankerChain.addCommand(storeMessageRankCommand);
 
         // TODO store the features ?! (or only necessary for evaluation?)
 
@@ -193,11 +202,17 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         StringBuilder sb = new StringBuilder();
         sb.append(this.getClass().getSimpleName());
         sb.append(" flags: {" + StringUtils.join(this.flags, ", ") + "}");
-        sb.append(" commandChain: " + this.rankerChain.getConfigurationDescription());
+        sb.append(" rankerCommandChain: " + this.rankerChain.getConfigurationDescription());
+        sb.append(" rerankerCommandChain: " + this.rerankerChain.getConfigurationDescription());
 
         return sb.toString();
     }
 
+    /**
+     * the flags used to setup the ranker
+     * 
+     * @return returns an unmodifiable collection of the flags
+     */
     public Collection<RankerConfigurationFlag> getFlags() {
         return Collections.unmodifiableCollection(flags);
     }
@@ -242,6 +257,33 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         }
 
         rankerChain.process(context);
+
+        stopWatch.stop();
+
+        LOGGER.debug("Ranker processed message {} in {} ms", message.getGlobalId(),
+                stopWatch.getTime());
+        return context;
+    }
+
+    /**
+     * The reranking only uses the term match feature and assumes that the message has been ranked
+     * before for the user, and hence no information extraction or message storing will be executed.
+     * 
+     * @param message
+     * @param userGlobalId
+     * @return
+     */
+    public MessageFeatureContext rerank(Message message, String userGlobalId) {
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
+
+        MessageFeatureContext context = new MessageFeatureContext(this.persistence,
+                message, null);
+        context.setNoRankingOnlyLearning(false);
+
+        context.setUserGlobalIdsToProcess(Arrays.asList(userGlobalId));
+
+        rerankerChain.process(context);
 
         stopWatch.stop();
 

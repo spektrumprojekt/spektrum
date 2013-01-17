@@ -35,12 +35,7 @@ import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
-import de.spektrumprojekt.i.ranker.MessageFeatureContext;
-import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
-import de.spektrumprojekt.i.ranker.chain.ComputeMessageRankCommand;
-import de.spektrumprojekt.i.ranker.chain.StoreMessageRankCommand;
-import de.spektrumprojekt.i.ranker.chain.features.TermMatchFeatureCommand;
-import de.spektrumprojekt.i.ranker.chain.features.TermMatchFeatureCommand.TermWeightAggregation;
+import de.spektrumprojekt.i.ranker.Ranker;
 import de.spektrumprojekt.persistence.Persistence;
 
 public class DirectedUserModelAdapter implements
@@ -50,16 +45,22 @@ public class DirectedUserModelAdapter implements
 
     private final Persistence persistence;
 
-    private final TermMatchFeatureCommand termMatchFeatureCommand;
+    private final Ranker ranker;
 
-    public DirectedUserModelAdapter(Persistence persistence) {
+    public DirectedUserModelAdapter(Persistence persistence, Ranker ranker) {
+        if (persistence == null) {
+            throw new IllegalArgumentException("persistence cannot be null.");
+        }
+        if (ranker == null) {
+            throw new IllegalArgumentException("ranker cannot be null.");
+        }
         this.persistence = persistence;
-        // TODO this must be provided, better call the ranker directly, or have some form of rerank
-        // on the ranker
-        this.termMatchFeatureCommand = new TermMatchFeatureCommand(this.persistence,
-                TermWeightAggregation.AVG, 0.75f);
+        this.ranker = ranker;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void deliverMessage(DirectedUserModelAdaptationMessage message) throws Exception {
         UserModel userModelToAdapt = this.persistence.getOrCreateUserModelByUser(message
@@ -108,7 +109,6 @@ public class DirectedUserModelAdapter implements
                         IncrementalWeightedAverage stat = stats.get(entry.getKey());
                         integrateStat(stat, userSimilarity, entry.getValue());
                     }
-
                 }
             }
 
@@ -134,15 +134,9 @@ public class DirectedUserModelAdapter implements
             // TODO hack. refactor.
 
             Message messageToRerate = this.persistence.getMessageByGlobalId(message.getMessageId());
-            UserSpecificMessageFeatureContext context = new UserSpecificMessageFeatureContext(
-                    this.persistence, message.getUserGlobalId(), messageToRerate, null);
 
-            termMatchFeatureCommand.process(context);
-            MessageFeatureContext mfContext = new MessageFeatureContext(this.persistence,
-                    messageToRerate, null);
-            mfContext.addUserContext(context);
-            new ComputeMessageRankCommand().process(context);
-            new StoreMessageRankCommand(this.persistence).process(mfContext);
+            ranker.rerank(messageToRerate, message.getUserGlobalId());
+
         }
 
     }

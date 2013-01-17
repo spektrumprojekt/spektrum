@@ -53,7 +53,7 @@ import de.spektrumprojekt.i.learner.adaptation.DirectedUserModelAdapter;
 import de.spektrumprojekt.i.learner.similarity.UserSimilarityComputer;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.Ranker;
-import de.spektrumprojekt.i.ranker.Ranker.RankerConfigurationFlag;
+import de.spektrumprojekt.i.ranker.RankerConfigurationFlag;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 
 /**
@@ -145,7 +145,8 @@ public class RankerTest extends MyStreamTest {
         communicator.registerMessageHandler(learner);
 
         if (ranker.getFlags().contains(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)) {
-            DirectedUserModelAdapter adapter = new DirectedUserModelAdapter(getPersistence());
+            DirectedUserModelAdapter adapter = new DirectedUserModelAdapter(getPersistence(),
+                    ranker);
             communicator.registerMessageHandler(adapter);
         }
 
@@ -275,10 +276,11 @@ public class RankerTest extends MyStreamTest {
         waitForCommunicatorToDelivierMessages();
         checkUserModelTerms(context, userModel1);
 
-        MessageRank rankForUser2 = context.getUserContext(user2.getGlobalId()).getMessageRank();
+        MessageRank rankForUser2 = getPersistence().getMessageRank(user2.getGlobalId(),
+                message.getGlobalId());
         Assert.assertNotNull(rankForUser2);
-        // Assert.assertTrue("rankForUser2 should positive if adaption run, but it is: " +
-        // rankForUser2.getRank(), rankForUser2.getRank() > 0.5);
+        Assert.assertTrue("rankForUser2 should positive if adaption run, but it is: "
+                + rankForUser2.getRank(), rankForUser2.getRank() > 0.5);
 
     }
 
