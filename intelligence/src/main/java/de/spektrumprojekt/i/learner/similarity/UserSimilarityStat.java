@@ -44,8 +44,17 @@ public class UserSimilarityStat extends UserSimilarity {
         super(userGlobalIdFrom, userGlobalIdTo, topicGlobalId, 0);
     }
 
-    public void consolidate() {
-        this.setSimilarity(Math.min(numberOfMentions, 1));
+    public void consolidate(UserSimilarityStat reverse, Integer fromCount, Integer toCount) {
+        double ratio1 = reverse.getNumberOfMentions() == 0 ? 0 : numberOfMentions
+                / reverse.getNumberOfMentions();
+        double ratio2 = numberOfMentions == 0 ? 0 : reverse.getNumberOfMentions()
+                / numberOfMentions;
+        if (ratio1 > 0 && ratio2 > 0) {
+            this.setSimilarity(Math.min(ratio1, ratio2));
+        }
+        if (fromCount > 0) {
+            this.setSimilarity(Math.max(getSimilarity(), numberOfMentions / fromCount.doubleValue()));
+        }
     }
 
     public String getKey() {

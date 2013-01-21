@@ -98,9 +98,33 @@ public class UserSimilarityComputer implements ConfigurationDescriptable {
             }
         }
 
+        Map<String, Integer> overallMentionsPerUserFrom = new HashMap<String, Integer>();
+        Map<String, Integer> overallMentionsPerUserTo = new HashMap<String, Integer>();
+
+        for (UserSimilarityStat stat : similarities.values()) {
+            Integer from = overallMentionsPerUserFrom.get(stat.getUserGlobalIdFrom());
+            if (from == null) {
+                from = 0;
+            }
+            from++;
+            overallMentionsPerUserFrom.put(stat.getUserGlobalIdFrom(), from);
+
+            Integer to = overallMentionsPerUserFrom.get(stat.getUserGlobalIdTo());
+            if (to == null) {
+                to = 0;
+            }
+            to++;
+            overallMentionsPerUserTo.put(stat.getUserGlobalIdFrom(), to);
+        }
+
         // 5th compute similarity, topic based!
         for (UserSimilarityStat stat : similarities.values()) {
-            stat.consolidate();
+            UserSimilarityStat reverse = similarities.get(UserSimilarityStat.getKey(
+                    stat.getUserGlobalIdTo(), stat.getUserGlobalIdFrom(),
+                    stat.getMessageGroupGlobalId()));
+            assert reverse != null;
+            stat.consolidate(reverse, overallMentionsPerUserFrom.get(stat.getUserGlobalIdFrom()),
+                    overallMentionsPerUserTo.get(stat.getUserGlobalIdTo()));
         }
         Collection<UserSimilarity> userSimilarities = new HashSet<UserSimilarity>(
                 similarities.values());

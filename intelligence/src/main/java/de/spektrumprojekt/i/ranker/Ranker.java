@@ -105,7 +105,8 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         UserFeatureCommand reRankUserFeatureCommand = new UserFeatureCommand(memberRunner);
 
         InformationExtractionCommand<MessageFeatureContext> ieCommand = InformationExtractionCommand
-                .createDefaultGermanEnglish(this.persistence, false, false);
+                .createDefaultGermanEnglish(this.persistence, false, this.flags
+                        .contains(RankerConfigurationFlag.USER_MESSAGE_GROUP_SPECIFIC_USER_MODEL));
 
         StoreMessageCommand storeMessageCommand = new StoreMessageCommand(persistence);
         DiscussionRootFeatureCommand discussionRootFeatureCommand = new DiscussionRootFeatureCommand();
@@ -149,12 +150,14 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
             userFeatureCommand.getUserSpecificCommandChain().addCommand(
                     discussionMentionFeatureCommand);
         }
-
-        userFeatureCommand.addCommand(termMatchFeatureCommand);
+        if (!this.flags.contains(RankerConfigurationFlag.DO_NOT_USE_TERM_MATCHER_FEATURE)) {
+            userFeatureCommand.addCommand(termMatchFeatureCommand);
+        }
         userFeatureCommand.addCommand(computeMessageRankCommand);
         userFeatureCommand.addCommand(invokeLearnerCommand);
 
-        if (this.flags.contains(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)) {
+        if (!this.flags.contains(RankerConfigurationFlag.DO_NOT_USE_TERM_MATCHER_FEATURE)
+                && this.flags.contains(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)) {
 
             userFeatureCommand.addCommand(triggerUserModelAdaptationCommand);
         }

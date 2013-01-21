@@ -41,7 +41,18 @@ import de.spektrumprojekt.persistence.Persistence;
 public class DirectedUserModelAdapter implements
         MessageHandler<DirectedUserModelAdaptationMessage>, ConfigurationDescriptable {
 
-    private double userSimilarityThreshold;
+    private static long adaptedCount = 0;
+    private static long requestedAdaptedCount = 0;
+
+    public static long getAdaptedCount() {
+        return adaptedCount;
+    }
+
+    public static long getRequestAdaptedCount() {
+        return requestedAdaptedCount;
+    }
+
+    private double userSimilarityThreshold = 0.1;
 
     private final Persistence persistence;
 
@@ -65,6 +76,7 @@ public class DirectedUserModelAdapter implements
     public void deliverMessage(DirectedUserModelAdaptationMessage message) throws Exception {
         UserModel userModelToAdapt = this.persistence.getOrCreateUserModelByUser(message
                 .getUserGlobalId());
+        requestedAdaptedCount++;
 
         // 1. Identify the terms of the messages that are not contained in the user model UMu.
         Collection<Term> termsToAdapt = Arrays.asList(message.getTermsToAdapt());
@@ -126,12 +138,11 @@ public class DirectedUserModelAdapter implements
                     }
                     entry.getScoredTerm().setWeight((float) statEntry.getValue().getValue());
                     entry.setAdapted(true);
+                    adaptedCount++;
                 }
             }
 
             persistence.storeOrUpdateUserModelEntries(userModelToAdapt, entries.values());
-
-            // TODO hack. refactor.
 
             Message messageToRerate = this.persistence.getMessageByGlobalId(message.getMessageId());
 
