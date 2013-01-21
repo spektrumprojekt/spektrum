@@ -150,7 +150,7 @@ public final class FeedAdapter extends BasePollingAdapter {
 
     @SuppressWarnings("unchecked")
     private Message convertMessage(String subscriptionId, SyndEntry syndEntry) {
-        Date publishedDate = syndEntry.getPublishedDate();
+        Date publishedDate = extractDate(subscriptionId, syndEntry);
         Message message = new Message(MessageType.CONTENT, StatusType.OK, subscriptionId,
                 publishedDate);
         message.addProperty(new Property(Property.PROPERTY_KEY_TITLE, syndEntry.getTitle()));
@@ -186,7 +186,7 @@ public final class FeedAdapter extends BasePollingAdapter {
         }
         String link = syndEntry.getLink();
         if (SpektrumUtils.notNullOrEmpty(link)) {
-            message.addProperty(new Property("link", link));
+            message.addProperty(new Property(Property.PROPERTY_KEY_LINK, link));
         }
         DCModule module = (DCModule) syndEntry.getModule(DCModule.URI);
         userextraction: {
@@ -213,6 +213,19 @@ public final class FeedAdapter extends BasePollingAdapter {
             get.setHeader("Authorization", "Basic " + base64EncodedCredentials);
         }
         return get;
+    }
+
+    private Date extractDate(String subscriptionId, SyndEntry syndEntry) {
+        Date publishedDate = syndEntry.getPublishedDate();
+        if (publishedDate == null) {
+            publishedDate = syndEntry.getUpdatedDate();
+        }
+        if (publishedDate == null) {
+            publishedDate = new Date();
+            LOGGER.warn("For an entry in subscription {} no date was found. Using current time.",
+                    subscriptionId);
+        }
+        return publishedDate;
     }
 
     @Override
