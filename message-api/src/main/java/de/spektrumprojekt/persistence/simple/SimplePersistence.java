@@ -177,6 +177,12 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
+    public Collection<Message> getMessagesSince(Date fromDate) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
     public Collection<Message> getMessagesSince(String messageGroupGlobalId, Date fromDate) {
         Collection<Message> filteredMessages = new HashSet<Message>();
         for (Message message : this.messages.values()) {
@@ -319,6 +325,13 @@ public class SimplePersistence implements Persistence {
 
     }
 
+    @Override
+    public void resetTermCount() {
+        for (Term term : this.termsTerms.values()) {
+            term.setCount(0);
+        }
+    }
+
     public void resetTerms(Set<Term> termsStillNeeded) {
 
         for (Term t : termsStillNeeded) {
@@ -396,5 +409,16 @@ public class SimplePersistence implements Persistence {
     @Override
     public void updateAggregationSubscription(SubscriptionStatus aggregationStatus) {
         throw new UnsupportedOperationException("Not yet implemented.");
+    }
+
+    @Override
+    public void updateTerms(Collection<Term> termsChanged) {
+        for (Term term : termsChanged) {
+            if (!this.termsTerms.containsValue(term)) {
+                throw new RuntimeException("The term '" + term
+                        + "' is not created within this persistence. Cannot update!");
+
+            }
+        }
     }
 }
