@@ -116,9 +116,15 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         DiscussionMentionFeatureCommand discussionMentionFeatureCommand = new DiscussionMentionFeatureCommand();
         TermMatchFeatureCommand termMatchFeatureCommand = new TermMatchFeatureCommand(persistence,
                 TermWeightAggregation.AVG, 0.75f);
-        ComputeMessageRankCommand computeMessageRankCommand = new ComputeMessageRankCommand();
-        InvokeLearnerCommand invokeLearnerCommand = new InvokeLearnerCommand(this.persistence,
-                this.communicator);
+        ComputeMessageRankCommand computeMessageRankCommand = new ComputeMessageRankCommand(
+                this.flags
+                        .contains(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE_BUT_LEARN_FROM_FEATURES)
+                        || this.flags
+                                .contains(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE),
+                this.flags
+                        .contains(RankerConfigurationFlag.USE_HALF_SCORE_ON_NON_PARTICIPATING_ANSWERS));
+        InvokeLearnerCommand invokeLearnerCommand = new InvokeLearnerCommand(
+                this.communicator, this.flags.contains(RankerConfigurationFlag.LEARN_NEGATIVE));
         TriggerUserModelAdaptationCommand triggerUserModelAdaptationCommand = new TriggerUserModelAdaptationCommand(
                 this.communicator);
         StoreMessageRankCommand storeMessageRankCommand = new StoreMessageRankCommand(persistence);
