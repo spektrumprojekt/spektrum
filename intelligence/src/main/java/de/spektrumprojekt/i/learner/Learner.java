@@ -23,12 +23,14 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.commons.chain.CommandChain;
 import de.spektrumprojekt.communication.CommunicationMessage;
 import de.spektrumprojekt.communication.MessageHandler;
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
 import de.spektrumprojekt.i.learner.chain.UserModelLearnerCommand;
+import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.Ranker;
 import de.spektrumprojekt.persistence.Persistence;
 
@@ -38,6 +40,26 @@ import de.spektrumprojekt.persistence.Persistence;
  * 
  */
 public class Learner implements MessageHandler<LearningMessage>, ConfigurationDescriptable {
+
+    public class ProxyCommand implements Command<LearnerMessageContext> {
+
+        private InformationExtractionCommand<MessageFeatureContext> ieChain;
+
+        public ProxyCommand(InformationExtractionCommand<MessageFeatureContext> ieChain2) {
+            this.ieChain = ieChain2;
+        }
+
+        @Override
+        public String getConfigurationDescription() {
+            return ieChain.getConfigurationDescription();
+        }
+
+        @Override
+        public void process(LearnerMessageContext context) {
+            ieChain.process(context);
+        }
+
+    }
 
     private CommandChain<LearnerMessageContext> learnerChain;
 
@@ -53,6 +75,7 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
      *            the strategy to integrate the user model
      */
     public Learner(Persistence persistence,
+            InformationExtractionCommand<MessageFeatureContext> ieChain,
             UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null!");
@@ -64,11 +87,7 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
 
         this.learnerChain = new CommandChain<LearnerMessageContext>();
 
-        // TODO this should use flags and it should be the same as the ranker
-        InformationExtractionCommand<LearnerMessageContext> ieCommand = InformationExtractionCommand
-                .createDefaultGermanEnglish(persistence, false, true);
-
-        this.learnerChain.addCommand(ieCommand);
+        this.learnerChain.addCommand(new ProxyCommand(ieChain));
         this.learnerChain.addCommand(new UserModelLearnerCommand(this.persistence,
                 userModelEntryIntegrationStrategy));
     }

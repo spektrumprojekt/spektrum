@@ -131,15 +131,15 @@ public class RankerTest extends MyStreamTest {
             userModels.add(userModel);
         }
 
-        Learner learner = new Learner(getPersistence(),
-                new UserModelEntryIntegrationPlainStrategy());
-
         rankerQueue = new LinkedBlockingQueue<CommunicationMessage>();
 
         communicator = new VirtualMachineCommunicator(rankerQueue, rankerQueue);
 
         Ranker ranker = new Ranker(getPersistence(), communicator,
                 new SimpleMessageGroupMemberRunner<MessageFeatureContext>(userForRanking), flags);
+
+        Learner learner = new Learner(getPersistence(), ranker.getInformationExtractionChain(),
+                new UserModelEntryIntegrationPlainStrategy());
 
         communicator.registerMessageHandler(ranker);
         communicator.registerMessageHandler(learner);

@@ -40,6 +40,7 @@ import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
+import de.spektrumprojekt.i.informationextraction.frequency.TermFrequencyComputer;
 import de.spektrumprojekt.i.ranker.chain.ComputeMessageRankCommand;
 import de.spektrumprojekt.i.ranker.chain.InvokeLearnerCommand;
 import de.spektrumprojekt.i.ranker.chain.StoreMessageCommand;
@@ -72,9 +73,12 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
 
     private final Persistence persistence;
     private final Communicator communicator;
+    private final TermFrequencyComputer termFrequencyComputer;
 
     private CommandChain<MessageFeatureContext> rankerChain;
     private CommandChain<MessageFeatureContext> rerankerChain;
+
+    private InformationExtractionCommand<MessageFeatureContext> informationExtractionChain;
 
     /**
      * 
@@ -97,6 +101,8 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         }
         this.persistence = persistence;
         this.communicator = communicator;
+        this.termFrequencyComputer = new TermFrequencyComputer(this.persistence);
+        // TODO register termfrequencycomputer in some timer
 
         rankerChain = new CommandChain<MessageFeatureContext>();
         rerankerChain = new CommandChain<MessageFeatureContext>();
@@ -110,9 +116,13 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         UserFeatureCommand userFeatureCommand = new UserFeatureCommand(memberRunner);
         UserFeatureCommand reRankUserFeatureCommand = new UserFeatureCommand(memberRunner);
 
-        InformationExtractionCommand<MessageFeatureContext> ieCommand = InformationExtractionCommand
-                .createDefaultGermanEnglish(this.persistence, false, this.flags
-                        .contains(RankerConfigurationFlag.USER_MESSAGE_GROUP_SPECIFIC_USER_MODEL));
+        this.informationExtractionChain = InformationExtractionCommand
+                .createDefaultGermanEnglish(
+                        this.persistence,
+                        this.termFrequencyComputer,
+                        false,
+                        this.flags
+                                .contains(RankerConfigurationFlag.USER_MESSAGE_GROUP_SPECIFIC_USER_MODEL));
 
         StoreMessageCommand storeMessageCommand = new StoreMessageCommand(persistence);
         DiscussionRootFeatureCommand discussionRootFeatureCommand = new DiscussionRootFeatureCommand();
@@ -137,7 +147,7 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         StoreMessageRankCommand storeMessageRankCommand = new StoreMessageRankCommand(persistence);
 
         // add the commands to the chain
-        rankerChain.addCommand(ieCommand);
+        rankerChain.addCommand(this.informationExtractionChain);
 
         // store the message after the terms have been extracted
         rankerChain.addCommand(storeMessageCommand);
@@ -217,6 +227,8 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
     public String getConfigurationDescription() {
         StringBuilder sb = new StringBuilder();
         sb.append(this.getClass().getSimpleName());
+        sb.append(" termFrequencyComputer: "
+                + this.termFrequencyComputer.getConfigurationDescription());
         sb.append(" flags: {" + StringUtils.join(this.flags, ", ") + "}");
         sb.append(" rankerCommandChain: " + this.rankerChain.getConfigurationDescription());
         sb.append(" rerankerCommandChain: " + this.rerankerChain.getConfigurationDescription());
@@ -233,12 +245,20 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         return Collections.unmodifiableCollection(flags);
     }
 
+    public InformationExtractionCommand<MessageFeatureContext> getInformationExtractionChain() {
+        return informationExtractionChain;
+    }
+
     /**
      * {@inheritDoc}
      */
     @Override
     public Class<RankingCommunicationMessage> getMessageClass() {
         return RankingCommunicationMessage.class;
+    }
+
+    public TermFrequencyComputer getTermFrequencyComputer() {
+        return termFrequencyComputer;
     }
 
     /**

@@ -35,6 +35,23 @@ public class TermFrequencyComputer implements ConfigurationDescriptable {
         return this.getClass().getSimpleName();
     }
 
+    public Collection<Term> integrate(Message message) {
+        Collection<Term> termsChanged = new HashSet<Term>();
+        for (MessagePart part : message.getMessageParts()) {
+            for (ScoredTerm st : part.getScoredTerms()) {
+                Term term = st.getTerm();
+
+                if (term.getCount() == 0) {
+                    uniqueTermCount++;
+                }
+                allTermCount++;
+                term.setCount(term.getCount() + 1);
+                termsChanged.add(term);
+            }
+        }
+        return termsChanged;
+    }
+
     public void run() {
         LOGGER.info("Starting TermFrequencyComputed ...");
         Date fromDate = new Date(0);
@@ -50,18 +67,8 @@ public class TermFrequencyComputer implements ConfigurationDescriptable {
         long uniqueTermCount = 0;
         int i = 0;
         for (Message message : messages) {
-            for (MessagePart part : message.getMessageParts()) {
-                for (ScoredTerm st : part.getScoredTerms()) {
-                    Term term = st.getTerm();
+            termsChanged.addAll(integrate(message));
 
-                    if (term.getCount() == 0) {
-                        uniqueTermCount++;
-                    }
-                    allTermCount++;
-                    term.setCount(term.getCount() + 1);
-                    termsChanged.add(term);
-                }
-            }
             i++;
             if (i % (messages.size() / 10) == 0) {
                 LOGGER.debug(" {} % done", i * 100 / messages.size());

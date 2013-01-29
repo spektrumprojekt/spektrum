@@ -91,11 +91,10 @@ public class ContentMatchFeatureCommand implements
             return 1;
         case INVERSE_TERM_FREQUENCY:
             float log = 1;
-            float count = 1;
-            if (term.getCount() > 1) {
-                count = term.getCount();
+            if (term.getCount() == 0) {
+                throw new RuntimeException("No! term.count cannot be 0! " + term);
             }
-            log = 1 + TermFrequencyComputer.messageCount / count;
+            log = 1 + TermFrequencyComputer.messageCount / term.getCount();
             return (float) Math.log(log);
 
         default:
