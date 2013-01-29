@@ -47,12 +47,13 @@ import de.spektrumprojekt.i.ranker.chain.StoreMessageRankCommand;
 import de.spektrumprojekt.i.ranker.chain.TriggerUserModelAdaptationCommand;
 import de.spektrumprojekt.i.ranker.chain.UserFeatureCommand;
 import de.spektrumprojekt.i.ranker.chain.features.AuthorFeatureCommand;
+import de.spektrumprojekt.i.ranker.chain.features.ContentMatchFeatureCommand;
+import de.spektrumprojekt.i.ranker.chain.features.ContentMatchFeatureCommand.TermWeightAggregation;
+import de.spektrumprojekt.i.ranker.chain.features.ContentMatchFeatureCommand.TermWeightStrategy;
 import de.spektrumprojekt.i.ranker.chain.features.DiscussionMentionFeatureCommand;
 import de.spektrumprojekt.i.ranker.chain.features.DiscussionParticipationFeatureCommand;
 import de.spektrumprojekt.i.ranker.chain.features.DiscussionRootFeatureCommand;
 import de.spektrumprojekt.i.ranker.chain.features.MentionFeatureCommand;
-import de.spektrumprojekt.i.ranker.chain.features.TermMatchFeatureCommand;
-import de.spektrumprojekt.i.ranker.chain.features.TermMatchFeatureCommand.TermWeightAggregation;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**
@@ -100,6 +101,11 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         rankerChain = new CommandChain<MessageFeatureContext>();
         rerankerChain = new CommandChain<MessageFeatureContext>();
 
+        TermWeightStrategy termWeightStrategy = TermWeightStrategy.NONE;
+        if (this.flags.contains(RankerConfigurationFlag.USE_INVERSE_TERM_FREQUENCY)) {
+            termWeightStrategy = TermWeightStrategy.INVERSE_TERM_FREQUENCY;
+        }
+
         // create the commands
         UserFeatureCommand userFeatureCommand = new UserFeatureCommand(memberRunner);
         UserFeatureCommand reRankUserFeatureCommand = new UserFeatureCommand(memberRunner);
@@ -114,8 +120,9 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         MentionFeatureCommand mentionFeatureCommand = new MentionFeatureCommand();
         DiscussionParticipationFeatureCommand discussionParticipationFeatureCommand = new DiscussionParticipationFeatureCommand();
         DiscussionMentionFeatureCommand discussionMentionFeatureCommand = new DiscussionMentionFeatureCommand();
-        TermMatchFeatureCommand termMatchFeatureCommand = new TermMatchFeatureCommand(persistence,
-                TermWeightAggregation.AVG, 0.75f);
+        ContentMatchFeatureCommand termMatchFeatureCommand = new ContentMatchFeatureCommand(
+                persistence,
+                TermWeightAggregation.AVG, termWeightStrategy, 0.75f);
         ComputeMessageRankCommand computeMessageRankCommand = new ComputeMessageRankCommand(
                 this.flags
                         .contains(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE_BUT_LEARN_FROM_FEATURES)

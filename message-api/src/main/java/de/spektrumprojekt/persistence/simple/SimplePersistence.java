@@ -31,8 +31,10 @@ import java.util.Set;
 import de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
+import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
+import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
@@ -178,8 +180,7 @@ public class SimplePersistence implements Persistence {
 
     @Override
     public Collection<Message> getMessagesSince(Date fromDate) {
-        // TODO Auto-generated method stub
-        return null;
+        return getMessagesSince(null, fromDate);
     }
 
     @Override
@@ -365,6 +366,13 @@ public class SimplePersistence implements Persistence {
             // TODO
             // message.setId(idGenerator.getNextMessage());
         }
+        for (MessagePart mp : message.getMessageParts()) {
+            for (ScoredTerm scoredTerm : mp.getScoredTerms()) {
+                Term term = this.getOrCreateTerm(scoredTerm.getTerm().getCategory(), scoredTerm
+                        .getTerm().getValue());
+                scoredTerm.setTerm(term);
+            }
+        }
         this.messages.put(message.getGlobalId(), message);
         return message;
     }
@@ -414,7 +422,7 @@ public class SimplePersistence implements Persistence {
     @Override
     public void updateTerms(Collection<Term> termsChanged) {
         for (Term term : termsChanged) {
-            if (!this.termsTerms.containsValue(term)) {
+            if (this.termsTerms.get(term.getValue()) != term) {
                 throw new RuntimeException("The term '" + term
                         + "' is not created within this persistence. Cannot update!");
 

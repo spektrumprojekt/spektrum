@@ -137,8 +137,7 @@ public class JPAPersistence implements Persistence {
 
     @Override
     public Collection<Message> getMessagesSince(Date fromDate) {
-        // TODO Auto-generated method stub
-        return null;
+        return this.messagePersistence.getMessagesSince(fromDate);
     }
 
     @Override

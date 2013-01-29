@@ -185,6 +185,10 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
         return transaction.executeTransaction(getEntityManager());
     }
 
+    public Collection<Message> getMessagesSince(Date fromDate) {
+        return this.getMessagesSince(null, fromDate);
+    }
+
     public List<Message> getMessagesSince(final String messageGroupGlobalId, final Date fromDate) {
         Transaction<List<Message>> transaction = new Transaction<List<Message>>() {
 
