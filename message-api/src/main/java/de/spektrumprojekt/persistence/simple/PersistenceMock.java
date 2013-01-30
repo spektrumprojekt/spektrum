@@ -233,4 +233,16 @@ public class PersistenceMock implements Persistence {
 
     }
 
+    @Override
+    public void storeMessagePattern(String pattern, Message message) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public Collection<Message> getMessagesForPattern(String pattern) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 }

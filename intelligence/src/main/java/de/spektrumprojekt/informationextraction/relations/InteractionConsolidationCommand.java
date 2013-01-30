@@ -1,16 +1,22 @@
 package de.spektrumprojekt.informationextraction.relations;
 
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessagePart;
+import de.spektrumprojekt.datamodel.message.MessageRelation;
+import de.spektrumprojekt.datamodel.message.MessageRelation.MessageRelationType;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
+import de.spektrumprojekt.persistence.Persistence;
 
 /**
  * <p>
@@ -22,44 +28,45 @@ import de.spektrumprojekt.informationextraction.InformationExtractionContext;
  */
 public class InteractionConsolidationCommand implements Command<InformationExtractionContext> {
 
-    // XXX store separately, integrate into Persistence
-    private final Map<String, Message> entityMessageMap = new LruMap<>(100);
+    /** The logger for this class. */
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(InteractionConsolidationCommand.class);
 
     // XXX make configurable
     private static final Pattern JIRA_PATTERN = Pattern
             .compile("https://jira.communardo.de/browse/[\\d\\w-]+");
 
-    private int processed;
-    private int consolidated;
-
     @Override
     public String getConfigurationDescription() {
-        return getClass().getName() + ", # of processed messages = " + processed
-                + " # of consolidated messages =  "
-                + consolidated;
+        return getClass().getName();
     }
 
     @Override
     public void process(InformationExtractionContext context) {
-        System.out.println("Process "
-                + getTitle(context.getMessage()));
+        LOGGER.debug("Process {}", getTitle(context.getMessage()));
 
         Message message = context.getMessage();
         MessagePart messagePart = context.getMessagePart();
         String messageContent = messagePart.getContent();
+        Persistence persistence = context.getPersistence();
 
         Set<String> matches = getUniqueMatches(JIRA_PATTERN, messageContent);
         for (String match : matches) {
-            Message reference = entityMessageMap.get(match);
-            if (reference != null) {
-                System.out.println("    > References " + getTitle(reference) + "(" + match + ")");
-                consolidated++;
+            Collection<Message> relatedMessages = persistence.getMessagesForPattern(match);
+            persistence.storeMessagePattern(match, message);
+            if (relatedMessages.isEmpty()) {
+                continue;
             }
-            entityMessageMap.put(match, message);
+            Set<String> relatedIds = new HashSet<>();
+            for (Message relatedMessage : relatedMessages) {
+                relatedIds.add(relatedMessage.getGlobalId());
+            }
+            String[] relatedIdsArray = relatedIds.toArray(new String[relatedIds.size()]);
+            MessageRelation relation = new MessageRelation(MessageRelationType.RELATION,
+                    relatedIdsArray);
+            LOGGER.debug("Message relation for {} = {}", message.getGlobalId(), relation);
+            persistence.storeMessageRelation(message, relation);
         }
-
-        processed++;
-
     }
 
     private Set<String> getUniqueMatches(Pattern pattern, String text) {

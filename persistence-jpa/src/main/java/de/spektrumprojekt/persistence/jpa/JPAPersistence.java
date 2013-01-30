@@ -245,4 +245,14 @@ public class JPAPersistence implements Persistence {
         this.messagePersistence.updateTerms(termsChanged);
     }
 
+    @Override
+    public void storeMessagePattern(String pattern, Message message) {
+        throw new UnsupportedOperationException("Not yet implemented.");
+    }
+
+    @Override
+    public Collection<Message> getMessagesForPattern(String pattern) {
+        throw new UnsupportedOperationException("Not yet implemented.");
+    }
+
 }

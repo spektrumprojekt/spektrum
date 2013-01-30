@@ -9,7 +9,7 @@ import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
 import de.spektrumprojekt.persistence.Persistence;
-import de.spektrumprojekt.persistence.simple.PersistenceMock;
+import de.spektrumprojekt.persistence.simple.SimplePersistence;
 
 public class InteractionConsolidationCommandTest {
 
@@ -19,7 +19,7 @@ public class InteractionConsolidationCommandTest {
                 SpektrumUtils.getTestResource("/relations/testFeed.xml"));
 
         InteractionConsolidationCommand consolidationCommand = new InteractionConsolidationCommand();
-        Persistence persistence = new PersistenceMock();
+        Persistence persistence = new SimplePersistence();
 
         for (Message message : dataSource) {
             MessagePart messagePart = message.getMessageParts().iterator().next();
@@ -27,7 +27,7 @@ public class InteractionConsolidationCommandTest {
                     message, messagePart);
             consolidationCommand.process(context);
         }
-        
+
         System.out.println(consolidationCommand.getConfigurationDescription());
     }
 

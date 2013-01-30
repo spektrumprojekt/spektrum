@@ -19,7 +19,9 @@
 
 package de.spektrumprojekt.persistence.simple;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -75,6 +77,8 @@ public class SimplePersistence implements Persistence {
     private final Map<String, Term> keyPhraseTerms = new HashMap<String, Term>();
 
     private final Collection<UserSimilarity> userSimilarities = new HashSet<UserSimilarity>();
+    
+    private final Map<String, List<Message>> patternMessages = new HashMap<String, List<Message>>();
 
     public void clearMessageRanks() {
         this.messageRanks.clear();
@@ -428,5 +432,24 @@ public class SimplePersistence implements Persistence {
 
             }
         }
+    }
+
+    @Override
+    public void storeMessagePattern(String pattern, Message message) {
+        List<Message> messages = patternMessages.get(pattern);
+        if (messages == null) {
+            messages = new ArrayList<Message>();
+            patternMessages.put(pattern, messages);
+        }
+        messages.add(message);
+    }
+
+    @Override
+    public Collection<Message> getMessagesForPattern(String pattern) {
+        List<Message> messages = patternMessages.get(pattern);
+        if (messages == null) {
+            return Collections.emptyList();
+        }
+        return new ArrayList<Message>(messages);
     }
 }

@@ -188,4 +188,9 @@ public interface Persistence {
     void updateAggregationSubscription(SubscriptionStatus aggregationStatus);
 
     void updateTerms(Collection<Term> termsChanged);
+    
+    void storeMessagePattern(String pattern, Message message);
+    
+    Collection<Message> getMessagesForPattern(String pattern);
+    
 }
