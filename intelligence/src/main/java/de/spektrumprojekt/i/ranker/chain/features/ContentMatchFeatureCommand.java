@@ -242,8 +242,8 @@ public class ContentMatchFeatureCommand implements
                 break;
             }
 
-            feature.setValue(Math.max(1, feature.getValue()));
-            feature.setValue(Math.min(0, feature.getValue()));
+            feature.setValue(Math.min(1, feature.getValue()));
+            feature.setValue(Math.max(0, feature.getValue()));
 
             context.addMessageFeature(feature);
         }
