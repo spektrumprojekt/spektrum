@@ -119,7 +119,8 @@ public final class StemmedTokenExtractorCommand implements Command<InformationEx
             float frequency = (float) tokenBag.getCount(token) / highestCount;
             token = tokenPrefix + token;
             context.getMessagePart().addScoredTerm(
-                    new ScoredTerm(context.getPersistence().getOrCreateTerm(Term.TermCategory.TERM,
+                    new ScoredTerm(context.getPersistence().getOrCreateTerm(
+                            Term.TermCategory.TERM,
                             token),
                             frequency));
         }

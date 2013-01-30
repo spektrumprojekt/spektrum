@@ -126,6 +126,20 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
         return messageGroups;
     }
 
+    public Collection<Term> getAllTerms() {
+        Transaction<Collection<Term>> transaction = new Transaction<Collection<Term>>() {
+
+            @Override
+            protected Collection<Term> doTransaction(EntityManager entityManager) {
+                TypedQuery<Term> query = entityManager.createQuery("select * from " + Term.class,
+                        Term.class);
+                return query.getResultList();
+            }
+        };
+
+        return transaction.executeTransaction(getEntityManager());
+    }
+
     /**
      * 
      * @param messageGlobalId

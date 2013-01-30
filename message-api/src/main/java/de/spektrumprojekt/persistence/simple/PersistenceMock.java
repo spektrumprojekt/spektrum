@@ -89,6 +89,11 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
+    public Collection<Term> getAllTerms() {
+        return null;
+    }
+
+    @Override
     public Collection<User> getAllUsers() {
         return null;
     }

@@ -149,6 +149,11 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
+    public Collection<Term> getAllTerms() {
+        return this.termsTerms.values();
+    }
+
+    @Override
     public Collection<User> getAllUsers() {
         return this.users.values();
     }

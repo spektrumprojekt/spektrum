@@ -59,7 +59,13 @@ public class InvokeLearnerCommand implements Command<UserSpecificMessageFeatureC
         } else if (context.check(Feature.DISCUSSION_MENTION_FEATURE, 1)) {
             value = Interest.HIGH;
         } else if (learnLowInterest && !context.check(Feature.DISCUSSION_ROOT_FEATURE, 1)) {
-            value = Interest.LOW;
+            if (context.getMessageRank().getRank() < 0.5f) {
+                value = Interest.NORMAL;
+            } else if (context.getMessageRank().getRank() < 0.25f) {
+                value = Interest.LOW;
+            } else if (context.getMessageRank().getRank() < 0.1f) {
+                value = Interest.NONE;
+            }
         }
         return value;
     }

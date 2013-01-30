@@ -19,18 +19,27 @@
 
 package de.spektrumprojekt.informationextraction.extractors;
 
+import java.util.Collection;
+
 import de.spektrumprojekt.commons.chain.Command;
+import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.i.informationextraction.frequency.TermFrequencyComputer;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
+import de.spektrumprojekt.persistence.Persistence;
 
-public final class TermCounterCommand implements Command<InformationExtractionContext> {
+public class TermCounterCommand implements Command<InformationExtractionContext> {
 
+    private final Persistence persistence;
     private final TermFrequencyComputer termFrequencyComputer;
 
-    public TermCounterCommand(TermFrequencyComputer termFrequencyComputer) {
+    public TermCounterCommand(Persistence persistence, TermFrequencyComputer termFrequencyComputer) {
+        if (persistence == null) {
+            throw new IllegalArgumentException("persistence cannot be null!");
+        }
         if (termFrequencyComputer == null) {
             throw new IllegalArgumentException("termFrequencyComputer cannot be null!");
         }
+        this.persistence = persistence;
         this.termFrequencyComputer = termFrequencyComputer;
     }
 
@@ -46,7 +55,10 @@ public final class TermCounterCommand implements Command<InformationExtractionCo
     @Override
     public void process(InformationExtractionContext context) {
 
-        termFrequencyComputer.integrate(context.getMessage());
+        Collection<Term> terms = termFrequencyComputer.integrate(context.getMessage());
+        if (!terms.isEmpty()) {
+            this.persistence.updateTerms(terms);
+        }
 
     }
 

@@ -1,11 +1,19 @@
 package de.spektrumprojekt.i.informationextraction.frequency;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,11 +35,11 @@ public class TermFrequencyComputer implements ConfigurationDescriptable {
 
     private final Map<String, Integer> messageGroupMessageCounts = new HashMap<String, Integer>();
 
-    public long allTermCount = 0;
+    private long allTermCount = 0;
 
-    public long uniqueTermCount = 0;
+    private long uniqueTermCount = 0;
 
-    public long messageCount = 0;
+    private long messageCount = 0;
 
     public TermFrequencyComputer(Persistence persistence, boolean beMessageGroupSpecific) {
         this.persistence = persistence;
@@ -39,9 +47,66 @@ public class TermFrequencyComputer implements ConfigurationDescriptable {
 
     }
 
+    public void dumpTermCounts(String filename) throws IOException {
+        List<Term> termsSorted = new ArrayList<Term>(this.persistence.getAllTerms());
+        Collections.sort(termsSorted, new Comparator<Term>() {
+
+            @Override
+            public int compare(Term o1, Term o2) {
+                if (o1 == o2) {
+                    return 0;
+                }
+                if (o1.getCount() != o2.getCount()) {
+                    return o1.getCount() - o2.getCount();
+                }
+
+                return o1.getValue().compareTo(o2.getValue());
+            }
+        });
+        float termsPerMessage = (float) allTermCount / messageCount;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("##############################\n");
+        sb.append("# Global Term Statistics \n");
+        sb.append("# \n");
+        sb.append("# messageCount " + messageCount + "\n");
+        sb.append("# allTermCount " + allTermCount + "\n");
+        sb.append("# uniqueTermCount " + uniqueTermCount + "\n");
+        sb.append("# termsPerMessage " + termsPerMessage + "\n");
+
+        sb.append("##############################\n");
+        sb.append("# Message Group Message Counts \n");
+        sb.append("# \n");
+        sb.append("# messageGroup.id messageGroup.globalId messageGroupMessageCount\n");
+        for (Entry<String, Integer> entry : this.messageGroupMessageCounts.entrySet()) {
+            MessageGroup messageGroup = this.persistence.getMessageGroupByGlobalId(entry.getKey());
+            sb.append("# " + messageGroup.getId() + " " + messageGroup.getGlobalId() + " "
+                    + entry.getValue() + "\n");
+        }
+
+        sb.append("##############################");
+        sb.append("# Term Counts");
+        sb.append("# ");
+        sb.append("# term.value term.count");
+        for (Term t : termsSorted) {
+            sb.append(t.getValue() + " " + t.getCount() + "\n");
+        }
+
+        FileUtils.writeStringToFile(new File(filename), sb.toString());
+
+    }
+
+    public long getAllTermCount() {
+        return allTermCount;
+    }
+
     @Override
     public String getConfigurationDescription() {
         return this.getClass().getSimpleName();
+    }
+
+    public long getMessageCount() {
+        return messageCount;
     }
 
     public long getMessageCount(String messageGroupId) {
@@ -56,6 +121,10 @@ public class TermFrequencyComputer implements ConfigurationDescriptable {
         return this.messageCount;
     }
 
+    public long getUniqueTermCount() {
+        return uniqueTermCount;
+    }
+
     public synchronized Collection<Term> integrate(Message message) {
         if (beMessageGroupSpecific) {
             integrate(message.getMessageGroup());
@@ -65,7 +134,9 @@ public class TermFrequencyComputer implements ConfigurationDescriptable {
         for (MessagePart part : message.getMessageParts()) {
             for (ScoredTerm st : part.getScoredTerms()) {
                 Term term = st.getTerm();
-
+                if (term.getId() == null) {
+                    throw new IllegalStateException("term.id cannot be null! term=" + term);
+                }
                 if (term.getCount() == 0) {
                     uniqueTermCount++;
                 }

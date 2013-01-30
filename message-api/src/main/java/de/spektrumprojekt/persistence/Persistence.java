@@ -61,6 +61,8 @@ public interface Persistence {
 
     Collection<MessageGroup> getAllMessageGroups();
 
+    Collection<Term> getAllTerms();
+
     Collection<User> getAllUsers();
 
     List<HashWithDate> getHashsByGlobalSubscriptionId(String subscriptionGlobalId);

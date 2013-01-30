@@ -75,7 +75,7 @@ public class InformationExtractionCommand<T extends MessageFeatureContext> imple
         }
         if (termFrequencyComputer != null) {
             command.getInformationExtractionCommandChain().addCommand(
-                    new TermCounterCommand(termFrequencyComputer));
+                    new TermCounterCommand(persistence, termFrequencyComputer));
         }
         return command;
     }
@@ -121,9 +121,12 @@ public class InformationExtractionCommand<T extends MessageFeatureContext> imple
         Property property = message.getPropertiesAsMap().get(
                 PROPERTY_INFORMATION_EXTRACTION_EXECUTION_DATE);
 
+        boolean hasBeenExecuted = property != null
+                && property.getPropertyValue().trim().length() > 0;
+
         // only run if it has not been executed some time for, e.g. if message is presented multiple
-        // times to learner or both to learnern and ranker at the same time
-        if (property == null || property.getPropertyValue().trim().length() == 0) {
+        // times to learner or both to learned and ranker at the same time
+        if (!hasBeenExecuted) {
 
             for (MessagePart messagePart : message.getMessageParts()) {
                 if (MimeType.TEXT_PLAIN.equals(messagePart.getMimeType())

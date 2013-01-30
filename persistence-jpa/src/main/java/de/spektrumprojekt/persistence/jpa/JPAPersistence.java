@@ -110,6 +110,11 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
+    public Collection<Term> getAllTerms() {
+        return this.messagePersistence.getAllTerms();
+    }
+
+    @Override
     public Collection<User> getAllUsers() {
         return this.userPersistence.getAllUsers();
     }
