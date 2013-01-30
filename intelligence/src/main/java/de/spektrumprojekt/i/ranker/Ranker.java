@@ -89,6 +89,8 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
      */
     public Ranker(Persistence persistence, Communicator communicator,
             MessageGroupMemberRunner<MessageFeatureContext> memberRunner,
+            TermWeightStrategy termWeightStrategy,
+            TermWeightAggregation termWeightAggregation,
             RankerConfigurationFlag... flags) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
@@ -96,21 +98,23 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         if (communicator == null) {
             throw new IllegalArgumentException("communicator cannot be null.");
         }
+        if (termWeightStrategy == null) {
+            throw new IllegalArgumentException("termWeightStrategy cannot be null.");
+        }
+        if (termWeightAggregation == null) {
+            throw new IllegalArgumentException("termWeightAggregation cannot be null.");
+        }
         if (flags != null) {
             this.flags.addAll(Arrays.asList(flags));
         }
         this.persistence = persistence;
         this.communicator = communicator;
-        this.termFrequencyComputer = new TermFrequencyComputer(this.persistence);
+        this.termFrequencyComputer = new TermFrequencyComputer(this.persistence,
+                this.flags.contains(RankerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL));
         // TODO register termfrequencycomputer in some timer
 
         rankerChain = new CommandChain<MessageFeatureContext>();
         rerankerChain = new CommandChain<MessageFeatureContext>();
-
-        TermWeightStrategy termWeightStrategy = TermWeightStrategy.NONE;
-        if (this.flags.contains(RankerConfigurationFlag.USE_INVERSE_TERM_FREQUENCY)) {
-            termWeightStrategy = TermWeightStrategy.INVERSE_TERM_FREQUENCY;
-        }
 
         // create the commands
         UserFeatureCommand userFeatureCommand = new UserFeatureCommand(memberRunner);
@@ -122,7 +126,7 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
                         this.termFrequencyComputer,
                         false,
                         this.flags
-                                .contains(RankerConfigurationFlag.USER_MESSAGE_GROUP_SPECIFIC_USER_MODEL));
+                                .contains(RankerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL));
 
         StoreMessageCommand storeMessageCommand = new StoreMessageCommand(persistence);
         DiscussionRootFeatureCommand discussionRootFeatureCommand = new DiscussionRootFeatureCommand();
@@ -132,7 +136,11 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         DiscussionMentionFeatureCommand discussionMentionFeatureCommand = new DiscussionMentionFeatureCommand();
         ContentMatchFeatureCommand termMatchFeatureCommand = new ContentMatchFeatureCommand(
                 persistence,
-                TermWeightAggregation.AVG, termWeightStrategy, 0.75f);
+                termFrequencyComputer,
+                termWeightAggregation,
+                termWeightStrategy,
+                0.75f
+                );
         ComputeMessageRankCommand computeMessageRankCommand = new ComputeMessageRankCommand(
                 this.flags
                         .contains(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE_BUT_LEARN_FROM_FEATURES)

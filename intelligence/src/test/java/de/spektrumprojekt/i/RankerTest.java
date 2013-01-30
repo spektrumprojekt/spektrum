@@ -55,6 +55,8 @@ import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.Ranker;
 import de.spektrumprojekt.i.ranker.RankerConfigurationFlag;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
+import de.spektrumprojekt.i.ranker.chain.features.ContentMatchFeatureCommand.TermWeightAggregation;
+import de.spektrumprojekt.i.ranker.chain.features.ContentMatchFeatureCommand.TermWeightStrategy;
 
 /**
  * Test the ranker
@@ -136,7 +138,8 @@ public class RankerTest extends MyStreamTest {
         communicator = new VirtualMachineCommunicator(rankerQueue, rankerQueue);
 
         Ranker ranker = new Ranker(getPersistence(), communicator,
-                new SimpleMessageGroupMemberRunner<MessageFeatureContext>(userForRanking), flags);
+                new SimpleMessageGroupMemberRunner<MessageFeatureContext>(userForRanking),
+                TermWeightStrategy.NONE, TermWeightAggregation.AVG, flags);
 
         Learner learner = new Learner(getPersistence(), ranker.getInformationExtractionChain(),
                 new UserModelEntryIntegrationPlainStrategy());

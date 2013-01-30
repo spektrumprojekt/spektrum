@@ -2,13 +2,16 @@ package de.spektrumprojekt.i.informationextraction.frequency;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
@@ -20,14 +23,20 @@ public class TermFrequencyComputer implements ConfigurationDescriptable {
 
     private final Persistence persistence;
 
-    public static long allTermCount = 0;
+    private final boolean beMessageGroupSpecific;
 
-    public static long uniqueTermCount = 0;
+    private final Map<String, Integer> messageGroupMessageCounts = new HashMap<String, Integer>();
 
-    public static long messageCount = 0;
+    public long allTermCount = 0;
 
-    public TermFrequencyComputer(Persistence persistence) {
+    public long uniqueTermCount = 0;
+
+    public long messageCount = 0;
+
+    public TermFrequencyComputer(Persistence persistence, boolean beMessageGroupSpecific) {
         this.persistence = persistence;
+        this.beMessageGroupSpecific = beMessageGroupSpecific;
+
     }
 
     @Override
@@ -35,7 +44,23 @@ public class TermFrequencyComputer implements ConfigurationDescriptable {
         return this.getClass().getSimpleName();
     }
 
-    public Collection<Term> integrate(Message message) {
+    public long getMessageCount(String messageGroupId) {
+
+        if (beMessageGroupSpecific) {
+            Integer count = this.messageGroupMessageCounts.get(messageGroupId);
+            if (count == null) {
+                return 0;
+            }
+            return count;
+        }
+        return this.messageCount;
+    }
+
+    public synchronized Collection<Term> integrate(Message message) {
+        if (beMessageGroupSpecific) {
+            integrate(message.getMessageGroup());
+        }
+
         Collection<Term> termsChanged = new HashSet<Term>();
         for (MessagePart part : message.getMessageParts()) {
             for (ScoredTerm st : part.getScoredTerms()) {
@@ -49,22 +74,34 @@ public class TermFrequencyComputer implements ConfigurationDescriptable {
                 termsChanged.add(term);
             }
         }
+        messageCount++;
         return termsChanged;
     }
 
-    public void run() {
+    private void integrate(MessageGroup messageGroup) {
+        Integer count = this.messageGroupMessageCounts.get(messageGroup.getGlobalId());
+        if (count == null) {
+            count = 0;
+        }
+        count++;
+        this.messageGroupMessageCounts.put(messageGroup.getGlobalId(), count);
+    }
+
+    public synchronized void run() {
         LOGGER.info("Starting TermFrequencyComputed ...");
         Date fromDate = new Date(0);
 
+        long allTermCount = 0;
+        long uniqueTermCount = 0;
+
         this.persistence.resetTermCount();
+        this.messageGroupMessageCounts.clear();
 
         Collection<Message> messages = this.persistence.getMessagesSince(fromDate);
         Collection<Term> termsChanged = new HashSet<Term>();
 
         LOGGER.info("TermFrequencyComputed loaded messages ...");
 
-        long allTermCount = 0;
-        long uniqueTermCount = 0;
         int i = 0;
         for (Message message : messages) {
             termsChanged.addAll(integrate(message));
