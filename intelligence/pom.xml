@@ -69,5 +69,10 @@
 			<artifactId>opennlp-tools</artifactId>
 			<version>1.5.2-incubating</version>
 		</dependency>
+		<dependency>
+			<groupId>rome</groupId>
+			<artifactId>rome</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 </project>

@@ -19,6 +19,11 @@
 
 package de.spektrumprojekt.commons;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.UnsupportedEncodingException;
+import java.net.URL;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -89,6 +94,23 @@ public final class SpektrumUtils {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+    }
+    
+    public static File getTestResource(String resourceLocation) throws FileNotFoundException {
+        if (resourceLocation.startsWith("/")) {
+            resourceLocation = resourceLocation.substring(1);
+        }
+        URL url = Thread.currentThread().getContextClassLoader().getResource(resourceLocation);
+        if (url == null) {
+            throw new FileNotFoundException(resourceLocation + " could not be found or accessed");
+        }
+        String resourcePath;
+        try {
+            resourcePath = URLDecoder.decode(url.getFile(), "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalStateException(e);
+        }
+        return new File(resourcePath);
     }
 
     private SpektrumUtils() {
