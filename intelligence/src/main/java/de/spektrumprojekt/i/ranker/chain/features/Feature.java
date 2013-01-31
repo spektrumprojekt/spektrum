@@ -61,14 +61,17 @@ public class Feature {
     /**
      * The mention
      */
-    public final static Feature MENTION_FEATURE = new Feature(
-            "MentionFeature");
+    public final static Feature MENTION_FEATURE = new Feature("MentionFeature");
+
+    /**
+     * The like
+     */
+    public final static Feature LIKE_FEATURE = new Feature("LikeFeature");
 
     /**
      * The mention
      */
-    public final static Feature TERM_MATCH_FEATURE = new Feature(
-            "TermMatch");
+    public final static Feature TERM_MATCH_FEATURE = new Feature("TermMatch");
 
     public final static List<Feature> ALL_FEATURES;
 
@@ -76,22 +79,13 @@ public class Feature {
         List<Feature> all = new ArrayList<Feature>();
         all.add(AUTHOR_FEATURE);
         all.add(MENTION_FEATURE);
+        all.add(LIKE_FEATURE);
         all.add(DISCUSSION_ROOT_FEATURE);
         all.add(DISCUSSION_PARTICIPATION_FEATURE);
         all.add(DISCUSSION_MENTION_FEATURE);
         all.add(TERM_MATCH_FEATURE);
 
         ALL_FEATURES = Collections.unmodifiableList(all);
-    }
-
-    public static String toString(Map<Feature, MessageFeature> features) {
-        StringBuilder sb = new StringBuilder();
-        for (Feature feature : Feature.ALL_FEATURES) {
-            MessageFeature mf = features.get(feature);
-            float val = mf == null ? 0 : mf.getValue();
-            sb.append(val + " ");
-        }
-        return sb.toString();
     }
 
     public static String toStringHeader() {
@@ -101,6 +95,24 @@ public class Feature {
         }
         return sb.toString();
 
+    }
+
+    public static String toString(Map<Feature, MessageFeature> features, String seperator,
+            boolean includeFeatureId) {
+        StringBuilder sb = new StringBuilder();
+        String prefix = "";
+        for (Feature feature : Feature.ALL_FEATURES) {
+            MessageFeature mf = features.get(feature);
+            float val = mf == null ? 0 : mf.getValue();
+
+            sb.append(prefix);
+            if (includeFeatureId) {
+                sb.append(feature.getId() + ": ");
+            }
+            sb.append(val);
+            prefix = seperator;
+        }
+        return sb.toString();
     }
 
     /**

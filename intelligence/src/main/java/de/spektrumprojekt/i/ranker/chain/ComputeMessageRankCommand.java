@@ -75,6 +75,8 @@ public class ComputeMessageRankCommand implements Command<UserSpecificMessageFea
                 messageRank.setRank(1f);
             } else if (context.check(Feature.MENTION_FEATURE, 1)) {
                 messageRank.setRank(0.95f);
+            } else if (context.check(Feature.LIKE_FEATURE, 1)) {
+                messageRank.setRank(0.95f);
             } else if (context.check(Feature.DISCUSSION_PARTICIPATION_FEATURE, 1)) {
                 messageRank.setRank(0.9f);
             } else if (context.check(Feature.DISCUSSION_MENTION_FEATURE, 1)) {

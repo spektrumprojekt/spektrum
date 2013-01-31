@@ -1,21 +1,21 @@
 /*
-* Licensed to the Apache Software Foundation (ASF) under one
-* or more contributor license agreements.  See the NOTICE file
-* distributed with this work for additional information
-* regarding copyright ownership.  The ASF licenses this file
-* to you under the Apache License, Version 2.0 (the
-* "License"); you may not use this file except in compliance
-* with the License.  You may obtain a copy of the License at
-* 
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package de.spektrumprojekt.helper;
 
@@ -50,6 +50,12 @@ public final class MessageHelper {
     private static final char MENTION_SEPERATOR_CHAR = ',';
     private static final String MENTION_SEPERATOR_STR = String.valueOf(MENTION_SEPERATOR_CHAR);
 
+    private static final String PROPERTY_KEY_USERS_LIKE = "mentions";
+
+    private static final char USERS_LIKE_SEPERATOR_CHAR = ',';
+    private static final String USERS_LIKE_SEPERATOR_CHAR_STR = String
+            .valueOf(USERS_LIKE_SEPERATOR_CHAR);
+
     /**
      * Create the property defining the mentions, the value is just a comma seperation of the ids.
      * 
@@ -76,6 +82,18 @@ public final class MessageHelper {
         return property;
     }
 
+    public static Property createUserLikesProperty(Iterable<String> userGlobalIds) {
+        String value = StringUtils.join(userGlobalIds, USERS_LIKE_SEPERATOR_CHAR);
+        Property property = new Property(PROPERTY_KEY_USERS_LIKE, value);
+        return property;
+    }
+
+    public static Property createUserLikesProperty(String[] userGlobalIds) {
+        String value = StringUtils.join(userGlobalIds, USERS_LIKE_SEPERATOR_CHAR);
+        Property property = new Property(PROPERTY_KEY_USERS_LIKE, value);
+        return property;
+    }
+
     /**
      * 
      * @param message
@@ -92,19 +110,34 @@ public final class MessageHelper {
         return terms;
     }
 
-    public static Collection<String> getMentions(Message message) {
+    private static Collection<String> getListProperty(Message message, String propertyKey,
+            String seperationString) {
         Map<String, Property> properties = message.getPropertiesAsMap();
-        Property mentionsProperty = properties.get(PROPERTY_KEY_MENTIONS);
-        Collection<String> mentions = null;
-        if (mentionsProperty != null && mentionsProperty.getPropertyValue() != null) {
-            String[] mentionsStr = mentionsProperty.getPropertyValue().split(
-                    new String(MENTION_SEPERATOR_STR));
-            mentions = new HashSet<String>(Arrays.asList(mentionsStr));
+        Property property = properties.get(propertyKey);
+        Collection<String> splittedPropertyValues = null;
+        if (property != null && property.getPropertyValue() != null) {
+            String[] propertyValues = property.getPropertyValue().split(
+                    seperationString);
+            splittedPropertyValues = new HashSet<String>(Arrays.asList(propertyValues));
         }
-        if (mentions == null) {
-            mentions = Collections.emptySet();
+        if (splittedPropertyValues == null) {
+            splittedPropertyValues = Collections.emptySet();
         }
-        return mentions;
+        return splittedPropertyValues;
+
+    }
+
+    public static Collection<String> getMentions(Message message) {
+        return getListProperty(message, PROPERTY_KEY_MENTIONS, MENTION_SEPERATOR_STR);
+    }
+
+    public static Collection<String> getUserLikes(Message message) {
+        return getListProperty(message, PROPERTY_KEY_USERS_LIKE, USERS_LIKE_SEPERATOR_CHAR_STR);
+    }
+
+    public static boolean isLikedByUser(Message message, String userGlobalId) {
+        Collection<String> likes = getUserLikes(message);
+        return likes.contains(userGlobalId);
     }
 
     /**
@@ -118,14 +151,8 @@ public final class MessageHelper {
      * @return true if the user is mentioned
      */
     public static boolean isMentioned(Message message, String userGlobalId) {
-        Collection<String> mentionsStr = getMentions(message);
-        for (String mention : mentionsStr) {
-            if (userGlobalId.equals(mention)) {
-                return true;
-            }
-        }
-
-        return false;
+        Collection<String> mentions = getMentions(message);
+        return mentions.contains(userGlobalId);
     }
 
     /**
