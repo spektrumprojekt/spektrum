@@ -5,6 +5,12 @@ import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.i.datamodel.MessageFeature;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 
+/**
+ * Command for computing the Like Feature
+ * 
+ * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
+ * 
+ */
 public class LikeFeatureCommand implements Command<UserSpecificMessageFeatureContext> {
 
     /**
