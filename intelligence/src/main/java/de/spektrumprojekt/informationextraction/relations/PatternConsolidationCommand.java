@@ -26,15 +26,29 @@ import de.spektrumprojekt.persistence.Persistence;
  * 
  * @author Philipp Katz
  */
-public class InteractionConsolidationCommand implements Command<InformationExtractionContext> {
+public class PatternConsolidationCommand implements Command<InformationExtractionContext> {
 
     /** The logger for this class. */
     private static final Logger LOGGER =
-            LoggerFactory.getLogger(InteractionConsolidationCommand.class);
+            LoggerFactory.getLogger(PatternConsolidationCommand.class);
 
-    // XXX make configurable
-    private static final Pattern JIRA_PATTERN = Pattern
-            .compile("https://jira.communardo.de/browse/[\\d\\w-]+");
+    /** The patterns which are used for establishing relations. */
+    private final Collection<Pattern> patterns;
+
+    /**
+     * <p>
+     * Initialize a new {@link PatternConsolidationCommand} with the specified collection of
+     * regexes. They are used for creating relations from processed to existing messages.
+     * </p>
+     * 
+     * @param regExes The collections of regexes.
+     */
+    public PatternConsolidationCommand(Collection<String> regExes) {
+        patterns = new HashSet<>();
+        for (String regEx : regExes) {
+            patterns.add(Pattern.compile(regEx));
+        }
+    }
 
     @Override
     public String getConfigurationDescription() {
@@ -50,7 +64,7 @@ public class InteractionConsolidationCommand implements Command<InformationExtra
         String messageContent = messagePart.getContent();
         Persistence persistence = context.getPersistence();
 
-        Set<String> matches = getUniqueMatches(JIRA_PATTERN, messageContent);
+        Set<String> matches = getUniqueMatches(patterns, messageContent);
         for (String match : matches) {
             Collection<Message> relatedMessages = persistence.getMessagesForPattern(match);
             persistence.storeMessagePattern(match, message);
@@ -69,11 +83,13 @@ public class InteractionConsolidationCommand implements Command<InformationExtra
         }
     }
 
-    private Set<String> getUniqueMatches(Pattern pattern, String text) {
-        Matcher matcher = pattern.matcher(text);
+    private Set<String> getUniqueMatches(Collection<Pattern> patterns, String text) {
         Set<String> result = new HashSet<>();
-        while (matcher.find()) {
-            result.add(matcher.group());
+        for (Pattern pattern : patterns) {
+            Matcher matcher = pattern.matcher(text);
+            while (matcher.find()) {
+                result.add(matcher.group());
+            }
         }
         return result;
     }

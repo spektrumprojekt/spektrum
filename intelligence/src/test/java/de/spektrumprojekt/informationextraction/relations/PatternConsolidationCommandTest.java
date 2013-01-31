@@ -1,6 +1,7 @@
 package de.spektrumprojekt.informationextraction.relations;
 
 import java.io.FileNotFoundException;
+import java.util.Collections;
 
 import org.junit.Test;
 
@@ -11,14 +12,17 @@ import de.spektrumprojekt.informationextraction.InformationExtractionContext;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.simple.SimplePersistence;
 
-public class InteractionConsolidationCommandTest {
+public class PatternConsolidationCommandTest {
 
     @Test
     public void testInteractionConsolidationCommand() throws FileNotFoundException {
         CommunoteTestDataSource dataSource = new CommunoteTestDataSource(
                 SpektrumUtils.getTestResource("/relations/testFeed.xml"));
 
-        InteractionConsolidationCommand consolidationCommand = new InteractionConsolidationCommand();
+        String regEx = "https://jira.communardo.de/browse/[\\d\\w-]+";
+
+        PatternConsolidationCommand consolidationCommand = new PatternConsolidationCommand(
+                Collections.singleton(regEx));
         Persistence persistence = new SimplePersistence();
 
         for (Message message : dataSource) {

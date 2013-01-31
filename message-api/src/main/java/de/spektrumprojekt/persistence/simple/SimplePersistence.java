@@ -52,7 +52,7 @@ import de.spektrumprojekt.persistence.Statistics;
  * store it into seralizable files.
  * 
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
- * 
+ * @author Philipp Katz
  */
 public class SimplePersistence implements Persistence {
 
