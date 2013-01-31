@@ -247,12 +247,12 @@ public class JPAPersistence implements Persistence {
 
     @Override
     public void storeMessagePattern(String pattern, Message message) {
-        throw new UnsupportedOperationException("Not yet implemented.");
+        messagePersistence.storeMessagePattern(pattern, message);
     }
 
     @Override
     public Collection<Message> getMessagesForPattern(String pattern) {
-        throw new UnsupportedOperationException("Not yet implemented.");
+        return messagePersistence.getMessagesForPattern(pattern);
     }
 
 }

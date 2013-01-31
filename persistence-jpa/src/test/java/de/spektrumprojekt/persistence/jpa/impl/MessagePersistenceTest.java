@@ -1,21 +1,21 @@
 /*
-* Licensed to the Apache Software Foundation (ASF) under one
-* or more contributor license agreements.  See the NOTICE file
-* distributed with this work for additional information
-* regarding copyright ownership.  The ASF licenses this file
-* to you under the Apache License, Version 2.0 (the
-* "License"); you may not use this file except in compliance
-* with the License.  You may obtain a copy of the License at
-* 
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package de.spektrumprojekt.persistence.jpa.impl;
 
@@ -243,5 +243,31 @@ public class MessagePersistenceTest {
 
         Assert.assertNotNull(rank2return);
         Assert.assertEquals(rank2.getRank(), rank2return.getRank(), 0.0001);
+    }
+
+    @Test
+    public void MessagePatterns() throws Exception {
+
+        String pattern1 = "TICKET-1";
+        String pattern2 = "TICKET-2";
+        String pattern3 = "TICKET-3";
+
+        Message message1 = createTestMessage("TICKET-1 opened");
+        Message message2 = createTestMessage("TICKET-2 modified");
+        Message message3 = createTestMessage("TICKET-1 closed");
+
+        persistence.storeMessagePattern(pattern1, message1);
+        persistence.storeMessagePattern(pattern2, message2);
+        persistence.storeMessagePattern(pattern1, message3);
+
+        Collection<Message> p1msgs = persistence.getMessagesForPattern(pattern1);
+        assertEquals(2, p1msgs.size());
+
+        Collection<Message> p2msgs = persistence.getMessagesForPattern(pattern2);
+        assertEquals(1, p2msgs.size());
+
+        Collection<Message> p3msgs = persistence.getMessagesForPattern(pattern3);
+        assertEquals(0, p3msgs.size());
+
     }
 }

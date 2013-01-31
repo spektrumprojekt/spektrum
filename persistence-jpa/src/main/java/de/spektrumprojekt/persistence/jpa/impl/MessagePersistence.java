@@ -36,9 +36,12 @@ import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
+import org.apache.commons.lang3.Validate;
+
 import de.spektrumprojekt.datamodel.identifiable.SpektrumEntity;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
+import de.spektrumprojekt.datamodel.message.MessagePattern;
 import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
@@ -335,6 +338,27 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
 
     public void updateTerms(Collection<Term> termsChanged) {
         this.saveAll(termsChanged);
+    }
+
+    public void storeMessagePattern(String pattern, Message message) {
+        Validate.notNull(pattern, "pattern must not be null");
+        Validate.notNull(message, "message must not be null");
+        MessagePattern messagePattern = new MessagePattern(message, pattern);
+        save(messagePattern);
+    }
+
+    public Collection<Message> getMessagesForPattern(String pattern) {
+        Validate.notNull(pattern, "pattern must not be null");
+        EntityManager entityManager = getEntityManager();
+        TypedQuery<Message> query = entityManager.createQuery(
+                "SELECT mp.message FROM MessagePattern mp WHERE mp.pattern =:pattern",
+                Message.class);
+        query.setParameter("pattern", pattern);
+        try {
+            return query.getResultList();
+        } finally {
+            entityManager.close();
+        }
     }
 
 }
