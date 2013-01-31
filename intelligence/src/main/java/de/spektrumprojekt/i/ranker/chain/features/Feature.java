@@ -1,23 +1,30 @@
 /*
-* Licensed to the Apache Software Foundation (ASF) under one
-* or more contributor license agreements.  See the NOTICE file
-* distributed with this work for additional information
-* regarding copyright ownership.  The ASF licenses this file
-* to you under the Apache License, Version 2.0 (the
-* "License"); you may not use this file except in compliance
-* with the License.  You may obtain a copy of the License at
-* 
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package de.spektrumprojekt.i.ranker.chain.features;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import de.spektrumprojekt.i.datamodel.MessageFeature;
 
 /**
  * A feature definition
@@ -63,6 +70,39 @@ public class Feature {
     public final static Feature TERM_MATCH_FEATURE = new Feature(
             "TermMatch");
 
+    public final static List<Feature> ALL_FEATURES;
+
+    static {
+        List<Feature> all = new ArrayList<Feature>();
+        all.add(AUTHOR_FEATURE);
+        all.add(MENTION_FEATURE);
+        all.add(DISCUSSION_ROOT_FEATURE);
+        all.add(DISCUSSION_PARTICIPATION_FEATURE);
+        all.add(DISCUSSION_MENTION_FEATURE);
+        all.add(TERM_MATCH_FEATURE);
+
+        ALL_FEATURES = Collections.unmodifiableList(all);
+    }
+
+    public static String toString(Map<Feature, MessageFeature> features) {
+        StringBuilder sb = new StringBuilder();
+        for (Feature feature : Feature.ALL_FEATURES) {
+            MessageFeature mf = features.get(feature);
+            float val = mf == null ? 0 : mf.getValue();
+            sb.append(val + " ");
+        }
+        return sb.toString();
+    }
+
+    public static String toStringHeader() {
+        StringBuilder sb = new StringBuilder();
+        for (Feature feature : Feature.ALL_FEATURES) {
+            sb.append(feature.getId() + " ");
+        }
+        return sb.toString();
+
+    }
+
     /**
      * 
      * @param id
@@ -98,6 +138,10 @@ public class Feature {
             return false;
         }
         return true;
+    }
+
+    public String getId() {
+        return id;
     }
 
     /**
