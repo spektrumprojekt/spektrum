@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<information-extraction-configuration>
+	<patterns>https://jira.communardo.de/browse/[\\d\\w-]+</patterns>
+</information-extraction-configuration>

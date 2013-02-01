@@ -10,17 +10,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.spektrumprojekt.commons.chain.Command;
-import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.MessageRelation.MessageRelationType;
+import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**
  * <p>
- * A consolidation strategy which combines {@link Message}s referencing the same entities (e.g.
+ * A consolidation strategy which combines {@link Message}s containing a specific pattern (e.g.
  * tickets, content, ...).
  * </p>
  * 
@@ -41,10 +41,11 @@ public class PatternConsolidationCommand implements Command<InformationExtractio
      * regexes. They are used for creating relations from processed to existing messages.
      * </p>
      * 
-     * @param regExes The collections of regexes.
+     * @param regExes
+     *            The collections of regexes.
      */
     public PatternConsolidationCommand(Collection<String> regExes) {
-        patterns = new HashSet<>();
+        patterns = new HashSet<Pattern>();
         for (String regEx : regExes) {
             patterns.add(Pattern.compile(regEx));
         }
@@ -52,12 +53,15 @@ public class PatternConsolidationCommand implements Command<InformationExtractio
 
     @Override
     public String getConfigurationDescription() {
-        return getClass().getName();
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("PatternConsolidationCommand");
+        stringBuilder.append(" patterns=").append(patterns);
+        return stringBuilder.toString();
     }
 
     @Override
     public void process(InformationExtractionContext context) {
-        LOGGER.debug("Process {}", getTitle(context.getMessage()));
+        LOGGER.debug("Process {}", MessageHelper.getTitle(context.getMessage()));
 
         Message message = context.getMessage();
         MessagePart messagePart = context.getMessagePart();
@@ -71,7 +75,7 @@ public class PatternConsolidationCommand implements Command<InformationExtractio
             if (relatedMessages.isEmpty()) {
                 continue;
             }
-            Set<String> relatedIds = new HashSet<>();
+            Set<String> relatedIds = new HashSet<String>();
             for (Message relatedMessage : relatedMessages) {
                 relatedIds.add(relatedMessage.getGlobalId());
             }
@@ -84,7 +88,7 @@ public class PatternConsolidationCommand implements Command<InformationExtractio
     }
 
     private Set<String> getUniqueMatches(Collection<Pattern> patterns, String text) {
-        Set<String> result = new HashSet<>();
+        Set<String> result = new HashSet<String>();
         for (Pattern pattern : patterns) {
             Matcher matcher = pattern.matcher(text);
             while (matcher.find()) {
@@ -92,10 +96,6 @@ public class PatternConsolidationCommand implements Command<InformationExtractio
             }
         }
         return result;
-    }
-
-    private static String getTitle(Message message) {
-        return message.getPropertiesAsMap().get(Property.PROPERTY_KEY_TITLE).getPropertyValue();
     }
 
 }

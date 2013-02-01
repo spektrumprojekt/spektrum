@@ -1,13 +1,13 @@
 package de.spektrumprojekt.informationextraction.relations;
 
 import java.io.FileNotFoundException;
-import java.util.Collections;
 
 import org.junit.Test;
 
 import de.spektrumprojekt.commons.SpektrumUtils;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessagePart;
+import de.spektrumprojekt.informationextraction.InformationExtractionConfiguration;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.simple.SimplePersistence;
@@ -19,10 +19,10 @@ public class PatternConsolidationCommandTest {
         CommunoteTestDataSource dataSource = new CommunoteTestDataSource(
                 SpektrumUtils.getTestResource("/relations/testFeed.xml"));
 
-        String regEx = "https://jira.communardo.de/browse/[\\d\\w-]+";
+        InformationExtractionConfiguration config = new InformationExtractionConfiguration();
 
         PatternConsolidationCommand consolidationCommand = new PatternConsolidationCommand(
-                Collections.singleton(regEx));
+                config.getPatternsForConsolidation());
         Persistence persistence = new SimplePersistence();
 
         for (Message message : dataSource) {
