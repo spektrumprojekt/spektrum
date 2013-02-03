@@ -125,7 +125,7 @@ public class SimplePersistence implements Persistence {
     }
 
     public String dumpUserModelSizes() {
-        String result = "\n";
+        String result = "UserModel Sizes (userId => userModelEntries.size) \n";
         for (Entry<User, UserModelHolder> entry : this.userModelHolders.entrySet()) {
             result += entry.getKey().getGlobalId() + " "
                     + entry.getValue().getUserModelEntries().size() + "\n";

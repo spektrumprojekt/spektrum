@@ -55,7 +55,7 @@ public class MessageRelation extends Identifiable {
 
     private MessageRelationType messageRelationType;
 
-    private String[] releatedMessageGlobalIds;
+    private String[] relatedMessageGlobalIds;
 
     /**
      * for orm
@@ -71,7 +71,7 @@ public class MessageRelation extends Identifiable {
             String[] globalMessageIds) {
         super(globalId);
         this.messageRelationType = messageRelationType;
-        this.releatedMessageGlobalIds = globalMessageIds;
+        this.relatedMessageGlobalIds = globalMessageIds;
     }
 
     /**
@@ -81,7 +81,7 @@ public class MessageRelation extends Identifiable {
             String[] globalMessageIds) {
         super();
         this.messageRelationType = messageRelationType;
-        this.releatedMessageGlobalIds = globalMessageIds;
+        this.relatedMessageGlobalIds = globalMessageIds;
     }
 
     public MessageRelationType getMessageRelationType() {
@@ -89,21 +89,28 @@ public class MessageRelation extends Identifiable {
     }
 
     public String[] getReleatedMessageGlobalIds() {
-        return releatedMessageGlobalIds;
+        return relatedMessageGlobalIds;
     }
 
     /**
-     * Check if the message is related
+     * Check if the message is related, that is, the messages global id is contained in the related
+     * messages ids. If the message is only related to itself it will return false.
      * 
      * @param message
      * @return
      */
     public boolean isRelated(Message message) {
-        if (releatedMessageGlobalIds == null || releatedMessageGlobalIds.length == 0) {
-            return true;
+        if (relatedMessageGlobalIds == null || relatedMessageGlobalIds.length == 0) {
+            return false;
         }
-        if (releatedMessageGlobalIds.length == 1) {
-            return message.getGlobalId().equals(releatedMessageGlobalIds[0]);
+        if (relatedMessageGlobalIds.length == 1
+                && relatedMessageGlobalIds[0].equals(message.getGlobalId())) {
+            return false;
+        }
+        for (String messageGlobalId : relatedMessageGlobalIds) {
+            if (messageGlobalId.equals(message.getGlobalId())) {
+                return true;
+            }
         }
         return false;
     }
@@ -111,7 +118,7 @@ public class MessageRelation extends Identifiable {
     @Override
     public String toString() {
         return "MessageRelation [messageRelationType=" + messageRelationType
-                + ", releatedMessageGlobalIds=" + Arrays.toString(releatedMessageGlobalIds)
+                + ", releatedMessageGlobalIds=" + Arrays.toString(relatedMessageGlobalIds)
                 + ", getGlobalId()=" + getGlobalId() + ", getId()=" + getId() + "]";
     }
 
