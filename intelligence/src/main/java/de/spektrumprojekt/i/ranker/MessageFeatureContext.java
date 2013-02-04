@@ -239,9 +239,9 @@ public class MessageFeatureContext {
         }
 
         relatedMessage = new HashMap<String, Message>();
-        if (this.messageRelation.getReleatedMessageGlobalIds() != null) {
+        if (this.messageRelation.getRelatedMessageGlobalIds() != null) {
             for (String messageGlobalId : this.messageRelation
-                    .getReleatedMessageGlobalIds()) {
+                    .getRelatedMessageGlobalIds()) {
                 Message message;
                 if (this.message.getGlobalId().equals(messageGlobalId)) {
                     message = this.message;

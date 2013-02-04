@@ -1,0 +1,1 @@
+ALTER TABLE messagerelation RENAME COLUMN releatedmessageglobalids TO relatedmessageglobalids;

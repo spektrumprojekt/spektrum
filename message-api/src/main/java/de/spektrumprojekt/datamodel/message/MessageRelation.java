@@ -88,7 +88,7 @@ public class MessageRelation extends Identifiable {
         return messageRelationType;
     }
 
-    public String[] getReleatedMessageGlobalIds() {
+    public String[] getRelatedMessageGlobalIds() {
         return relatedMessageGlobalIds;
     }
 
