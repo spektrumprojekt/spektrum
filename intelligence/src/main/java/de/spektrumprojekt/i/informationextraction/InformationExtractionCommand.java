@@ -32,11 +32,11 @@ import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.i.informationextraction.frequency.TermFrequencyComputer;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
+import de.spektrumprojekt.informationextraction.extractors.JerichoTextCleanerCommand;
 import de.spektrumprojekt.informationextraction.extractors.KeyphraseExtractorCommand;
 import de.spektrumprojekt.informationextraction.extractors.LanguageDetectorCommand;
 import de.spektrumprojekt.informationextraction.extractors.StemmedTokenExtractorCommand;
 import de.spektrumprojekt.informationextraction.extractors.TermCounterCommand;
-import de.spektrumprojekt.informationextraction.extractors.TextCleanerCommand;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**
@@ -64,7 +64,7 @@ public class InformationExtractionCommand<T extends MessageFeatureContext> imple
         allowedLanguages.add("en");
 
         InformationExtractionCommand<T> command = new InformationExtractionCommand<T>(persistence);
-        command.getInformationExtractionCommandChain().addCommand(new TextCleanerCommand());
+        command.getInformationExtractionCommandChain().addCommand(new JerichoTextCleanerCommand());
         command.getInformationExtractionCommandChain().addCommand(
                 new LanguageDetectorCommand("de", allowedLanguages));
         command.getInformationExtractionCommandChain().addCommand(

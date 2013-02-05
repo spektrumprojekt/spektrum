@@ -21,6 +21,8 @@ package de.spektrumprojekt.informationextraction.extractors;
 
 import java.util.regex.Pattern;
 
+import net.htmlparser.jericho.Source;
+import net.htmlparser.jericho.TextExtractor;
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
@@ -31,26 +33,36 @@ import de.spektrumprojekt.informationextraction.InformationExtractionContext;
  * 
  * 
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
- * @author Philipp Katz
+ * 
  * 
  */
-public final class TextCleanerCommand implements Command<InformationExtractionContext> {
+public final class JerichoTextCleanerCommand implements Command<InformationExtractionContext> {
 
-    private static final Pattern STRIP_HTML = Pattern
-            .compile("<!--.*?-->|<style.*?>.*?</style>|<script.*?>.*?</script>|<.*?>");
-
+    private static final int CHARACTER_WHITESPACE = 32;
+    private static final char CHARACHTER_HASH = '#';
     private static final Pattern NORMALIZE_WHITESPACE = Pattern.compile("\\s{2,}");
+
+    public JerichoTextCleanerCommand() {
+    }
 
     private String cleanText(String rawText) {
 
-        // TODO maybe think about using something like this:
-        // http://jericho.htmlparser.net/docs/index.html
+        Source source = new Source(rawText);
 
-        String cleanText = STRIP_HTML.matcher(rawText).replaceAll("");
+        TextExtractor extractor = source.getTextExtractor().setConvertNonBreakingSpaces(true)
+                .setIncludeAttributes(false);
+        String cleanText = extractor.toString();
+        char[] cha = cleanText.toCharArray();
+        for (int i = 0; i < cha.length; i++) {
+            if (Character.isWhitespace(cha[i])) {
+                cha[i] = CHARACTER_WHITESPACE;
+            } else if (cha[i] == CHARACHTER_HASH) {
+                cha[i] = CHARACTER_WHITESPACE;
+            }
+        }
+        cleanText = new String(cha);
         cleanText = NORMALIZE_WHITESPACE.matcher(cleanText).replaceAll(" ");
-        cleanText.replace("#160;", " ");
-        cleanText = cleanText.trim();
-        return cleanText;
+        return cleanText.trim();
 
     }
 

@@ -190,6 +190,11 @@
 				<artifactId>httpclient</artifactId>
 				<version>4.1.1</version>
 			</dependency>
+			<dependency>
+				<groupId>net.htmlparser.jericho</groupId>
+				<artifactId>jericho-html</artifactId>
+				<version>3.2</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 	<repositories>

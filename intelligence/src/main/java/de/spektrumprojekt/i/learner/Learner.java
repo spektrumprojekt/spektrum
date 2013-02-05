@@ -28,7 +28,9 @@ import de.spektrumprojekt.commons.chain.CommandChain;
 import de.spektrumprojekt.communication.CommunicationMessage;
 import de.spektrumprojekt.communication.MessageHandler;
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
+import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
+import de.spektrumprojekt.i.learner.chain.StoreObservationCommand;
 import de.spektrumprojekt.i.learner.chain.UserModelLearnerCommand;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.Ranker;
@@ -90,6 +92,7 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
         this.learnerChain.addCommand(new ProxyCommand(ieChain));
         this.learnerChain.addCommand(new UserModelLearnerCommand(this.persistence,
                 userModelEntryIntegrationStrategy));
+        this.learnerChain.addCommand(new StoreObservationCommand(this.persistence));
     }
 
     /**
@@ -102,9 +105,15 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
 
         stopWatch.start();
 
+        Message message = this.persistence.getMessageByGlobalId(learningMessage.getObservation()
+                .getMessageGlobalId());
+        if (message == null) {
+            throw new IllegalStateException("Message for globalId="
+                    + learningMessage.getObservation().getMessageGlobalId()
+                    + " not found in persistence.");
+        }
         LearnerMessageContext context = new LearnerMessageContext(persistence,
-                learningMessage.getMessage(), learningMessage.getMessageRelation(),
-                learningMessage.getUserToLearnForGlobalId(), learningMessage.getInterest());
+                learningMessage.getObservation(), message, learningMessage.getMessageRelation());
 
         this.learnerChain.process(context);
 

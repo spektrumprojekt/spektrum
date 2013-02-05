@@ -15,5 +15,7 @@ public enum ObservationType {
     /**
      * A message has been liked. The observation will hold the message that was liked.
      */
-    LIKE
+    LIKE,
+
+    RATING
 }

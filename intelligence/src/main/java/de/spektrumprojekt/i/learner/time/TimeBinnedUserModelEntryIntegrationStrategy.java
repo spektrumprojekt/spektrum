@@ -24,9 +24,9 @@ import java.util.HashSet;
 
 import de.spektrumprojekt.commons.time.TimeProviderHolder;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
+import de.spektrumprojekt.datamodel.observation.Interest;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserModelEntryTimeBin;
-import de.spektrumprojekt.i.learner.Interest;
 import de.spektrumprojekt.i.learner.UserModelEntryIntegrationPlainStrategy;
 
 public class TimeBinnedUserModelEntryIntegrationStrategy extends

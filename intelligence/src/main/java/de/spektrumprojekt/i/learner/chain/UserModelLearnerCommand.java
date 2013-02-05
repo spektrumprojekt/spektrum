@@ -1,21 +1,21 @@
 /*
-* Licensed to the Apache Software Foundation (ASF) under one
-* or more contributor license agreements.  See the NOTICE file
-* distributed with this work for additional information
-* regarding copyright ownership.  The ASF licenses this file
-* to you under the Apache License, Version 2.0 (the
-* "License"); you may not use this file except in compliance
-* with the License.  You may obtain a copy of the License at
-* 
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package de.spektrumprojekt.i.learner.chain;
 
@@ -30,9 +30,9 @@ import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
+import de.spektrumprojekt.datamodel.observation.Interest;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
-import de.spektrumprojekt.i.learner.Interest;
 import de.spektrumprojekt.i.learner.LearnerMessageContext;
 import de.spektrumprojekt.i.learner.UserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.persistence.Persistence;
@@ -74,8 +74,13 @@ public class UserModelLearnerCommand implements Command<LearnerMessageContext> {
         // TODO this means storing the observations, checking for some
 
         Message message = context.getMessage();
-        String userToLearnForGlobalId = context.getUserToLearnForGlobalId();
-        Interest interest = context.getInterest();
+        String userToLearnForGlobalId = context.getObservation().getUserGlobalId();
+        Interest interest = context.getObservation().getInterest();
+        if (interest == null) {
+            // TODO generate a interest if not yet available
+            throw new UnsupportedOperationException(
+                    "Not yet implemented: 'generate a interest if not yet available' ");
+        }
 
         UserModel userModel = persistence.getOrCreateUserModelByUser(
                 userToLearnForGlobalId);
@@ -127,5 +132,4 @@ public class UserModelLearnerCommand implements Command<LearnerMessageContext> {
         persistence.storeOrUpdateUserModelEntries(userModel, entries.values());
 
     }
-
 }

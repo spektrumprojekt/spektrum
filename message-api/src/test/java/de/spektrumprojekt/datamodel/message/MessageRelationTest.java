@@ -17,7 +17,7 @@ import de.spektrumprojekt.datamodel.message.MessageRelation.MessageRelationType;
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 
  */
-public class MessageRelationtTest {
+public class MessageRelationTest {
 
     private final ObjectMapper om = new ObjectMapper();
 

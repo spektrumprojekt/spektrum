@@ -4,6 +4,8 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Date;
 
+import junit.framework.Assert;
+
 import org.junit.Test;
 
 import de.spektrumprojekt.datamodel.common.MimeType;
@@ -14,11 +16,11 @@ import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
 import de.spektrumprojekt.persistence.simple.PersistenceMock;
 
-public class TextCleanerTest {
+public class JerichoTextCleanerTest {
 
     @Test
     public void testTextCleaner() {
-        TextCleanerCommand textCleaner = new TextCleanerCommand();
+        JerichoTextCleanerCommand textCleaner = new JerichoTextCleanerCommand();
 
         Message message = new Message(MessageType.CONTENT, StatusType.OK, new Date());
         String text = "<!-- comment --><p>the <i>quick</i> brown fox jumps over the lazy dog.</p>";
@@ -36,8 +38,25 @@ public class TextCleanerTest {
         message.addMessagePart(messagePart);
         context = new InformationExtractionContext(new PersistenceMock(), message, messagePart);
         textCleaner.process(context);
-        assertEquals("Extracted text is: " + context.getCleanText(), 1176, context.getCleanText()
+        assertEquals("Extracted text is: " + context.getCleanText(), 1180, context.getCleanText()
                 .length());
-    }
 
+        message = new Message(MessageType.CONTENT, StatusType.OK, new Date());
+        text = "<p>Test1</p><p>Test2</p><ul><li>Test3</li><li>Test4</li><li>Test5 Test6&#160; Test7</li><ul><li>test17</li></ul><li>Test8</li></ul><ol><li>Test9</li><ol><li>Test10</li><li>Test11</li></ol><li><u>Test12</u></li><li><b>Test13</b></li><li>Test14</li><ol><li><i>Test15</i></li><li><a href=\"http://www.communote.com\" target=\"_blank\">Test16</a></li><ol><li><u><i><b>Test18</b></i></u>esdfzisdfzsdf</li></ol><li>#test19</li><li>#test20</li></ol></ol><p>&#8203;</p><p>&#8203;</p><p><br/><br/>test21 test22   test23</p><p>test24 test25 test26 test27 test28<br/>test29 test30</p><p>&#8203;</p>";
+        messagePart = new MessagePart(MimeType.TEXT_PLAIN, text);
+        message.addMessagePart(messagePart);
+        context = new InformationExtractionContext(new PersistenceMock(), message, messagePart);
+        textCleaner.process(context);
+
+        String lowerText = context.getCleanText().toLowerCase();
+        for (int i = 0; i < lowerText.length(); i++) {
+            System.out.println("'" + lowerText.charAt(i) + "' = " + (double) lowerText.charAt(i)
+                    + " isWhiteSpace=" + Character.isWhitespace(lowerText.charAt(i)));
+        }
+        char ch = '\0';
+        System.out.println("'" + ch + "' = " + (int) ch);
+        for (int i = 1; i <= 30; i++) {
+            Assert.assertTrue("Text should contain test" + i, lowerText.contains("test" + i));
+        }
+    }
 }

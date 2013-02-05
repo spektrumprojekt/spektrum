@@ -20,6 +20,7 @@
 package de.spektrumprojekt.i;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -32,10 +33,12 @@ import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
+import de.spektrumprojekt.datamodel.observation.Interest;
+import de.spektrumprojekt.datamodel.observation.Observation;
+import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
-import de.spektrumprojekt.i.learner.Interest;
 import de.spektrumprojekt.i.learner.Learner;
 import de.spektrumprojekt.i.learner.LearningMessage;
 import de.spektrumprojekt.i.learner.UserModelEntryIntegrationPlainStrategy;
@@ -125,6 +128,7 @@ public class LearnerTest extends MyStreamTest {
         Message message = createPlainTextMessage(
                 "Test Content. This is some plain old test content with nothing spectacular in it.",
                 null, null);
+        message = getPersistence().storeMessage(message);
 
         // extract the terms
         InformationExtractionCommand<MessageFeatureContext> ieCommand = InformationExtractionCommand
@@ -140,22 +144,25 @@ public class LearnerTest extends MyStreamTest {
                 userModelEntryIntegrationStrategy);
 
         // learning an exterme=1 interest
-        LearningMessage learningMessage = new LearningMessage(message, user1ToLearnForGlobalId,
-                Interest.EXTREME);
+        Observation observation = new Observation(user1ToLearnForGlobalId, message.getGlobalId(),
+                ObservationType.RATING, null, new Date(), Interest.EXTREME);
+        LearningMessage learningMessage = new LearningMessage(observation);
         learner.deliverMessage(learningMessage);
         checkUserModelEntries(message, user1ToLearnForGlobalId, terms, 1.0f);
 
         // learning an high=0.8 interest for a new user
-        learningMessage = new LearningMessage(message, user2ToLearnForGlobalId,
-                Interest.HIGH);
+        observation = new Observation(user2ToLearnForGlobalId, message.getGlobalId(),
+                ObservationType.RATING, null, new Date(), Interest.HIGH);
+        learningMessage = new LearningMessage(observation);
         learner.deliverMessage(learningMessage);
         checkUserModelEntries(message, user2ToLearnForGlobalId, terms, 0.75f);
 
         // learning a low=0.2 interest for a user 1 again
-        // TODO actualy we have a problem here, it is not a new learning message, but a change,
+        // TODO actually we have a problem here, it is not a new learning message, but a change,
         // since the user already learned for the message!
-        learningMessage = new LearningMessage(message, user1ToLearnForGlobalId,
-                Interest.LOW);
+        observation = new Observation(user1ToLearnForGlobalId, message.getGlobalId(),
+                ObservationType.RATING, null, new Date(), Interest.LOW);
+        learningMessage = new LearningMessage(observation);
         learner.deliverMessage(learningMessage);
         checkUserModelEntries(message, user1ToLearnForGlobalId, terms, 0.625f);
 

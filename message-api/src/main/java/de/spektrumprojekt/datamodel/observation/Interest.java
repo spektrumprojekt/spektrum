@@ -17,7 +17,7 @@
 * under the License.
 */
 
-package de.spektrumprojekt.i.learner;
+package de.spektrumprojekt.datamodel.observation;
 
 /**
  * The observed interest

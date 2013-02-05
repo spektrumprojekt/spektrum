@@ -9,6 +9,7 @@ import javax.persistence.TemporalType;
 import javax.persistence.UniqueConstraint;
 
 import de.spektrumprojekt.datamodel.identifiable.Identifiable;
+import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.user.User;
 
 /**
@@ -29,13 +30,19 @@ public class Observation extends Identifiable {
      */
     private static final long serialVersionUID = 1L;;
 
-    private User user;
+    private String userGlobalId;
+
+    private String messageGlobalId;
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date observationDate;
+
     private ObservationType observationType;
 
     private String observation;
+
+    // a derived interest, if null it will be determined by observation type
+    private Interest interest;
 
     /**
      * for jpa
@@ -44,28 +51,52 @@ public class Observation extends Identifiable {
         // for jpa
     }
 
-    public Observation(User user, ObservationType observationType, String observation) {
-        this(user, observationType, observation, null);
-    }
-
-    public Observation(User user, ObservationType observationType, String observation,
-            Date observationDate) {
-        if (user == null) {
-            throw new IllegalArgumentException("user cannot be null");
+    public Observation(String userGlobalId,
+            String messageGlobalId,
+            ObservationType observationType,
+            String observation,
+            Date observationDate,
+            Interest interest) {
+        if (userGlobalId == null) {
+            throw new IllegalArgumentException("userGlobalId cannot be null");
+        }
+        if (messageGlobalId == null) {
+            throw new IllegalArgumentException("messageGlobalId cannot be null");
         }
         if (observationType == null) {
             throw new IllegalArgumentException("observationType cannot be null");
         }
-        if (observation == null) {
-            throw new IllegalArgumentException("observation cannot be null");
-        }
         if (observationDate == null) {
             observationDate = new Date();
         }
-        this.user = user;
+        this.userGlobalId = userGlobalId;
+        this.messageGlobalId = messageGlobalId;
         this.observationType = observationType;
         this.observation = observation;
         this.observationDate = observationDate;
+        this.interest = interest;
+    }
+
+    public Observation(User user, Message message, ObservationType observationType,
+            String observation,
+            Date observationDate, Interest interest) {
+        this(user == null ? null : user.getGlobalId(),
+                message == null ? null : message.getGlobalId(),
+                observationType,
+                observation,
+                observationDate, interest);
+    }
+
+    public Observation(User user, ObservationType observationType, String observation) {
+        this(user, null, observationType, observation, null, null);
+    }
+
+    public Interest getInterest() {
+        return interest;
+    }
+
+    public String getMessageGlobalId() {
+        return messageGlobalId;
     }
 
     public String getObservation() {
@@ -80,8 +111,16 @@ public class Observation extends Identifiable {
         return observationType;
     }
 
-    public User getUser() {
-        return user;
+    public String getUserGlobalId() {
+        return userGlobalId;
+    }
+
+    public void setInterest(Interest interest) {
+        this.interest = interest;
+    }
+
+    public void setMessageGlobalId(String messageGlobalId) {
+        this.messageGlobalId = messageGlobalId;
     }
 
     public void setObservation(String observation) {
@@ -96,7 +135,7 @@ public class Observation extends Identifiable {
         this.observationType = observationType;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setUserGlobalId(String userGlobalId) {
+        this.userGlobalId = userGlobalId;
     }
 }

@@ -21,7 +21,9 @@ package de.spektrumprojekt.i.ranker.chain;
 
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.communication.Communicator;
-import de.spektrumprojekt.i.learner.Interest;
+import de.spektrumprojekt.datamodel.observation.Interest;
+import de.spektrumprojekt.datamodel.observation.Observation;
+import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.i.learner.LearningMessage;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 import de.spektrumprojekt.i.ranker.chain.features.Feature;
@@ -89,10 +91,18 @@ public class InvokeLearnerCommand implements Command<UserSpecificMessageFeatureC
         Interest interest = generateInterest(context);
 
         if (interest != null) {
-            LearningMessage learningMessage = new LearningMessage(context.getMessage(),
-                    context.getUserGlobalId(), interest);
 
-            // this.learner.deliverMessage(learningMessage);
+            Observation observation = new Observation(
+                    context.getUserGlobalId(),
+                    context.getMessage().getGlobalId(),
+                    ObservationType.MESSAGE,
+                    null,
+                    context.getMessage().getPublicationDate(),
+                    interest);
+
+            LearningMessage learningMessage = new LearningMessage(observation,
+                    context.getMessageRelation());
+
             communicator.sendMessage(learningMessage);
 
         }
