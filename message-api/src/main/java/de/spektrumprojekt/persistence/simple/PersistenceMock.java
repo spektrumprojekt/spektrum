@@ -31,6 +31,8 @@ import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
+import de.spektrumprojekt.datamodel.observation.Observation;
+import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
@@ -53,7 +55,6 @@ public class PersistenceMock implements Persistence {
 
     @Override
     public Statistics computeStatistics() {
-        // TODO Auto-generated method stub
         return null;
     }
 
@@ -67,19 +68,15 @@ public class PersistenceMock implements Persistence {
 
     @Override
     public void deleteHashWithDates(List<HashWithDate> hashesToDelete) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public SubscriptionStatus getAggregationSubscription(String subscriptionId) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public List<SubscriptionStatus> getAggregationSubscriptions() {
-        // TODO Auto-generated method stub
         return null;
     }
 
@@ -100,31 +97,26 @@ public class PersistenceMock implements Persistence {
 
     @Override
     public List<HashWithDate> getHashsByGlobalSubscriptionId(String subscriptionGlobalId) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public Message getMessageByGlobalId(String messageGlobalId) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public MessageGroup getMessageGroupByGlobalId(String globalIdString) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public MessageRank getMessageRank(String userGlobalId, String messageGlobalId) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public Collection<Message> getMessagesSince(Date fromDate) {
-
         return null;
     }
 
@@ -134,27 +126,29 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
+    public Collection<Observation> getObservations(String userGlobalId, String messageGlobalId,
+            ObservationType observationType) {
+        return null;
+    }
+
+    @Override
     public Term getOrCreateTerm(TermCategory termCategory, String name) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public User getOrCreateUser(String userGlobalId) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public UserModel getOrCreateUserModelByUser(String userGlobalId) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public Map<Term, UserModelEntry> getUserModelEntriesForTerms(UserModel userModel,
             Collection<Term> terms) {
-        // TODO Auto-generated method stub
         return null;
     }
 
@@ -171,14 +165,10 @@ public class PersistenceMock implements Persistence {
 
     @Override
     public void initialize() {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void removeUserModelEntry(UserModel userModel, UserModelEntry userModelEntry) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
@@ -188,38 +178,34 @@ public class PersistenceMock implements Persistence {
 
     @Override
     public SubscriptionStatus saveAggregationSubscription(SubscriptionStatus aggregationSubscription) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public HashWithDate saveHashWithDate(HashWithDate hashWithDate) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public Message storeMessage(Message message) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public MessageGroup storeMessageGroup(MessageGroup messageGroup) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public void storeMessageRanks(Collection<MessageRank> ranks) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void storeMessageRelation(Message message, MessageRelation relatedMessages) {
-        // TODO Auto-generated method stub
+    }
 
+    @Override
+    public void storeObservation(Observation observation) {
     }
 
     @Override
@@ -230,12 +216,10 @@ public class PersistenceMock implements Persistence {
 
     @Override
     public void updateAggregationSubscription(SubscriptionStatus aggregationStatus) {
-
     }
 
     @Override
     public void updateTerms(Collection<Term> termsChanged) {
-
     }
 
 }

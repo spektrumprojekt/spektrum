@@ -1,21 +1,21 @@
 /*
-* Licensed to the Apache Software Foundation (ASF) under one
-* or more contributor license agreements.  See the NOTICE file
-* distributed with this work for additional information
-* regarding copyright ownership.  The ASF licenses this file
-* to you under the Apache License, Version 2.0 (the
-* "License"); you may not use this file except in compliance
-* with the License.  You may obtain a copy of the License at
-* 
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package de.spektrumprojekt.persistence.jpa.impl;
 
@@ -45,6 +45,9 @@ import de.spektrumprojekt.datamodel.message.MessageType;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
+import de.spektrumprojekt.datamodel.observation.Interest;
+import de.spektrumprojekt.datamodel.observation.Observation;
+import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.persistence.Persistence;
@@ -243,5 +246,43 @@ public class MessagePersistenceTest {
 
         Assert.assertNotNull(rank2return);
         Assert.assertEquals(rank2.getRank(), rank2return.getRank(), 0.0001);
+    }
+
+    @Test
+    public void testObservations() {
+        Observation obs = new Observation("userId1", "messageId1", ObservationType.LIKE, null,
+                new Date(), Interest.EXTREME);
+
+        persistence.storeObservation(obs);
+
+        Collection<Observation> persistedObservations = persistence.getObservations(
+                obs.getUserGlobalId(),
+                obs.getMessageGlobalId(), obs.getObservationType());
+
+        Assert.assertNotNull(persistedObservations);
+        Assert.assertEquals(1, persistedObservations.size());
+
+        Observation persistedObservation = persistedObservations.iterator().next();
+
+        Assert.assertEquals(obs.getUserGlobalId(), persistedObservation.getUserGlobalId());
+        Assert.assertEquals(obs.getMessageGlobalId(), persistedObservation.getMessageGlobalId());
+        Assert.assertEquals(obs.getObservationType(), persistedObservation.getObservationType());
+
+        Observation obs2 = new Observation("userId1", "messageId1", ObservationType.LIKE, null,
+                new Date(), Interest.EXTREME);
+        persistence.storeObservation(obs2);
+        persistedObservations = persistence.getObservations(obs.getUserGlobalId(),
+                obs.getMessageGlobalId(),
+                obs.getObservationType());
+
+        Assert.assertNotNull(persistedObservations);
+        Assert.assertEquals(2, persistedObservations.size());
+
+        for (Observation ob : persistedObservations) {
+            Assert.assertEquals(obs.getUserGlobalId(), ob.getUserGlobalId());
+            Assert.assertEquals(obs.getMessageGlobalId(), ob.getMessageGlobalId());
+            Assert.assertEquals(obs.getObservationType(), ob.getObservationType());
+        }
+
     }
 }

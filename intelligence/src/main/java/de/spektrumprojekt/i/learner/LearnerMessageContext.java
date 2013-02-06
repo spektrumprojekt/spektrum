@@ -19,6 +19,9 @@
 
 package de.spektrumprojekt.i.learner;
 
+import java.util.Collection;
+import java.util.HashSet;
+
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.observation.Observation;
@@ -34,6 +37,8 @@ public class LearnerMessageContext extends MessageFeatureContext {
 
     private final Observation observation;
 
+    private final Collection<Observation> relatedObservations = new HashSet<Observation>();
+
     public LearnerMessageContext(Persistence persistence, Observation observation, Message message,
             MessageRelation messageRelation) {
         super(persistence, message, messageRelation);
@@ -46,6 +51,10 @@ public class LearnerMessageContext extends MessageFeatureContext {
 
     public Observation getObservation() {
         return observation;
+    }
+
+    public Collection<Observation> getRelatedObservations() {
+        return relatedObservations;
     }
 
 }

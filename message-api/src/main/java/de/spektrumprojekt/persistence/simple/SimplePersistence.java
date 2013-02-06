@@ -37,6 +37,8 @@ import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
+import de.spektrumprojekt.datamodel.observation.Observation;
+import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
@@ -53,6 +55,82 @@ import de.spektrumprojekt.persistence.Statistics;
  * 
  */
 public class SimplePersistence implements Persistence {
+
+    private class ObservationKey {
+
+        private final String userGlobalId;
+        private final String messageGlobalId;
+        private final ObservationType observationType;
+
+        public ObservationKey(String userGlobalId, String messageGlobalId,
+                ObservationType observationType) {
+            this.userGlobalId = userGlobalId;
+            this.messageGlobalId = messageGlobalId;
+            this.observationType = observationType;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            ObservationKey other = (ObservationKey) obj;
+            if (!getOuterType().equals(other.getOuterType())) {
+                return false;
+            }
+            if (messageGlobalId == null) {
+                if (other.messageGlobalId != null) {
+                    return false;
+                }
+            } else if (!messageGlobalId.equals(other.messageGlobalId)) {
+                return false;
+            }
+            if (observationType != other.observationType) {
+                return false;
+            }
+            if (userGlobalId == null) {
+                if (other.userGlobalId != null) {
+                    return false;
+                }
+            } else if (!userGlobalId.equals(other.userGlobalId)) {
+                return false;
+            }
+            return true;
+        }
+
+        public String getMessageGlobalId() {
+            return messageGlobalId;
+        }
+
+        public ObservationType getObservationType() {
+            return observationType;
+        }
+
+        private SimplePersistence getOuterType() {
+            return SimplePersistence.this;
+        }
+
+        public String getUserGlobalId() {
+            return userGlobalId;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + getOuterType().hashCode();
+            result = prime * result + (messageGlobalId == null ? 0 : messageGlobalId.hashCode());
+            result = prime * result + (observationType == null ? 0 : observationType.hashCode());
+            result = prime * result + (userGlobalId == null ? 0 : userGlobalId.hashCode());
+            return result;
+        }
+    }
 
     private final IdGenerator idGenerator = new IdGenerator();
 
@@ -75,6 +153,8 @@ public class SimplePersistence implements Persistence {
     private final Map<String, Term> keyPhraseTerms = new HashMap<String, Term>();
 
     private final Collection<UserSimilarity> userSimilarities = new HashSet<UserSimilarity>();
+
+    private final Map<ObservationKey, Collection<Observation>> observations = new HashMap<SimplePersistence.ObservationKey, Collection<Observation>>();
 
     public void clearMessageRanks() {
         this.messageRanks.clear();
@@ -202,6 +282,14 @@ public class SimplePersistence implements Persistence {
             }
         }
         return filteredMessages;
+    }
+
+    @Override
+    public Collection<Observation> getObservations(String userGlobalId, String messageGlobalId,
+            ObservationType observationType) {
+        ObservationKey key = new ObservationKey(userGlobalId, messageGlobalId, observationType);
+        Collection<Observation> observations = this.observations.get(key);
+        return observations;
     }
 
     @Override
@@ -402,6 +490,18 @@ public class SimplePersistence implements Persistence {
     public void storeMessageRelation(Message message, MessageRelation relatedMessages) {
         relatedMessages.setId(idGenerator.getNextMessageRelationId());
         this.messageRelations.put(message.getGlobalId(), relatedMessages);
+    }
+
+    @Override
+    public void storeObservation(Observation observation) {
+        ObservationKey key = new ObservationKey(observation.getUserGlobalId(),
+                observation.getMessageGlobalId(), observation.getObservationType());
+        Collection<Observation> observations = this.observations.get(key);
+        if (observations == null) {
+            observations = new HashSet<Observation>();
+            this.observations.put(key, observations);
+        }
+        observations.add(observation);
     }
 
     @Override
