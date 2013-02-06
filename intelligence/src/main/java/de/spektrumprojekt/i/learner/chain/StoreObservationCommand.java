@@ -20,5 +20,6 @@ public class StoreObservationCommand implements Command<LearnerMessageContext> {
     @Override
     public void process(LearnerMessageContext context) {
 
+        this.persistence.storeObservation(context.getObservation());
     }
 }

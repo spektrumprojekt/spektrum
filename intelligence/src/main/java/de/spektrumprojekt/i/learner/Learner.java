@@ -23,13 +23,14 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.commons.chain.CommandChain;
+import de.spektrumprojekt.commons.chain.ProxyCommand;
 import de.spektrumprojekt.communication.CommunicationMessage;
 import de.spektrumprojekt.communication.MessageHandler;
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
+import de.spektrumprojekt.i.learner.chain.LoadRelatedObservationsCommand;
 import de.spektrumprojekt.i.learner.chain.StoreObservationCommand;
 import de.spektrumprojekt.i.learner.chain.UserModelLearnerCommand;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
@@ -42,26 +43,6 @@ import de.spektrumprojekt.persistence.Persistence;
  * 
  */
 public class Learner implements MessageHandler<LearningMessage>, ConfigurationDescriptable {
-
-    public class ProxyCommand implements Command<LearnerMessageContext> {
-
-        private InformationExtractionCommand<MessageFeatureContext> ieChain;
-
-        public ProxyCommand(InformationExtractionCommand<MessageFeatureContext> ieChain2) {
-            this.ieChain = ieChain2;
-        }
-
-        @Override
-        public String getConfigurationDescription() {
-            return ieChain.getConfigurationDescription();
-        }
-
-        @Override
-        public void process(LearnerMessageContext context) {
-            ieChain.process(context);
-        }
-
-    }
 
     private CommandChain<LearnerMessageContext> learnerChain;
 
@@ -89,7 +70,9 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
 
         this.learnerChain = new CommandChain<LearnerMessageContext>();
 
-        this.learnerChain.addCommand(new ProxyCommand(ieChain));
+        this.learnerChain
+                .addCommand(new ProxyCommand<MessageFeatureContext, LearnerMessageContext>(ieChain));
+        this.learnerChain.addCommand(new LoadRelatedObservationsCommand(this.persistence));
         this.learnerChain.addCommand(new UserModelLearnerCommand(this.persistence,
                 userModelEntryIntegrationStrategy));
         this.learnerChain.addCommand(new StoreObservationCommand(this.persistence));

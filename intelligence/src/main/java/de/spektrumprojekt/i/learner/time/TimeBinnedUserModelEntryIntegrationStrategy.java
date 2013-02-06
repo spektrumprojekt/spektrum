@@ -64,6 +64,15 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
         return index * binSizeInMs;
     }
 
+    @Override
+    public boolean disintegrate(UserModelEntry entry, Interest interest, ScoredTerm scoredTerm,
+            Date observationDate) {
+        if (observationDate == null) {
+            throw new IllegalArgumentException("observationDate cannot be null.");
+        }
+        return updateEntry(entry, -1 * interest.getScore(), scoredTerm, observationDate);
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -79,6 +88,12 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
         if (observationDate == null) {
             throw new IllegalArgumentException("observationDate cannot be null.");
         }
+        return updateEntry(entry, interest.getScore(), scoredTerm, observationDate);
+
+    }
+
+    private boolean updateEntry(UserModelEntry entry, float interestScore, ScoredTerm scoredTerm,
+            Date observationDate) {
         if (scoredTerm.getWeight() >= getMinScore()) {
 
             long currentTime = TimeProviderHolder.DEFAULT.getCurrentTime();
@@ -95,8 +110,12 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
                     entry.addTimeBinEntry(timeBin);
                 }
 
-                timeBin.setScoreCount(timeBin.getScoreCount() + 1);
-                timeBin.setScoreSum(timeBin.getScoreSum() + interest.getScore());
+                if (interestScore >= 0) {
+                    timeBin.setScoreCount(timeBin.getScoreCount() + 1);
+                } else {
+                    timeBin.setScoreCount(timeBin.getScoreCount() - 1);
+                }
+                timeBin.setScoreSum(timeBin.getScoreSum() + interestScore);
 
                 for (UserModelEntryTimeBin entryTimeBin : new HashSet<UserModelEntryTimeBin>(
                         entry.getTimeBinEntries())) {
@@ -114,6 +133,5 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
             }
         }
         return entry.getTimeBinEntries() == null || entry.getTimeBinEntries().size() == 0;
-
     }
 }

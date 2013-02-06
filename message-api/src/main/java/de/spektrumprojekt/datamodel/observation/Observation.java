@@ -28,9 +28,9 @@ public class Observation extends Identifiable {
     /**
      * 
      */
-    private static final long serialVersionUID = 1L;;
+    private static final long serialVersionUID = 1L;
 
-    private String userGlobalId;
+    private String userGlobalId;;
 
     private String messageGlobalId;
 
@@ -137,5 +137,24 @@ public class Observation extends Identifiable {
 
     public void setUserGlobalId(String userGlobalId) {
         this.userGlobalId = userGlobalId;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Observation [userGlobalId=");
+        builder.append(userGlobalId);
+        builder.append(", messageGlobalId=");
+        builder.append(messageGlobalId);
+        builder.append(", observationDate=");
+        builder.append(observationDate);
+        builder.append(", observationType=");
+        builder.append(observationType);
+        builder.append(", observation=");
+        builder.append(observation);
+        builder.append(", interest=");
+        builder.append(interest);
+        builder.append("]");
+        return builder.toString();
     }
 }

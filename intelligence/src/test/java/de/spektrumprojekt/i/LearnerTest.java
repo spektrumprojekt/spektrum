@@ -70,6 +70,13 @@ public class LearnerTest extends MyStreamTest {
         this.userModelEntryIntegrationStrategy = new UserModelEntryIntegrationPlainStrategy();
     }
 
+    private void checkObservations(String userGlobalId, Message message, int expectedSize) {
+        Collection<Observation> observations = getPersistence().getObservations(userGlobalId,
+                message.getGlobalId(), ObservationType.RATING);
+        Assert.assertNotNull(observations);
+        Assert.assertEquals(expectedSize, observations.size());
+    }
+
     /**
      * Check the user model entries
      * 
@@ -95,7 +102,7 @@ public class LearnerTest extends MyStreamTest {
 
         for (UserModelEntry entry : entries.values()) {
             Assert.assertNotNull(entry);
-            Assert.assertEquals(entry.getScoredTerm().getWeight(), value, 0.0001);
+            Assert.assertEquals(value, entry.getScoredTerm().getWeight(), 0.0001);
         }
     }
 
@@ -143,28 +150,29 @@ public class LearnerTest extends MyStreamTest {
         Learner learner = new Learner(getPersistence(), ieCommand,
                 userModelEntryIntegrationStrategy);
 
-        // learning an exterme=1 interest
+        // learning an extreme=1 interest
         Observation observation = new Observation(user1ToLearnForGlobalId, message.getGlobalId(),
                 ObservationType.RATING, null, new Date(), Interest.EXTREME);
         LearningMessage learningMessage = new LearningMessage(observation);
         learner.deliverMessage(learningMessage);
         checkUserModelEntries(message, user1ToLearnForGlobalId, terms, 1.0f);
+        checkObservations(user1ToLearnForGlobalId, message, 1);
 
-        // learning an high=0.8 interest for a new user
+        // learning an high=0.75 interest for a new user
         observation = new Observation(user2ToLearnForGlobalId, message.getGlobalId(),
                 ObservationType.RATING, null, new Date(), Interest.HIGH);
         learningMessage = new LearningMessage(observation);
         learner.deliverMessage(learningMessage);
         checkUserModelEntries(message, user2ToLearnForGlobalId, terms, 0.75f);
+        checkObservations(user2ToLearnForGlobalId, message, 1);
 
-        // learning a low=0.2 interest for a user 1 again
-        // TODO actually we have a problem here, it is not a new learning message, but a change,
-        // since the user already learned for the message!
+        // learning a low=0.25 interest for a user 1 again
         observation = new Observation(user1ToLearnForGlobalId, message.getGlobalId(),
                 ObservationType.RATING, null, new Date(), Interest.LOW);
         learningMessage = new LearningMessage(observation);
         learner.deliverMessage(learningMessage);
-        checkUserModelEntries(message, user1ToLearnForGlobalId, terms, 0.625f);
+        checkUserModelEntries(message, user1ToLearnForGlobalId, terms, 0.25f);
+        checkObservations(user1ToLearnForGlobalId, message, 2);
 
     }
 }
