@@ -31,6 +31,8 @@ import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
+import de.spektrumprojekt.datamodel.observation.Observation;
+import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
@@ -61,6 +63,8 @@ public interface Persistence {
 
     Collection<MessageGroup> getAllMessageGroups();
 
+    Collection<Term> getAllTerms();
+
     Collection<User> getAllUsers();
 
     List<HashWithDate> getHashsByGlobalSubscriptionId(String subscriptionGlobalId);
@@ -87,6 +91,9 @@ public interface Persistence {
     Collection<Message> getMessagesSince(Date fromDate);
 
     Collection<Message> getMessagesSince(String messageGroupGlobalId, Date fromDate);
+
+    Collection<Observation> getObservations(String userGlobalId, String messageGlobalId,
+            ObservationType observationType);
 
     /**
      * Get the term for the name
@@ -173,6 +180,8 @@ public interface Persistence {
      */
 
     void storeMessageRelation(Message message, MessageRelation relatedMessages);
+
+    void storeObservation(Observation observation);
 
     /**
      * Store(create) or update the changed user model

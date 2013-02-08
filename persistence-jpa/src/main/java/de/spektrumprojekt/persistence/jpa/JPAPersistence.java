@@ -32,6 +32,8 @@ import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
+import de.spektrumprojekt.datamodel.observation.Observation;
+import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
@@ -110,6 +112,11 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
+    public Collection<Term> getAllTerms() {
+        return this.messagePersistence.getAllTerms();
+    }
+
+    @Override
     public Collection<User> getAllUsers() {
         return this.userPersistence.getAllUsers();
     }
@@ -143,6 +150,13 @@ public class JPAPersistence implements Persistence {
     @Override
     public List<Message> getMessagesSince(String topicId, Date fromDate) {
         return this.messagePersistence.getMessagesSince(topicId, fromDate);
+    }
+
+    @Override
+    public Collection<Observation> getObservations(String userGlobalId, String messageGlobalId,
+            ObservationType observationType) {
+        return this.messagePersistence.getObservations(userGlobalId, messageGlobalId,
+                observationType);
     }
 
     @Override
@@ -227,6 +241,11 @@ public class JPAPersistence implements Persistence {
     public void storeMessageRelation(Message message,
             MessageRelation relatedMessages) {
         messagePersistence.storeMessageRelation(message, relatedMessages);
+    }
+
+    @Override
+    public void storeObservation(Observation observation) {
+        this.messagePersistence.storeObservation(observation);
     }
 
     @Override

@@ -26,6 +26,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.spektrumprojekt.communication.CommunicationMessage;
 import de.spektrumprojekt.communication.MessageHandler;
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
@@ -40,6 +43,8 @@ import de.spektrumprojekt.persistence.Persistence;
 
 public class DirectedUserModelAdapter implements
         MessageHandler<DirectedUserModelAdaptationMessage>, ConfigurationDescriptable {
+
+    private final static Logger LOGGER = LoggerFactory.getLogger(DirectedUserModelAdapter.class);
 
     private static long adaptedCount = 0;
     private static long requestedAdaptedCount = 0;
@@ -139,6 +144,14 @@ public class DirectedUserModelAdapter implements
                     entry.getScoredTerm().setWeight((float) statEntry.getValue().getValue());
                     entry.setAdapted(true);
                     adaptedCount++;
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug(
+                                "Adapted user model entry for user '{}' set term '{}' to score '{}'. ",
+                                new Object[] {
+                                        message.getUserGlobalId(),
+                                        entry.getScoredTerm().getTerm().getValue(),
+                                        entry.getScoredTerm().getWeight() });
+                    }
                 }
             }
 

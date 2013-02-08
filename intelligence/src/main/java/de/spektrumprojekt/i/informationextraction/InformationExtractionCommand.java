@@ -32,11 +32,11 @@ import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.i.informationextraction.frequency.TermFrequencyComputer;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
+import de.spektrumprojekt.informationextraction.extractors.JerichoTextCleanerCommand;
 import de.spektrumprojekt.informationextraction.extractors.KeyphraseExtractorCommand;
 import de.spektrumprojekt.informationextraction.extractors.LanguageDetectorCommand;
 import de.spektrumprojekt.informationextraction.extractors.StemmedTokenExtractorCommand;
 import de.spektrumprojekt.informationextraction.extractors.TermCounterCommand;
-import de.spektrumprojekt.informationextraction.extractors.TextCleanerCommand;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**
@@ -64,7 +64,7 @@ public class InformationExtractionCommand<T extends MessageFeatureContext> imple
         allowedLanguages.add("en");
 
         InformationExtractionCommand<T> command = new InformationExtractionCommand<T>(persistence);
-        command.getInformationExtractionCommandChain().addCommand(new TextCleanerCommand());
+        command.getInformationExtractionCommandChain().addCommand(new JerichoTextCleanerCommand());
         command.getInformationExtractionCommandChain().addCommand(
                 new LanguageDetectorCommand("de", allowedLanguages));
         command.getInformationExtractionCommandChain().addCommand(
@@ -75,7 +75,7 @@ public class InformationExtractionCommand<T extends MessageFeatureContext> imple
         }
         if (termFrequencyComputer != null) {
             command.getInformationExtractionCommandChain().addCommand(
-                    new TermCounterCommand(termFrequencyComputer));
+                    new TermCounterCommand(persistence, termFrequencyComputer));
         }
         return command;
     }
@@ -121,9 +121,12 @@ public class InformationExtractionCommand<T extends MessageFeatureContext> imple
         Property property = message.getPropertiesAsMap().get(
                 PROPERTY_INFORMATION_EXTRACTION_EXECUTION_DATE);
 
+        boolean hasBeenExecuted = property != null
+                && property.getPropertyValue().trim().length() > 0;
+
         // only run if it has not been executed some time for, e.g. if message is presented multiple
-        // times to learner or both to learnern and ranker at the same time
-        if (property == null || property.getPropertyValue().trim().length() == 0) {
+        // times to learner or both to learned and ranker at the same time
+        if (!hasBeenExecuted) {
 
             for (MessagePart messagePart : message.getMessageParts()) {
                 if (MimeType.TEXT_PLAIN.equals(messagePart.getMimeType())

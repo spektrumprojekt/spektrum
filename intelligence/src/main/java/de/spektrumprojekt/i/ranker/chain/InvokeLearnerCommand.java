@@ -21,7 +21,9 @@ package de.spektrumprojekt.i.ranker.chain;
 
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.communication.Communicator;
-import de.spektrumprojekt.i.learner.Interest;
+import de.spektrumprojekt.datamodel.observation.Interest;
+import de.spektrumprojekt.datamodel.observation.Observation;
+import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.i.learner.LearningMessage;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 import de.spektrumprojekt.i.ranker.chain.features.Feature;
@@ -54,12 +56,20 @@ public class InvokeLearnerCommand implements Command<UserSpecificMessageFeatureC
             value = Interest.EXTREME;
         } else if (context.check(Feature.MENTION_FEATURE, 1)) {
             value = Interest.HIGH;
+        } else if (context.check(Feature.LIKE_FEATURE, 1)) {
+            value = Interest.HIGH;
         } else if (context.check(Feature.DISCUSSION_PARTICIPATION_FEATURE, 1)) {
             value = Interest.HIGH;
         } else if (context.check(Feature.DISCUSSION_MENTION_FEATURE, 1)) {
             value = Interest.HIGH;
         } else if (learnLowInterest && !context.check(Feature.DISCUSSION_ROOT_FEATURE, 1)) {
-            value = Interest.LOW;
+            if (context.getMessageRank().getRank() < 0.5f) {
+                value = Interest.NORMAL;
+            } else if (context.getMessageRank().getRank() < 0.25f) {
+                value = Interest.LOW;
+            } else if (context.getMessageRank().getRank() < 0.1f) {
+                value = Interest.NONE;
+            }
         }
         return value;
     }
@@ -81,10 +91,18 @@ public class InvokeLearnerCommand implements Command<UserSpecificMessageFeatureC
         Interest interest = generateInterest(context);
 
         if (interest != null) {
-            LearningMessage learningMessage = new LearningMessage(context.getMessage(),
-                    context.getUserGlobalId(), interest);
 
-            // this.learner.deliverMessage(learningMessage);
+            Observation observation = new Observation(
+                    context.getUserGlobalId(),
+                    context.getMessage().getGlobalId(),
+                    ObservationType.MESSAGE,
+                    null,
+                    context.getMessage().getPublicationDate(),
+                    interest);
+
+            LearningMessage learningMessage = new LearningMessage(observation,
+                    context.getMessageRelation());
+
             communicator.sendMessage(learningMessage);
 
         }

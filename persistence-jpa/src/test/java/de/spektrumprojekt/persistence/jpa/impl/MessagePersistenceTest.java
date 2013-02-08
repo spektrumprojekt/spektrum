@@ -45,6 +45,9 @@ import de.spektrumprojekt.datamodel.message.MessageType;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
+import de.spektrumprojekt.datamodel.observation.Interest;
+import de.spektrumprojekt.datamodel.observation.Observation;
+import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.persistence.Persistence;
@@ -268,6 +271,42 @@ public class MessagePersistenceTest {
 
         Collection<Message> p3msgs = persistence.getMessagesForPattern(pattern3);
         assertEquals(0, p3msgs.size());
+    }
 
+    @Test
+    public void testObservations() {
+        Observation obs = new Observation("userId1", "messageId1", ObservationType.LIKE, null,
+                new Date(), Interest.EXTREME);
+
+        persistence.storeObservation(obs);
+
+        Collection<Observation> persistedObservations = persistence.getObservations(
+                obs.getUserGlobalId(),
+                obs.getMessageGlobalId(), obs.getObservationType());
+
+        Assert.assertNotNull(persistedObservations);
+        Assert.assertEquals(1, persistedObservations.size());
+
+        Observation persistedObservation = persistedObservations.iterator().next();
+
+        Assert.assertEquals(obs.getUserGlobalId(), persistedObservation.getUserGlobalId());
+        Assert.assertEquals(obs.getMessageGlobalId(), persistedObservation.getMessageGlobalId());
+        Assert.assertEquals(obs.getObservationType(), persistedObservation.getObservationType());
+
+        Observation obs2 = new Observation("userId1", "messageId1", ObservationType.LIKE, null,
+                new Date(), Interest.EXTREME);
+        persistence.storeObservation(obs2);
+        persistedObservations = persistence.getObservations(obs.getUserGlobalId(),
+                obs.getMessageGlobalId(),
+                obs.getObservationType());
+
+        Assert.assertNotNull(persistedObservations);
+        Assert.assertEquals(2, persistedObservations.size());
+
+        for (Observation ob : persistedObservations) {
+            Assert.assertEquals(obs.getUserGlobalId(), ob.getUserGlobalId());
+            Assert.assertEquals(obs.getMessageGlobalId(), ob.getMessageGlobalId());
+            Assert.assertEquals(obs.getObservationType(), ob.getObservationType());
+        }
     }
 }

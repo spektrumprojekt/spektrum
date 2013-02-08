@@ -325,7 +325,9 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
                 message, null);
         context.setNoRankingOnlyLearning(false);
 
-        context.setUserGlobalIdsToProcess(Arrays.asList(userGlobalId));
+        if (userGlobalId != null) {
+            context.setUserGlobalIdsToProcess(Arrays.asList(userGlobalId));
+        }
 
         rerankerChain.process(context);
 

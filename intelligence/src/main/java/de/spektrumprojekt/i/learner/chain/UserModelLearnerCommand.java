@@ -1,27 +1,28 @@
 /*
-* Licensed to the Apache Software Foundation (ASF) under one
-* or more contributor license agreements.  See the NOTICE file
-* distributed with this work for additional information
-* regarding copyright ownership.  The ASF licenses this file
-* to you under the Apache License, Version 2.0 (the
-* "License"); you may not use this file except in compliance
-* with the License.  You may obtain a copy of the License at
-* 
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package de.spektrumprojekt.i.learner.chain;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -30,9 +31,10 @@ import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
+import de.spektrumprojekt.datamodel.observation.Interest;
+import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
-import de.spektrumprojekt.i.learner.Interest;
 import de.spektrumprojekt.i.learner.LearnerMessageContext;
 import de.spektrumprojekt.i.learner.UserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.persistence.Persistence;
@@ -67,19 +69,40 @@ public class UserModelLearnerCommand implements Command<LearnerMessageContext> {
                 + userModelEntryIntegrationStrategy.getConfigurationDescription();
     }
 
-    @Override
-    public void process(LearnerMessageContext context) {
+    private Observation getObservationForDisintegration(LearnerMessageContext context,
+            Message message) {
 
-        // TODO check that the message has been learned before for the user
-        // TODO this means storing the observations, checking for some
+        List<Observation> relatedObservations = context.getRelatedObservations();
+        Observation observationForDisintegration = null;
+        if (relatedObservations.size() > 0) {
+            observationForDisintegration = relatedObservations.get(0);
 
-        Message message = context.getMessage();
-        String userToLearnForGlobalId = context.getUserToLearnForGlobalId();
-        Interest interest = context.getInterest();
+            if (!observationForDisintegration.getMessageGlobalId().equals(message.getGlobalId())) {
+                throw new IllegalStateException(
+                        "messageGlobalId of observation does not match! observation="
+                                + observationForDisintegration
+                                + " message=" + message);
+            }
+            if (!observationForDisintegration.getUserGlobalId().equals(
+                    context.getObservation().getUserGlobalId())) {
+                throw new IllegalStateException(
+                        "userGlobalId of observation does not match! observation="
+                                + observationForDisintegration
+                                + " message=" + message);
+            }
+            if (!observationForDisintegration.getObservationType().equals(
+                    context.getObservation().getObservationType())) {
+                throw new IllegalStateException(
+                        "observationType of observation does not match! observation1="
+                                + observationForDisintegration
+                                + " context.observation=" + context.getObservation());
+            }
 
-        UserModel userModel = persistence.getOrCreateUserModelByUser(
-                userToLearnForGlobalId);
+        }
+        return observationForDisintegration;
+    }
 
+    private Map<Term, ScoredTerm> getScoredTermsOfMessage(Message message) {
         Map<Term, ScoredTerm> scoredTermsOfMessage = new HashMap<Term, ScoredTerm>();
         for (MessagePart messagePart : message.getMessageParts()) {
             // in case the message parts have the same terms, use the max value of it
@@ -93,6 +116,38 @@ public class UserModelLearnerCommand implements Command<LearnerMessageContext> {
                 scoredTermsOfMessage.put(use.getTerm(), use);
             }
         }
+        return scoredTermsOfMessage;
+    }
+
+    @Override
+    public void process(LearnerMessageContext context) {
+
+        // TODO check that the message has been learned before for the user
+        // TODO this means storing the observations, checking for some
+
+        Message message = context.getMessage();
+
+        String userToLearnForGlobalId = context.getObservation().getUserGlobalId();
+        Interest interest = context.getObservation().getInterest();
+
+        if (interest == null) {
+            // TODO generate a interest if not yet available
+            throw new UnsupportedOperationException(
+                    "Not yet implemented: 'generate a interest if not yet available' ");
+        }
+        UserModel userModel = persistence.getOrCreateUserModelByUser(
+                userToLearnForGlobalId);
+
+        Observation observationForDisintegration = getObservationForDisintegration(context,
+                message);
+
+        if (observationForDisintegration != null
+                && observationForDisintegration.getInterest().equals(interest)) {
+            // nothing to do here. the got the observation with the same interest.
+            return;
+        }
+
+        Map<Term, ScoredTerm> scoredTermsOfMessage = getScoredTermsOfMessage(message);
 
         Collection<Term> terms = new HashSet<Term>(scoredTermsOfMessage.keySet());
         Map<Term, UserModelEntry> entries = context.getPersistence()
@@ -102,9 +157,18 @@ public class UserModelLearnerCommand implements Command<LearnerMessageContext> {
         Collection<Term> entriesToRemove = new HashSet<Term>();
         for (Entry<Term, UserModelEntry> entry : entries.entrySet()) {
             if (entry.getValue() != null) {
-                boolean remove = userModelEntryIntegrationStrategy.integrate(entry.getValue(),
+                if (observationForDisintegration != null) {
+                    userModelEntryIntegrationStrategy.disintegrate(
+                            entry.getValue(),
+                            observationForDisintegration.getInterest(),
+                            scoredTermsOfMessage.get(entry.getKey()),
+                            observationForDisintegration.getObservationDate());
+                }
+                boolean remove = userModelEntryIntegrationStrategy.integrate(
+                        entry.getValue(),
                         interest,
-                        scoredTermsOfMessage.get(entry.getKey()), message.getPublicationDate());
+                        scoredTermsOfMessage.get(entry.getKey()),
+                        context.getObservation().getObservationDate());
                 if (remove) {
                     entriesToRemove.add(entry.getKey());
                 }
@@ -127,5 +191,4 @@ public class UserModelLearnerCommand implements Command<LearnerMessageContext> {
         persistence.storeOrUpdateUserModelEntries(userModel, entries.values());
 
     }
-
 }

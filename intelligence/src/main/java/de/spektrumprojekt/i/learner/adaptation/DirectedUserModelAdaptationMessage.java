@@ -19,6 +19,8 @@
 
 package de.spektrumprojekt.i.learner.adaptation;
 
+import java.util.Arrays;
+
 import de.spektrumprojekt.communication.CommunicationMessage;
 import de.spektrumprojekt.datamodel.message.Term;
 
@@ -28,10 +30,11 @@ public class DirectedUserModelAdaptationMessage implements CommunicationMessage 
      * 
      */
     private static final long serialVersionUID = 1L;
+
     private String messageId;
     private String messageGroupGlobalId;
-
     private String userGlobalId;
+
     private Term[] termsToAdapt;
 
     /**
@@ -84,6 +87,23 @@ public class DirectedUserModelAdaptationMessage implements CommunicationMessage 
     @Override
     public String retrieveMessageType() {
         return this.getClass().getSimpleName();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("DirectedUserModelAdaptationMessage [messageId=");
+        builder.append(messageId);
+        builder.append(", messageGroupGlobalId=");
+        builder.append(messageGroupGlobalId);
+        builder.append(", userGlobalId=");
+        builder.append(userGlobalId);
+        builder.append(", termsToAdapt=");
+        builder.append(Arrays.toString(termsToAdapt));
+        builder.append(", retrieveMessageType()=");
+        builder.append(retrieveMessageType());
+        builder.append("]");
+        return builder.toString();
     }
 
 }

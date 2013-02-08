@@ -47,6 +47,8 @@ import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
+import de.spektrumprojekt.datamodel.observation.Observation;
+import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
@@ -127,6 +129,20 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
         List<MessageGroup> messageGroups = transaction.executeTransaction(getEntityManager());
 
         return messageGroups;
+    }
+
+    public Collection<Term> getAllTerms() {
+        Transaction<Collection<Term>> transaction = new Transaction<Collection<Term>>() {
+
+            @Override
+            protected Collection<Term> doTransaction(EntityManager entityManager) {
+                TypedQuery<Term> query = entityManager.createQuery("select * from " + Term.class,
+                        Term.class);
+                return query.getResultList();
+            }
+        };
+
+        return transaction.executeTransaction(getEntityManager());
     }
 
     /**
@@ -221,6 +237,39 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
                 } catch (NoResultException e) {
                     return Collections.emptyList();
                 }
+            }
+        };
+        return transaction.executeTransaction(getEntityManager());
+    }
+
+    public Collection<Observation> getObservations(final String userGlobalId,
+            final String messageGlobalId, final ObservationType observationType) {
+        Transaction<Collection<Observation>> transaction = new Transaction<Collection<Observation>>() {
+
+            @Override
+            protected Collection<Observation> doTransaction(EntityManager entityManager) {
+                CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+                CriteriaQuery<Observation> query = criteriaBuilder.createQuery(Observation.class);
+                Root<Observation> entity = query.from(Observation.class);
+
+                ParameterExpression<String> userParameter = criteriaBuilder
+                        .parameter(String.class);
+                ParameterExpression<String> messageParameter = criteriaBuilder
+                        .parameter(String.class);
+                ParameterExpression<ObservationType> otParameter = criteriaBuilder
+                        .parameter(ObservationType.class);
+
+                query.where(criteriaBuilder.and(
+                        criteriaBuilder.equal(entity.get("userGlobalId"), userParameter),
+                        criteriaBuilder.equal(entity.get("messageGlobalId"), messageParameter),
+                        criteriaBuilder.equal(entity.get("observationType"), otParameter)));
+
+                TypedQuery<Observation> typedQuery = entityManager.createQuery(query);
+                typedQuery.setParameter(userParameter, userGlobalId);
+                typedQuery.setParameter(messageParameter, messageGlobalId);
+                typedQuery.setParameter(otParameter, observationType);
+
+                return typedQuery.getResultList();
             }
         };
         return transaction.executeTransaction(getEntityManager());
@@ -334,6 +383,10 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
             relatedMessages.setId(persistedMessageRelation.getId());
         }
         this.save(relatedMessages);
+    }
+
+    public void storeObservation(Observation observation) {
+        this.save(observation);
     }
 
     public void updateTerms(Collection<Term> termsChanged) {
