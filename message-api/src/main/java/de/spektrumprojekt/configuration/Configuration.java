@@ -19,6 +19,7 @@
 
 package de.spektrumprojekt.configuration;
 
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -37,7 +38,7 @@ import java.util.Properties;
  * default property has been defined
  * 
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
- * 
+ * @author Philipp Katz
  */
 public interface Configuration {
 
@@ -97,4 +98,24 @@ public interface Configuration {
      * @return the value.
      */
     public String getStringProperty(String key, String defaultValue);
+
+    /**
+     * 
+     * @param key the key
+     * @return the value of the key
+     */
+    public List<String> getListProperty(String key);
+
+    /**
+     * See the class documentation. First check the underlying configuration (file, database), than
+     * the {@link #getDefaultProperties()} and then if still not found use the given default value
+     * 
+     * @param key
+     *            the key
+     * @param defaultValue
+     *            the default value
+     * @return the value.
+     */
+    public List<String> getListProperty(String key, List<String> defaultValues);
+
 }

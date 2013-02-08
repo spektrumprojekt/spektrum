@@ -2,7 +2,6 @@ package de.spektrumprojekt.informationextraction;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.Collections;
 
 import org.apache.commons.configuration.ConfigurationException;
 import org.slf4j.Logger;
@@ -41,7 +40,7 @@ public final class InformationExtractionConfiguration extends SimpleConfiguratio
     }
 
     public Collection<String> getPatternsForConsolidation() {
-        return Collections.singleton(configuration.getStringProperty("patterns"));
+        return configuration.getListProperty("pattern");
     }
 
 }

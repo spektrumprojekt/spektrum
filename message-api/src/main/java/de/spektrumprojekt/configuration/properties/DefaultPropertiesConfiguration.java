@@ -19,6 +19,8 @@
 
 package de.spektrumprojekt.configuration.properties;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -113,6 +115,22 @@ public abstract class DefaultPropertiesConfiguration implements Configuration {
         return defaultValue;
     }
 
+    @Override
+    public List<String> getListProperty(String key) {
+        return getListProperty(key, Collections.singletonList(defaultProperties.getProperty(key)));
+    }
+
+    @Override
+    public List<String> getListProperty(String key, List<String> defaultValues) {
+        if (internalExistsProperty(key)) {
+            return internalGetListProperty(key);
+        }
+        if (defaultProperties.containsKey(key)) {
+            return Collections.singletonList(defaultProperties.getProperty(key));
+        }
+        return defaultValues;
+    }
+
     /**
      * Internal method the actually get the property from an underlying configuration (file,
      * database, etc)
@@ -142,5 +160,14 @@ public abstract class DefaultPropertiesConfiguration implements Configuration {
      * @return the value.
      */
     protected abstract String internalGetStringProperty(String key);
+
+    /**
+     * Internal method the actually get the property from an underlying configuration (file,
+     * database, etc)
+     * 
+     * @param key the key.
+     * @return the value.
+     */
+    protected abstract List<String> internalGetListProperty(String key);
 
 }

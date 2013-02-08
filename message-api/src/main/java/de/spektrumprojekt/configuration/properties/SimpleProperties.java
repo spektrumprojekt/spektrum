@@ -22,6 +22,7 @@ package de.spektrumprojekt.configuration.properties;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 public class SimpleProperties extends DefaultPropertiesConfiguration {
@@ -56,6 +57,14 @@ public class SimpleProperties extends DefaultPropertiesConfiguration {
 
     @Override
     protected String internalGetStringProperty(String key) {
+        // it is a little awkward, but this implementation uses the default properties of the super
+        // class. so it should have found it already, it only calls this if exists is false, so we
+        // know, it does not exist.
+        return null;
+    }
+
+    @Override
+    protected List<String> internalGetListProperty(String key) {
         // it is a little awkward, but this implementation uses the default properties of the super
         // class. so it should have found it already, it only calls this if exists is false, so we
         // know, it does not exist.

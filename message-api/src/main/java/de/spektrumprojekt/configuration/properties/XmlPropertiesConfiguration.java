@@ -19,6 +19,7 @@
 
 package de.spektrumprojekt.configuration.properties;
 
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.configuration.ConfigurationException;
@@ -63,5 +64,11 @@ public class XmlPropertiesConfiguration extends DefaultPropertiesConfiguration {
     @Override
     protected String internalGetStringProperty(String key) {
         return config.getString(key);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public List<String> internalGetListProperty(String key) {
+        return config.getList(key);
     }
 }
