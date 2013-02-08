@@ -4,3 +4,5 @@ target/
 .project
 bin
 .pmd
+
+*/src/test/resources/relations/
