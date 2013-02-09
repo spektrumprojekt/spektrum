@@ -51,7 +51,9 @@ public final class MessageHelper {
     private static final char MENTION_SEPERATOR_CHAR = ',';
     private static final String MENTION_SEPERATOR_STR = String.valueOf(MENTION_SEPERATOR_CHAR);
 
-    private static final String PROPERTY_KEY_USERS_LIKE = "mentions";
+    private static final String PROPERTY_KEY_USERS_LIKE = "likes";
+
+    private static final String PROPERTY_KEY_PARENT_MESSAGE = "parent";
 
     private static final char USERS_LIKE_SEPERATOR_CHAR = ',';
     private static final String USERS_LIKE_SEPERATOR_CHAR_STR = String
@@ -80,6 +82,11 @@ public final class MessageHelper {
     public static Property createMentionProperty(String[] userGlobalIds) {
         String value = StringUtils.join(userGlobalIds, MENTION_SEPERATOR_CHAR);
         Property property = new Property(PROPERTY_KEY_MENTIONS, value);
+        return property;
+    }
+
+    public static Property createParentMessageProperty(String messageGlobalId) {
+        Property property = new Property(PROPERTY_KEY_PARENT_MESSAGE, messageGlobalId);
         return property;
     }
 
@@ -132,6 +139,30 @@ public final class MessageHelper {
         return getListProperty(message, PROPERTY_KEY_MENTIONS, MENTION_SEPERATOR_STR);
     }
 
+    public static Property getParentMessage(Message message) {
+        Map<String, Property> properties = message.getPropertiesAsMap();
+        Property property = properties.get(PROPERTY_KEY_PARENT_MESSAGE);
+        return property;
+    }
+
+    /**
+     * <p>
+     * Retrieve the title property of a message ({@link Property#PROPERTY_KEY_TITLE}).
+     * </p>
+     * 
+     * @param message
+     * @return
+     */
+    public static String getTitle(Message message) {
+        Validate.notNull(message, "message must not be null");
+
+        Property property = message.getPropertiesAsMap().get(Property.PROPERTY_KEY_TITLE);
+        if (property == null) {
+            return null;
+        }
+        return property.getPropertyValue();
+    }
+
     public static Collection<String> getUserLikes(Message message) {
         return getListProperty(message, PROPERTY_KEY_USERS_LIKE, USERS_LIKE_SEPERATOR_CHAR_STR);
     }
@@ -161,24 +192,6 @@ public final class MessageHelper {
      */
     private MessageHelper() {
         // i am only a helper class :(
-    }
-
-    /**
-     * <p>
-     * Retrieve the title property of a message ({@link Property#PROPERTY_KEY_TITLE}).
-     * </p>
-     * 
-     * @param message
-     * @return
-     */
-    public static String getTitle(Message message) {
-        Validate.notNull(message, "message must not be null");
-
-        Property property = message.getPropertiesAsMap().get(Property.PROPERTY_KEY_TITLE);
-        if (property == null) {
-            return null;
-        }
-        return property.getPropertyValue();
     }
 
 }

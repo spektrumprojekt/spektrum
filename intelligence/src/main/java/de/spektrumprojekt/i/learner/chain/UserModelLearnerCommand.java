@@ -74,8 +74,18 @@ public class UserModelLearnerCommand implements Command<LearnerMessageContext> {
 
         List<Observation> relatedObservations = context.getRelatedObservations();
         Observation observationForDisintegration = null;
-        if (relatedObservations.size() > 0) {
-            observationForDisintegration = relatedObservations.get(0);
+
+        // the observation the highest priority is picked, since this is the one what was integrated
+        for (Observation related : relatedObservations) {
+            if (observationForDisintegration == null) {
+                observationForDisintegration = related;
+            } else if (related.getPriority().priorityValue() >= observationForDisintegration
+                    .getPriority().priorityValue()) {
+                observationForDisintegration = related;
+            }
+        }
+
+        if (observationForDisintegration != null) {
 
             if (!observationForDisintegration.getMessageGlobalId().equals(message.getGlobalId())) {
                 throw new IllegalStateException(
@@ -99,6 +109,7 @@ public class UserModelLearnerCommand implements Command<LearnerMessageContext> {
             }
 
         }
+
         return observationForDisintegration;
     }
 
@@ -142,8 +153,12 @@ public class UserModelLearnerCommand implements Command<LearnerMessageContext> {
                 message);
 
         if (observationForDisintegration != null
-                && observationForDisintegration.getInterest().equals(interest)) {
-            // nothing to do here. the got the observation with the same interest.
+                && (observationForDisintegration.getInterest().equals(interest)
+                || context.getObservation().getPriority().priorityValue() < observationForDisintegration
+                        .getPriority().priorityValue()
+                )) {
+            // nothing to do here. we got an observation with the same interest or the observation
+            // has a lower priority as one we used before
             return;
         }
 

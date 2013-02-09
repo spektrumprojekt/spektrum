@@ -149,7 +149,14 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
                 this.flags
                         .contains(RankerConfigurationFlag.USE_HALF_SCORE_ON_NON_PARTICIPATING_ANSWERS));
         InvokeLearnerCommand invokeLearnerCommand = new InvokeLearnerCommand(
-                this.communicator, this.flags.contains(RankerConfigurationFlag.LEARN_NEGATIVE));
+                this.persistence,
+                this.communicator,
+                this.flags.contains(RankerConfigurationFlag.LEARN_NEGATIVE),
+                this.flags
+                        .contains(RankerConfigurationFlag.DISCUSSION_PARTICIPATION_LEARN_FROM_PARENT_MESSAGE),
+                this.flags
+                        .contains(RankerConfigurationFlag.DISCUSSION_PARTICIPATION_LEARN_FROM_ALL_PARENT_MESSAGES)
+                );
         TriggerUserModelAdaptationCommand triggerUserModelAdaptationCommand = new TriggerUserModelAdaptationCommand(
                 this.communicator);
         StoreMessageRankCommand storeMessageRankCommand = new StoreMessageRankCommand(persistence);

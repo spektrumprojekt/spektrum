@@ -61,7 +61,8 @@ public class UserFeatureCommand implements Command<MessageFeatureContext>,
      */
     @Override
     public String getConfigurationDescription() {
-        return this.getClass().getSimpleName();
+        return this.getClass().getSimpleName() + " userSpecificCommandChain: "
+                + userSpecificCommandChain.getConfigurationDescription();
     }
 
     /**

@@ -35,6 +35,7 @@ import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.observation.Interest;
 import de.spektrumprojekt.datamodel.observation.Observation;
+import de.spektrumprojekt.datamodel.observation.Observation.ObservationPriority;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
@@ -152,7 +153,8 @@ public class LearnerTest extends MyStreamTest {
 
         // learning an extreme=1 interest
         Observation observation = new Observation(user1ToLearnForGlobalId, message.getGlobalId(),
-                ObservationType.RATING, null, new Date(), Interest.EXTREME);
+                ObservationType.RATING, ObservationPriority.USER_FEEDBACK, null, new Date(),
+                Interest.EXTREME);
         LearningMessage learningMessage = new LearningMessage(observation);
         learner.deliverMessage(learningMessage);
         checkUserModelEntries(message, user1ToLearnForGlobalId, terms, 1.0f);
@@ -160,7 +162,8 @@ public class LearnerTest extends MyStreamTest {
 
         // learning an high=0.75 interest for a new user
         observation = new Observation(user2ToLearnForGlobalId, message.getGlobalId(),
-                ObservationType.RATING, null, new Date(), Interest.HIGH);
+                ObservationType.RATING, ObservationPriority.USER_FEEDBACK, null, new Date(),
+                Interest.HIGH);
         learningMessage = new LearningMessage(observation);
         learner.deliverMessage(learningMessage);
         checkUserModelEntries(message, user2ToLearnForGlobalId, terms, 0.75f);
@@ -168,11 +171,22 @@ public class LearnerTest extends MyStreamTest {
 
         // learning a low=0.25 interest for a user 1 again
         observation = new Observation(user1ToLearnForGlobalId, message.getGlobalId(),
-                ObservationType.RATING, null, new Date(), Interest.LOW);
+                ObservationType.RATING, ObservationPriority.USER_FEEDBACK, null, new Date(),
+                Interest.LOW);
         learningMessage = new LearningMessage(observation);
         learner.deliverMessage(learningMessage);
         checkUserModelEntries(message, user1ToLearnForGlobalId, terms, 0.25f);
         checkObservations(user1ToLearnForGlobalId, message, 2);
+
+        // learning a high=0.75 interest for a user 1 again but with a lower priority, hence the
+        // result should not change to the last one
+        observation = new Observation(user1ToLearnForGlobalId, message.getGlobalId(),
+                ObservationType.RATING, ObservationPriority.SECOND_LEVEL_FEATURE_INFERRED, null,
+                new Date(), Interest.HIGH);
+        learningMessage = new LearningMessage(observation);
+        learner.deliverMessage(learningMessage);
+        checkUserModelEntries(message, user1ToLearnForGlobalId, terms, 0.25f);
+        checkObservations(user1ToLearnForGlobalId, message, 3);
 
     }
 }

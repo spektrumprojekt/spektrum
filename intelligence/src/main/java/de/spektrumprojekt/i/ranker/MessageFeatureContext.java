@@ -247,7 +247,9 @@ public class MessageFeatureContext {
                     message = this.message;
                 }
                 message = persistence.getMessageByGlobalId(messageGlobalId);
-                relatedMessage.put(messageGlobalId, message);
+                if (message != null) {
+                    relatedMessage.put(messageGlobalId, message);
+                }
             }
         }
     }

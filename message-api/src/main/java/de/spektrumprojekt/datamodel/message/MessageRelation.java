@@ -92,29 +92,6 @@ public class MessageRelation extends Identifiable {
         return relatedMessageGlobalIds;
     }
 
-    /**
-     * Check if the message is related, that is, the messages global id is contained in the related
-     * messages ids. If the message is only related to itself it will return false.
-     * 
-     * @param message
-     * @return
-     */
-    public boolean isRelated(Message message) {
-        if (relatedMessageGlobalIds == null || relatedMessageGlobalIds.length == 0) {
-            return false;
-        }
-        if (relatedMessageGlobalIds.length == 1
-                && relatedMessageGlobalIds[0].equals(message.getGlobalId())) {
-            return false;
-        }
-        for (String messageGlobalId : relatedMessageGlobalIds) {
-            if (messageGlobalId.equals(message.getGlobalId())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     @Override
     public String toString() {
         return "MessageRelation [messageRelationType=" + messageRelationType
