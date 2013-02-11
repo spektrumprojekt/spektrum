@@ -21,10 +21,7 @@ package de.spektrumprojekt.i.ranker;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,8 +50,6 @@ import de.spektrumprojekt.i.ranker.chain.UserFeatureCommand;
 import de.spektrumprojekt.i.ranker.chain.UserSimilarityIntegrationCommand;
 import de.spektrumprojekt.i.ranker.chain.features.AuthorFeatureCommand;
 import de.spektrumprojekt.i.ranker.chain.features.ContentMatchFeatureCommand;
-import de.spektrumprojekt.i.ranker.chain.features.ContentMatchFeatureCommand.TermWeightAggregation;
-import de.spektrumprojekt.i.ranker.chain.features.ContentMatchFeatureCommand.TermWeightStrategy;
 import de.spektrumprojekt.i.ranker.chain.features.DiscussionMentionFeatureCommand;
 import de.spektrumprojekt.i.ranker.chain.features.DiscussionParticipationFeatureCommand;
 import de.spektrumprojekt.i.ranker.chain.features.DiscussionRootFeatureCommand;
@@ -73,22 +68,22 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
 
     private final static Logger LOGGER = LoggerFactory.getLogger(Ranker.class);
 
-    private final Collection<RankerConfigurationFlag> flags = new HashSet<RankerConfigurationFlag>();
-
     private final Persistence persistence;
-
     private final Communicator communicator;
-    private final AdaptMessageRankByCMFOfSimilarUsersCommand adaptMessageRankByCMFOfSimilarUsersCommand;
 
+    private final AdaptMessageRankByCMFOfSimilarUsersCommand adaptMessageRankByCMFOfSimilarUsersCommand;
     private final FeatureStatisticsCommand featureStatisticsCommand;
+
     private CommandChain<MessageFeatureContext> rankerChain;
 
     private CommandChain<MessageFeatureContext> rerankerChain;
-
     private InformationExtractionCommand<MessageFeatureContext> informationExtractionChain;
+
     private final TermFrequencyComputer termFrequencyComputer;
 
     private UserSimilarityComputer userSimilarityComputer;
+
+    private final RankerConfiguration rankerConfiguration;
 
     /**
      * 
@@ -100,28 +95,24 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
     public Ranker(Persistence persistence,
             Communicator communicator,
             MessageGroupMemberRunner<MessageFeatureContext> memberRunner,
-            TermWeightStrategy termWeightStrategy,
-            TermWeightAggregation termWeightAggregation,
-            RankerConfigurationFlag... flags) {
+            RankerConfiguration rankerConfiguration) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
         }
         if (communicator == null) {
             throw new IllegalArgumentException("communicator cannot be null.");
         }
-        if (termWeightStrategy == null) {
-            throw new IllegalArgumentException("termWeightStrategy cannot be null.");
+        if (rankerConfiguration == null) {
+            throw new IllegalArgumentException("rankerConfiguration cannot be null.");
         }
-        if (termWeightAggregation == null) {
-            throw new IllegalArgumentException("termWeightAggregation cannot be null.");
-        }
-        if (flags != null) {
-            this.flags.addAll(Arrays.asList(flags));
-        }
+        this.rankerConfiguration = rankerConfiguration;
+        this.rankerConfiguration.immutable();
+
         this.persistence = persistence;
         this.communicator = communicator;
         this.termFrequencyComputer = new TermFrequencyComputer(this.persistence,
-                this.flags.contains(RankerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL));
+                this.rankerConfiguration
+                        .hasFlag(RankerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL));
         // TODO register termfrequencycomputer in some timer
 
         rankerChain = new CommandChain<MessageFeatureContext>();
@@ -135,9 +126,12 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
                 .createDefaultGermanEnglish(
                         this.persistence,
                         this.termFrequencyComputer,
-                        false,
-                        this.flags
-                                .contains(RankerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL));
+                        this.rankerConfiguration.isAddTagsToText(),
+                        this.rankerConfiguration.isDoTokens(),
+                        this.rankerConfiguration.isDoTags(),
+                        this.rankerConfiguration.isDoKeyphrase(),
+                        this.rankerConfiguration
+                                .hasFlag(RankerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL));
 
         userSimilarityComputer = new UserSimilarityComputer(this.persistence);
 
@@ -152,25 +146,25 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         ContentMatchFeatureCommand termMatchFeatureCommand = new ContentMatchFeatureCommand(
                 persistence,
                 termFrequencyComputer,
-                termWeightAggregation,
-                termWeightStrategy,
-                0.75f
+                rankerConfiguration.getTermWeightAggregation(),
+                rankerConfiguration.getTermWeightStrategy(),
+                rankerConfiguration.getInterestTermTreshold()
                 );
         ComputeMessageRankCommand computeMessageRankCommand = new ComputeMessageRankCommand(
-                this.flags
-                        .contains(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE_BUT_LEARN_FROM_FEATURES)
-                        || this.flags
-                                .contains(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE),
-                this.flags
-                        .contains(RankerConfigurationFlag.USE_HALF_SCORE_ON_NON_PARTICIPATING_ANSWERS));
+                this.rankerConfiguration
+                        .hasFlag(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE_BUT_LEARN_FROM_FEATURES)
+                        || this.rankerConfiguration
+                                .hasFlag(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE),
+                this.rankerConfiguration
+                        .hasFlag(RankerConfigurationFlag.USE_HALF_SCORE_ON_NON_PARTICIPATING_ANSWERS));
         InvokeLearnerCommand invokeLearnerCommand = new InvokeLearnerCommand(
                 this.persistence,
                 this.communicator,
-                this.flags.contains(RankerConfigurationFlag.LEARN_NEGATIVE),
-                this.flags
-                        .contains(RankerConfigurationFlag.DISCUSSION_PARTICIPATION_LEARN_FROM_PARENT_MESSAGE),
-                this.flags
-                        .contains(RankerConfigurationFlag.DISCUSSION_PARTICIPATION_LEARN_FROM_ALL_PARENT_MESSAGES)
+                this.rankerConfiguration.hasFlag(RankerConfigurationFlag.LEARN_NEGATIVE),
+                this.rankerConfiguration
+                        .hasFlag(RankerConfigurationFlag.DISCUSSION_PARTICIPATION_LEARN_FROM_PARENT_MESSAGE),
+                this.rankerConfiguration
+                        .hasFlag(RankerConfigurationFlag.DISCUSSION_PARTICIPATION_LEARN_FROM_ALL_PARENT_MESSAGES)
                 );
         TriggerUserModelAdaptationCommand triggerUserModelAdaptationCommand = new TriggerUserModelAdaptationCommand(
                 this.communicator);
@@ -179,9 +173,9 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         adaptMessageRankByCMFOfSimilarUsersCommand =
                 new AdaptMessageRankByCMFOfSimilarUsersCommand(
                         persistence,
-                        1.00f,
-                        0.01f,
-                        0.25f);
+                        this.rankerConfiguration.getMessageRankThreshold(),
+                        this.rankerConfiguration.getMinUserSimilarity(),
+                        this.rankerConfiguration.getMinContentMessageScore());
         StoreMessageRankCommand storeMessageRankCommand = new StoreMessageRankCommand(persistence);
 
         // add the commands to the chain
@@ -192,35 +186,44 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
 
         rankerChain.addCommand(userSimilarityIntegrationCommand);
 
-        if (!this.flags.contains(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE)
-                && !this.flags.contains(RankerConfigurationFlag.DO_NOT_USE_DISCUSSION_FEATURES)) {
+        if (!this.rankerConfiguration
+                .hasFlag(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE)
+                && !this.rankerConfiguration
+                        .hasFlag(RankerConfigurationFlag.DO_NOT_USE_DISCUSSION_FEATURES)) {
 
             rankerChain.addCommand(discussionRootFeatureCommand);
         }
         rankerChain.addCommand(userFeatureCommand);
 
-        if (!this.flags.contains(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE)) {
+        if (!this.rankerConfiguration
+                .hasFlag(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE)) {
 
             userFeatureCommand.addCommand(authorFeatureCommand);
             userFeatureCommand.addCommand(mentionFeatureCommand);
         }
 
-        if (!this.flags.contains(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE) &&
-                !this.flags.contains(RankerConfigurationFlag.DO_NOT_USE_DISCUSSION_FEATURES)) {
+        if (!this.rankerConfiguration
+                .hasFlag(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE)
+                &&
+                !this.rankerConfiguration
+                        .hasFlag(RankerConfigurationFlag.DO_NOT_USE_DISCUSSION_FEATURES)) {
 
             userFeatureCommand.getUserSpecificCommandChain().addCommand(
                     discussionParticipationFeatureCommand);
             userFeatureCommand.getUserSpecificCommandChain().addCommand(
                     discussionMentionFeatureCommand);
         }
-        if (!this.flags.contains(RankerConfigurationFlag.DO_NOT_USE_CONTENT_MATCHER_FEATURE)) {
+        if (!this.rankerConfiguration
+                .hasFlag(RankerConfigurationFlag.DO_NOT_USE_CONTENT_MATCHER_FEATURE)) {
             userFeatureCommand.addCommand(termMatchFeatureCommand);
         }
         userFeatureCommand.addCommand(computeMessageRankCommand);
         userFeatureCommand.addCommand(invokeLearnerCommand);
 
-        if (!this.flags.contains(RankerConfigurationFlag.DO_NOT_USE_CONTENT_MATCHER_FEATURE)
-                && this.flags.contains(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)) {
+        if (!this.rankerConfiguration
+                .hasFlag(RankerConfigurationFlag.DO_NOT_USE_CONTENT_MATCHER_FEATURE)
+                && this.rankerConfiguration
+                        .hasFlag(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)) {
 
             userFeatureCommand.addCommand(triggerUserModelAdaptationCommand);
         }
@@ -228,7 +231,8 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         featureStatisticsCommand = new FeatureStatisticsCommand();
         userFeatureCommand.addCommand(featureStatisticsCommand);
 
-        if (this.flags.contains(RankerConfigurationFlag.USE_CONTENT_MATCH_FEATURE_OF_SIMILAR_USERS)) {
+        if (this.rankerConfiguration
+                .hasFlag(RankerConfigurationFlag.USE_CONTENT_MATCH_FEATURE_OF_SIMILAR_USERS)) {
             rankerChain.addCommand(adaptMessageRankByCMFOfSimilarUsersCommand);
         }
 
@@ -278,9 +282,10 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
     public String getConfigurationDescription() {
         StringBuilder sb = new StringBuilder();
         sb.append(this.getClass().getSimpleName());
+        sb.append(" rankerConfiguration: "
+                + this.rankerConfiguration.getConfigurationDescription());
         sb.append(" termFrequencyComputer: "
                 + this.termFrequencyComputer.getConfigurationDescription());
-        sb.append(" flags: {" + StringUtils.join(this.flags, ", ") + "}");
         sb.append(" rankerCommandChain: " + this.rankerChain.getConfigurationDescription());
         sb.append(" rerankerCommandChain: " + this.rerankerChain.getConfigurationDescription());
         sb.append(" userSimilarityComputer: "
@@ -293,15 +298,6 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         return featureStatisticsCommand;
     }
 
-    /**
-     * the flags used to setup the ranker
-     * 
-     * @return returns an unmodifiable collection of the flags
-     */
-    public Collection<RankerConfigurationFlag> getFlags() {
-        return Collections.unmodifiableCollection(flags);
-    }
-
     public InformationExtractionCommand<MessageFeatureContext> getInformationExtractionChain() {
         return informationExtractionChain;
     }
@@ -312,6 +308,10 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
     @Override
     public Class<RankingCommunicationMessage> getMessageClass() {
         return RankingCommunicationMessage.class;
+    }
+
+    public RankerConfiguration getRankerConfiguration() {
+        return rankerConfiguration;
     }
 
     public TermFrequencyComputer getTermFrequencyComputer() {

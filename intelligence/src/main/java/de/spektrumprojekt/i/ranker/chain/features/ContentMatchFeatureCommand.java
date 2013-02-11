@@ -77,7 +77,8 @@ public class ContentMatchFeatureCommand implements
      */
     public ContentMatchFeatureCommand(Persistence persistence,
             TermFrequencyComputer termFrequencyComputer,
-            TermWeightAggregation termWeightAggregation, TermWeightStrategy termWeightStrategy,
+            TermWeightAggregation termWeightAggregation,
+            TermWeightStrategy termWeightStrategy,
             float interestTermTreshold) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");

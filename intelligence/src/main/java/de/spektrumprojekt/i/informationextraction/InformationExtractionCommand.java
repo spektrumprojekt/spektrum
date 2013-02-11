@@ -36,6 +36,7 @@ import de.spektrumprojekt.informationextraction.extractors.JerichoTextCleanerCom
 import de.spektrumprojekt.informationextraction.extractors.KeyphraseExtractorCommand;
 import de.spektrumprojekt.informationextraction.extractors.LanguageDetectorCommand;
 import de.spektrumprojekt.informationextraction.extractors.StemmedTokenExtractorCommand;
+import de.spektrumprojekt.informationextraction.extractors.TagExtractorCommand;
 import de.spektrumprojekt.informationextraction.extractors.TermCounterCommand;
 import de.spektrumprojekt.persistence.Persistence;
 
@@ -55,7 +56,11 @@ public class InformationExtractionCommand<T extends MessageFeatureContext> imple
      * @return a default information extraction command with german english as allowed language
      */
     public static <T extends MessageFeatureContext> InformationExtractionCommand<T> createDefaultGermanEnglish(
-            Persistence persistence, TermFrequencyComputer termFrequencyComputer,
+            Persistence persistence,
+            TermFrequencyComputer termFrequencyComputer,
+            boolean addTagsToText,
+            boolean doTokens,
+            boolean doTags,
             boolean doKeyphrase,
             boolean beMessageGroupSpecific) {
         Collection<String> allowedLanguages = new HashSet<String>();
@@ -64,14 +69,23 @@ public class InformationExtractionCommand<T extends MessageFeatureContext> imple
         allowedLanguages.add("en");
 
         InformationExtractionCommand<T> command = new InformationExtractionCommand<T>(persistence);
-        command.getInformationExtractionCommandChain().addCommand(new JerichoTextCleanerCommand());
+        if (doTokens || doKeyphrase) {
+            command.getInformationExtractionCommandChain().addCommand(
+                    new JerichoTextCleanerCommand(addTagsToText));
+        }
         command.getInformationExtractionCommandChain().addCommand(
                 new LanguageDetectorCommand("de", allowedLanguages));
-        command.getInformationExtractionCommandChain().addCommand(
-                new StemmedTokenExtractorCommand(beMessageGroupSpecific));
+        if (doTokens) {
+            command.getInformationExtractionCommandChain().addCommand(
+                    new StemmedTokenExtractorCommand(beMessageGroupSpecific));
+        }
         if (doKeyphrase) {
             command.getInformationExtractionCommandChain()
                     .addCommand(new KeyphraseExtractorCommand());
+        }
+        if (doTags) {
+            command.getInformationExtractionCommandChain().addCommand(new TagExtractorCommand(
+                    beMessageGroupSpecific));
         }
         if (termFrequencyComputer != null) {
             command.getInformationExtractionCommandChain().addCommand(

@@ -19,10 +19,14 @@
 
 package de.spektrumprojekt.informationextraction.extractors;
 
+import java.util.Collection;
 import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringUtils;
 
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.datamodel.message.MessagePart;
+import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
 
 /***
@@ -40,6 +44,12 @@ public final class TextCleanerCommand implements Command<InformationExtractionCo
             .compile("<!--.*?-->|<style.*?>.*?</style>|<script.*?>.*?</script>|<.*?>");
 
     private static final Pattern NORMALIZE_WHITESPACE = Pattern.compile("\\s{2,}");
+
+    private final boolean addTagsToText;
+
+    public TextCleanerCommand(boolean addTagsToText) {
+        this.addTagsToText = addTagsToText;
+    }
 
     private String cleanText(String rawText) {
 
@@ -59,7 +69,7 @@ public final class TextCleanerCommand implements Command<InformationExtractionCo
      */
     @Override
     public String getConfigurationDescription() {
-        return this.getClass().getSimpleName();
+        return this.getClass().getSimpleName() + " addTagsToText: " + this.addTagsToText;
     }
 
     /**
@@ -71,6 +81,10 @@ public final class TextCleanerCommand implements Command<InformationExtractionCo
         MessagePart rawTextPart = context.getMessagePart();
 
         String rawText = rawTextPart.getContent();
+        if (this.addTagsToText) {
+            Collection<String> tags = MessageHelper.getTags(context.getMessage());
+            rawText += " " + StringUtils.join(tags, " ");
+        }
         String cleanText = cleanText(rawText);
 
         context.setCleanText(cleanText);

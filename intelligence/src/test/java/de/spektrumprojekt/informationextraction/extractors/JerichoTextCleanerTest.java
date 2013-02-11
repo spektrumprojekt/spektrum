@@ -20,7 +20,7 @@ public class JerichoTextCleanerTest {
 
     @Test
     public void testTextCleaner() {
-        JerichoTextCleanerCommand textCleaner = new JerichoTextCleanerCommand();
+        JerichoTextCleanerCommand textCleaner = new JerichoTextCleanerCommand(false);
 
         Message message = new Message(MessageType.CONTENT, StatusType.OK, new Date());
         String text = "<!-- comment --><p>the <i>quick</i> brown fox jumps over the lazy dog.</p>";

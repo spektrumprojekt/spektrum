@@ -42,22 +42,28 @@ import de.spektrumprojekt.datamodel.message.Term;
  */
 public final class MessageHelper {
 
+    private static final char MENTION_SEPERATOR_CHAR = ',';
+    private static final String MENTION_SEPERATOR_STR = String.valueOf(MENTION_SEPERATOR_CHAR);
     /**
      * Property for the mentions. Contains a comma separated list of user global ids
      * 
      */
     private static final String PROPERTY_KEY_MENTIONS = "mentions";
 
-    private static final char MENTION_SEPERATOR_CHAR = ',';
-    private static final String MENTION_SEPERATOR_STR = String.valueOf(MENTION_SEPERATOR_CHAR);
-
-    private static final String PROPERTY_KEY_USERS_LIKE = "likes";
-
-    private static final String PROPERTY_KEY_PARENT_MESSAGE = "parent";
+    private static final char TAG_SEPERATOR_CHAR = ',';
+    private static final String TAG_SEPERATOR_STR = String.valueOf(MENTION_SEPERATOR_CHAR);
+    /**
+     * Property for the mentions. Contains a comma separated list of user global ids
+     * 
+     */
+    private static final String PROPERTY_KEY_TAGS = "tags";
 
     private static final char USERS_LIKE_SEPERATOR_CHAR = ',';
     private static final String USERS_LIKE_SEPERATOR_CHAR_STR = String
             .valueOf(USERS_LIKE_SEPERATOR_CHAR);
+    private static final String PROPERTY_KEY_USERS_LIKE = "likes";
+
+    private static final String PROPERTY_KEY_PARENT_MESSAGE = "parent";
 
     /**
      * Create the property defining the mentions, the value is just a comma seperation of the ids.
@@ -87,6 +93,12 @@ public final class MessageHelper {
 
     public static Property createParentMessageProperty(String messageGlobalId) {
         Property property = new Property(PROPERTY_KEY_PARENT_MESSAGE, messageGlobalId);
+        return property;
+    }
+
+    public static Property createTagProperty(Iterable<String> tags) {
+        String value = StringUtils.join(tags, TAG_SEPERATOR_CHAR);
+        Property property = new Property(PROPERTY_KEY_TAGS, value);
         return property;
     }
 
@@ -143,6 +155,10 @@ public final class MessageHelper {
         Map<String, Property> properties = message.getPropertiesAsMap();
         Property property = properties.get(PROPERTY_KEY_PARENT_MESSAGE);
         return property;
+    }
+
+    public static Collection<String> getTags(Message message) {
+        return getListProperty(message, PROPERTY_KEY_TAGS, TAG_SEPERATOR_STR);
     }
 
     /**

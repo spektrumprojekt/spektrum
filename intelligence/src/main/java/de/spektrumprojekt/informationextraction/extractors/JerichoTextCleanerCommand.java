@@ -19,12 +19,17 @@
 
 package de.spektrumprojekt.informationextraction.extractors;
 
+import java.util.Collection;
 import java.util.regex.Pattern;
 
 import net.htmlparser.jericho.Source;
 import net.htmlparser.jericho.TextExtractor;
+
+import org.apache.commons.lang3.StringUtils;
+
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.datamodel.message.MessagePart;
+import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
 
 /***
@@ -42,7 +47,10 @@ public final class JerichoTextCleanerCommand implements Command<InformationExtra
     private static final char CHARACHTER_HASH = '#';
     private static final Pattern NORMALIZE_WHITESPACE = Pattern.compile("\\s{2,}");
 
-    public JerichoTextCleanerCommand() {
+    private final boolean addTagsToText;
+
+    public JerichoTextCleanerCommand(boolean addTagsToText) {
+        this.addTagsToText = addTagsToText;
     }
 
     private String cleanText(String rawText) {
@@ -83,6 +91,11 @@ public final class JerichoTextCleanerCommand implements Command<InformationExtra
         MessagePart rawTextPart = context.getMessagePart();
 
         String rawText = rawTextPart.getContent();
+
+        if (this.addTagsToText) {
+            Collection<String> tags = MessageHelper.getTags(context.getMessage());
+            rawText += " " + StringUtils.join(tags, " ");
+        }
         String cleanText = cleanText(rawText);
 
         context.setCleanText(cleanText);
