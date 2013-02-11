@@ -116,6 +116,11 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
+    public Collection<Message> getMessagesForPattern(String pattern) {
+        return null;
+    }
+
+    @Override
     public Collection<Message> getMessagesSince(Date fromDate) {
         return null;
     }
@@ -159,6 +164,12 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
+    public UserSimilarity getUserSimilarity(String userGlobalIdFrom, String userGlobalIdTo,
+            String messageGroupGlobalId) {
+        return null;
+    }
+
+    @Override
     public Collection<UserModel> getUsersWithUserModel(Collection<Term> arrayList) {
         return null;
     }
@@ -197,6 +208,10 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
+    public void storeMessagePattern(String pattern, Message message) {
+    }
+
+    @Override
     public void storeMessageRanks(Collection<MessageRank> ranks) {
     }
 
@@ -215,23 +230,16 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
+    public void storeUserSimilarity(UserSimilarity stat) {
+
+    }
+
+    @Override
     public void updateAggregationSubscription(SubscriptionStatus aggregationStatus) {
     }
 
     @Override
     public void updateTerms(Collection<Term> termsChanged) {
-    }
-
-    @Override
-    public void storeMessagePattern(String pattern, Message message) {
-        // TODO Auto-generated method stub
-        
-    }
-
-    @Override
-    public Collection<Message> getMessagesForPattern(String pattern) {
-        // TODO Auto-generated method stub
-        return null;
     }
 
 }

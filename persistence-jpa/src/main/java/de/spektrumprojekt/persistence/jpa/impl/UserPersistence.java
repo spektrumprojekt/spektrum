@@ -1,21 +1,21 @@
 /*
-* Licensed to the Apache Software Foundation (ASF) under one
-* or more contributor license agreements.  See the NOTICE file
-* distributed with this work for additional information
-* regarding copyright ownership.  The ASF licenses this file
-* to you under the Apache License, Version 2.0 (the
-* "License"); you may not use this file except in compliance
-* with the License.  You may obtain a copy of the License at
-* 
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package de.spektrumprojekt.persistence.jpa.impl;
 
@@ -275,6 +275,45 @@ public class UserPersistence extends AbstractPersistenceLayer {
         return transaction.executeTransaction(getEntityManager());
     }
 
+    public UserSimilarity getUserSimilarity(final String userGlobalIdFrom,
+            final String userGlobalIdTo,
+            final String messageGroupGlobalId) {
+        if (userGlobalIdFrom == null) {
+            throw new IllegalArgumentException("userGlobalIdFrom cannot be null.");
+        }
+        if (userGlobalIdTo == null) {
+            throw new IllegalArgumentException("userGlobalIdTo cannot be null or empty.");
+        }
+        Transaction<UserSimilarity> transaction = new Transaction<UserSimilarity>() {
+
+            @Override
+            protected UserSimilarity doTransaction(EntityManager entityManager) {
+                CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+                CriteriaQuery<UserSimilarity> query = cb
+                        .createQuery(UserSimilarity.class);
+                Root<UserSimilarity> userSim = query.from(UserSimilarity.class);
+
+                Predicate zero = cb.equal(userSim.get("userGlobalIdFrom"), userGlobalIdFrom);
+                Predicate one = cb.equal(userSim.get("userGlobalIdTo"), userGlobalIdTo);
+
+                if (messageGroupGlobalId != null) {
+                    Predicate two = cb.equal(userSim.get("messageGroupGlobalId"),
+                            messageGroupGlobalId);
+                    query.where(zero, one, two);
+                } else {
+                    query.where(zero, one);
+                }
+
+                try {
+                    return entityManager.createQuery(query).getSingleResult();
+                } catch (NoResultException e) {
+                    return null;
+                }
+            }
+        };
+        return transaction.executeTransaction(getEntityManager());
+    }
+
     public Collection<UserModel> getUsersWithUserModel(final Collection<Term> terms) {
         if (terms == null || terms.isEmpty()) {
             throw new IllegalArgumentException("terms cannot be null or empty.");
@@ -320,6 +359,10 @@ public class UserPersistence extends AbstractPersistenceLayer {
     public Collection<UserModelEntry> storeOrUpdateUserModelEntries(UserModel userModel,
             Collection<UserModelEntry> changedEntries) {
         return this.saveAll(changedEntries);
+    }
+
+    public void storeUserSimilarity(UserSimilarity stat) {
+        this.save(stat);
     }
 
 }

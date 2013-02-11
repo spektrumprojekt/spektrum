@@ -88,6 +88,8 @@ public interface Persistence {
 
     MessageRank getMessageRank(String userGlobalId, String messageGlobalId);
 
+    Collection<Message> getMessagesForPattern(String pattern);
+
     Collection<Message> getMessagesSince(Date fromDate);
 
     Collection<Message> getMessagesSince(String messageGroupGlobalId, Date fromDate);
@@ -132,6 +134,9 @@ public interface Persistence {
     Collection<UserSimilarity> getUserSimilarities(String userGlobalId, Collection<String> users,
             String messageGroupGlobalId, double userSimilarityThreshold);
 
+    UserSimilarity getUserSimilarity(String userGlobalIdFrom, String userGlobalIdTo,
+            String messageGroupGlobalId);
+
     Collection<UserModel> getUsersWithUserModel(Collection<Term> terms);
 
     void initialize();
@@ -160,6 +165,8 @@ public interface Persistence {
      * @return the stored message group
      */
     MessageGroup storeMessageGroup(MessageGroup messageGroup);
+
+    void storeMessagePattern(String pattern, Message message);
 
     /**
      * 
@@ -194,12 +201,10 @@ public interface Persistence {
     Collection<UserModelEntry> storeOrUpdateUserModelEntries(UserModel userModel,
             Collection<UserModelEntry> changedEntries);
 
+    void storeUserSimilarity(UserSimilarity stat);
+
     void updateAggregationSubscription(SubscriptionStatus aggregationStatus);
 
     void updateTerms(Collection<Term> termsChanged);
-    
-    void storeMessagePattern(String pattern, Message message);
-    
-    Collection<Message> getMessagesForPattern(String pattern);
-    
+
 }
