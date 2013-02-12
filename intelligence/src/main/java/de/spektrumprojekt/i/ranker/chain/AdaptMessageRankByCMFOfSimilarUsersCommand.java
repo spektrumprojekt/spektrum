@@ -102,7 +102,7 @@ public class AdaptMessageRankByCMFOfSimilarUsersCommand implements Command<Messa
 
                 for (UserSpecificMessageFeatureContext userContext : context.getUserContexts()) {
 
-                    float cmfRank = userContext.getFeatureValue(Feature.TERM_MATCH_FEATURE);
+                    float cmfRank = userContext.getFeatureValue(Feature.CONTENT_MATCH_FEATURE);
 
                     if (cmfRank > this.minContentMessageScore && cmfRank > newRank) {
 

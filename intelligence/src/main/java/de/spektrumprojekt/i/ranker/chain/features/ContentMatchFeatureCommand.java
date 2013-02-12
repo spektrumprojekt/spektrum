@@ -194,7 +194,7 @@ public class ContentMatchFeatureCommand implements
      * @return the feature id
      */
     public Feature getFeatureId() {
-        return Feature.TERM_MATCH_FEATURE;
+        return Feature.CONTENT_MATCH_FEATURE;
     }
 
     private float getMax(Message message, Map<Term, UserModelEntry> relevantEntries,

@@ -71,7 +71,7 @@ public class Feature {
     /**
      * The mention
      */
-    public final static Feature TERM_MATCH_FEATURE = new Feature("TermMatch");
+    public final static Feature CONTENT_MATCH_FEATURE = new Feature("TermMatch");
 
     public final static List<Feature> ALL_FEATURES;
 
@@ -83,7 +83,7 @@ public class Feature {
         all.add(DISCUSSION_ROOT_FEATURE);
         all.add(DISCUSSION_PARTICIPATION_FEATURE);
         all.add(DISCUSSION_MENTION_FEATURE);
-        all.add(TERM_MATCH_FEATURE);
+        all.add(CONTENT_MATCH_FEATURE);
 
         ALL_FEATURES = Collections.unmodifiableList(all);
     }

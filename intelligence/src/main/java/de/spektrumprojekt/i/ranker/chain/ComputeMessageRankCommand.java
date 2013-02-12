@@ -85,7 +85,7 @@ public class ComputeMessageRankCommand implements Command<UserSpecificMessageFea
                 isNonParticipatingAnswer = true;
             }
         }
-        MessageFeature termMatch = context.getFeature(Feature.TERM_MATCH_FEATURE);
+        MessageFeature termMatch = context.getFeature(Feature.CONTENT_MATCH_FEATURE);
         if (termMatch != null && termMatch.getValue() > messageRank.getRank()) {
 
             float value = termMatch.getValue();
