@@ -57,6 +57,8 @@ public final class JerichoTextCleanerCommand implements Command<InformationExtra
 
         Source source = new Source(rawText);
 
+        rawText = rawText.toLowerCase();
+
         TextExtractor extractor = source.getTextExtractor().setConvertNonBreakingSpaces(true)
                 .setIncludeAttributes(false);
         String cleanText = extractor.toString();
@@ -65,6 +67,10 @@ public final class JerichoTextCleanerCommand implements Command<InformationExtra
             if (Character.isWhitespace(cha[i])) {
                 cha[i] = CHARACTER_WHITESPACE;
             } else if (cha[i] == CHARACHTER_HASH) {
+                cha[i] = CHARACTER_WHITESPACE;
+            } else if (cha[i] == '%') {
+                cha[i] = CHARACTER_WHITESPACE;
+            } else if (cha[i] == '.') {
                 cha[i] = CHARACTER_WHITESPACE;
             }
         }

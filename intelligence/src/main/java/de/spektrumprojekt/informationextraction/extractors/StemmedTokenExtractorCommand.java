@@ -43,15 +43,17 @@ public final class StemmedTokenExtractorCommand implements Command<InformationEx
 
     private final boolean useMessageGroupIdForToken;
     private final boolean assertMessageGroup;
+    private final int minimumTermLength;
 
     public StemmedTokenExtractorCommand(boolean useMessageGroupIdForToken) {
-        this(useMessageGroupIdForToken, true);
+        this(useMessageGroupIdForToken, true, 0);
     }
 
     public StemmedTokenExtractorCommand(boolean useMessageGroupIdForToken,
-            boolean assertMessageGroup) {
+            boolean assertMessageGroup, int minimumTermLength) {
         this.useMessageGroupIdForToken = useMessageGroupIdForToken;
         this.assertMessageGroup = assertMessageGroup;
+        this.minimumTermLength = minimumTermLength;
     }
 
     private List<String> cleanTokens(List<String> tokens) {
@@ -73,8 +75,10 @@ public final class StemmedTokenExtractorCommand implements Command<InformationEx
      */
     @Override
     public String getConfigurationDescription() {
-        return this.getClass().getSimpleName() + " useMessageGroupIdForToken: "
-                + useMessageGroupIdForToken + " assertMessageGroup: " + assertMessageGroup;
+        return this.getClass().getSimpleName()
+                + " useMessageGroupIdForToken: " + useMessageGroupIdForToken
+                + " assertMessageGroup: " + assertMessageGroup
+                + " minimumTermLength: " + minimumTermLength;
     }
 
     public boolean isAssertMessageGroup() {
@@ -116,6 +120,9 @@ public final class StemmedTokenExtractorCommand implements Command<InformationEx
         int highestCount = BagHelper.getHighestCount(tokenBag);
         for (Object tokenObj : tokenBag) {
             String token = (String) tokenObj;
+            if (token.length() < minimumTermLength) {
+                continue;
+            }
             float frequency = (float) tokenBag.getCount(token) / highestCount;
             token = tokenPrefix + token;
             context.getMessagePart().addScoredTerm(

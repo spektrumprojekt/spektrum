@@ -27,7 +27,7 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
     private boolean doTokens = true;
     private boolean doKeyphrase;
     private boolean addTagsToText;
-
+    private int minimumTermLength;
     private TermWeightStrategy termWeightStrategy;
 
     private TermWeightAggregation termWeightAggregation;
@@ -106,6 +106,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     public float getMinContentMessageScore() {
         return minContentMessageScore;
+    }
+
+    public int getMinimumTermLength() {
+        return minimumTermLength;
     }
 
     public float getMinUserSimilarity() {
@@ -190,6 +194,11 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
     public void setMinContentMessageScore(float minContentMessageScore) {
         assert01(minContentMessageScore, "minContentMessageScore");
         this.minContentMessageScore = minContentMessageScore;
+    }
+
+    public void setMinimumTermLength(int minimumTermLength) {
+        assertCanSet();
+        this.minimumTermLength = minimumTermLength;
     }
 
     public void setMinUserSimilarity(float minUserSimilarity) {

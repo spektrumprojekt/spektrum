@@ -141,7 +141,7 @@ public class LearnerTest extends MyStreamTest {
         // extract the terms
         InformationExtractionCommand<MessageFeatureContext> ieCommand = InformationExtractionCommand
                 .createDefaultGermanEnglish(getPersistence(), null, false, true, false, false,
-                        false);
+                        false, 0);
         MessageFeatureContext context = new MessageFeatureContext(getPersistence(), message, null);
         ieCommand.process(context);
         checkScoredTerms(context);

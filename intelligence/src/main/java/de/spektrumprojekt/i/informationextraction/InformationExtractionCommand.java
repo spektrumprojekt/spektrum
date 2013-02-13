@@ -62,7 +62,8 @@ public class InformationExtractionCommand<T extends MessageFeatureContext> imple
             boolean doTokens,
             boolean doTags,
             boolean doKeyphrase,
-            boolean beMessageGroupSpecific) {
+            boolean beMessageGroupSpecific,
+            int minimumTermLength) {
         Collection<String> allowedLanguages = new HashSet<String>();
 
         allowedLanguages.add("de");
@@ -77,7 +78,8 @@ public class InformationExtractionCommand<T extends MessageFeatureContext> imple
                 new LanguageDetectorCommand("de", allowedLanguages));
         if (doTokens) {
             command.getInformationExtractionCommandChain().addCommand(
-                    new StemmedTokenExtractorCommand(beMessageGroupSpecific));
+                    new StemmedTokenExtractorCommand(beMessageGroupSpecific, false,
+                            minimumTermLength));
         }
         if (doKeyphrase) {
             command.getInformationExtractionCommandChain()

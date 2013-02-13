@@ -15,8 +15,6 @@ import de.spektrumprojekt.datamodel.message.MessageType;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
-import de.spektrumprojekt.informationextraction.extractors.LanguageDetectorCommand;
-import de.spektrumprojekt.informationextraction.extractors.StemmedTokenExtractorCommand;
 import de.spektrumprojekt.persistence.simple.SimplePersistence;
 
 public class StemmedTokenExtractorTest {
@@ -25,17 +23,19 @@ public class StemmedTokenExtractorTest {
 
     @Test
     public void testStemmedTokenExtractor() {
-        StemmedTokenExtractorCommand stemmedTokenExtractor = new StemmedTokenExtractorCommand(false, false);
+        StemmedTokenExtractorCommand stemmedTokenExtractor = new StemmedTokenExtractorCommand(
+                false, false, 0);
 
         Message message = new Message(MessageType.CONTENT, StatusType.OK, new Date());
         MessagePart messagePart = new MessagePart(MimeType.TEXT_PLAIN, TEXT);
         message.addMessagePart(messagePart);
         message.addProperty(new Property(LanguageDetectorCommand.LANGUAGE, "de"));
-        
-        InformationExtractionContext context = new InformationExtractionContext(new SimplePersistence(), message, messagePart);
+
+        InformationExtractionContext context = new InformationExtractionContext(
+                new SimplePersistence(), message, messagePart);
         context.setCleanText(TEXT);
         stemmedTokenExtractor.process(context);
-        
+
         Collection<ScoredTerm> scoredTerms = messagePart.getScoredTerms();
         assertEquals(16, scoredTerms.size());
     }

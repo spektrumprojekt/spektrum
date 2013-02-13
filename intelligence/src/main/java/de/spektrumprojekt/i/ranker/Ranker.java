@@ -131,7 +131,8 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
                         this.rankerConfiguration.isDoTags(),
                         this.rankerConfiguration.isDoKeyphrase(),
                         this.rankerConfiguration
-                                .hasFlag(RankerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL));
+                                .hasFlag(RankerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL),
+                        this.rankerConfiguration.getMinimumTermLength());
 
         userSimilarityComputer = new UserSimilarityComputer(this.persistence);
 
