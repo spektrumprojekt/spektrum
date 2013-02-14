@@ -82,6 +82,8 @@
 		<class>de.spektrumprojekt.datamodel.message.ScoredTerm</class>
 		<class>de.spektrumprojekt.datamodel.message.Term</class>
 		<class>de.spektrumprojekt.datamodel.message.TermMetaInformation</class>
+		
+		<class>de.spektrumprojekt.datamodel.observation.Observation</class>
 
 		<class>de.spektrumprojekt.datamodel.user.User</class>
 		<class>de.spektrumprojekt.datamodel.user.UserModel</class>

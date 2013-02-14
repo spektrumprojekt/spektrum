@@ -1,4 +1,4 @@
-package de.spektrumprojekt.i.informationextraction.frequency;
+package de.spektrumprojekt.i.term.frequency;
 
 import java.io.File;
 import java.io.IOException;

@@ -52,7 +52,7 @@ import de.spektrumprojekt.i.ranker.MessageFeatureContext;
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 
  */
-public class LearnerTest extends MyStreamTest {
+public class LearnerTest extends IntelligenceSpektrumTest {
 
     private final String user1ToLearnForGlobalId = "userToLearnFor1";
     private final String user2ToLearnForGlobalId = "userToLearnFor2";

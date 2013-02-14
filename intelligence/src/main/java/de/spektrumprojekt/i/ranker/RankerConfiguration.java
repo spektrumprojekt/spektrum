@@ -7,8 +7,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
-import de.spektrumprojekt.i.ranker.chain.features.ContentMatchFeatureCommand.TermWeightAggregation;
-import de.spektrumprojekt.i.ranker.chain.features.ContentMatchFeatureCommand.TermWeightStrategy;
+import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
+import de.spektrumprojekt.i.term.TermWeightStrategy;
 
 public class RankerConfiguration implements ConfigurationDescriptable, Cloneable {
 
@@ -30,18 +30,18 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
     private int minimumTermLength;
     private TermWeightStrategy termWeightStrategy;
 
-    private TermWeightAggregation termWeightAggregation;
+    private TermVectorSimilarityStrategy termWeightAggregation;
 
     private boolean immutable;
 
     private float interestTermTreshold = 0.75f;
 
-    public RankerConfiguration(TermWeightStrategy strategy, TermWeightAggregation aggregation) {
+    public RankerConfiguration(TermWeightStrategy strategy, TermVectorSimilarityStrategy aggregation) {
         this(strategy, aggregation, (RankerConfigurationFlag[]) null);
     }
 
     public RankerConfiguration(TermWeightStrategy termWeightStrategy,
-            TermWeightAggregation termWeightAggregation,
+            TermVectorSimilarityStrategy termWeightAggregation,
             RankerConfigurationFlag... flags) {
         if (termWeightStrategy == null) {
             throw new IllegalStateException("termWeightStrategy cannot be null.");
@@ -116,7 +116,7 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         return minUserSimilarity;
     }
 
-    public TermWeightAggregation getTermWeightAggregation() {
+    public TermVectorSimilarityStrategy getTermWeightAggregation() {
         return termWeightAggregation;
     }
 
@@ -206,7 +206,7 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         this.minUserSimilarity = minUserSimilarity;
     }
 
-    public void setTermWeightAggregation(TermWeightAggregation termWeightAggregation) {
+    public void setTermWeightAggregation(TermVectorSimilarityStrategy termWeightAggregation) {
         assertCanSet();
         if (termWeightAggregation == null) {
             throw new IllegalStateException("termWeightAggregation cannot be null.");

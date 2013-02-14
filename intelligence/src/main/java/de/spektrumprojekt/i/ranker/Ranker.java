@@ -37,7 +37,6 @@ import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
-import de.spektrumprojekt.i.informationextraction.frequency.TermFrequencyComputer;
 import de.spektrumprojekt.i.learner.similarity.UserSimilarityComputer;
 import de.spektrumprojekt.i.ranker.chain.AdaptMessageRankByCMFOfSimilarUsersCommand;
 import de.spektrumprojekt.i.ranker.chain.ComputeMessageRankCommand;
@@ -54,6 +53,9 @@ import de.spektrumprojekt.i.ranker.chain.features.DiscussionMentionFeatureComman
 import de.spektrumprojekt.i.ranker.chain.features.DiscussionParticipationFeatureCommand;
 import de.spektrumprojekt.i.ranker.chain.features.DiscussionRootFeatureCommand;
 import de.spektrumprojekt.i.ranker.chain.features.MentionFeatureCommand;
+import de.spektrumprojekt.i.term.TermSimilarityWeightComputerFactory;
+import de.spektrumprojekt.i.term.frequency.TermFrequencyComputer;
+import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**
@@ -79,6 +81,7 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
     private CommandChain<MessageFeatureContext> rerankerChain;
     private InformationExtractionCommand<MessageFeatureContext> informationExtractionChain;
 
+    private final TermVectorSimilarityComputer termVectorSimilarityComputer;
     private final TermFrequencyComputer termFrequencyComputer;
 
     private UserSimilarityComputer userSimilarityComputer;
@@ -113,6 +116,10 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         this.termFrequencyComputer = new TermFrequencyComputer(this.persistence,
                 this.rankerConfiguration
                         .hasFlag(RankerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL));
+
+        termVectorSimilarityComputer = TermSimilarityWeightComputerFactory.getInstance()
+                .createTermVectorSimilarityComputer(rankerConfiguration.getTermWeightAggregation(),
+                        rankerConfiguration.getTermWeightStrategy(), termFrequencyComputer);
         // TODO register termfrequencycomputer in some timer
 
         rankerChain = new CommandChain<MessageFeatureContext>();
@@ -144,11 +151,10 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         MentionFeatureCommand mentionFeatureCommand = new MentionFeatureCommand();
         DiscussionParticipationFeatureCommand discussionParticipationFeatureCommand = new DiscussionParticipationFeatureCommand();
         DiscussionMentionFeatureCommand discussionMentionFeatureCommand = new DiscussionMentionFeatureCommand();
+
         ContentMatchFeatureCommand termMatchFeatureCommand = new ContentMatchFeatureCommand(
                 persistence,
-                termFrequencyComputer,
-                rankerConfiguration.getTermWeightAggregation(),
-                rankerConfiguration.getTermWeightStrategy(),
+                termVectorSimilarityComputer,
                 rankerConfiguration.getInterestTermTreshold()
                 );
         ComputeMessageRankCommand computeMessageRankCommand = new ComputeMessageRankCommand(
@@ -285,6 +291,8 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         sb.append(this.getClass().getSimpleName());
         sb.append(" rankerConfiguration: "
                 + this.rankerConfiguration.getConfigurationDescription());
+        sb.append(" termVectorSimilarityComputer: "
+                + this.termVectorSimilarityComputer.getConfigurationDescription());
         sb.append(" termFrequencyComputer: "
                 + this.termFrequencyComputer.getConfigurationDescription());
         sb.append(" rankerCommandChain: " + this.rankerChain.getConfigurationDescription());
@@ -317,6 +325,10 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
 
     public TermFrequencyComputer getTermFrequencyComputer() {
         return termFrequencyComputer;
+    }
+
+    public TermVectorSimilarityComputer getTermVectorSimilarityComputer() {
+        return termVectorSimilarityComputer;
     }
 
     public UserSimilarityComputer getUserSimilarityComputer() {
