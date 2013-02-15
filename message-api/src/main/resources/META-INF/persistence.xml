@@ -89,6 +89,7 @@
 		<class>de.spektrumprojekt.datamodel.user.UserModel</class>
 		<class>de.spektrumprojekt.datamodel.user.UserModelEntry</class>
 		<class>de.spektrumprojekt.datamodel.user.UserModelEntryTimeBin</class>
+		<class>de.spektrumprojekt.datamodel.user.UserSimilarity</class>
 
 		<exclude-unlisted-classes>false</exclude-unlisted-classes>
 		<properties>
