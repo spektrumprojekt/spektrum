@@ -42,9 +42,6 @@ public class NGramsExtractorCommand implements Command<InformationExtractionCont
             if (token.length() < 2) {
                 continue;
             }
-            if (!TOKEN_PATTERN.matcher(token).matches()) {
-                continue;
-            }
             cleanTokens.add(token);
         }
         return cleanTokens;
