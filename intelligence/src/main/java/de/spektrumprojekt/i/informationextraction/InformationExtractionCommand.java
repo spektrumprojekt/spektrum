@@ -30,11 +30,11 @@ import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
-import de.spektrumprojekt.i.term.frequency.TermFrequencyComputer;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
 import de.spektrumprojekt.informationextraction.extractors.JerichoTextCleanerCommand;
 import de.spektrumprojekt.informationextraction.extractors.KeyphraseExtractorCommand;
 import de.spektrumprojekt.informationextraction.extractors.LanguageDetectorCommand;
+import de.spektrumprojekt.informationextraction.extractors.NGramsExtractorCommand;
 import de.spektrumprojekt.informationextraction.extractors.StemmedTokenExtractorCommand;
 import de.spektrumprojekt.informationextraction.extractors.TagExtractorCommand;
 import de.spektrumprojekt.informationextraction.extractors.TermCounterCommand;
@@ -51,47 +51,59 @@ public class InformationExtractionCommand<T extends MessageFeatureContext> imple
     private static final String PROPERTY_INFORMATION_EXTRACTION_EXECUTION_DATE = "informationExtractionExecutionDate";
 
     /**
-     * @param doKeyphrase
-     *            true to include the keyphrase extraction
+     * TODO use an information extraction configuration
+     * 
+     * @param informationExtractionConfiguration
+     *            TODO
+     * 
      * @return a default information extraction command with german english as allowed language
      */
     public static <T extends MessageFeatureContext> InformationExtractionCommand<T> createDefaultGermanEnglish(
-            Persistence persistence,
-            TermFrequencyComputer termFrequencyComputer,
-            boolean addTagsToText,
-            boolean doTokens,
-            boolean doTags,
-            boolean doKeyphrase,
-            boolean beMessageGroupSpecific,
-            int minimumTermLength) {
+            InformationExtractionConfiguration informationExtractionConfiguration) {
         Collection<String> allowedLanguages = new HashSet<String>();
 
         allowedLanguages.add("de");
         allowedLanguages.add("en");
 
-        InformationExtractionCommand<T> command = new InformationExtractionCommand<T>(persistence);
-        if (doTokens || doKeyphrase) {
-            command.getInformationExtractionCommandChain().addCommand(
-                    new JerichoTextCleanerCommand(addTagsToText));
+        InformationExtractionCommand<T> command = new InformationExtractionCommand<T>(
+                informationExtractionConfiguration.persistence);
+        if (informationExtractionConfiguration.doTokens
+                || informationExtractionConfiguration.doKeyphrase) {
+            command.getInformationExtractionCommandChain()
+                    .addCommand(
+                            new JerichoTextCleanerCommand(
+                                    informationExtractionConfiguration.addTagsToText));
         }
         command.getInformationExtractionCommandChain().addCommand(
                 new LanguageDetectorCommand("de", allowedLanguages));
-        if (doTokens) {
-            command.getInformationExtractionCommandChain().addCommand(
-                    new StemmedTokenExtractorCommand(beMessageGroupSpecific, false,
-                            minimumTermLength));
+        if (informationExtractionConfiguration.doTokens) {
+
+            if (informationExtractionConfiguration.useNGramsInstreadOfStemming) {
+                command.getInformationExtractionCommandChain().addCommand(
+                        new NGramsExtractorCommand(
+                                informationExtractionConfiguration.beMessageGroupSpecific, false,
+                                informationExtractionConfiguration.nGramsSize,
+                                informationExtractionConfiguration.minimumTermLength));
+
+            } else {
+                command.getInformationExtractionCommandChain().addCommand(
+                        new StemmedTokenExtractorCommand(
+                                informationExtractionConfiguration.beMessageGroupSpecific, false,
+                                informationExtractionConfiguration.minimumTermLength));
+            }
         }
-        if (doKeyphrase) {
+        if (informationExtractionConfiguration.doKeyphrase) {
             command.getInformationExtractionCommandChain()
                     .addCommand(new KeyphraseExtractorCommand());
         }
-        if (doTags) {
+        if (informationExtractionConfiguration.doTags) {
             command.getInformationExtractionCommandChain().addCommand(new TagExtractorCommand(
-                    beMessageGroupSpecific));
+                    informationExtractionConfiguration.beMessageGroupSpecific));
         }
-        if (termFrequencyComputer != null) {
+        if (informationExtractionConfiguration.termFrequencyComputer != null) {
             command.getInformationExtractionCommandChain().addCommand(
-                    new TermCounterCommand(persistence, termFrequencyComputer));
+                    new TermCounterCommand(informationExtractionConfiguration.persistence,
+                            informationExtractionConfiguration.termFrequencyComputer));
         }
         return command;
     }

@@ -28,8 +28,9 @@ public class LogInverseTermWeightComputer implements TermWeightComputer {
                 throw new RuntimeException("No! numMessageWithTerm cannot be 0! " + term);
             }
         }
-        float log = 1 + numMessageWithTerm2 / term.getCount();
-        float weight = (float) Math.log(log);
+
+        float log = term.getCount() == 0 ? 0 : numMessageWithTerm2 / term.getCount();
+        float weight = log == 0 ? 0 : (float) Math.log(log);
         return weight;
     }
 

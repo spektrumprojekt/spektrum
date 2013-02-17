@@ -37,6 +37,7 @@ import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
+import de.spektrumprojekt.i.informationextraction.InformationExtractionConfiguration;
 import de.spektrumprojekt.i.learner.similarity.UserSimilarityComputer;
 import de.spektrumprojekt.i.ranker.chain.AdaptMessageRankByCMFOfSimilarUsersCommand;
 import de.spektrumprojekt.i.ranker.chain.ComputeMessageRankCommand;
@@ -129,17 +130,22 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         UserFeatureCommand userFeatureCommand = new UserFeatureCommand(memberRunner);
         UserFeatureCommand reRankUserFeatureCommand = new UserFeatureCommand(memberRunner);
 
+        InformationExtractionConfiguration informationExtractionConfiguration = new InformationExtractionConfiguration(
+                this.persistence,
+                this.termFrequencyComputer,
+                this.rankerConfiguration.isAddTagsToText(),
+                this.rankerConfiguration.isDoTokens(),
+                this.rankerConfiguration.isDoTags(),
+                this.rankerConfiguration.isDoKeyphrase(),
+                this.rankerConfiguration
+                        .hasFlag(RankerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL),
+                this.rankerConfiguration.getMinimumTermLength());
+        informationExtractionConfiguration.useNGramsInstreadOfStemming = this.rankerConfiguration
+                .isUseNGrams();
+        informationExtractionConfiguration.nGramsSize = this.rankerConfiguration.getnGramsSize();
+
         this.informationExtractionChain = InformationExtractionCommand
-                .createDefaultGermanEnglish(
-                        this.persistence,
-                        this.termFrequencyComputer,
-                        this.rankerConfiguration.isAddTagsToText(),
-                        this.rankerConfiguration.isDoTokens(),
-                        this.rankerConfiguration.isDoTags(),
-                        this.rankerConfiguration.isDoKeyphrase(),
-                        this.rankerConfiguration
-                                .hasFlag(RankerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL),
-                        this.rankerConfiguration.getMinimumTermLength());
+                .createDefaultGermanEnglish(informationExtractionConfiguration);
 
         userSimilarityComputer = new UserSimilarityComputer(this.persistence);
 

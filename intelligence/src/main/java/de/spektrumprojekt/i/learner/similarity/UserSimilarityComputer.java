@@ -105,8 +105,9 @@ public class UserSimilarityComputer implements ConfigurationDescriptable {
         // header
         rows.add("MessageGroupId UserIdFrom UserIdTo Sim");
 
-        for (User user : this.persistence.getAllUsers()) {
-            for (MessageGroup messageGroup : messageGroups) {
+        for (MessageGroup messageGroup : messageGroups) {
+            for (User user : this.persistence.getAllUsers()) {
+
                 List<UserSimilarity> sims = new ArrayList<UserSimilarity>(
                         this.persistence.getUserSimilarities(
                                 user.getGlobalId(), userIds, messageGroup.getGlobalId(), 0.01d));
@@ -116,9 +117,9 @@ public class UserSimilarityComputer implements ConfigurationDescriptable {
                     String row = "MG: " + sim.getMessageGroupGlobalId() + " "
                             + sim.getUserGlobalIdFrom()
                             + " -> " + sim.getUserGlobalIdTo() + " " + sim.getSimilarity();
+                    row += " numMentions: " + sim.getNumberOfMentions();
                     rows.add(row);
                 }
-
             }
         }
 

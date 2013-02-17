@@ -18,7 +18,7 @@ public class AverageTermVectorSimilarityComputer extends TermWeightTermVectorSim
             Collection<Term> terms) {
         float sumTop = 0;
         float sumBottom = 0;
-        for (Term term : terms) {
+        for (Term term : relevantEntries.keySet()) {
             UserModelEntry entry = relevantEntries.get(term);
             float entryScore = 0;
             if (entry != null) {

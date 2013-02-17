@@ -80,14 +80,16 @@ public final class TagExtractorCommand implements Command<InformationExtractionC
             }
         }
         for (String tag : tags) {
-            String term = tokenPrefix + "%" + tag;
-            context.getMessagePart().addScoredTerm(
-                    new ScoredTerm(context.getPersistence().getOrCreateTerm(
-                            Term.TermCategory.TERM,
-                            term),
-                            1));
+            tag = tag.trim();
+            if (tag.length() > 0) {
+                String term = tokenPrefix + "%" + tag;
+                context.getMessagePart().addScoredTerm(
+                        new ScoredTerm(context.getPersistence().getOrCreateTerm(
+                                Term.TermCategory.TERM,
+                                term),
+                                1));
+            }
         }
 
     }
-
 }

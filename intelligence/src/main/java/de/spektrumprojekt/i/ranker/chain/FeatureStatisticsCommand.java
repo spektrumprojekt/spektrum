@@ -20,7 +20,6 @@
 package de.spektrumprojekt.i.ranker.chain;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +37,32 @@ import de.spektrumprojekt.i.ranker.chain.features.Feature;
  */
 public class FeatureStatisticsCommand implements Command<UserSpecificMessageFeatureContext> {
 
-    private final Map<Feature, Integer> featureCounts = new HashMap<Feature, Integer>();
+    private class FeatureStat {
+        public int ones;
+        public int zeroPointFive;
+        public int greaterZero;
+        public int exists;
+
+        private String getPercentString(int val, int overall) {
+            int percent = 100 * val / overall;
+            return val + " (" + percent + "%) ";
+        }
+
+        @Override
+        public String toString() {
+            return " ==1: " + ones + " >0.5: " + zeroPointFive + " >0: " + greaterZero
+                    + " exists: " + exists;
+        }
+
+        public String toString(int overall) {
+            return " ==1: " + getPercentString(ones, overall) + " >=0.5: "
+                    + getPercentString(zeroPointFive, overall) + " >0: "
+                    + getPercentString(greaterZero, overall) + " exists: "
+                    + getPercentString(exists, overall);
+        }
+    }
+
+    private final Map<Feature, FeatureStat> featureCounts = new HashMap<Feature, FeatureStat>();
 
     private int contextCount;
 
@@ -49,7 +73,7 @@ public class FeatureStatisticsCommand implements Command<UserSpecificMessageFeat
      */
     public FeatureStatisticsCommand() {
         for (Feature f : Feature.ALL_FEATURES) {
-            this.featureCounts.put(f, 0);
+            this.featureCounts.put(f, new FeatureStat());
         }
     }
 
@@ -71,21 +95,12 @@ public class FeatureStatisticsCommand implements Command<UserSpecificMessageFeat
         for (Feature f : Feature.ALL_FEATURES) {
             StringBuilder sb = new StringBuilder();
             sb.append(f.getId() + ": ");
-            sb.append(this.featureCounts.get(f));
+            sb.append(this.featureCounts.get(f).toString(contextCount));
 
-            int percent = 0;
-            if (contextCount > 0) {
-                percent = 100 * this.featureCounts.get(f) / contextCount;
-            }
-            sb.append(" " + percent + "%");
             values.add(sb.toString());
         }
         values.add("contextCount: " + contextCount);
         return values;
-    }
-
-    public Map<Feature, Integer> getFeatureCounts() {
-        return Collections.unmodifiableMap(featureCounts);
     }
 
     /**
@@ -95,11 +110,24 @@ public class FeatureStatisticsCommand implements Command<UserSpecificMessageFeat
     public void process(UserSpecificMessageFeatureContext context) {
 
         contextCount++;
+
         for (MessageFeature feature : context.getFeatures().values()) {
+            FeatureStat stat = this.featureCounts.get(feature.getFeatureId());
+            stat.exists++;
+
             if (feature.getValue() == 1) {
-                Integer count = this.featureCounts.get(feature.getFeatureId());
-                this.featureCounts.put(feature.getFeatureId(), count + 1);
+                stat.ones++;
             }
+            if (feature.getValue() >= 0.5) {
+                stat.zeroPointFive++;
+            }
+            if (feature.getValue() > 0) {
+                stat.greaterZero++;
+            }
+        }
+
+        if (context.getFeatures().size() == 0) {
+            this.featureCounts.get(Feature.NULL_FEATURE).exists++;
         }
 
     }

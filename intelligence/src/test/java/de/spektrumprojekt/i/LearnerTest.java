@@ -40,11 +40,13 @@ import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
+import de.spektrumprojekt.i.informationextraction.InformationExtractionConfiguration;
 import de.spektrumprojekt.i.learner.Learner;
 import de.spektrumprojekt.i.learner.LearningMessage;
 import de.spektrumprojekt.i.learner.UserModelEntryIntegrationPlainStrategy;
 import de.spektrumprojekt.i.learner.UserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
+import de.spektrumprojekt.persistence.Persistence;
 
 /**
  * Test for the {@link Learner}
@@ -140,8 +142,8 @@ public class LearnerTest extends IntelligenceSpektrumTest {
 
         // extract the terms
         InformationExtractionCommand<MessageFeatureContext> ieCommand = InformationExtractionCommand
-                .createDefaultGermanEnglish(getPersistence(), null, false, true, false, false,
-                        false, 0);
+                .createDefaultGermanEnglish(new InformationExtractionConfiguration(getPersistence(), null, false, true, false, false,
+                        false, 0));
         MessageFeatureContext context = new MessageFeatureContext(getPersistence(), message, null);
         ieCommand.process(context);
         checkScoredTerms(context);

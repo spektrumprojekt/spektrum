@@ -36,6 +36,9 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     private float interestTermTreshold = 0.75f;
 
+    private boolean useNGrams;
+    private int nGramsSize = 2;
+
     public RankerConfiguration(TermWeightStrategy strategy, TermVectorSimilarityStrategy aggregation) {
         this(strategy, aggregation, (RankerConfigurationFlag[]) null);
     }
@@ -116,6 +119,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         return minUserSimilarity;
     }
 
+    public int getnGramsSize() {
+        return nGramsSize;
+    }
+
     public TermVectorSimilarityStrategy getTermWeightAggregation() {
         return termWeightAggregation;
     }
@@ -152,6 +159,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     public boolean isImmutable() {
         return immutable;
+    }
+
+    public boolean isUseNGrams() {
+        return useNGrams;
     }
 
     public void setAddTagsToText(boolean addTagsToText) {
@@ -206,6 +217,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         this.minUserSimilarity = minUserSimilarity;
     }
 
+    public void setnGramsSize(int nGramsSize) {
+        this.nGramsSize = nGramsSize;
+    }
+
     public void setTermWeightAggregation(TermVectorSimilarityStrategy termWeightAggregation) {
         assertCanSet();
         if (termWeightAggregation == null) {
@@ -220,6 +235,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
             throw new IllegalStateException("termWeightStrategy cannot be null.");
         }
         this.termWeightStrategy = termWeightStrategy;
+    }
+
+    public void setUseNGrams(boolean useNGrams) {
+        this.useNGrams = useNGrams;
     }
 
     @Override
