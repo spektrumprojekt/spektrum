@@ -47,7 +47,7 @@ import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
 import de.spektrumprojekt.datamodel.observation.Interest;
 import de.spektrumprojekt.datamodel.observation.Observation;
-import de.spektrumprojekt.datamodel.observation.Observation.ObservationPriority;
+import de.spektrumprojekt.datamodel.observation.ObservationPriority;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 import de.spektrumprojekt.datamodel.user.User;

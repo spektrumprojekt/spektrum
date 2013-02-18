@@ -20,22 +20,27 @@
 
 package de.spektrumprojekt.datamodel.observation;
 
-/**
- * The type of an observation. The type defines the semantics of the observation itself..
- * 
- * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
- * 
- */
-public enum ObservationType {
-    /**
-     * A new message has been created and started a ranking. The observation will hold the global id
-     * of the referring message.
-     */
-    MESSAGE,
-    /**
-     * A message has been liked. The observation will hold the message that was liked.
-     */
-    LIKE,
+public enum ObservationPriority {
 
-    RATING
+    USER_FEEDBACK(100),
+    FIRST_LEVEL_FEATURE_INFERRED(90),
+    SECOND_LEVEL_FEATURE_INFERRED(80);
+
+    private final int priority;
+
+    private ObservationPriority(int priority) {
+        this.priority = priority;
+    }
+
+    public boolean hasHigherPriorityAs(ObservationPriority priority) {
+        return this.priority > priority.priorityValue();
+    }
+
+    public boolean hasLowerPriorityAs(ObservationPriority priority) {
+        return this.priority < priority.priorityValue();
+    }
+
+    public int priorityValue() {
+        return priority;
+    }
 }

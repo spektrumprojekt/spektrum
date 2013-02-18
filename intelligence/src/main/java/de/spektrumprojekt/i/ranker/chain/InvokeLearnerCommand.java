@@ -28,7 +28,7 @@ import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.observation.Interest;
 import de.spektrumprojekt.datamodel.observation.Observation;
-import de.spektrumprojekt.datamodel.observation.Observation.ObservationPriority;
+import de.spektrumprojekt.datamodel.observation.ObservationPriority;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.i.learner.LearningMessage;
