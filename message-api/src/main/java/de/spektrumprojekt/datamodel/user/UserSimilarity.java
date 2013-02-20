@@ -97,7 +97,8 @@ public class UserSimilarity extends Identifiable {
             this.setSimilarity(Math.min(ratio1, ratio2));
         }
         if (fromCount > 0) {
-            this.setSimilarity(Math.max(getSimilarity(), numberOfMentions / fromCount.doubleValue()));
+            this.setSimilarity(Math.max(getSimilarity(),
+                    Math.min(1, numberOfMentions / fromCount.doubleValue())));
         }
     }
 
