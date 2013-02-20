@@ -197,7 +197,12 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         // store the message after the terms have been extracted
         rankerChain.addCommand(storeMessageCommand);
 
-        rankerChain.addCommand(userSimilarityIntegrationCommand);
+        if (this.rankerConfiguration
+                .hasFlag(RankerConfigurationFlag.USE_CONTENT_MATCH_FEATURE_OF_SIMILAR_USERS) ||
+                this.rankerConfiguration
+                        .hasFlag(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)) {
+            rankerChain.addCommand(userSimilarityIntegrationCommand);
+        }
 
         if (!this.rankerConfiguration
                 .hasFlag(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE)
