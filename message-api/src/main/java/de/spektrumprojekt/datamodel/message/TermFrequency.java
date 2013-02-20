@@ -64,11 +64,12 @@ public class TermFrequency extends Identifiable {
     private long uniqueTermCount;
     private long messageCount;
 
-    private final static ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final transient ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    private final static MapType messageGroupMessageCountsMapType = MapType.construct(
-            HashMap.class,
-            SimpleType.construct(String.class), SimpleType.construct(Integer.class));
+    private static final transient MapType MESSAGE_GROUP_MESSAGE_COUNTS_MAP_TYPE = MapType
+            .construct(
+                    HashMap.class,
+                    SimpleType.construct(String.class), SimpleType.construct(Integer.class));
 
     public TermFrequency() {
         super(SINGLE_GLOBAL_ID);
@@ -109,9 +110,9 @@ public class TermFrequency extends Identifiable {
             messageGroupMessageCounts = new HashMap<String, Integer>();
         } else {
             try {
-                messageGroupMessageCounts = OBJECT_MAPPER
-                        .readValue(this.messageGroupMessageCountsJson,
-                                messageGroupMessageCountsMapType);
+                messageGroupMessageCounts = OBJECT_MAPPER.readValue(
+                        this.messageGroupMessageCountsJson,
+                        MESSAGE_GROUP_MESSAGE_COUNTS_MAP_TYPE);
             } catch (JsonParseException e) {
                 throw new RuntimeException("Error deserializing map", e);
             } catch (JsonMappingException e) {
@@ -120,13 +121,12 @@ public class TermFrequency extends Identifiable {
                 throw new RuntimeException("Error deserializing map", e);
             }
         }
-
     }
 
     public void prepareForStore() {
         try {
-            this.messageGroupMessageCountsJson = OBJECT_MAPPER
-                    .writeValueAsString(this.messageGroupMessageCounts);
+            this.messageGroupMessageCountsJson = OBJECT_MAPPER.writeValueAsString(
+                    this.messageGroupMessageCounts);
         } catch (JsonGenerationException e) {
             throw new RuntimeException("Error serializing map", e);
         } catch (JsonMappingException e) {
