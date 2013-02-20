@@ -31,6 +31,7 @@ import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
+import de.spektrumprojekt.datamodel.message.TermFrequency;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
@@ -152,6 +153,11 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
+    public TermFrequency getTermFrequency() {
+        return null;
+    }
+
+    @Override
     public Map<Term, UserModelEntry> getUserModelEntriesForTerms(UserModel userModel,
             Collection<Term> terms) {
         return null;
@@ -236,6 +242,11 @@ public class PersistenceMock implements Persistence {
 
     @Override
     public void updateAggregationSubscription(SubscriptionStatus aggregationStatus) {
+    }
+
+    @Override
+    public void updateTermFrequency(TermFrequency termFrequency) {
+
     }
 
     @Override

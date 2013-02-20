@@ -31,6 +31,7 @@ import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
+import de.spektrumprojekt.datamodel.message.TermFrequency;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
@@ -119,6 +120,8 @@ public interface Persistence {
      */
     UserModel getOrCreateUserModelByUser(String userGlobalId);
 
+    TermFrequency getTermFrequency();
+
     /**
      * 
      * @param userModel
@@ -204,6 +207,8 @@ public interface Persistence {
     void storeUserSimilarity(UserSimilarity stat);
 
     void updateAggregationSubscription(SubscriptionStatus aggregationStatus);
+
+    void updateTermFrequency(TermFrequency termFrequency);
 
     void updateTerms(Collection<Term> termsChanged);
 

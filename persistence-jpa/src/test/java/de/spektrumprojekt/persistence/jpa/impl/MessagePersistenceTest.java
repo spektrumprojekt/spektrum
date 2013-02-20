@@ -45,6 +45,7 @@ import de.spektrumprojekt.datamodel.message.MessageType;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
+import de.spektrumprojekt.datamodel.message.TermFrequency;
 import de.spektrumprojekt.datamodel.observation.Interest;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationPriority;
@@ -310,6 +311,48 @@ public class MessagePersistenceTest {
             Assert.assertEquals(obs.getUserGlobalId(), ob.getUserGlobalId());
             Assert.assertEquals(obs.getMessageGlobalId(), ob.getMessageGlobalId());
             Assert.assertEquals(obs.getObservationType(), ob.getObservationType());
+        }
+    }
+
+    @Test
+    public void testTermFrequency() {
+        TermFrequency tf = persistence.getTermFrequency();
+        Assert.assertNotNull(tf);
+
+        tf.setAllTermCount(12);
+        tf.setMessageCount(1200);
+        tf.setUniqueTermCount(120);
+
+        persistence.updateTermFrequency(tf);
+
+        TermFrequency tf2 = persistence.getTermFrequency();
+
+        Assert.assertEquals(tf.getAllTermCount(), tf2.getAllTermCount());
+        Assert.assertEquals(tf.getMessageCount(), tf2.getMessageCount());
+        Assert.assertEquals(tf.getUniqueTermCount(), tf2.getUniqueTermCount());
+
+        for (int i = 0; i < 10; i++) {
+            tf2.setMessageGroupMessageCount("mg" + i, i + 10);
+        }
+        persistence.updateTermFrequency(tf2);
+
+        TermFrequency tf3 = persistence.getTermFrequency();
+
+        for (int i = 0; i < 10; i++) {
+            Integer integer = tf3.getMessageGroupMessageCounts().get("mg" + i);
+            Assert.assertNotNull(i + "", integer);
+            Assert.assertEquals(i + "", i + 10, integer.intValue());
+        }
+
+        for (int i = 0; i < 10; i++) {
+            tf3.incrementMessageGroupMessageCount("mg" + i);
+        }
+        persistence.updateTermFrequency(tf3);
+
+        TermFrequency tf4 = persistence.getTermFrequency();
+        for (int i = 0; i < 10; i++) {
+
+            Assert.assertEquals(i + 11, tf4.getMessageGroupMessageCounts().get("mg" + i).intValue());
         }
     }
 }

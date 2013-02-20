@@ -39,6 +39,7 @@ import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
+import de.spektrumprojekt.datamodel.message.TermFrequency;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
@@ -159,6 +160,8 @@ public class SimplePersistence implements Persistence {
     private final Map<String, List<Message>> patternMessages = new HashMap<String, List<Message>>();
 
     private final Map<ObservationKey, Collection<Observation>> observations = new HashMap<SimplePersistence.ObservationKey, Collection<Observation>>();
+
+    private TermFrequency termFrequency = new TermFrequency();
 
     public void clearMessageRanks() {
         this.messageRanks.clear();
@@ -352,6 +355,11 @@ public class SimplePersistence implements Persistence {
 
         }
         return userModelHolder.getUserModel();
+    }
+
+    @Override
+    public TermFrequency getTermFrequency() {
+        return termFrequency;
     }
 
     @Override
@@ -560,6 +568,11 @@ public class SimplePersistence implements Persistence {
     @Override
     public void updateAggregationSubscription(SubscriptionStatus aggregationStatus) {
         throw new UnsupportedOperationException("Not yet implemented.");
+    }
+
+    @Override
+    public void updateTermFrequency(TermFrequency termFrequency) {
+        this.termFrequency = termFrequency;
     }
 
     @Override
