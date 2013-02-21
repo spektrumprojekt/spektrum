@@ -7,8 +7,6 @@ import java.util.List;
 
 import org.junit.Test;
 
-import de.spektrumprojekt.informationextraction.extractors.ExtractionUtils;
-
 public class ExtractionUtilsTest {
     
     @Test
@@ -19,6 +17,19 @@ public class ExtractionUtilsTest {
         assertEquals("the quick brown", nGramTokens.get(0));
         assertEquals("quick brown fox", nGramTokens.get(1));
         assertEquals("brown fox jumps", nGramTokens.get(2));
+    }
+
+    @Test
+    public void testCreateCharNGrams() {
+        String text = "the quick brown fox";
+        List<String> charNGrams = ExtractionUtils.createCharNGrams(text, 3);
+        assertEquals(17, charNGrams.size());
+        assertEquals("the", charNGrams.get(0));
+        assertEquals("he ", charNGrams.get(1));
+        assertEquals("e q", charNGrams.get(2));
+
+        charNGrams = ExtractionUtils.createCharNGrams(text, 2, 5);
+        assertEquals(66, charNGrams.size());
     }
 
 }

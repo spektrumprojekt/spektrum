@@ -41,7 +41,11 @@ import org.tartarus.snowball.ext.FrenchStemmer;
 import org.tartarus.snowball.ext.GermanStemmer;
 
 /**
+ * <p>
+ * Utility class for text mining tasks like stemming, stopwords, n-gram creation, ...
+ * </p>
  * 
+ * @author Philipp Katz
  */
 public final class ExtractionUtils {
 
@@ -95,6 +99,49 @@ public final class ExtractionUtils {
             nGrams.add(nGram.toString());
         }
         return nGrams;
+    }
+
+    /**
+     * <p>
+     * Create character-based n-grams of the given length.
+     * </p>
+     * 
+     * @param text The text for which to create the n-grams, not <code>null</code>.
+     * @param length The length of the n-grams to create, greater or equal one.
+     * @return A list with n-grams in the order as extracted from the text.
+     */
+    public static List<String> createCharNGrams(String text, int length) {
+        Validate.isTrue(length >= 1, "length must be greater or equal 1");
+        Validate.notNull(text, "text must not be null");
+
+        List<String> ret = new ArrayList<String>();
+        for (int i = 0; i <= text.length() - length; i++) {
+            ret.add(text.substring(i, i + length));
+        }
+
+        return ret;
+    }
+
+    /**
+     * <p>
+     * Create character-based n-grams in the given length interval.
+     * </p>
+     * 
+     * @param text The text for which to create n-grams, not <code>null</code>.
+     * @param minLength The minimum length of the n-grams to create, greater or equal one.
+     * @param maxLength The maximum length of the n-grams to create, greater or equal minLength.
+     * @return A list with n-grams starting with the min length in the order as extracted from the text.
+     */
+    public static List<String> createCharNGrams(String text, int minLength, int maxLength) {
+        Validate.isTrue(minLength >= 1, "minLength must be greater or equal 1");
+        Validate.isTrue(maxLength >= minLength, "maxLength must be greater or equal minLength");
+        Validate.notNull(text, "text must not be null");
+
+        List<String> ret = new ArrayList<String>();
+        for (int length = minLength; length <= maxLength; length++) {
+            ret.addAll(createCharNGrams(text, length));
+        }
+        return ret;
     }
 
     /**
