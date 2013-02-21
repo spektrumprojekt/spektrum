@@ -19,23 +19,36 @@
 
 package de.spektrumprojekt.i.learner.similarity;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import de.spektrumprojekt.commons.time.TimeProviderHolder;
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
+import de.spektrumprojekt.datamodel.identifiable.Identifiable;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
+import de.spektrumprojekt.helper.IdentifiableHelper;
 import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.persistence.Persistence;
 
 public class UserSimilarityComputer implements ConfigurationDescriptable {
+
+    private final static Logger LOGGER = LoggerFactory.getLogger(UserSimilarityComputer.class);
 
     private static final long MONTH = 28 * 24 * 3600;
 
@@ -43,11 +56,98 @@ public class UserSimilarityComputer implements ConfigurationDescriptable {
 
     private final Persistence persistence;
 
+    private Map<String, Integer> overallMentionsPerUserFrom = new HashMap<String, Integer>();
+
+    private Map<String, Integer> overallMentionsPerUserTo = new HashMap<String, Integer>();
+
     public UserSimilarityComputer(Persistence persistence) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
         }
         this.persistence = persistence;
+    }
+
+    public List<String> dumpUserSimilarities() {
+
+        LOGGER.debug("Dumping UserSimilarities ...");
+
+        List<User> users = new ArrayList<User>(this.persistence.getAllUsers());
+        List<MessageGroup> messageGroups = new ArrayList<MessageGroup>(
+                this.persistence.getAllMessageGroups());
+
+        Comparator<Identifiable> comp = new Comparator<Identifiable>() {
+
+            @Override
+            public int compare(Identifiable o1, Identifiable o2) {
+                return o1.getGlobalId().compareTo(o2.getGlobalId());
+            }
+
+        };
+
+        Comparator<UserSimilarity> compSim = new Comparator<UserSimilarity>() {
+
+            @Override
+            public int compare(UserSimilarity o1, UserSimilarity o2) {
+                int result = o1.getUserGlobalIdFrom().compareTo(o2.getUserGlobalIdFrom());
+                if (result == 0) {
+                    result = o1.getUserGlobalIdTo().compareTo(o2.getUserGlobalIdTo());
+                }
+                return result;
+            }
+
+        };
+
+        Collections.sort(users, comp);
+        Collections.sort(messageGroups, comp);
+
+        Collection<String> userIds = IdentifiableHelper.getGlobalIds(users);
+        List<String> rows = new ArrayList<String>();
+        // header
+        rows.add("MessageGroupId UserIdFrom UserIdTo Sim");
+
+        for (MessageGroup messageGroup : messageGroups) {
+            for (User user : this.persistence.getAllUsers()) {
+
+                List<UserSimilarity> sims = new ArrayList<UserSimilarity>(
+                        this.persistence.getUserSimilarities(
+                                user.getGlobalId(), userIds, messageGroup.getGlobalId(), 0.01d));
+                Collections.sort(sims, compSim);
+
+                for (UserSimilarity sim : sims) {
+                    String row = "MG: " + sim.getMessageGroupGlobalId() + " "
+                            + sim.getUserGlobalIdFrom()
+                            + " -> " + sim.getUserGlobalIdTo() + " " + sim.getSimilarity();
+                    row += " numMentions: " + sim.getNumberOfMentions();
+                    rows.add(row);
+                }
+            }
+        }
+
+        for (User user : users) {
+            Integer from = this.overallMentionsPerUserFrom.get(user.getGlobalId());
+            Integer to = this.overallMentionsPerUserTo.get(user.getGlobalId());
+
+            if (from != null || to != null) {
+                if (from == null) {
+                    from = 0;
+                }
+                if (to == null) {
+                    to = 0;
+                }
+
+                rows.add("overallMentions " + user.getGlobalId() + " from ->: " + from
+                        + "  to <-: " + to);
+            }
+        }
+
+        LOGGER.info("Dumping UserSimilarities done with {} rows." + rows.size());
+
+        return rows;
+    }
+
+    public void dumpUserSimilarities(File file) throws IOException {
+        List<String> rows = dumpUserSimilarities();
+        FileUtils.writeLines(file, rows);
     }
 
     @Override
@@ -57,37 +157,23 @@ public class UserSimilarityComputer implements ConfigurationDescriptable {
 
     public Collection<UserSimilarity> run() {
 
-        Map<String, UserSimilarityStat> similarities = new HashMap<String, UserSimilarityStat>();
+        overallMentionsPerUserFrom.clear();
+        overallMentionsPerUserTo.clear();
+
+        Map<String, UserSimilarity> similarities = new HashMap<String, UserSimilarity>();
 
         // 1st get a list of all users
-
-        List<User> users = new ArrayList<User>(persistence.getAllUsers());
+        // skipped
 
         // 2nd get a list of all topics
         Collection<MessageGroup> messageGroups = persistence.getAllMessageGroups();
 
         // 3rd init user sim matrix
-        for (MessageGroup messageGroup : messageGroups) {
-            for (int i = 0; i < users.size(); i++) {
-                inner: for (int j = 0; j < users.size(); j++) {
-                    if (i == j) {
-                        break inner;
-                    }
-                    UserSimilarityStat stat1 = new UserSimilarityStat(users.get(i).getGlobalId(),
-                            users.get(j)
-                                    .getGlobalId(), messageGroup.getGlobalId());
-                    UserSimilarityStat stat2 = new UserSimilarityStat(users.get(j).getGlobalId(),
-                            users.get(i)
-                                    .getGlobalId(), messageGroup.getGlobalId());
-                    similarities.put(stat1.getKey(), stat1);
-                    similarities.put(stat2.getKey(), stat2);
-                }
-            }
-        }
+        // skipped
 
         // 4th iterate over message of last month (or whatever)
-        Date now = new Date();
-        Date goingBack = new Date(now.getTime() - intervall);
+        long now = TimeProviderHolder.DEFAULT.getCurrentTime();
+        Date goingBack = new Date(now - intervall);
         for (MessageGroup messageGroup : messageGroups) {
             // some iteration ?
             Collection<Message> messages = persistence.getMessagesSince(messageGroup.getGlobalId(),
@@ -98,31 +184,22 @@ public class UserSimilarityComputer implements ConfigurationDescriptable {
             }
         }
 
-        Map<String, Integer> overallMentionsPerUserFrom = new HashMap<String, Integer>();
-        Map<String, Integer> overallMentionsPerUserTo = new HashMap<String, Integer>();
+        for (UserSimilarity stat : similarities.values()) {
+            String userGlobalIdFrom = stat.getUserGlobalIdFrom();
+            String userGlobalIdTo = stat.getUserGlobalIdTo();
 
-        for (UserSimilarityStat stat : similarities.values()) {
-            Integer from = overallMentionsPerUserFrom.get(stat.getUserGlobalIdFrom());
-            if (from == null) {
-                from = 0;
-            }
-            from++;
-            overallMentionsPerUserFrom.put(stat.getUserGlobalIdFrom(), from);
-
-            Integer to = overallMentionsPerUserFrom.get(stat.getUserGlobalIdTo());
-            if (to == null) {
-                to = 0;
-            }
-            to++;
-            overallMentionsPerUserTo.put(stat.getUserGlobalIdFrom(), to);
+            updateOverallCounts(userGlobalIdFrom, userGlobalIdTo);
         }
 
         // 5th compute similarity, topic based!
-        for (UserSimilarityStat stat : similarities.values()) {
-            UserSimilarityStat reverse = similarities.get(UserSimilarityStat.getKey(
+        for (UserSimilarity stat : similarities.values()) {
+            UserSimilarity reverse = similarities.get(UserSimilarity.getKey(
                     stat.getUserGlobalIdTo(), stat.getUserGlobalIdFrom(),
                     stat.getMessageGroupGlobalId()));
-            assert reverse != null;
+            if (reverse == null) {
+                reverse = new UserSimilarity(stat.getUserGlobalIdTo(), stat.getUserGlobalIdFrom(),
+                        stat.getMessageGroupGlobalId());
+            }
             stat.consolidate(reverse, overallMentionsPerUserFrom.get(stat.getUserGlobalIdFrom()),
                     overallMentionsPerUserTo.get(stat.getUserGlobalIdTo()));
         }
@@ -133,7 +210,58 @@ public class UserSimilarityComputer implements ConfigurationDescriptable {
         return userSimilarities;
     }
 
-    private void updateUserSimilarities(Map<String, UserSimilarityStat> similarities,
+    public void runForMessage(Message message) {
+        Collection<String> mentionUserGlobalIds = MessageHelper.getMentions(message);
+
+        String messageGroupGlobalId = message.getMessageGroup() != null ? message.getMessageGroup()
+                .getGlobalId() : null;
+        String userGlobalIdFrom = message.getAuthorGlobalId();
+
+        to: for (String userGlobalIdTo : mentionUserGlobalIds) {
+            if (userGlobalIdFrom.equals(userGlobalIdTo)) {
+                break to;
+            }
+            UserSimilarity stat = this.persistence.getUserSimilarity(userGlobalIdFrom,
+                    userGlobalIdTo, messageGroupGlobalId);
+            UserSimilarity reverse = this.persistence.getUserSimilarity(userGlobalIdTo,
+                    userGlobalIdFrom, messageGroupGlobalId);
+            if (stat == null) {
+                stat = new UserSimilarity(userGlobalIdFrom, userGlobalIdTo,
+                        messageGroupGlobalId);
+            }
+            if (reverse == null) {
+                reverse = new UserSimilarity(userGlobalIdTo, userGlobalIdFrom,
+                        messageGroupGlobalId);
+            }
+            stat.incrementNumberOfMentions();
+
+            updateOverallCounts(userGlobalIdFrom, userGlobalIdTo);
+
+            stat.consolidate(reverse, overallMentionsPerUserFrom.get(stat.getUserGlobalIdFrom()),
+                    overallMentionsPerUserTo.get(stat.getUserGlobalIdTo()));
+
+            this.persistence.storeUserSimilarity(stat);
+            this.persistence.storeUserSimilarity(reverse);
+        }
+    }
+
+    private void updateOverallCounts(String userGlobalIdFrom, String userGlobalIdTo) {
+        Integer from = overallMentionsPerUserFrom.get(userGlobalIdFrom);
+        if (from == null) {
+            from = 0;
+        }
+        from++;
+        overallMentionsPerUserFrom.put(userGlobalIdFrom, from);
+
+        Integer to = overallMentionsPerUserFrom.get(userGlobalIdTo);
+        if (to == null) {
+            to = 0;
+        }
+        to++;
+        overallMentionsPerUserTo.put(userGlobalIdTo, to);
+    }
+
+    private void updateUserSimilarities(Map<String, UserSimilarity> similarities,
             Message message) {
         Collection<String> mentionUserGlobalIds = MessageHelper.getMentions(message);
 
@@ -145,9 +273,13 @@ public class UserSimilarityComputer implements ConfigurationDescriptable {
             if (from.equals(to)) {
                 break to;
             }
-            UserSimilarityStat stat = similarities.get(UserSimilarityStat.getKey(from, to,
-                    messageGroupId));
-            assert stat != null;
+            String key = UserSimilarity.getKey(from, to,
+                    messageGroupId);
+            UserSimilarity stat = similarities.get(key);
+            if (stat == null) {
+                stat = new UserSimilarity(from, to, messageGroupId);
+                similarities.put(stat.getKey(), stat);
+            }
             stat.incrementNumberOfMentions();
         }
 

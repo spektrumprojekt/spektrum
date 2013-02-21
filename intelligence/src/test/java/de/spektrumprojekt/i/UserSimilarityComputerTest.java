@@ -22,7 +22,7 @@ import de.spektrumprojekt.i.learner.similarity.UserSimilarityComputer;
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 
  */
-public class UserSimilarityComputerTest extends MyStreamTest {
+public class UserSimilarityComputerTest extends IntelligenceSpektrumTest {
 
     @Before
     public void setupTest() throws ConfigurationException {

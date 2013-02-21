@@ -1,3 +1,22 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package de.spektrumprojekt.datamodel.observation;
 
 import java.util.Date;
@@ -39,6 +58,8 @@ public class Observation extends Identifiable {
 
     private ObservationType observationType;
 
+    private ObservationPriority priority;
+
     private String observation;
 
     // a derived interest, if null it will be determined by observation type
@@ -54,6 +75,7 @@ public class Observation extends Identifiable {
     public Observation(String userGlobalId,
             String messageGlobalId,
             ObservationType observationType,
+            ObservationPriority priority,
             String observation,
             Date observationDate,
             Interest interest) {
@@ -66,29 +88,41 @@ public class Observation extends Identifiable {
         if (observationType == null) {
             throw new IllegalArgumentException("observationType cannot be null");
         }
+        if (priority == null) {
+            throw new IllegalArgumentException("priority cannot be null");
+        }
         if (observationDate == null) {
             observationDate = new Date();
         }
         this.userGlobalId = userGlobalId;
         this.messageGlobalId = messageGlobalId;
         this.observationType = observationType;
+        this.priority = priority;
         this.observation = observation;
         this.observationDate = observationDate;
         this.interest = interest;
     }
 
-    public Observation(User user, Message message, ObservationType observationType,
+    public Observation(User user,
+            Message message,
+            ObservationType observationType,
+            ObservationPriority priority,
             String observation,
-            Date observationDate, Interest interest) {
+            Date observationDate,
+            Interest interest) {
         this(user == null ? null : user.getGlobalId(),
                 message == null ? null : message.getGlobalId(),
                 observationType,
+                priority,
                 observation,
                 observationDate, interest);
     }
 
-    public Observation(User user, ObservationType observationType, String observation) {
-        this(user, null, observationType, observation, null, null);
+    public Observation(User user,
+            ObservationType observationType,
+            ObservationPriority priority,
+            String observation) {
+        this(user, null, observationType, priority, observation, null, null);
     }
 
     public Interest getInterest() {
@@ -109,6 +143,10 @@ public class Observation extends Identifiable {
 
     public ObservationType getObservationType() {
         return observationType;
+    }
+
+    public ObservationPriority getPriority() {
+        return priority;
     }
 
     public String getUserGlobalId() {
@@ -135,26 +173,19 @@ public class Observation extends Identifiable {
         this.observationType = observationType;
     }
 
+    public void setPriority(ObservationPriority priority) {
+        this.priority = priority;
+    }
+
     public void setUserGlobalId(String userGlobalId) {
         this.userGlobalId = userGlobalId;
     }
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("Observation [userGlobalId=");
-        builder.append(userGlobalId);
-        builder.append(", messageGlobalId=");
-        builder.append(messageGlobalId);
-        builder.append(", observationDate=");
-        builder.append(observationDate);
-        builder.append(", observationType=");
-        builder.append(observationType);
-        builder.append(", observation=");
-        builder.append(observation);
-        builder.append(", interest=");
-        builder.append(interest);
-        builder.append("]");
-        return builder.toString();
+        return "Observation [userGlobalId=" + userGlobalId + ", messageGlobalId=" + messageGlobalId
+                + ", observationDate=" + observationDate + ", observationType=" + observationType
+                + ", priority=" + priority + ", observation=" + observation + ", interest="
+                + interest + "]";
     }
 }

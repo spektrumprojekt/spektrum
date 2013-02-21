@@ -81,12 +81,16 @@
 		<class>de.spektrumprojekt.datamodel.message.MetaInformation</class>
 		<class>de.spektrumprojekt.datamodel.message.ScoredTerm</class>
 		<class>de.spektrumprojekt.datamodel.message.Term</class>
+		<class>de.spektrumprojekt.datamodel.message.TermFrequency</class>
 		<class>de.spektrumprojekt.datamodel.message.TermMetaInformation</class>
+		
+		<class>de.spektrumprojekt.datamodel.observation.Observation</class>
 
 		<class>de.spektrumprojekt.datamodel.user.User</class>
 		<class>de.spektrumprojekt.datamodel.user.UserModel</class>
 		<class>de.spektrumprojekt.datamodel.user.UserModelEntry</class>
 		<class>de.spektrumprojekt.datamodel.user.UserModelEntryTimeBin</class>
+		<class>de.spektrumprojekt.datamodel.user.UserSimilarity</class>
 
 		<exclude-unlisted-classes>false</exclude-unlisted-classes>
 		<properties>

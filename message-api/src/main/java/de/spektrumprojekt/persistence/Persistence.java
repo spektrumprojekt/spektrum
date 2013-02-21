@@ -31,6 +31,7 @@ import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
+import de.spektrumprojekt.datamodel.message.TermFrequency;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
@@ -88,6 +89,8 @@ public interface Persistence {
 
     MessageRank getMessageRank(String userGlobalId, String messageGlobalId);
 
+    Collection<Message> getMessagesForPattern(String pattern);
+
     Collection<Message> getMessagesSince(Date fromDate);
 
     Collection<Message> getMessagesSince(String messageGroupGlobalId, Date fromDate);
@@ -117,6 +120,8 @@ public interface Persistence {
      */
     UserModel getOrCreateUserModelByUser(String userGlobalId);
 
+    TermFrequency getTermFrequency();
+
     /**
      * 
      * @param userModel
@@ -131,6 +136,9 @@ public interface Persistence {
 
     Collection<UserSimilarity> getUserSimilarities(String userGlobalId, Collection<String> users,
             String messageGroupGlobalId, double userSimilarityThreshold);
+
+    UserSimilarity getUserSimilarity(String userGlobalIdFrom, String userGlobalIdTo,
+            String messageGroupGlobalId);
 
     Collection<UserModel> getUsersWithUserModel(Collection<Term> terms);
 
@@ -160,6 +168,8 @@ public interface Persistence {
      * @return the stored message group
      */
     MessageGroup storeMessageGroup(MessageGroup messageGroup);
+
+    void storeMessagePattern(String pattern, Message message);
 
     /**
      * 
@@ -194,12 +204,12 @@ public interface Persistence {
     Collection<UserModelEntry> storeOrUpdateUserModelEntries(UserModel userModel,
             Collection<UserModelEntry> changedEntries);
 
+    void storeUserSimilarity(UserSimilarity stat);
+
     void updateAggregationSubscription(SubscriptionStatus aggregationStatus);
 
+    void updateTermFrequency(TermFrequency termFrequency);
+
     void updateTerms(Collection<Term> termsChanged);
-    
-    void storeMessagePattern(String pattern, Message message);
-    
-    Collection<Message> getMessagesForPattern(String pattern);
-    
+
 }

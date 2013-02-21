@@ -39,6 +39,7 @@ import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
+import de.spektrumprojekt.datamodel.message.TermFrequency;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
@@ -154,11 +155,13 @@ public class SimplePersistence implements Persistence {
 
     private final Map<String, Term> keyPhraseTerms = new HashMap<String, Term>();
 
-    private final Collection<UserSimilarity> userSimilarities = new HashSet<UserSimilarity>();
-    
+    private final Map<String, UserSimilarity> userSimilarities = new HashMap<String, UserSimilarity>();
+
     private final Map<String, List<Message>> patternMessages = new HashMap<String, List<Message>>();
 
     private final Map<ObservationKey, Collection<Observation>> observations = new HashMap<SimplePersistence.ObservationKey, Collection<Observation>>();
+
+    private TermFrequency termFrequency = new TermFrequency();
 
     public void clearMessageRanks() {
         this.messageRanks.clear();
@@ -200,7 +203,9 @@ public class SimplePersistence implements Persistence {
     @Override
     public void deleteAndCreateUserSimilarities(Collection<UserSimilarity> values) {
         this.userSimilarities.clear();
-        this.userSimilarities.addAll(values);
+        for (UserSimilarity sim : values) {
+            this.userSimilarities.put(sim.getKey(), sim);
+        }
     }
 
     @Override
@@ -265,6 +270,15 @@ public class SimplePersistence implements Persistence {
 
     public Collection<Message> getMessages() {
         return this.messages.values();
+    }
+
+    @Override
+    public Collection<Message> getMessagesForPattern(String pattern) {
+        List<Message> messages = patternMessages.get(pattern);
+        if (messages == null) {
+            return Collections.emptyList();
+        }
+        return new ArrayList<Message>(messages);
     }
 
     @Override
@@ -344,6 +358,11 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
+    public TermFrequency getTermFrequency() {
+        return termFrequency;
+    }
+
+    @Override
     public Map<Term, UserModelEntry> getUserModelEntriesForTerms(UserModel userModel,
             Collection<Term> terms) {
         Map<Term, UserModelEntry> entries = new HashMap<Term, UserModelEntry>();
@@ -379,7 +398,7 @@ public class SimplePersistence implements Persistence {
     public Collection<UserSimilarity> getUserSimilarities(String userGlobalId,
             Collection<String> users, String messageGroupGlobalId, double userSimilarityThreshold) {
         Collection<UserSimilarity> sims = new HashSet<UserSimilarity>();
-        for (UserSimilarity similarity : this.userSimilarities) {
+        for (UserSimilarity similarity : this.userSimilarities.values()) {
             if (similarity.getUserGlobalIdFrom().equals(userGlobalId)
                     && users.contains(similarity.getUserGlobalIdTo())
                     && (messageGroupGlobalId == null
@@ -390,6 +409,13 @@ public class SimplePersistence implements Persistence {
             }
         }
         return sims;
+    }
+
+    @Override
+    public UserSimilarity getUserSimilarity(String userGlobalIdFrom, String userGlobalIdTo,
+            String messageGroupGlobalId) {
+        return this.userSimilarities.get(UserSimilarity.getKey(userGlobalIdFrom, userGlobalIdTo,
+                messageGroupGlobalId));
     }
 
     @Override
@@ -483,6 +509,16 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
+    public void storeMessagePattern(String pattern, Message message) {
+        List<Message> messages = patternMessages.get(pattern);
+        if (messages == null) {
+            messages = new ArrayList<Message>();
+            patternMessages.put(pattern, messages);
+        }
+        messages.add(message);
+    }
+
+    @Override
     public void storeMessageRanks(Collection<MessageRank> ranks) {
         for (MessageRank messageRank : ranks) {
             this.messageRanks.put(new UserMessageIdentifier(messageRank.getUserGlobalId(),
@@ -524,8 +560,19 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
+    public void storeUserSimilarity(UserSimilarity stat) {
+        this.userSimilarities.put(stat.getKey(), stat);
+
+    }
+
+    @Override
     public void updateAggregationSubscription(SubscriptionStatus aggregationStatus) {
         throw new UnsupportedOperationException("Not yet implemented.");
+    }
+
+    @Override
+    public void updateTermFrequency(TermFrequency termFrequency) {
+        this.termFrequency = termFrequency;
     }
 
     @Override
@@ -537,24 +584,5 @@ public class SimplePersistence implements Persistence {
 
             }
         }
-    }
-
-    @Override
-    public void storeMessagePattern(String pattern, Message message) {
-        List<Message> messages = patternMessages.get(pattern);
-        if (messages == null) {
-            messages = new ArrayList<Message>();
-            patternMessages.put(pattern, messages);
-        }
-        messages.add(message);
-    }
-
-    @Override
-    public Collection<Message> getMessagesForPattern(String pattern) {
-        List<Message> messages = patternMessages.get(pattern);
-        if (messages == null) {
-            return Collections.emptyList();
-        }
-        return new ArrayList<Message>(messages);
     }
 }

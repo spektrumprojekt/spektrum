@@ -31,6 +31,7 @@ import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
+import de.spektrumprojekt.datamodel.message.TermFrequency;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
@@ -116,6 +117,11 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
+    public Collection<Message> getMessagesForPattern(String pattern) {
+        return null;
+    }
+
+    @Override
     public Collection<Message> getMessagesSince(Date fromDate) {
         return null;
     }
@@ -147,6 +153,11 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
+    public TermFrequency getTermFrequency() {
+        return null;
+    }
+
+    @Override
     public Map<Term, UserModelEntry> getUserModelEntriesForTerms(UserModel userModel,
             Collection<Term> terms) {
         return null;
@@ -155,6 +166,12 @@ public class PersistenceMock implements Persistence {
     @Override
     public Collection<UserSimilarity> getUserSimilarities(String userGlobalId,
             Collection<String> users, String messageGroupGlobalId, double userSimilarityThreshold) {
+        return null;
+    }
+
+    @Override
+    public UserSimilarity getUserSimilarity(String userGlobalIdFrom, String userGlobalIdTo,
+            String messageGroupGlobalId) {
         return null;
     }
 
@@ -197,6 +214,10 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
+    public void storeMessagePattern(String pattern, Message message) {
+    }
+
+    @Override
     public void storeMessageRanks(Collection<MessageRank> ranks) {
     }
 
@@ -215,23 +236,21 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
+    public void storeUserSimilarity(UserSimilarity stat) {
+
+    }
+
+    @Override
     public void updateAggregationSubscription(SubscriptionStatus aggregationStatus) {
     }
 
     @Override
+    public void updateTermFrequency(TermFrequency termFrequency) {
+
+    }
+
+    @Override
     public void updateTerms(Collection<Term> termsChanged) {
-    }
-
-    @Override
-    public void storeMessagePattern(String pattern, Message message) {
-        // TODO Auto-generated method stub
-        
-    }
-
-    @Override
-    public Collection<Message> getMessagesForPattern(String pattern) {
-        // TODO Auto-generated method stub
-        return null;
     }
 
 }

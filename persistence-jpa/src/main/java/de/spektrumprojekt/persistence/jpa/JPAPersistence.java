@@ -32,6 +32,7 @@ import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
+import de.spektrumprojekt.datamodel.message.TermFrequency;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
@@ -143,6 +144,11 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
+    public Collection<Message> getMessagesForPattern(String pattern) {
+        return messagePersistence.getMessagesForPattern(pattern);
+    }
+
+    @Override
     public Collection<Message> getMessagesSince(Date fromDate) {
         return this.messagePersistence.getMessagesSince(fromDate);
     }
@@ -175,6 +181,11 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
+    public TermFrequency getTermFrequency() {
+        return this.messagePersistence.getTermFrequency();
+    }
+
+    @Override
     public Map<Term, UserModelEntry> getUserModelEntriesForTerms(UserModel userModel,
             Collection<Term> terms) {
         return userPersistence.getUserModelEntriesForTerms(userModel, terms);
@@ -185,6 +196,14 @@ public class JPAPersistence implements Persistence {
             Collection<String> users, String messageGroupGlobalId, double userSimilarityThreshold) {
         return this.userPersistence.getUserSimilarities(userGlobalId, users, messageGroupGlobalId,
                 userSimilarityThreshold);
+    }
+
+    @Override
+    public UserSimilarity getUserSimilarity(String userGlobalIdFrom, String userGlobalIdTo,
+            String messageGroupGlobalId) {
+
+        return this.userPersistence.getUserSimilarity(userGlobalIdFrom, userGlobalIdTo,
+                messageGroupGlobalId);
     }
 
     @Override
@@ -233,6 +252,11 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
+    public void storeMessagePattern(String pattern, Message message) {
+        messagePersistence.storeMessagePattern(pattern, message);
+    }
+
+    @Override
     public void storeMessageRanks(Collection<MessageRank> ranks) {
         messagePersistence.storeMessageRanks(ranks);
     }
@@ -255,23 +279,23 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
+    public void storeUserSimilarity(UserSimilarity stat) {
+        this.userPersistence.storeUserSimilarity(stat);
+    }
+
+    @Override
     public void updateAggregationSubscription(SubscriptionStatus aggregationStatus) {
         aggregationSubscriptionPersistence.updateAggregationSubscription(aggregationStatus);
     }
 
     @Override
+    public void updateTermFrequency(TermFrequency termFrequency) {
+        this.messagePersistence.updateTermFrequency(termFrequency);
+    }
+
+    @Override
     public void updateTerms(Collection<Term> termsChanged) {
         this.messagePersistence.updateTerms(termsChanged);
-    }
-
-    @Override
-    public void storeMessagePattern(String pattern, Message message) {
-        messagePersistence.storeMessagePattern(pattern, message);
-    }
-
-    @Override
-    public Collection<Message> getMessagesForPattern(String pattern) {
-        return messagePersistence.getMessagesForPattern(pattern);
     }
 
 }

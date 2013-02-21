@@ -23,7 +23,7 @@ import java.util.Collection;
 
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.datamodel.message.Term;
-import de.spektrumprojekt.i.informationextraction.frequency.TermFrequencyComputer;
+import de.spektrumprojekt.i.term.frequency.TermFrequencyComputer;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
 import de.spektrumprojekt.persistence.Persistence;
 

@@ -47,6 +47,7 @@ import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
+import de.spektrumprojekt.datamodel.message.TermFrequency;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
@@ -204,6 +205,20 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
         return transaction.executeTransaction(getEntityManager());
     }
 
+    public Collection<Message> getMessagesForPattern(String pattern) {
+        Validate.notNull(pattern, "pattern must not be null");
+        EntityManager entityManager = getEntityManager();
+        TypedQuery<Message> query = entityManager.createQuery(
+                "SELECT mp.message FROM MessagePattern mp WHERE mp.pattern =:pattern",
+                Message.class);
+        query.setParameter("pattern", pattern);
+        try {
+            return query.getResultList();
+        } finally {
+            entityManager.close();
+        }
+    }
+
     public Collection<Message> getMessagesSince(Date fromDate) {
         return this.getMessagesSince(null, fromDate);
     }
@@ -313,6 +328,17 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
         return transaction.executeTransaction(getEntityManager());
     }
 
+    public TermFrequency getTermFrequency() {
+        TermFrequency termFrequency = getEntityByGlobalId(TermFrequency.class,
+                TermFrequency.SINGLE_GLOBAL_ID);
+        if (termFrequency == null) {
+            termFrequency = new TermFrequency();
+            termFrequency = this.save(termFrequency);
+        }
+        termFrequency.init();
+        return termFrequency;
+    }
+
     public void resetTermCount() {
         Transaction<Integer> transaction = new Transaction<Integer>() {
 
@@ -346,6 +372,13 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
      */
     public MessageGroup storeMessageGroup(MessageGroup messageGroup) {
         return this.save(messageGroup);
+    }
+
+    public void storeMessagePattern(String pattern, Message message) {
+        Validate.notNull(pattern, "pattern must not be null");
+        Validate.notNull(message, "message must not be null");
+        MessagePattern messagePattern = new MessagePattern(message, pattern);
+        save(messagePattern);
     }
 
     /**
@@ -389,29 +422,13 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
         this.save(observation);
     }
 
+    public void updateTermFrequency(TermFrequency termFrequency) {
+        termFrequency.prepareForStore();
+        this.save(termFrequency);
+    }
+
     public void updateTerms(Collection<Term> termsChanged) {
         this.saveAll(termsChanged);
-    }
-
-    public void storeMessagePattern(String pattern, Message message) {
-        Validate.notNull(pattern, "pattern must not be null");
-        Validate.notNull(message, "message must not be null");
-        MessagePattern messagePattern = new MessagePattern(message, pattern);
-        save(messagePattern);
-    }
-
-    public Collection<Message> getMessagesForPattern(String pattern) {
-        Validate.notNull(pattern, "pattern must not be null");
-        EntityManager entityManager = getEntityManager();
-        TypedQuery<Message> query = entityManager.createQuery(
-                "SELECT mp.message FROM MessagePattern mp WHERE mp.pattern =:pattern",
-                Message.class);
-        query.setParameter("pattern", pattern);
-        try {
-            return query.getResultList();
-        } finally {
-            entityManager.close();
-        }
     }
 
 }

@@ -1,4 +1,4 @@
-package de.spektrumprojekt.i.informationextraction.frequency;
+package de.spektrumprojekt.i.term.frequency;
 
 import java.io.File;
 import java.io.IOException;
@@ -7,10 +7,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.io.FileUtils;
@@ -23,6 +21,7 @@ import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
+import de.spektrumprojekt.datamodel.message.TermFrequency;
 import de.spektrumprojekt.persistence.Persistence;
 
 public class TermFrequencyComputer implements ConfigurationDescriptable {
@@ -33,13 +32,7 @@ public class TermFrequencyComputer implements ConfigurationDescriptable {
 
     private final boolean beMessageGroupSpecific;
 
-    private final Map<String, Integer> messageGroupMessageCounts = new HashMap<String, Integer>();
-
-    private long allTermCount = 0;
-
-    private long uniqueTermCount = 0;
-
-    private long messageCount = 0;
+    private TermFrequency termFrequency = null;
 
     public TermFrequencyComputer(Persistence persistence, boolean beMessageGroupSpecific) {
         this.persistence = persistence;
@@ -63,22 +56,24 @@ public class TermFrequencyComputer implements ConfigurationDescriptable {
                 return o1.getValue().compareTo(o2.getValue());
             }
         });
-        float termsPerMessage = (float) allTermCount / messageCount;
+        float termsPerMessage = (float) termFrequency.getAllTermCount()
+                / termFrequency.getMessageCount();
 
         StringBuilder sb = new StringBuilder();
         sb.append("##############################\n");
         sb.append("# Global Term Statistics \n");
         sb.append("# \n");
-        sb.append("# messageCount " + messageCount + "\n");
-        sb.append("# allTermCount " + allTermCount + "\n");
-        sb.append("# uniqueTermCount " + uniqueTermCount + "\n");
+        sb.append("# messageCount " + termFrequency.getMessageCount() + "\n");
+        sb.append("# allTermCount " + termFrequency.getAllTermCount() + "\n");
+        sb.append("# uniqueTermCount " + termFrequency.getUniqueTermCount() + "\n");
         sb.append("# termsPerMessage " + termsPerMessage + "\n");
 
         sb.append("##############################\n");
         sb.append("# Message Group Message Counts \n");
         sb.append("# \n");
         sb.append("# messageGroup.id messageGroup.globalId messageGroupMessageCount\n");
-        for (Entry<String, Integer> entry : this.messageGroupMessageCounts.entrySet()) {
+        for (Entry<String, Integer> entry : this.termFrequency.getMessageGroupMessageCounts()
+                .entrySet()) {
             MessageGroup messageGroup = this.persistence.getMessageGroupByGlobalId(entry.getKey());
             sb.append("# " + messageGroup.getId() + " " + messageGroup.getGlobalId() + " "
                     + entry.getValue() + "\n");
@@ -97,7 +92,7 @@ public class TermFrequencyComputer implements ConfigurationDescriptable {
     }
 
     public long getAllTermCount() {
-        return allTermCount;
+        return termFrequency.getAllTermCount();
     }
 
     @Override
@@ -106,26 +101,54 @@ public class TermFrequencyComputer implements ConfigurationDescriptable {
     }
 
     public long getMessageCount() {
-        return messageCount;
+        return termFrequency.getMessageCount();
     }
 
     public long getMessageCount(String messageGroupId) {
 
         if (beMessageGroupSpecific) {
-            Integer count = this.messageGroupMessageCounts.get(messageGroupId);
+            Integer count = getTermFrequency().getMessageGroupMessageCounts().get(messageGroupId);
             if (count == null) {
                 return 0;
             }
             return count;
         }
-        return this.messageCount;
+        return getTermFrequency().getMessageCount();
+    }
+
+    private TermFrequency getTermFrequency() {
+        if (this.termFrequency == null) {
+            synchronized (this) {
+                if (this.termFrequency == null) {
+                    termFrequency = persistence.getTermFrequency();
+                }
+            }
+        }
+        return this.termFrequency;
     }
 
     public long getUniqueTermCount() {
-        return uniqueTermCount;
+        return getTermFrequency().getUniqueTermCount();
     }
 
     public synchronized Collection<Term> integrate(Message message) {
+        getTermFrequency();
+        Collection<Term> terms = internalIntegrate(message);
+        this.updateTermFrequency();
+        return terms;
+    }
+
+    private void integrate(MessageGroup messageGroup) {
+        Integer count = this.termFrequency.getMessageGroupMessageCounts().get(
+                messageGroup.getGlobalId());
+        if (count == null) {
+            count = 0;
+        }
+        count++;
+        this.termFrequency.getMessageGroupMessageCounts().put(messageGroup.getGlobalId(), count);
+    }
+
+    private Collection<Term> internalIntegrate(Message message) {
         if (beMessageGroupSpecific) {
             integrate(message.getMessageGroup());
         }
@@ -138,24 +161,15 @@ public class TermFrequencyComputer implements ConfigurationDescriptable {
                     throw new IllegalStateException("term.id cannot be null! term=" + term);
                 }
                 if (term.getCount() == 0) {
-                    uniqueTermCount++;
+                    termFrequency.setUniqueTermCount(termFrequency.getUniqueTermCount() + 1);
                 }
-                allTermCount++;
+                termFrequency.setAllTermCount(termFrequency.getAllTermCount() + 1);
                 term.setCount(term.getCount() + 1);
                 termsChanged.add(term);
             }
         }
-        messageCount++;
+        termFrequency.setMessageCount(termFrequency.getMessageCount() + 1);
         return termsChanged;
-    }
-
-    private void integrate(MessageGroup messageGroup) {
-        Integer count = this.messageGroupMessageCounts.get(messageGroup.getGlobalId());
-        if (count == null) {
-            count = 0;
-        }
-        count++;
-        this.messageGroupMessageCounts.put(messageGroup.getGlobalId(), count);
     }
 
     public synchronized void run() {
@@ -166,7 +180,7 @@ public class TermFrequencyComputer implements ConfigurationDescriptable {
         long uniqueTermCount = 0;
 
         this.persistence.resetTermCount();
-        this.messageGroupMessageCounts.clear();
+        this.termFrequency.getMessageGroupMessageCounts().clear();
 
         Collection<Message> messages = this.persistence.getMessagesSince(fromDate);
         Collection<Term> termsChanged = new HashSet<Term>();
@@ -175,7 +189,7 @@ public class TermFrequencyComputer implements ConfigurationDescriptable {
 
         int i = 0;
         for (Message message : messages) {
-            termsChanged.addAll(integrate(message));
+            termsChanged.addAll(internalIntegrate(message));
 
             i++;
             if (i % (messages.size() / 10) == 0) {
@@ -186,13 +200,17 @@ public class TermFrequencyComputer implements ConfigurationDescriptable {
 
         this.persistence.updateTerms(termsChanged);
 
-        this.allTermCount = allTermCount;
-        this.uniqueTermCount = uniqueTermCount;
-        this.messageCount = messages.size();
+        this.termFrequency.setAllTermCount(allTermCount);
+        this.termFrequency.setUniqueTermCount(uniqueTermCount);
+        this.termFrequency.setMessageCount(messages.size());
+
+        updateTermFrequency();
 
         LOGGER.info("Finished TermFrequencyComputed.");
 
-        // TODO where to store the overall term counts ?
+    }
 
+    private void updateTermFrequency() {
+        this.persistence.updateTermFrequency(this.termFrequency);
     }
 }

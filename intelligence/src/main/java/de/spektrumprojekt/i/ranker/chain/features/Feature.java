@@ -37,6 +37,11 @@ public class Feature {
     private final String id;
 
     /**
+     * NULL Feature indicating no feature matched
+     */
+    public final static Feature NULL_FEATURE = new Feature("NullFeature");
+
+    /**
      * The author feature
      */
     public final static Feature AUTHOR_FEATURE = new Feature("AuthorFeature");
@@ -71,7 +76,7 @@ public class Feature {
     /**
      * The mention
      */
-    public final static Feature TERM_MATCH_FEATURE = new Feature("TermMatch");
+    public final static Feature CONTENT_MATCH_FEATURE = new Feature("TermMatch");
 
     public final static List<Feature> ALL_FEATURES;
 
@@ -83,18 +88,10 @@ public class Feature {
         all.add(DISCUSSION_ROOT_FEATURE);
         all.add(DISCUSSION_PARTICIPATION_FEATURE);
         all.add(DISCUSSION_MENTION_FEATURE);
-        all.add(TERM_MATCH_FEATURE);
+        all.add(CONTENT_MATCH_FEATURE);
+        all.add(NULL_FEATURE);
 
         ALL_FEATURES = Collections.unmodifiableList(all);
-    }
-
-    public static String toStringHeader() {
-        StringBuilder sb = new StringBuilder();
-        for (Feature feature : Feature.ALL_FEATURES) {
-            sb.append(feature.getId() + " ");
-        }
-        return sb.toString();
-
     }
 
     public static String toString(Map<Feature, MessageFeature> features, String seperator,
@@ -113,6 +110,15 @@ public class Feature {
             prefix = seperator;
         }
         return sb.toString();
+    }
+
+    public static String toStringHeader() {
+        StringBuilder sb = new StringBuilder();
+        for (Feature feature : Feature.ALL_FEATURES) {
+            sb.append(feature.getId() + " ");
+        }
+        return sb.toString();
+
     }
 
     /**

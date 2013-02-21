@@ -45,8 +45,10 @@ import de.spektrumprojekt.datamodel.message.MessageType;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
+import de.spektrumprojekt.datamodel.message.TermFrequency;
 import de.spektrumprojekt.datamodel.observation.Interest;
 import de.spektrumprojekt.datamodel.observation.Observation;
+import de.spektrumprojekt.datamodel.observation.ObservationPriority;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 import de.spektrumprojekt.datamodel.user.User;
@@ -84,6 +86,31 @@ public class MessagePersistenceTest {
         MessagePart messagePart = new MessagePart(MimeType.TEXT_PLAIN, text);
         message.addMessagePart(messagePart);
         return message;
+    }
+
+    @Test
+    public void MessagePatterns() throws Exception {
+
+        String pattern1 = "TICKET-1";
+        String pattern2 = "TICKET-2";
+        String pattern3 = "TICKET-3";
+
+        Message message1 = createTestMessage("TICKET-1 opened");
+        Message message2 = createTestMessage("TICKET-2 modified");
+        Message message3 = createTestMessage("TICKET-1 closed");
+
+        persistence.storeMessagePattern(pattern1, message1);
+        persistence.storeMessagePattern(pattern2, message2);
+        persistence.storeMessagePattern(pattern1, message3);
+
+        Collection<Message> p1msgs = persistence.getMessagesForPattern(pattern1);
+        assertEquals(2, p1msgs.size());
+
+        Collection<Message> p2msgs = persistence.getMessagesForPattern(pattern2);
+        assertEquals(1, p2msgs.size());
+
+        Collection<Message> p3msgs = persistence.getMessagesForPattern(pattern3);
+        assertEquals(0, p3msgs.size());
     }
 
     @Before
@@ -249,33 +276,9 @@ public class MessagePersistenceTest {
     }
 
     @Test
-    public void MessagePatterns() throws Exception {
-
-        String pattern1 = "TICKET-1";
-        String pattern2 = "TICKET-2";
-        String pattern3 = "TICKET-3";
-
-        Message message1 = createTestMessage("TICKET-1 opened");
-        Message message2 = createTestMessage("TICKET-2 modified");
-        Message message3 = createTestMessage("TICKET-1 closed");
-
-        persistence.storeMessagePattern(pattern1, message1);
-        persistence.storeMessagePattern(pattern2, message2);
-        persistence.storeMessagePattern(pattern1, message3);
-
-        Collection<Message> p1msgs = persistence.getMessagesForPattern(pattern1);
-        assertEquals(2, p1msgs.size());
-
-        Collection<Message> p2msgs = persistence.getMessagesForPattern(pattern2);
-        assertEquals(1, p2msgs.size());
-
-        Collection<Message> p3msgs = persistence.getMessagesForPattern(pattern3);
-        assertEquals(0, p3msgs.size());
-    }
-
-    @Test
     public void testObservations() {
-        Observation obs = new Observation("userId1", "messageId1", ObservationType.LIKE, null,
+        Observation obs = new Observation("userId1", "messageId1", ObservationType.LIKE,
+                ObservationPriority.USER_FEEDBACK, null,
                 new Date(), Interest.EXTREME);
 
         persistence.storeObservation(obs);
@@ -293,7 +296,8 @@ public class MessagePersistenceTest {
         Assert.assertEquals(obs.getMessageGlobalId(), persistedObservation.getMessageGlobalId());
         Assert.assertEquals(obs.getObservationType(), persistedObservation.getObservationType());
 
-        Observation obs2 = new Observation("userId1", "messageId1", ObservationType.LIKE, null,
+        Observation obs2 = new Observation("userId1", "messageId1", ObservationType.LIKE,
+                ObservationPriority.FIRST_LEVEL_FEATURE_INFERRED, null,
                 new Date(), Interest.EXTREME);
         persistence.storeObservation(obs2);
         persistedObservations = persistence.getObservations(obs.getUserGlobalId(),
@@ -307,6 +311,48 @@ public class MessagePersistenceTest {
             Assert.assertEquals(obs.getUserGlobalId(), ob.getUserGlobalId());
             Assert.assertEquals(obs.getMessageGlobalId(), ob.getMessageGlobalId());
             Assert.assertEquals(obs.getObservationType(), ob.getObservationType());
+        }
+    }
+
+    @Test
+    public void testTermFrequency() {
+        TermFrequency tf = persistence.getTermFrequency();
+        Assert.assertNotNull(tf);
+
+        tf.setAllTermCount(12);
+        tf.setMessageCount(1200);
+        tf.setUniqueTermCount(120);
+
+        persistence.updateTermFrequency(tf);
+
+        TermFrequency tf2 = persistence.getTermFrequency();
+
+        Assert.assertEquals(tf.getAllTermCount(), tf2.getAllTermCount());
+        Assert.assertEquals(tf.getMessageCount(), tf2.getMessageCount());
+        Assert.assertEquals(tf.getUniqueTermCount(), tf2.getUniqueTermCount());
+
+        for (int i = 0; i < 10; i++) {
+            tf2.setMessageGroupMessageCount("mg" + i, i + 10);
+        }
+        persistence.updateTermFrequency(tf2);
+
+        TermFrequency tf3 = persistence.getTermFrequency();
+
+        for (int i = 0; i < 10; i++) {
+            Integer integer = tf3.getMessageGroupMessageCounts().get("mg" + i);
+            Assert.assertNotNull(i + "", integer);
+            Assert.assertEquals(i + "", i + 10, integer.intValue());
+        }
+
+        for (int i = 0; i < 10; i++) {
+            tf3.incrementMessageGroupMessageCount("mg" + i);
+        }
+        persistence.updateTermFrequency(tf3);
+
+        TermFrequency tf4 = persistence.getTermFrequency();
+        for (int i = 0; i < 10; i++) {
+
+            Assert.assertEquals(i + 11, tf4.getMessageGroupMessageCounts().get("mg" + i).intValue());
         }
     }
 }

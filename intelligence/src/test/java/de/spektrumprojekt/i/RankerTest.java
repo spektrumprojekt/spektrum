@@ -53,10 +53,11 @@ import de.spektrumprojekt.i.learner.adaptation.DirectedUserModelAdapter;
 import de.spektrumprojekt.i.learner.similarity.UserSimilarityComputer;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.Ranker;
+import de.spektrumprojekt.i.ranker.RankerConfiguration;
 import de.spektrumprojekt.i.ranker.RankerConfigurationFlag;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
-import de.spektrumprojekt.i.ranker.chain.features.ContentMatchFeatureCommand.TermWeightAggregation;
-import de.spektrumprojekt.i.ranker.chain.features.ContentMatchFeatureCommand.TermWeightStrategy;
+import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
+import de.spektrumprojekt.i.term.TermWeightStrategy;
 
 /**
  * Test the ranker
@@ -64,7 +65,7 @@ import de.spektrumprojekt.i.ranker.chain.features.ContentMatchFeatureCommand.Ter
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 
  */
-public class RankerTest extends MyStreamTest {
+public class RankerTest extends IntelligenceSpektrumTest {
 
     private MessageGroup messageGroup;
     private MessageRelation messageRelation;
@@ -137,17 +138,24 @@ public class RankerTest extends MyStreamTest {
 
         communicator = new VirtualMachineCommunicator(rankerQueue, rankerQueue);
 
-        Ranker ranker = new Ranker(getPersistence(), communicator,
-                new SimpleMessageGroupMemberRunner<MessageFeatureContext>(userForRanking),
-                TermWeightStrategy.NONE, TermWeightAggregation.AVG, flags);
+        RankerConfiguration rankerConfiguration = new RankerConfiguration(TermWeightStrategy.TRIVIAL,
+                TermVectorSimilarityStrategy.AVG, flags);
 
-        Learner learner = new Learner(getPersistence(), ranker.getInformationExtractionChain(),
+        Ranker ranker = new Ranker(
+                getPersistence(),
+                communicator,
+                new SimpleMessageGroupMemberRunner<MessageFeatureContext>(userForRanking),
+                rankerConfiguration);
+
+        Learner learner = new Learner(
+                getPersistence(),
+                ranker.getInformationExtractionChain(),
                 new UserModelEntryIntegrationPlainStrategy());
 
         communicator.registerMessageHandler(ranker);
         communicator.registerMessageHandler(learner);
 
-        if (ranker.getFlags().contains(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)) {
+        if (rankerConfiguration.hasFlag(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)) {
             DirectedUserModelAdapter adapter = new DirectedUserModelAdapter(getPersistence(),
                     ranker);
             communicator.registerMessageHandler(adapter);

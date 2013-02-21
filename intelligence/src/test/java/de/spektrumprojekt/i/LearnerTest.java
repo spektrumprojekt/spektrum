@@ -35,15 +35,18 @@ import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.observation.Interest;
 import de.spektrumprojekt.datamodel.observation.Observation;
+import de.spektrumprojekt.datamodel.observation.ObservationPriority;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
+import de.spektrumprojekt.i.informationextraction.InformationExtractionConfiguration;
 import de.spektrumprojekt.i.learner.Learner;
 import de.spektrumprojekt.i.learner.LearningMessage;
 import de.spektrumprojekt.i.learner.UserModelEntryIntegrationPlainStrategy;
 import de.spektrumprojekt.i.learner.UserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
+import de.spektrumprojekt.persistence.Persistence;
 
 /**
  * Test for the {@link Learner}
@@ -51,7 +54,7 @@ import de.spektrumprojekt.i.ranker.MessageFeatureContext;
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 
  */
-public class LearnerTest extends MyStreamTest {
+public class LearnerTest extends IntelligenceSpektrumTest {
 
     private final String user1ToLearnForGlobalId = "userToLearnFor1";
     private final String user2ToLearnForGlobalId = "userToLearnFor2";
@@ -139,7 +142,8 @@ public class LearnerTest extends MyStreamTest {
 
         // extract the terms
         InformationExtractionCommand<MessageFeatureContext> ieCommand = InformationExtractionCommand
-                .createDefaultGermanEnglish(getPersistence(), null, true, false);
+                .createDefaultGermanEnglish(new InformationExtractionConfiguration(getPersistence(), null, false, true, false, false,
+                        false, 0));
         MessageFeatureContext context = new MessageFeatureContext(getPersistence(), message, null);
         ieCommand.process(context);
         checkScoredTerms(context);
@@ -152,7 +156,8 @@ public class LearnerTest extends MyStreamTest {
 
         // learning an extreme=1 interest
         Observation observation = new Observation(user1ToLearnForGlobalId, message.getGlobalId(),
-                ObservationType.RATING, null, new Date(), Interest.EXTREME);
+                ObservationType.RATING, ObservationPriority.USER_FEEDBACK, null, new Date(),
+                Interest.EXTREME);
         LearningMessage learningMessage = new LearningMessage(observation);
         learner.deliverMessage(learningMessage);
         checkUserModelEntries(message, user1ToLearnForGlobalId, terms, 1.0f);
@@ -160,7 +165,8 @@ public class LearnerTest extends MyStreamTest {
 
         // learning an high=0.75 interest for a new user
         observation = new Observation(user2ToLearnForGlobalId, message.getGlobalId(),
-                ObservationType.RATING, null, new Date(), Interest.HIGH);
+                ObservationType.RATING, ObservationPriority.USER_FEEDBACK, null, new Date(),
+                Interest.HIGH);
         learningMessage = new LearningMessage(observation);
         learner.deliverMessage(learningMessage);
         checkUserModelEntries(message, user2ToLearnForGlobalId, terms, 0.75f);
@@ -168,11 +174,22 @@ public class LearnerTest extends MyStreamTest {
 
         // learning a low=0.25 interest for a user 1 again
         observation = new Observation(user1ToLearnForGlobalId, message.getGlobalId(),
-                ObservationType.RATING, null, new Date(), Interest.LOW);
+                ObservationType.RATING, ObservationPriority.USER_FEEDBACK, null, new Date(),
+                Interest.LOW);
         learningMessage = new LearningMessage(observation);
         learner.deliverMessage(learningMessage);
         checkUserModelEntries(message, user1ToLearnForGlobalId, terms, 0.25f);
         checkObservations(user1ToLearnForGlobalId, message, 2);
+
+        // learning a high=0.75 interest for a user 1 again but with a lower priority, hence the
+        // result should not change to the last one
+        observation = new Observation(user1ToLearnForGlobalId, message.getGlobalId(),
+                ObservationType.RATING, ObservationPriority.SECOND_LEVEL_FEATURE_INFERRED, null,
+                new Date(), Interest.HIGH);
+        learningMessage = new LearningMessage(observation);
+        learner.deliverMessage(learningMessage);
+        checkUserModelEntries(message, user1ToLearnForGlobalId, terms, 0.25f);
+        checkObservations(user1ToLearnForGlobalId, message, 3);
 
     }
 }

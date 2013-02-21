@@ -18,7 +18,7 @@ public class TextCleanerTest {
 
     @Test
     public void testTextCleaner() {
-        TextCleanerCommand textCleaner = new TextCleanerCommand();
+        TextCleanerCommand textCleaner = new TextCleanerCommand(false);
 
         Message message = new Message(MessageType.CONTENT, StatusType.OK, new Date());
         String text = "<!-- comment --><p>the <i>quick</i> brown fox jumps over the lazy dog.</p>";

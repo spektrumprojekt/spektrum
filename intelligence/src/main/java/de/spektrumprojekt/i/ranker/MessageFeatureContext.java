@@ -157,6 +157,16 @@ public class MessageFeatureContext {
 
     /**
      * 
+     * @param feature
+     * @return the value of the feature or 0 if not existing
+     */
+    public float getFeatureValue(Feature feature) {
+        MessageFeature messageFeature = this.getFeature(feature);
+        return messageFeature == null ? 0 : messageFeature.getValue();
+    }
+
+    /**
+     * 
      * @return the contexts of the information extraction
      */
     public Collection<InformationExtractionContext> getInformationExtractionContexts() {
@@ -247,7 +257,9 @@ public class MessageFeatureContext {
                     message = this.message;
                 }
                 message = persistence.getMessageByGlobalId(messageGlobalId);
-                relatedMessage.put(messageGlobalId, message);
+                if (message != null) {
+                    relatedMessage.put(messageGlobalId, message);
+                }
             }
         }
     }
