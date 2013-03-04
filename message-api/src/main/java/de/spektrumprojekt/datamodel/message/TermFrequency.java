@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.persistence.Entity;
+import javax.persistence.Lob;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
@@ -57,6 +58,7 @@ public class TermFrequency extends Identifiable {
      */
     private static final long serialVersionUID = 1L;
 
+    @Lob
     private String messageGroupMessageCountsJson;
     private transient Map<String, Integer> messageGroupMessageCounts;
 
