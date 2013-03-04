@@ -60,10 +60,10 @@ public class KeyphraseExtractorCommand implements Command<InformationExtractionC
      * @param tokens
      * @return
      */
-    private List<String> filterTokens(List<String> tokens) {
+    private List<String> filterTokens(String language, List<String> tokens) {
         List<String> filteredTokens = new ArrayList<String>();
         for (String token : tokens) {
-            if (ExtractionUtils.STOPWORDS_EN.contains(token)) {
+            if (ExtractionUtils.isStopword(language, token)) {
                 filteredTokens.add(IGNORED_TOKEN);
             } else if (!TOKEN_PATTERN.matcher(token).matches()) {
                 filteredTokens.add(IGNORED_TOKEN);
@@ -96,7 +96,7 @@ public class KeyphraseExtractorCommand implements Command<InformationExtractionC
 
         text = text.toLowerCase();
         List<String> tokens = ExtractionUtils.tokenize(text);
-        tokens = filterTokens(tokens);
+        tokens = filterTokens(language, tokens);
 
         List<String> nGrams = new ArrayList<String>();
         nGrams.addAll(tokens);

@@ -21,7 +21,6 @@ package de.spektrumprojekt.informationextraction.extractors;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.apache.commons.collections.Bag;
@@ -36,8 +35,6 @@ import de.spektrumprojekt.informationextraction.InformationExtractionContext;
 
 public final class StemmedTokenExtractorCommand implements Command<InformationExtractionContext> {
 
-    private static final String LANGUAGE_EN = "en";
-    private static final String LANGUAGE_DE = "de";
     /** Allowed characters for a token, everything else will be filtered out. */
     private static final Pattern TOKEN_PATTERN = Pattern.compile("[A-Za-z0-9\\.]+");
 
@@ -135,17 +132,9 @@ public final class StemmedTokenExtractorCommand implements Command<InformationEx
     }
 
     private List<String> removeStopwords(String language, List<String> tokens) {
-        Set<String> stopwords;
-        if (language.equals(LANGUAGE_DE)) {
-            stopwords = ExtractionUtils.STOPWORDS_DE;
-        } else if (language.equals(LANGUAGE_EN)) {
-            stopwords = ExtractionUtils.STOPWORDS_EN;
-        } else {
-            return tokens;
-        }
         List<String> ret = new ArrayList<String>();
         for (String token : tokens) {
-            if (!stopwords.contains(token.toLowerCase())) {
+            if (!ExtractionUtils.isStopword(language, token.toLowerCase())) {
                 ret.add(token);
             }
         }

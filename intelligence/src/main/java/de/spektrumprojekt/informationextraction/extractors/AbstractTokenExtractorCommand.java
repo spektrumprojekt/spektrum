@@ -2,7 +2,6 @@ package de.spektrumprojekt.informationextraction.extractors;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.commons.collections.Bag;
 import org.apache.commons.collections.bag.HashBag;
@@ -16,9 +15,6 @@ import de.spektrumprojekt.informationextraction.InformationExtractionContext;
 
 public abstract class AbstractTokenExtractorCommand implements
         Command<InformationExtractionContext> {
-
-    private static final String LANGUAGE_EN = "en";
-    private static final String LANGUAGE_DE = "de";
 
     private final boolean useMessageGroupIdForToken;
     private final boolean assertMessageGroup;
@@ -90,17 +86,9 @@ public abstract class AbstractTokenExtractorCommand implements
     public abstract void process(InformationExtractionContext context);
 
     protected List<String> removeStopwords(String language, List<String> tokens) {
-        Set<String> stopwords;
-        if (language.equals(LANGUAGE_DE)) {
-            stopwords = ExtractionUtils.STOPWORDS_DE;
-        } else if (language.equals(LANGUAGE_EN)) {
-            stopwords = ExtractionUtils.STOPWORDS_EN;
-        } else {
-            return tokens;
-        }
         List<String> ret = new ArrayList<String>();
         for (String token : tokens) {
-            if (!stopwords.contains(token.toLowerCase())) {
+            if (!ExtractionUtils.isStopword(language, token.toLowerCase())) {
                 ret.add(token);
             }
         }

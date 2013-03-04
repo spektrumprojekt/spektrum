@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -49,6 +50,8 @@ import org.tartarus.snowball.ext.GermanStemmer;
  */
 public final class ExtractionUtils {
 
+    // XXX introduce language enum.
+
     /** The logger for this class. */
     private static final Logger LOGGER = Logger.getLogger(ExtractionUtils.class);
 
@@ -59,9 +62,9 @@ public final class ExtractionUtils {
             .compile("(?i)\\b((?:[a-z][\\w-]+:(?:/{1,3}|[a-z0-9%])|www\\d{0,3}[.]|[a-z0-9.\\-]+[.][a-z]{2,4}/)(?:[^\\s()<>]+|\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\))+(?:\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\)|[^\\s`!()\\[\\]{};:'\".,<>?Â«Â»â€œâ€�â€˜â€™]))");
 
     /** Stopwords for English langugage. */
-    public static final Set<String> STOPWORDS_EN;
+    private static final Set<String> STOPWORDS_EN;
     /** Stopwords for German language. */
-    public static final Set<String> STOPWORDS_DE;
+    private static final Set<String> STOPWORDS_DE;
 
     static {
         try {
@@ -266,6 +269,27 @@ public final class ExtractionUtils {
 
         List<String> tokens = Arrays.asList(SimpleTokenizer.INSTANCE.tokenize(text));
         return tokens;
+    }
+
+    /**
+     * <p>
+     * Check, whether the given word is a stopword in the specified language.
+     * </p>
+     * 
+     * @param language The language.
+     * @param word The word to check.
+     * @return <code>true</code> if word is stopword, <code>false</code> otherwise.
+     */
+    public static boolean isStopword(String language, String word) {
+        Set<String> stopwords;
+        if (language.equals("de")) {
+            stopwords = STOPWORDS_DE;
+        } else if (language.equals("en")) {
+            stopwords = STOPWORDS_EN;
+        } else {
+            stopwords = Collections.emptySet();
+        }
+        return stopwords.contains(word.toLowerCase());
     }
 
     private ExtractionUtils() {
