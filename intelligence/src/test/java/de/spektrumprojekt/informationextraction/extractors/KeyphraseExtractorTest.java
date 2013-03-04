@@ -18,9 +18,6 @@ import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.datamodel.message.MessageType;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
-import de.spektrumprojekt.informationextraction.extractors.KeyphraseCandidates;
-import de.spektrumprojekt.informationextraction.extractors.KeyphraseExtractorCommand;
-import de.spektrumprojekt.informationextraction.extractors.LanguageDetectorCommand;
 import de.spektrumprojekt.persistence.simple.SimplePersistence;
 
 @RunWith(Parameterized.class)
@@ -55,7 +52,7 @@ public class KeyphraseExtractorTest {
 
     @Test
     public void testKeyphraseExtractor() {
-        KeyphraseExtractorCommand keyphraseExtractor = new KeyphraseExtractorCommand();
+        KeyphraseExtractorCommand keyphraseExtractor = new KeyphraseExtractorCommand(new MockTagSource());
         Message message = new Message(MessageType.CONTENT, StatusType.OK, new Date());
         message.addProperty(new Property(Property.PROPERTY_KEY_TITLE, title));
         message.addProperty(new Property(LanguageDetectorCommand.LANGUAGE, language));

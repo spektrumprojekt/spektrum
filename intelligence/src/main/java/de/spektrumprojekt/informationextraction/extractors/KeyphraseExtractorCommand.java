@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.collections.Bag;
 import org.apache.commons.collections.bag.HashBag;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.Validate;
 
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
@@ -39,6 +40,21 @@ public class KeyphraseExtractorCommand implements Command<InformationExtractionC
 
     /** Marker to indicate an undesired token. */
     private static final String IGNORED_TOKEN = "###";
+
+    private final TagSource tagSource;
+
+    /**
+     * <p>
+     * Create a new {@link KeyphraseExtractorCommand} with the specified {@link TagSource} providing a controlled
+     * vocabulary of tags to assign.
+     * </p>
+     * 
+     * @param tagSource The TagSource providing tags to assign, not <code>null</code>.
+     */
+    public KeyphraseExtractorCommand(TagSource tagSource) {
+        Validate.notNull(tagSource, "tagSource must not be null");
+        this.tagSource = tagSource;
+    }
 
     private KeyphraseCandidates createCandidates(String language, Bag nGramBag) {
         KeyphraseCandidates candidates = new KeyphraseCandidates();
