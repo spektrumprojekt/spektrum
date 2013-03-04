@@ -83,7 +83,8 @@ public class TermVectorSimilarityComputerTest extends IntelligenceSpektrumTest {
                 .createTermVectorSimilarityComputer(
                         simStrategy,
                         weightStrategy,
-                        termFrequencyComputer);
+                        termFrequencyComputer,
+                        false);
 
         for (Message message : this.messages) {
 

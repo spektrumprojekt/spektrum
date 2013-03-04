@@ -126,7 +126,7 @@ public class Feature {
      * @param id
      *            the feature of the id
      */
-    private Feature(String id) {
+    public Feature(String id) {
         if (id == null) {
             throw new IllegalArgumentException("id cannot be null");
         }

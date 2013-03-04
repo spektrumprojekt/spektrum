@@ -359,6 +359,7 @@ public class SimplePersistence implements Persistence {
 
     @Override
     public TermFrequency getTermFrequency() {
+        termFrequency.init();
         return termFrequency;
     }
 

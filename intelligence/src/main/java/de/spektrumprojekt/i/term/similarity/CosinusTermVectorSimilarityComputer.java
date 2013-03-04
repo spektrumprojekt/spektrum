@@ -9,8 +9,9 @@ import de.spektrumprojekt.i.term.weight.TermWeightComputer;
 
 public class CosinusTermVectorSimilarityComputer extends TermWeightTermVectorSimilarityComputer {
 
-    public CosinusTermVectorSimilarityComputer(TermWeightComputer termWeightComputer) {
-        super(termWeightComputer);
+    public CosinusTermVectorSimilarityComputer(TermWeightComputer termWeightComputer,
+            boolean treatMissingUserModelEntriesAsZero) {
+        super(termWeightComputer, treatMissingUserModelEntriesAsZero);
     }
 
     @Override
@@ -19,7 +20,13 @@ public class CosinusTermVectorSimilarityComputer extends TermWeightTermVectorSim
         float sumTop = 0;
         float squareSum1 = 0;
         float squareSum2 = 0;
-        for (Term term : terms) {
+        Collection<Term> termsForIteration;
+        if (isTreatMissingUserModelEntriesAsZero()) {
+            termsForIteration = terms;
+        } else {
+            termsForIteration = relevantEntries.keySet();
+        }
+        for (Term term : termsForIteration) {
             UserModelEntry entry = relevantEntries.get(term);
             float entryScore = 0;
             if (entry != null) {

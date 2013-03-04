@@ -4,6 +4,7 @@ import de.spektrumprojekt.i.term.frequency.TermFrequencyComputer;
 import de.spektrumprojekt.persistence.Persistence;
 
 public class InformationExtractionConfiguration {
+
     public Persistence persistence;
     public TermFrequencyComputer termFrequencyComputer;
     public boolean addTagsToText;
@@ -12,8 +13,10 @@ public class InformationExtractionConfiguration {
     public boolean doKeyphrase;
     public boolean beMessageGroupSpecific;
     public int minimumTermLength;
-    public boolean useNGramsInstreadOfStemming;
-    public int nGramsSize;
+    public boolean useWordNGramsInsteadOfStemming;
+    public int nGramsLength;
+    public boolean useCharNGramsInsteadOfStemming;
+    public boolean charNGramsRemoveStopwords;
 
     public InformationExtractionConfiguration(Persistence persistence,
             TermFrequencyComputer termFrequencyComputer, boolean addTagsToText, boolean doTokens,

@@ -9,8 +9,9 @@ import de.spektrumprojekt.i.term.weight.TermWeightComputer;
 
 public class AverageTermVectorSimilarityComputer extends TermWeightTermVectorSimilarityComputer {
 
-    public AverageTermVectorSimilarityComputer(TermWeightComputer termWeightComputer) {
-        super(termWeightComputer);
+    public AverageTermVectorSimilarityComputer(TermWeightComputer termWeightComputer,
+            boolean treatMissingUserModelEntriesAsZero) {
+        super(termWeightComputer, treatMissingUserModelEntriesAsZero);
     }
 
     @Override
@@ -18,7 +19,13 @@ public class AverageTermVectorSimilarityComputer extends TermWeightTermVectorSim
             Collection<Term> terms) {
         float sumTop = 0;
         float sumBottom = 0;
-        for (Term term : relevantEntries.keySet()) {
+        Collection<Term> termsForIteration;
+        if (isTreatMissingUserModelEntriesAsZero()) {
+            termsForIteration = terms;
+        } else {
+            termsForIteration = relevantEntries.keySet();
+        }
+        for (Term term : termsForIteration) {
             UserModelEntry entry = relevantEntries.get(term);
             float entryScore = 0;
             if (entry != null) {

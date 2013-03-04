@@ -11,7 +11,7 @@ import de.spektrumprojekt.i.term.weight.TermWeightComputer;
 public class MaximumTermVectorSimilarityComputer extends TermWeightTermVectorSimilarityComputer {
 
     public MaximumTermVectorSimilarityComputer(TermWeightComputer termWeightComputer) {
-        super(termWeightComputer);
+        super(termWeightComputer, false);
     }
 
     @Override

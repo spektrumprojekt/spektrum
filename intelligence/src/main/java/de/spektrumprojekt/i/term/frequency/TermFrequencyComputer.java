@@ -1,6 +1,7 @@
 package de.spektrumprojekt.i.term.frequency;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +35,8 @@ public class TermFrequencyComputer implements ConfigurationDescriptable {
     private final boolean beMessageGroupSpecific;
 
     private TermFrequency termFrequency = null;
+
+    private FileWriter termUniqueness;
 
     public TermFrequencyComputer(Persistence persistence, boolean beMessageGroupSpecific) {
         this.persistence = persistence;
@@ -131,9 +135,21 @@ public class TermFrequencyComputer implements ConfigurationDescriptable {
         return getTermFrequency().getUniqueTermCount();
     }
 
+    public void init(String filename) {
+        if (filename != null) {
+            try {
+                termUniqueness = new FileWriter(new File(filename));
+                logTermChangeHeader();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+    }
+
     public synchronized Collection<Term> integrate(Message message) {
         getTermFrequency();
-        Collection<Term> terms = internalIntegrate(message);
+        Collection<Term> terms = internalIntegrate(message, true);
         this.updateTermFrequency();
         return terms;
     }
@@ -148,7 +164,7 @@ public class TermFrequencyComputer implements ConfigurationDescriptable {
         this.termFrequency.getMessageGroupMessageCounts().put(messageGroup.getGlobalId(), count);
     }
 
-    private Collection<Term> internalIntegrate(Message message) {
+    private Collection<Term> internalIntegrate(Message message, boolean log) {
         if (beMessageGroupSpecific) {
             integrate(message.getMessageGroup());
         }
@@ -169,7 +185,27 @@ public class TermFrequencyComputer implements ConfigurationDescriptable {
             }
         }
         termFrequency.setMessageCount(termFrequency.getMessageCount() + 1);
+        if (log) {
+            logTermChange(message.getPublicationDate());
+        }
         return termsChanged;
+    }
+
+    private void logTermChange(Date date) {
+        if (termUniqueness != null) {
+            try {
+                termUniqueness.write(date.getTime() + " " + termFrequency.getAllTermCount() + " "
+                        + termFrequency.getUniqueTermCount() + " "
+                        + termFrequency.getMessageCount()
+                        + "\n");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private void logTermChangeHeader() throws IOException {
+        termUniqueness.write("Time AllTerms UniqueTerms MessageCount \n");
     }
 
     public synchronized void run() {
@@ -189,7 +225,7 @@ public class TermFrequencyComputer implements ConfigurationDescriptable {
 
         int i = 0;
         for (Message message : messages) {
-            termsChanged.addAll(internalIntegrate(message));
+            termsChanged.addAll(internalIntegrate(message, false));
 
             i++;
             if (i % (messages.size() / 10) == 0) {
@@ -208,6 +244,12 @@ public class TermFrequencyComputer implements ConfigurationDescriptable {
 
         LOGGER.info("Finished TermFrequencyComputed.");
 
+    }
+
+    public void stop() {
+        if (termUniqueness != null) {
+            IOUtils.closeQuietly(termUniqueness);
+        }
     }
 
     private void updateTermFrequency() {

@@ -24,6 +24,12 @@ public enum RankerConfigurationFlag {
 
     // USE_INVERSE_TERM_FREQUENCY,
 
-    USE_CONTENT_MATCH_FEATURE_OF_SIMILAR_USERS;
+    USE_CONTENT_MATCH_FEATURE_OF_SIMILAR_USERS,
+
+    // will not infer observations from ratings
+    NO_LEARNING_ONLY_RANKING,
+
+    // only usefull for analyzing term uniqness
+    NO_USER_SPECIFIC_COMMANDS;
 
 }

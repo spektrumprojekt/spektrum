@@ -117,10 +117,13 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         this.termFrequencyComputer = new TermFrequencyComputer(this.persistence,
                 this.rankerConfiguration
                         .hasFlag(RankerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL));
+        if (this.rankerConfiguration.getTermUniquenessLogfile() != null) {
+            this.termFrequencyComputer.init(this.rankerConfiguration
+                    .getTermUniquenessLogfile());
+        }
 
         termVectorSimilarityComputer = TermSimilarityWeightComputerFactory.getInstance()
-                .createTermVectorSimilarityComputer(rankerConfiguration.getTermWeightAggregation(),
-                        rankerConfiguration.getTermWeightStrategy(), termFrequencyComputer);
+                .createTermVectorSimilarityComputer(rankerConfiguration, termFrequencyComputer);
         // TODO register termfrequencycomputer in some timer
 
         rankerChain = new CommandChain<MessageFeatureContext>();
@@ -140,9 +143,14 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
                 this.rankerConfiguration
                         .hasFlag(RankerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL),
                 this.rankerConfiguration.getMinimumTermLength());
-        informationExtractionConfiguration.useNGramsInstreadOfStemming = this.rankerConfiguration
-                .isUseNGrams();
-        informationExtractionConfiguration.nGramsSize = this.rankerConfiguration.getnGramsSize();
+        informationExtractionConfiguration.useWordNGramsInsteadOfStemming = this.rankerConfiguration
+                .isUseWordNGrams();
+        informationExtractionConfiguration.useCharNGramsInsteadOfStemming = this.rankerConfiguration
+                .isUseCharNGrams();
+        informationExtractionConfiguration.nGramsLength = this.rankerConfiguration
+                .getNGramsLength();
+        informationExtractionConfiguration.charNGramsRemoveStopwords = this.rankerConfiguration
+                .isCharNGramsRemoveStopwords();
 
         this.informationExtractionChain = InformationExtractionCommand
                 .createDefaultGermanEnglish(informationExtractionConfiguration);
@@ -211,7 +219,9 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
 
             rankerChain.addCommand(discussionRootFeatureCommand);
         }
-        rankerChain.addCommand(userFeatureCommand);
+        if (!this.rankerConfiguration.hasFlag(RankerConfigurationFlag.NO_USER_SPECIFIC_COMMANDS)) {
+            rankerChain.addCommand(userFeatureCommand);
+        }
 
         if (!this.rankerConfiguration
                 .hasFlag(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE)) {
@@ -236,12 +246,16 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
             userFeatureCommand.addCommand(termMatchFeatureCommand);
         }
         userFeatureCommand.addCommand(computeMessageRankCommand);
-        userFeatureCommand.addCommand(invokeLearnerCommand);
+        if (!this.rankerConfiguration.hasFlag(RankerConfigurationFlag.NO_LEARNING_ONLY_RANKING)) {
+            userFeatureCommand.addCommand(invokeLearnerCommand);
+        }
 
         if (!this.rankerConfiguration
                 .hasFlag(RankerConfigurationFlag.DO_NOT_USE_CONTENT_MATCHER_FEATURE)
                 && this.rankerConfiguration
-                        .hasFlag(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)) {
+                        .hasFlag(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)
+                && !this.rankerConfiguration
+                        .hasFlag(RankerConfigurationFlag.NO_LEARNING_ONLY_RANKING)) {
 
             userFeatureCommand.addCommand(triggerUserModelAdaptationCommand);
         }
@@ -263,8 +277,6 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         reRankUserFeatureCommand.addCommand(computeMessageRankCommand);
         rerankerChain.addCommand(storeMessageRankCommand);
 
-        // TODO store the features ?! (or only necessary for evaluation?)
-
     }
 
     /**
@@ -275,6 +287,10 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
      */
     public void addCommand(Command<MessageFeatureContext> command) {
         this.rankerChain.addCommand(command);
+    }
+
+    public void close() {
+        this.termFrequencyComputer.stop();
     }
 
     /**

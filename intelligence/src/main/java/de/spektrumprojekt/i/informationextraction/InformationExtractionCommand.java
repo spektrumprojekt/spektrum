@@ -31,13 +31,14 @@ import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
+import de.spektrumprojekt.informationextraction.extractors.CharNGramsExtractorCommand;
 import de.spektrumprojekt.informationextraction.extractors.JerichoTextCleanerCommand;
 import de.spektrumprojekt.informationextraction.extractors.KeyphraseExtractorCommand;
 import de.spektrumprojekt.informationextraction.extractors.LanguageDetectorCommand;
-import de.spektrumprojekt.informationextraction.extractors.NGramsExtractorCommand;
 import de.spektrumprojekt.informationextraction.extractors.StemmedTokenExtractorCommand;
 import de.spektrumprojekt.informationextraction.extractors.TagExtractorCommand;
 import de.spektrumprojekt.informationextraction.extractors.TermCounterCommand;
+import de.spektrumprojekt.informationextraction.extractors.WordNGramsExtractorCommand;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**
@@ -78,13 +79,21 @@ public class InformationExtractionCommand<T extends MessageFeatureContext> imple
                 new LanguageDetectorCommand("de", allowedLanguages));
         if (informationExtractionConfiguration.doTokens) {
 
-            if (informationExtractionConfiguration.useNGramsInstreadOfStemming) {
+            if (informationExtractionConfiguration.useWordNGramsInsteadOfStemming) {
                 command.getInformationExtractionCommandChain().addCommand(
-                        new NGramsExtractorCommand(
-                                informationExtractionConfiguration.beMessageGroupSpecific, false,
-                                informationExtractionConfiguration.nGramsSize,
+                        new WordNGramsExtractorCommand(
+                                informationExtractionConfiguration.beMessageGroupSpecific,
+                                false,
+                                informationExtractionConfiguration.nGramsLength,
                                 informationExtractionConfiguration.minimumTermLength));
 
+            } else if (informationExtractionConfiguration.useCharNGramsInsteadOfStemming) {
+                command.getInformationExtractionCommandChain().addCommand(
+                        new CharNGramsExtractorCommand(
+                                informationExtractionConfiguration.beMessageGroupSpecific,
+                                false,
+                                informationExtractionConfiguration.nGramsLength,
+                                informationExtractionConfiguration.charNGramsRemoveStopwords));
             } else {
                 command.getInformationExtractionCommandChain().addCommand(
                         new StemmedTokenExtractorCommand(

@@ -25,6 +25,8 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 import de.spektrumprojekt.datamodel.identifiable.Identifiable;
 
 /**
@@ -86,6 +88,11 @@ public class MessageRelation extends Identifiable {
 
     public MessageRelationType getMessageRelationType() {
         return messageRelationType;
+    }
+
+    @JsonIgnore
+    public int getNumberOfRelatedMessages() {
+        return relatedMessageGlobalIds == null ? 0 : relatedMessageGlobalIds.length;
     }
 
     public String[] getRelatedMessageGlobalIds() {

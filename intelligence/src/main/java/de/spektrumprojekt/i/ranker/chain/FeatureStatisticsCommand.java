@@ -44,7 +44,7 @@ public class FeatureStatisticsCommand implements Command<UserSpecificMessageFeat
         public int exists;
 
         private String getPercentString(int val, int overall) {
-            int percent = 100 * val / overall;
+            int percent = overall == 0 ? 0 : 100 * val / overall;
             return val + " (" + percent + "%) ";
         }
 
@@ -131,5 +131,4 @@ public class FeatureStatisticsCommand implements Command<UserSpecificMessageFeat
         }
 
     }
-
 }
