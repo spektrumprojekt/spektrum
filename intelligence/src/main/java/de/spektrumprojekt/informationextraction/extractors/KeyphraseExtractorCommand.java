@@ -1,21 +1,21 @@
 /*
-* Licensed to the Apache Software Foundation (ASF) under one
-* or more contributor license agreements.  See the NOTICE file
-* distributed with this work for additional information
-* regarding copyright ownership.  The ASF licenses this file
-* to you under the Apache License, Version 2.0 (the
-* "License"); you may not use this file except in compliance
-* with the License.  You may obtain a copy of the License at
-* 
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package de.spektrumprojekt.informationextraction.extractors;
 
@@ -25,14 +25,21 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.collections.Bag;
 import org.apache.commons.collections.bag.HashBag;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.StringUtils;
 
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
+import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
 
+/**
+ * <p>
+ * A simple tag extractor which can work using a controlled vocabulary with tags to assign.
+ * </p>
+ * 
+ * @author Philipp Katz
+ */
 public class KeyphraseExtractorCommand implements Command<InformationExtractionContext> {
 
     /** Allowed characters for a token, everything else will be filtered out. */
@@ -41,18 +48,32 @@ public class KeyphraseExtractorCommand implements Command<InformationExtractionC
     /** Marker to indicate an undesired token. */
     private static final String IGNORED_TOKEN = "###";
 
+    /** The similarity threshold when matching strings, this migh need to be fine-tuned. */
+    private static final float SIMILARITY_THRESHOLD = 0.85f;
+
+    /** The tag source provides a controlled vocabulary with terms to assign. */
     private final TagSource tagSource;
 
     /**
      * <p>
-     * Create a new {@link KeyphraseExtractorCommand} with the specified {@link TagSource} providing a controlled
-     * vocabulary of tags to assign.
+     * Create a new {@link KeyphraseExtractorCommand} <i>without</i> controlled vocabulary.
+     * </p>
+     */
+    public KeyphraseExtractorCommand() {
+        this(null);
+    }
+
+    /**
+     * <p>
+     * Create a new {@link KeyphraseExtractorCommand} with the specified {@link TagSource} providing
+     * a controlled vocabulary of tags to assign.
      * </p>
      * 
-     * @param tagSource The TagSource providing tags to assign, not <code>null</code>.
+     * @param tagSource
+     *            The TagSource providing tags to assign, <code>null</code> to use no controlled
+     *            vocabulary.
      */
     public KeyphraseExtractorCommand(TagSource tagSource) {
-        Validate.notNull(tagSource, "tagSource must not be null");
         this.tagSource = tagSource;
     }
 
@@ -105,7 +126,7 @@ public class KeyphraseExtractorCommand implements Command<InformationExtractionC
 
         String language = LanguageDetectorCommand.getAnnotatedLanguage(context.getMessage());
 
-        String text = context.getCleanText();
+        String text = getCompleteText(context);
         if (StringUtils.isEmpty(text)) {
             return;
         }
@@ -125,23 +146,74 @@ public class KeyphraseExtractorCommand implements Command<InformationExtractionC
             if (nGram.contains(IGNORED_TOKEN) || nGram.length() < 3) {
                 continue;
             }
-            nGramBag.add(nGram);
+
+            // check occurrence in controlled vocabulary
+            String termFromVocabulary = getFromVocabulary(nGram);
+            if (termFromVocabulary != null) {
+                nGramBag.add(termFromVocabulary);
+            } else if (tagSource == null) {
+                // if we have no controlled vocabulary, accept them all for now
+                nGramBag.add(nGram);
+            }
         }
 
         KeyphraseCandidates candidates = createCandidates(language, nGramBag);
 
         for (KeyphraseCandidate candidate : candidates) {
-            if (candidate.getCount() > 1) {
 
-                // TODO how to normalize the score ?
-                context.getMessagePart().addScoredTerm(
-                        new ScoredTerm(
-                                context.getPersistence().getOrCreateTerm(
-                                        Term.TermCategory.KEYPHRASE,
-                                        candidate.getShortestUnstemmedValue()),
-                                candidate.getCount()));
+            // TODO how to normalize the score ?
+            context.getMessagePart().addScoredTerm(
+                    new ScoredTerm(context.getPersistence().getOrCreateTerm(
+                            Term.TermCategory.KEYPHRASE,
+                            candidate.getShortestUnstemmedValue()), candidate.getCount()));
+        }
+    }
+
+    /**
+     * <p>
+     * Get complete text concatenation of a message (title plus text content).
+     * </p>
+     * 
+     * @param context
+     * @return
+     */
+    private String getCompleteText(InformationExtractionContext context) {
+        StringBuilder builder = new StringBuilder();
+        String title = MessageHelper.getTitle(context.getMessage());
+        if (StringUtils.isNotBlank(title)) {
+            builder.append(title).append('\n');
+        }
+        String text = context.getCleanText();
+        if (StringUtils.isNotBlank(text)) {
+            builder.append(text);
+        }
+        return builder.toString();
+    }
+
+    /**
+     * <p>
+     * Check, whether the provided term occurs in the in the controlled vocabulary.
+     * </p>
+     * 
+     * @param term
+     *            The term to check.
+     * @return The value of the matched term from the vocabulary.
+     */
+    private String getFromVocabulary(String term) {
+        if (tagSource == null) {
+            return null;
+        }
+        String lowercaseTerm = term.toLowerCase();
+        for (Term currentTerm : tagSource.getTags()) {
+            String lowercaseCandidate = currentTerm.getValue().toLowerCase();
+            // XXX most likely, we have to consider the string's lengths here, and maybe have a
+            // special treatment for very short tags. But this needs to be determined empirically.
+            float sim = ExtractionUtils.getLevenshteinSimilarity(lowercaseCandidate, lowercaseTerm);
+            if (sim > SIMILARITY_THRESHOLD) {
+                return currentTerm.getValue();
             }
         }
+        return null;
     }
 
 }

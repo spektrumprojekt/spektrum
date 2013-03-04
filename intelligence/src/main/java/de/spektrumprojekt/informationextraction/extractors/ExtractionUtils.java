@@ -34,6 +34,7 @@ import java.util.regex.Pattern;
 
 import opennlp.tools.tokenize.SimpleTokenizer;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import org.apache.log4j.Logger;
 import org.tartarus.snowball.SnowballProgram;
@@ -109,8 +110,10 @@ public final class ExtractionUtils {
      * Create character-based n-grams of the given length.
      * </p>
      * 
-     * @param text The text for which to create the n-grams, not <code>null</code>.
-     * @param length The length of the n-grams to create, greater or equal one.
+     * @param text
+     *            The text for which to create the n-grams, not <code>null</code>.
+     * @param length
+     *            The length of the n-grams to create, greater or equal one.
      * @return A list with n-grams in the order as extracted from the text.
      */
     public static List<String> createCharNGrams(String text, int length) {
@@ -130,10 +133,14 @@ public final class ExtractionUtils {
      * Create character-based n-grams in the given length interval.
      * </p>
      * 
-     * @param text The text for which to create n-grams, not <code>null</code>.
-     * @param minLength The minimum length of the n-grams to create, greater or equal one.
-     * @param maxLength The maximum length of the n-grams to create, greater or equal minLength.
-     * @return A list with n-grams starting with the min length in the order as extracted from the text.
+     * @param text
+     *            The text for which to create n-grams, not <code>null</code>.
+     * @param minLength
+     *            The minimum length of the n-grams to create, greater or equal one.
+     * @param maxLength
+     *            The maximum length of the n-grams to create, greater or equal minLength.
+     * @return A list with n-grams starting with the min length in the order as extracted from the
+     *         text.
      */
     public static List<String> createCharNGrams(String text, int minLength, int maxLength) {
         Validate.isTrue(minLength >= 1, "minLength must be greater or equal 1");
@@ -276,8 +283,10 @@ public final class ExtractionUtils {
      * Check, whether the given word is a stopword in the specified language.
      * </p>
      * 
-     * @param language The language.
-     * @param word The word to check.
+     * @param language
+     *            The language.
+     * @param word
+     *            The word to check.
      * @return <code>true</code> if word is stopword, <code>false</code> otherwise.
      */
     public static boolean isStopword(String language, String word) {
@@ -290,6 +299,24 @@ public final class ExtractionUtils {
             stopwords = Collections.emptySet();
         }
         return stopwords.contains(word.toLowerCase());
+    }
+
+    /**
+     * <p>
+     * Get the Levenshtein similarity for two given string.
+     * </p>
+     * 
+     * @param s1
+     *            First string, not <code>null</code>.
+     * @param s2
+     *            Second string, not <code>null</code>.
+     * @return The Levenshtein similarity.
+     */
+    public static float getLevenshteinSimilarity(String s1, String s2) {
+        Validate.notNull(s1, "s1 must not be null");
+        Validate.notNull(s2, "s2 must not be null");
+        int distance = StringUtils.getLevenshteinDistance(s1, s2);
+        return 1 - (float) distance / Math.max(s1.length(), s2.length());
     }
 
     private ExtractionUtils() {
