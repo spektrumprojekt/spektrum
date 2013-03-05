@@ -1,10 +1,12 @@
 package de.spektrumprojekt.i.informationextraction;
 
 import de.spektrumprojekt.i.term.frequency.TermFrequencyComputer;
+import de.spektrumprojekt.informationextraction.extractors.TagSource;
 import de.spektrumprojekt.persistence.Persistence;
 
 public class InformationExtractionConfiguration {
 
+    public TagSource tagSource;
     public Persistence persistence;
     public TermFrequencyComputer termFrequencyComputer;
     public boolean addTagsToText;
@@ -17,6 +19,7 @@ public class InformationExtractionConfiguration {
     public int nGramsLength;
     public boolean useCharNGramsInsteadOfStemming;
     public boolean charNGramsRemoveStopwords;
+    public boolean matchTextAgainstTagSource;
 
     public InformationExtractionConfiguration(Persistence persistence,
             TermFrequencyComputer termFrequencyComputer, boolean addTagsToText, boolean doTokens,

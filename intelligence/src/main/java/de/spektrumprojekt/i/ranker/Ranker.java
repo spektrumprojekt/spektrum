@@ -77,15 +77,15 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
     private final AdaptMessageRankByCMFOfSimilarUsersCommand adaptMessageRankByCMFOfSimilarUsersCommand;
     private final FeatureStatisticsCommand featureStatisticsCommand;
 
-    private CommandChain<MessageFeatureContext> rankerChain;
+    private final CommandChain<MessageFeatureContext> rankerChain;
 
-    private CommandChain<MessageFeatureContext> rerankerChain;
-    private InformationExtractionCommand<MessageFeatureContext> informationExtractionChain;
+    private final CommandChain<MessageFeatureContext> rerankerChain;
+    private final InformationExtractionCommand<MessageFeatureContext> informationExtractionChain;
 
     private final TermVectorSimilarityComputer termVectorSimilarityComputer;
     private final TermFrequencyComputer termFrequencyComputer;
 
-    private UserSimilarityComputer userSimilarityComputer;
+    private final UserSimilarityComputer userSimilarityComputer;
 
     private final RankerConfiguration rankerConfiguration;
 
@@ -96,8 +96,7 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
      * @param memberRunner
      *            callback runner to get the groups for the user
      */
-    public Ranker(Persistence persistence,
-            Communicator communicator,
+    public Ranker(Persistence persistence, Communicator communicator,
             MessageGroupMemberRunner<MessageFeatureContext> memberRunner,
             RankerConfiguration rankerConfiguration) {
         if (persistence == null) {
@@ -118,8 +117,7 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
                 this.rankerConfiguration
                         .hasFlag(RankerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL));
         if (this.rankerConfiguration.getTermUniquenessLogfile() != null) {
-            this.termFrequencyComputer.init(this.rankerConfiguration
-                    .getTermUniquenessLogfile());
+            this.termFrequencyComputer.init(this.rankerConfiguration.getTermUniquenessLogfile());
         }
 
         termVectorSimilarityComputer = TermSimilarityWeightComputerFactory.getInstance()
@@ -134,12 +132,9 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         UserFeatureCommand reRankUserFeatureCommand = new UserFeatureCommand(memberRunner);
 
         InformationExtractionConfiguration informationExtractionConfiguration = new InformationExtractionConfiguration(
-                this.persistence,
-                this.termFrequencyComputer,
-                this.rankerConfiguration.isAddTagsToText(),
-                this.rankerConfiguration.isDoTokens(),
-                this.rankerConfiguration.isDoTags(),
-                this.rankerConfiguration.isDoKeyphrase(),
+                this.persistence, this.termFrequencyComputer,
+                this.rankerConfiguration.isAddTagsToText(), this.rankerConfiguration.isDoTokens(),
+                this.rankerConfiguration.isDoTags(), this.rankerConfiguration.isDoKeyphrase(),
                 this.rankerConfiguration
                         .hasFlag(RankerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL),
                 this.rankerConfiguration.getMinimumTermLength());
@@ -151,6 +146,9 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
                 .getNGramsLength();
         informationExtractionConfiguration.charNGramsRemoveStopwords = this.rankerConfiguration
                 .isCharNGramsRemoveStopwords();
+        informationExtractionConfiguration.matchTextAgainstTagSource = this.rankerConfiguration
+                .isMatchTextAgainstTagSource();
+        informationExtractionConfiguration.tagSource = this.rankerConfiguration.getTagSource();
 
         this.informationExtractionChain = InformationExtractionCommand
                 .createDefaultGermanEnglish(informationExtractionConfiguration);
@@ -167,10 +165,8 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         DiscussionMentionFeatureCommand discussionMentionFeatureCommand = new DiscussionMentionFeatureCommand();
 
         ContentMatchFeatureCommand termMatchFeatureCommand = new ContentMatchFeatureCommand(
-                persistence,
-                termVectorSimilarityComputer,
-                rankerConfiguration.getInterestTermTreshold()
-                );
+                persistence, termVectorSimilarityComputer,
+                rankerConfiguration.getInterestTermTreshold());
         ComputeMessageRankCommand computeMessageRankCommand = new ComputeMessageRankCommand(
                 this.rankerConfiguration
                         .hasFlag(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE_BUT_LEARN_FROM_FEATURES)
@@ -185,18 +181,15 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
                 this.rankerConfiguration
                         .hasFlag(RankerConfigurationFlag.DISCUSSION_PARTICIPATION_LEARN_FROM_PARENT_MESSAGE),
                 this.rankerConfiguration
-                        .hasFlag(RankerConfigurationFlag.DISCUSSION_PARTICIPATION_LEARN_FROM_ALL_PARENT_MESSAGES)
-                );
+                        .hasFlag(RankerConfigurationFlag.DISCUSSION_PARTICIPATION_LEARN_FROM_ALL_PARENT_MESSAGES));
         TriggerUserModelAdaptationCommand triggerUserModelAdaptationCommand = new TriggerUserModelAdaptationCommand(
                 this.communicator);
 
         // TODO where to take the configuration values from ?
-        adaptMessageRankByCMFOfSimilarUsersCommand =
-                new AdaptMessageRankByCMFOfSimilarUsersCommand(
-                        persistence,
-                        this.rankerConfiguration.getMessageRankThreshold(),
-                        this.rankerConfiguration.getMinUserSimilarity(),
-                        this.rankerConfiguration.getMinContentMessageScore());
+        adaptMessageRankByCMFOfSimilarUsersCommand = new AdaptMessageRankByCMFOfSimilarUsersCommand(
+                persistence, this.rankerConfiguration.getMessageRankThreshold(),
+                this.rankerConfiguration.getMinUserSimilarity(),
+                this.rankerConfiguration.getMinContentMessageScore());
         StoreMessageRankCommand storeMessageRankCommand = new StoreMessageRankCommand(persistence);
 
         // add the commands to the chain
@@ -206,8 +199,8 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         rankerChain.addCommand(storeMessageCommand);
 
         if (this.rankerConfiguration
-                .hasFlag(RankerConfigurationFlag.USE_CONTENT_MATCH_FEATURE_OF_SIMILAR_USERS) ||
-                this.rankerConfiguration
+                .hasFlag(RankerConfigurationFlag.USE_CONTENT_MATCH_FEATURE_OF_SIMILAR_USERS)
+                || this.rankerConfiguration
                         .hasFlag(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)) {
             rankerChain.addCommand(userSimilarityIntegrationCommand);
         }
@@ -232,8 +225,7 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
 
         if (!this.rankerConfiguration
                 .hasFlag(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE)
-                &&
-                !this.rankerConfiguration
+                && !this.rankerConfiguration
                         .hasFlag(RankerConfigurationFlag.DO_NOT_USE_DISCUSSION_FEATURES)) {
 
             userFeatureCommand.getUserSpecificCommandChain().addCommand(
@@ -297,8 +289,7 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
      * {@inheritDoc}
      */
     @Override
-    public void deliverMessage(RankingCommunicationMessage message)
-            throws Exception {
+    public void deliverMessage(RankingCommunicationMessage message) throws Exception {
 
         rank(message.getMessage(), message.getMessageRelation(),
                 message.getUserGlobalIdsToRankFor(), message.isNoRankingOnlyLearning());
@@ -316,8 +307,7 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
     public String getConfigurationDescription() {
         StringBuilder sb = new StringBuilder();
         sb.append(this.getClass().getSimpleName());
-        sb.append(" rankerConfiguration: "
-                + this.rankerConfiguration.getConfigurationDescription());
+        sb.append(" rankerConfiguration: " + this.rankerConfiguration.getConfigurationDescription());
         sb.append(" termVectorSimilarityComputer: "
                 + this.termVectorSimilarityComputer.getConfigurationDescription());
         sb.append(" termFrequencyComputer: "
@@ -384,8 +374,8 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
 
-        MessageFeatureContext context = new MessageFeatureContext(this.persistence,
-                message, messageRelation);
+        MessageFeatureContext context = new MessageFeatureContext(this.persistence, message,
+                messageRelation);
         context.setNoRankingOnlyLearning(noRankingOnlyLearning);
 
         if (userGlobalIdsToRankFor != null) {
@@ -414,8 +404,7 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
 
-        MessageFeatureContext context = new MessageFeatureContext(this.persistence,
-                message, null);
+        MessageFeatureContext context = new MessageFeatureContext(this.persistence, message, null);
         context.setNoRankingOnlyLearning(false);
 
         if (userGlobalId != null) {

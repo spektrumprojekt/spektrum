@@ -9,6 +9,7 @@ import java.util.Set;
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
 import de.spektrumprojekt.i.term.TermWeightStrategy;
+import de.spektrumprojekt.informationextraction.extractors.TagSource;
 
 public class RankerConfiguration implements ConfigurationDescriptable, Cloneable {
 
@@ -44,13 +45,15 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
     private boolean charNGramsRemoveStopwords;
     private String termUniquenessLogfile;
 
+    private boolean matchTextAgainstTagSource;
+    private TagSource tagSource;
+
     public RankerConfiguration(TermWeightStrategy strategy, TermVectorSimilarityStrategy aggregation) {
         this(strategy, aggregation, (RankerConfigurationFlag[]) null);
     }
 
     public RankerConfiguration(TermWeightStrategy termWeightStrategy,
-            TermVectorSimilarityStrategy termWeightAggregation,
-            RankerConfigurationFlag... flags) {
+            TermVectorSimilarityStrategy termWeightAggregation, RankerConfigurationFlag... flags) {
         if (termWeightStrategy == null) {
             throw new IllegalStateException("termWeightStrategy cannot be null.");
         }
@@ -128,6 +131,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         return nGramsLength;
     }
 
+    public TagSource getTagSource() {
+        return tagSource;
+    }
+
     public String getTermUniquenessLogfile() {
         return termUniquenessLogfile;
     }
@@ -172,6 +179,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     public boolean isImmutable() {
         return immutable;
+    }
+
+    public boolean isMatchTextAgainstTagSource() {
+        return matchTextAgainstTagSource;
     }
 
     public boolean isTreatMissingUserModelEntriesAsZero() {
@@ -223,6 +234,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         this.interestTermTreshold = interestTermTreshold;
     }
 
+    public void setMatchTextAgainstTagSource(boolean matchTextAgainstTagSource) {
+        this.matchTextAgainstTagSource = matchTextAgainstTagSource;
+    }
+
     public void setMessageRankThreshold(float messageRankThreshold) {
         assert01(messageRankThreshold, "messageRankThreshold");
         this.messageRankThreshold = messageRankThreshold;
@@ -246,6 +261,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
     public void setNGramsLength(int nGramsLength) {
         assertCanSet();
         this.nGramsLength = nGramsLength;
+    }
+
+    public void setTagSource(TagSource tagSource) {
+        this.tagSource = tagSource;
     }
 
     public void setTermUniquenessLogfile(String termUniquenessLogfile) {

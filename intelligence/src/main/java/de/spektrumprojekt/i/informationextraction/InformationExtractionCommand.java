@@ -82,16 +82,14 @@ public class InformationExtractionCommand<T extends MessageFeatureContext> imple
             if (informationExtractionConfiguration.useWordNGramsInsteadOfStemming) {
                 command.getInformationExtractionCommandChain().addCommand(
                         new WordNGramsExtractorCommand(
-                                informationExtractionConfiguration.beMessageGroupSpecific,
-                                false,
+                                informationExtractionConfiguration.beMessageGroupSpecific, false,
                                 informationExtractionConfiguration.nGramsLength,
                                 informationExtractionConfiguration.minimumTermLength));
 
             } else if (informationExtractionConfiguration.useCharNGramsInsteadOfStemming) {
                 command.getInformationExtractionCommandChain().addCommand(
                         new CharNGramsExtractorCommand(
-                                informationExtractionConfiguration.beMessageGroupSpecific,
-                                false,
+                                informationExtractionConfiguration.beMessageGroupSpecific, false,
                                 informationExtractionConfiguration.nGramsLength,
                                 informationExtractionConfiguration.charNGramsRemoveStopwords));
             } else {
@@ -102,25 +100,31 @@ public class InformationExtractionCommand<T extends MessageFeatureContext> imple
             }
         }
         if (informationExtractionConfiguration.doKeyphrase) {
-            command.getInformationExtractionCommandChain()
-                    .addCommand(new KeyphraseExtractorCommand());
+            command.getInformationExtractionCommandChain().addCommand(
+                    new KeyphraseExtractorCommand());
         }
         if (informationExtractionConfiguration.doTags) {
-            command.getInformationExtractionCommandChain().addCommand(new TagExtractorCommand(
-                    informationExtractionConfiguration.beMessageGroupSpecific));
+            command.getInformationExtractionCommandChain().addCommand(
+                    new TagExtractorCommand(
+                            informationExtractionConfiguration.beMessageGroupSpecific));
         }
         if (informationExtractionConfiguration.termFrequencyComputer != null) {
             command.getInformationExtractionCommandChain().addCommand(
                     new TermCounterCommand(informationExtractionConfiguration.persistence,
                             informationExtractionConfiguration.termFrequencyComputer));
         }
+        if (informationExtractionConfiguration.matchTextAgainstTagSource
+                && informationExtractionConfiguration.tagSource != null) {
+            command.getInformationExtractionCommandChain().addCommand(
+                    new KeyphraseExtractorCommand(informationExtractionConfiguration.tagSource));
+
+        }
         return command;
     }
 
     private final Persistence persistence;
 
-    private final CommandChain<InformationExtractionContext> informationExtractionCommandChain =
-            new CommandChain<InformationExtractionContext>();
+    private final CommandChain<InformationExtractionContext> informationExtractionCommandChain = new CommandChain<InformationExtractionContext>();
 
     public InformationExtractionCommand(Persistence persistence) {
         if (persistence == null) {
@@ -179,8 +183,7 @@ public class InformationExtractionCommand<T extends MessageFeatureContext> imple
             }
 
             message.addProperty(new Property(PROPERTY_INFORMATION_EXTRACTION_EXECUTION_DATE,
-                    new Date().getTime()
-                            + ""));
+                    new Date().getTime() + ""));
         }
     }
 
