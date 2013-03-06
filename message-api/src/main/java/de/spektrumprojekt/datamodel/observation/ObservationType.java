@@ -37,5 +37,7 @@ public enum ObservationType {
      */
     LIKE,
 
-    RATING
+    RATING,
+
+    INTERACTION
 }

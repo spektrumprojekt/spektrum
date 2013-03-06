@@ -22,9 +22,8 @@ package de.spektrumprojekt.datamodel.observation;
 
 public enum ObservationPriority {
 
-    USER_FEEDBACK(100),
-    FIRST_LEVEL_FEATURE_INFERRED(90),
-    SECOND_LEVEL_FEATURE_INFERRED(80);
+    USER_FEEDBACK(100), FIRST_LEVEL_FEATURE_INFERRED(90), USER_INTERACTION(85), SECOND_LEVEL_FEATURE_INFERRED(
+            80);
 
     private final int priority;
 
