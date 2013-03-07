@@ -29,6 +29,22 @@ public class KeyphraseExtractorCommandTest {
     private static final String title5 = "Filling in the gaps: great enterprise focused add-ons for OS X Server";
     private static final String text5 = "In our review of OS X Server, we found that Mountain Lion has a lot to offer home users or Mac-centric small businesses. Enterprise-level features, however, have fallen by the wayside. Luckily, some great first- and third-party tools exist to help close the gap between Apple's server product and more robust enterprise management systems from the likes of Microsoft and Dell.Some of the products are free open-source programs, and some are strong, for-pay products intended for use with hundreds if not thousands of Macs. Whatever your needs are, this list of applications should point you in the right direction if you're looking to extend OS X Server's capabilities.Apple Remote DesktopSending a Software Update UNIX command with Apple Remote Desktop. One of OS X Server's most glaring blind spots relative to Windows Server and Active Directory is software management. There's no way to install third-party applications on Macs that are already out in the field. And if you use a program like DeployStudio to install applications when you set up your Mac, it isn't much help to you once the Mac is off your desk and out in the field.";
 
+    private Collection<ScoredTerm> test(KeyphraseExtractorCommand command, String language,
+            String title, String text) {
+        Message message = new Message(MessageType.CONTENT, StatusType.OK, new Date());
+        message.addProperty(new Property(Property.PROPERTY_KEY_TITLE, title));
+        message.addProperty(new Property(LanguageDetectorCommand.LANGUAGE, language));
+        message.addProperty(new Property(Property.PROPERTY_KEY_EXTERNAL,
+                Property.PROPERTY_VALUE_EXTERNAL));
+
+        MessagePart messagePart = new MessagePart(MimeType.TEXT_PLAIN, text);
+        InformationExtractionContext context = new InformationExtractionContext(
+                new SimplePersistence(), message, messagePart);
+        context.setCleanText(text);
+        command.process(context);
+        return messagePart.getScoredTerms();
+    }
+
     @Test
     public void testKeyphraseExtractor() {
         KeyphraseExtractorCommand command = new KeyphraseExtractorCommand();
@@ -37,21 +53,6 @@ public class KeyphraseExtractorCommandTest {
         assertEquals(24, test(command, "en", null, text3).size());
         assertEquals(120, test(command, "en", title4, text4).size());
         assertEquals(131, test(command, "en", title5, text5).size());
-    }
-
-    private Collection<ScoredTerm> test(KeyphraseExtractorCommand command, String language,
-            String title, String text) {
-        Message message = new Message(MessageType.CONTENT, StatusType.OK, new Date());
-        message.addProperty(new Property(Property.PROPERTY_KEY_TITLE, title));
-        message.addProperty(new Property(LanguageDetectorCommand.LANGUAGE, language));
-
-        MessagePart messagePart = new MessagePart(MimeType.TEXT_PLAIN, text);
-        InformationExtractionContext context = new InformationExtractionContext(
-                new SimplePersistence(), message,
-                messagePart);
-        context.setCleanText(text);
-        command.process(context);
-        return messagePart.getScoredTerms();
     }
 
     @Test

@@ -50,6 +50,24 @@ public class Property extends Identifiable {
      */
     public static final String PROPERTY_KEY_LINK = "link";
 
+    /**
+     * Key of the property which marks a message as external message.
+     */
+    public static final String PROPERTY_KEY_EXTERNAL = "contentTypes.external";
+    /**
+     * Value of the property which marks a message as external message.
+     */
+    public static final String PROPERTY_VALUE_EXTERNAL = "external";
+
+    /**
+     * Key of the property which marks a message as an activity.
+     */
+    public static final String PROPERTY_KEY_ACTIVITY = "contentTypes.activity";
+    /**
+     * Value of the property which marks a message as an activity.
+     */
+    public static final String PROPERTY_VALUE_ACTIVITY = "activity";
+
     private String propertyKey;
 
     @Lob

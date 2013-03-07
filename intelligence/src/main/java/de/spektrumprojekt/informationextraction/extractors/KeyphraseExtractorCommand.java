@@ -28,6 +28,7 @@ import org.apache.commons.collections.bag.HashBag;
 import org.apache.commons.lang3.StringUtils;
 
 import de.spektrumprojekt.commons.chain.Command;
+import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.helper.MessageHelper;
@@ -114,6 +115,27 @@ public class KeyphraseExtractorCommand implements Command<InformationExtractionC
     }
 
     /**
+     * <p>
+     * Get complete text concatenation of a message (title plus text content).
+     * </p>
+     * 
+     * @param context
+     * @return
+     */
+    private String getCompleteText(InformationExtractionContext context) {
+        StringBuilder builder = new StringBuilder();
+        String title = MessageHelper.getTitle(context.getMessage());
+        if (StringUtils.isNotBlank(title)) {
+            builder.append(title).append('\n');
+        }
+        String text = context.getCleanText();
+        if (StringUtils.isNotBlank(text)) {
+            builder.append(text);
+        }
+        return builder.toString();
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -121,8 +143,40 @@ public class KeyphraseExtractorCommand implements Command<InformationExtractionC
         return this.getClass().getSimpleName();
     }
 
+    /**
+     * <p>
+     * Check, whether the provided term occurs in the in the controlled vocabulary.
+     * </p>
+     * 
+     * @param term
+     *            The term to check.
+     * @return The value of the matched term from the vocabulary.
+     */
+    private String getFromVocabulary(String term) {
+        if (tagSource == null) {
+            return null;
+        }
+        String lowercaseTerm = term.toLowerCase();
+        for (Term currentTerm : tagSource.getTags()) {
+            String lowercaseCandidate = currentTerm.getValue().toLowerCase();
+            // XXX most likely, we have to consider the string's lengths here, and maybe have a
+            // special treatment for very short tags. But this needs to be determined empirically.
+            float sim = ExtractionUtils.getLevenshteinSimilarity(lowercaseCandidate, lowercaseTerm);
+            if (sim > SIMILARITY_THRESHOLD) {
+                return currentTerm.getValue();
+            }
+        }
+        return null;
+    }
+
     @Override
     public void process(InformationExtractionContext context) {
+        Property externalProperty = context.getMessage().getPropertiesAsMap()
+                .get(Property.PROPERTY_KEY_EXTERNAL);
+        if (externalProperty == null
+                || !externalProperty.getPropertyValue().equals(Property.PROPERTY_VALUE_EXTERNAL)) {
+            return;
+        }
 
         String language = LanguageDetectorCommand.getAnnotatedLanguage(context.getMessage());
 
@@ -164,56 +218,9 @@ public class KeyphraseExtractorCommand implements Command<InformationExtractionC
             // TODO how to normalize the score ?
             context.getMessagePart().addScoredTerm(
                     new ScoredTerm(context.getPersistence().getOrCreateTerm(
-                            Term.TermCategory.KEYPHRASE,
-                            candidate.getShortestUnstemmedValue()), candidate.getCount()));
+                            Term.TermCategory.KEYPHRASE, candidate.getShortestUnstemmedValue()),
+                            candidate.getCount()));
         }
-    }
-
-    /**
-     * <p>
-     * Get complete text concatenation of a message (title plus text content).
-     * </p>
-     * 
-     * @param context
-     * @return
-     */
-    private String getCompleteText(InformationExtractionContext context) {
-        StringBuilder builder = new StringBuilder();
-        String title = MessageHelper.getTitle(context.getMessage());
-        if (StringUtils.isNotBlank(title)) {
-            builder.append(title).append('\n');
-        }
-        String text = context.getCleanText();
-        if (StringUtils.isNotBlank(text)) {
-            builder.append(text);
-        }
-        return builder.toString();
-    }
-
-    /**
-     * <p>
-     * Check, whether the provided term occurs in the in the controlled vocabulary.
-     * </p>
-     * 
-     * @param term
-     *            The term to check.
-     * @return The value of the matched term from the vocabulary.
-     */
-    private String getFromVocabulary(String term) {
-        if (tagSource == null) {
-            return null;
-        }
-        String lowercaseTerm = term.toLowerCase();
-        for (Term currentTerm : tagSource.getTags()) {
-            String lowercaseCandidate = currentTerm.getValue().toLowerCase();
-            // XXX most likely, we have to consider the string's lengths here, and maybe have a
-            // special treatment for very short tags. But this needs to be determined empirically.
-            float sim = ExtractionUtils.getLevenshteinSimilarity(lowercaseCandidate, lowercaseTerm);
-            if (sim > SIMILARITY_THRESHOLD) {
-                return currentTerm.getValue();
-            }
-        }
-        return null;
     }
 
 }
