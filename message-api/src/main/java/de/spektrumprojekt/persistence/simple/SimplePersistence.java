@@ -268,6 +268,11 @@ public class SimplePersistence implements Persistence {
         return this.messageRanks.get(new UserMessageIdentifier(userGlobalId, messageGlobalId));
     }
 
+    @Override
+    public MessageRelation getMessageRelation(Message message) {
+        return messageRelations.get(message.getGlobalId());
+    }
+
     public Collection<Message> getMessages() {
         return this.messages.values();
     }

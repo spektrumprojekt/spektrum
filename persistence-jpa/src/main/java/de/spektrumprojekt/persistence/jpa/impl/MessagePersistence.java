@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.List;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityTransaction;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
@@ -182,10 +183,9 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
                 ParameterExpression<String> messageGlobalIdParameter = criteriaBuilder
                         .parameter(String.class);
 
-                query.where(criteriaBuilder.and(
-                        criteriaBuilder.equal(entity.get("userGlobalId"), userGlobalIdParameter),
-                        criteriaBuilder.equal(entity.get("messageGlobalId"),
-                                messageGlobalIdParameter)));
+                query.where(criteriaBuilder.and(criteriaBuilder.equal(entity.get("userGlobalId"),
+                        userGlobalIdParameter), criteriaBuilder.equal(
+                        entity.get("messageGlobalId"), messageGlobalIdParameter)));
 
                 TypedQuery<MessageRank> typedQuery = entityManager.createQuery(query);
                 typedQuery.setParameter(userGlobalIdParameter, userGlobalId);
@@ -203,6 +203,22 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
         };
 
         return transaction.executeTransaction(getEntityManager());
+    }
+
+    public MessageRelation getMessageRelation(Message message) {
+        Validate.notNull(message, "message must not be null");
+        EntityManager entityManager = getEntityManager();
+        TypedQuery<MessageRelation> query = entityManager.createQuery(
+                "SELECT mr FROM MessageRelation mr WHERE mr.globalId = '" + message.getGlobalId()
+                        + "'", MessageRelation.class);
+        try {
+            MessageRelation result = query.getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            return null;
+        } finally {
+            entityManager.close();
+        }
     }
 
     public Collection<Message> getMessagesForPattern(String pattern) {
@@ -229,8 +245,7 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
             @Override
             protected List<Message> doTransaction(EntityManager entityManager) {
                 CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-                CriteriaQuery<Message> query = cb
-                        .createQuery(Message.class);
+                CriteriaQuery<Message> query = cb.createQuery(Message.class);
                 Root<Message> messageEntity = query.from(Message.class);
                 query.select(messageEntity);
 
@@ -267,8 +282,7 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
                 CriteriaQuery<Observation> query = criteriaBuilder.createQuery(Observation.class);
                 Root<Observation> entity = query.from(Observation.class);
 
-                ParameterExpression<String> userParameter = criteriaBuilder
-                        .parameter(String.class);
+                ParameterExpression<String> userParameter = criteriaBuilder.parameter(String.class);
                 ParameterExpression<String> messageParameter = criteriaBuilder
                         .parameter(String.class);
                 ParameterExpression<ObservationType> otParameter = criteriaBuilder
@@ -377,8 +391,18 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
     public void storeMessagePattern(String pattern, Message message) {
         Validate.notNull(pattern, "pattern must not be null");
         Validate.notNull(message, "message must not be null");
+        EntityManager entityManager = getEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        TypedQuery<Message> query = entityManager.createQuery(
+                "SELECT m FROM Message m WHERE m.globalId = :globalId", Message.class);
+        query.setParameter("globalId", message.getGlobalId());
+        message = query.getSingleResult();
         MessagePattern messagePattern = new MessagePattern(message, pattern);
-        save(messagePattern);
+        entityManager.merge(messagePattern);
+        transaction.commit();
+        entityManager.close();
+        // save(messagePattern);
     }
 
     /**
@@ -407,8 +431,7 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
      *            the relation
      */
 
-    public void storeMessageRelation(Message message,
-            MessageRelation relatedMessages) {
+    public void storeMessageRelation(Message message, MessageRelation relatedMessages) {
 
         MessageRelation persistedMessageRelation = this.getEntityByGlobalId(MessageRelation.class,
                 relatedMessages.getGlobalId());

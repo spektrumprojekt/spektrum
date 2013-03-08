@@ -76,6 +76,7 @@
 		<class>de.spektrumprojekt.datamodel.message.Message</class>
 		<class>de.spektrumprojekt.datamodel.message.MessageGroup</class>
 		<class>de.spektrumprojekt.datamodel.message.MessagePart</class>
+		<class>de.spektrumprojekt.datamodel.message.MessagePattern</class>
 		<class>de.spektrumprojekt.datamodel.message.MessageRank</class>
 		<class>de.spektrumprojekt.datamodel.message.MessageRelation</class>
 		<class>de.spektrumprojekt.datamodel.message.MetaInformation</class>

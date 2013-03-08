@@ -34,8 +34,8 @@ public class KeyphraseExtractorCommandTest {
         Message message = new Message(MessageType.CONTENT, StatusType.OK, new Date());
         message.addProperty(new Property(Property.PROPERTY_KEY_TITLE, title));
         message.addProperty(new Property(LanguageDetectorCommand.LANGUAGE, language));
-        message.addProperty(new Property(Property.PROPERTY_KEY_EXTERNAL,
-                Property.PROPERTY_VALUE_EXTERNAL));
+        // message.addProperty(new Property(Property.PROPERTY_KEY_EXTERNAL,
+        // Property.PROPERTY_VALUE_EXTERNAL));
 
         MessagePart messagePart = new MessagePart(MimeType.TEXT_PLAIN, text);
         InformationExtractionContext context = new InformationExtractionContext(

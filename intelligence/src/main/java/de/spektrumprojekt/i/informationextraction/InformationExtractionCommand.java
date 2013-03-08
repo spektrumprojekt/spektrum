@@ -32,6 +32,7 @@ import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
 import de.spektrumprojekt.informationextraction.extractors.CharNGramsExtractorCommand;
+import de.spektrumprojekt.informationextraction.extractors.ExecuteOnlyForExternalMessagesCommand;
 import de.spektrumprojekt.informationextraction.extractors.JerichoTextCleanerCommand;
 import de.spektrumprojekt.informationextraction.extractors.KeyphraseExtractorCommand;
 import de.spektrumprojekt.informationextraction.extractors.LanguageDetectorCommand;
@@ -101,7 +102,7 @@ public class InformationExtractionCommand<T extends MessageFeatureContext> imple
         }
         if (informationExtractionConfiguration.doKeyphrase) {
             command.getInformationExtractionCommandChain().addCommand(
-                    new KeyphraseExtractorCommand());
+                    new ExecuteOnlyForExternalMessagesCommand(new KeyphraseExtractorCommand()));
         }
         if (informationExtractionConfiguration.doTags) {
             command.getInformationExtractionCommandChain().addCommand(
@@ -116,7 +117,8 @@ public class InformationExtractionCommand<T extends MessageFeatureContext> imple
         if (informationExtractionConfiguration.matchTextAgainstTagSource
                 && informationExtractionConfiguration.tagSource != null) {
             command.getInformationExtractionCommandChain().addCommand(
-                    new KeyphraseExtractorCommand(informationExtractionConfiguration.tagSource));
+                    new ExecuteOnlyForExternalMessagesCommand(new KeyphraseExtractorCommand(
+                            informationExtractionConfiguration.tagSource)));
 
         }
         return command;

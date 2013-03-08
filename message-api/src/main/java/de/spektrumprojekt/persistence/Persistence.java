@@ -89,6 +89,8 @@ public interface Persistence {
 
     MessageRank getMessageRank(String userGlobalId, String messageGlobalId);
 
+    public MessageRelation getMessageRelation(Message message);
+
     Collection<Message> getMessagesForPattern(String pattern);
 
     Collection<Message> getMessagesSince(Date fromDate);

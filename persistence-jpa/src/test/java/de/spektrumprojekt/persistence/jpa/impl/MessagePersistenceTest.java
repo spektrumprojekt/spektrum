@@ -28,6 +28,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.junit.Assert;
@@ -41,6 +42,8 @@ import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.datamodel.message.MessageRank;
+import de.spektrumprojekt.datamodel.message.MessageRelation;
+import de.spektrumprojekt.datamodel.message.MessageRelation.MessageRelationType;
 import de.spektrumprojekt.datamodel.message.MessageType;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
@@ -99,15 +102,20 @@ public class MessagePersistenceTest {
         Message message2 = createTestMessage("TICKET-2 modified");
         Message message3 = createTestMessage("TICKET-1 closed");
 
+        message1 = persistence.storeMessage(message1);
+        message2 = persistence.storeMessage(message2);
+        message3 = persistence.storeMessage(message3);
+
         persistence.storeMessagePattern(pattern1, message1);
         persistence.storeMessagePattern(pattern2, message2);
         persistence.storeMessagePattern(pattern1, message3);
+        persistence.storeMessagePattern(pattern2, message1);
 
         Collection<Message> p1msgs = persistence.getMessagesForPattern(pattern1);
         assertEquals(2, p1msgs.size());
 
         Collection<Message> p2msgs = persistence.getMessagesForPattern(pattern2);
-        assertEquals(1, p2msgs.size());
+        assertEquals(2, p2msgs.size());
 
         Collection<Message> p3msgs = persistence.getMessagesForPattern(pattern3);
         assertEquals(0, p3msgs.size());
@@ -137,6 +145,23 @@ public class MessagePersistenceTest {
 
         Assert.assertEquals(groups.size(), CollectionUtils.intersection(groups, retrieveGroups)
                 .size());
+    }
+
+    @Test
+    public void testGetMessageRelation() {
+        String globalId = UUID.randomUUID().toString();
+        String[] globalMessageIds = new String[] { UUID.randomUUID().toString(),
+                UUID.randomUUID().toString() };
+        Message message = new Message(globalId, MessageType.CONTENT, StatusType.OK, null,
+                new Date());
+        MessageRelation messageRelation = new MessageRelation(MessageRelationType.RELATION,
+                globalId, globalMessageIds);
+
+        persistence.storeMessageRelation(message, messageRelation);
+        String[] loadedIds = persistence.getMessageRelation(message).getRelatedMessageGlobalIds();
+        for (int i = 0; i < globalMessageIds.length; i++) {
+            Assert.assertEquals(globalMessageIds[i], loadedIds[i]);
+        }
     }
 
     @Test
@@ -172,8 +197,7 @@ public class MessagePersistenceTest {
                 CollectionUtils.intersection(returnedMessages, messages).size());
 
         Date since = new Date(startDate + intervall * size / 2);
-        returnedMessages = this.persistence.getMessagesSince(
-                group.getGlobalId(), since);
+        returnedMessages = this.persistence.getMessagesSince(group.getGlobalId(), since);
 
         for (Message returnedMessage : returnedMessages) {
             Assert.assertTrue("Date of message " + returnedMessage.getPublicationDate()
@@ -278,14 +302,12 @@ public class MessagePersistenceTest {
     @Test
     public void testObservations() {
         Observation obs = new Observation("userId1", "messageId1", ObservationType.LIKE,
-                ObservationPriority.USER_FEEDBACK, null,
-                new Date(), Interest.EXTREME);
+                ObservationPriority.USER_FEEDBACK, null, new Date(), Interest.EXTREME);
 
         persistence.storeObservation(obs);
 
         Collection<Observation> persistedObservations = persistence.getObservations(
-                obs.getUserGlobalId(),
-                obs.getMessageGlobalId(), obs.getObservationType());
+                obs.getUserGlobalId(), obs.getMessageGlobalId(), obs.getObservationType());
 
         Assert.assertNotNull(persistedObservations);
         Assert.assertEquals(1, persistedObservations.size());
@@ -297,12 +319,11 @@ public class MessagePersistenceTest {
         Assert.assertEquals(obs.getObservationType(), persistedObservation.getObservationType());
 
         Observation obs2 = new Observation("userId1", "messageId1", ObservationType.LIKE,
-                ObservationPriority.FIRST_LEVEL_FEATURE_INFERRED, null,
-                new Date(), Interest.EXTREME);
+                ObservationPriority.FIRST_LEVEL_FEATURE_INFERRED, null, new Date(),
+                Interest.EXTREME);
         persistence.storeObservation(obs2);
         persistedObservations = persistence.getObservations(obs.getUserGlobalId(),
-                obs.getMessageGlobalId(),
-                obs.getObservationType());
+                obs.getMessageGlobalId(), obs.getObservationType());
 
         Assert.assertNotNull(persistedObservations);
         Assert.assertEquals(2, persistedObservations.size());

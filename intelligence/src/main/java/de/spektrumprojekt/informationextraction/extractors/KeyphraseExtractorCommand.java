@@ -28,7 +28,6 @@ import org.apache.commons.collections.bag.HashBag;
 import org.apache.commons.lang3.StringUtils;
 
 import de.spektrumprojekt.commons.chain.Command;
-import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.helper.MessageHelper;
@@ -171,12 +170,12 @@ public class KeyphraseExtractorCommand implements Command<InformationExtractionC
 
     @Override
     public void process(InformationExtractionContext context) {
-        Property externalProperty = context.getMessage().getPropertiesAsMap()
-                .get(Property.PROPERTY_KEY_EXTERNAL);
-        if (externalProperty == null
-                || !externalProperty.getPropertyValue().equals(Property.PROPERTY_VALUE_EXTERNAL)) {
-            return;
-        }
+        // Property externalProperty = context.getMessage().getPropertiesAsMap()
+        // .get(Property.PROPERTY_KEY_EXTERNAL);
+        // if (externalProperty == null
+        // || !externalProperty.getPropertyValue().equals(Property.PROPERTY_VALUE_EXTERNAL)) {
+        // return;
+        // }
 
         String language = LanguageDetectorCommand.getAnnotatedLanguage(context.getMessage());
 

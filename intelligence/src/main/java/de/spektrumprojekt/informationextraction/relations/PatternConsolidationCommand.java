@@ -29,8 +29,7 @@ import de.spektrumprojekt.persistence.Persistence;
 public class PatternConsolidationCommand implements Command<InformationExtractionContext> {
 
     /** The logger for this class. */
-    private static final Logger LOGGER =
-            LoggerFactory.getLogger(PatternConsolidationCommand.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PatternConsolidationCommand.class);
 
     /** The patterns which are used for establishing relations. */
     private final Collection<Pattern> patterns;
@@ -59,6 +58,17 @@ public class PatternConsolidationCommand implements Command<InformationExtractio
         return stringBuilder.toString();
     }
 
+    private Set<String> getUniqueMatches(Collection<Pattern> patterns, String text) {
+        Set<String> result = new HashSet<String>();
+        for (Pattern pattern : patterns) {
+            Matcher matcher = pattern.matcher(text);
+            while (matcher.find()) {
+                result.add(matcher.group());
+            }
+        }
+        return result;
+    }
+
     @Override
     public void process(InformationExtractionContext context) {
         LOGGER.debug("Process {}", MessageHelper.getTitle(context.getMessage()));
@@ -81,21 +91,9 @@ public class PatternConsolidationCommand implements Command<InformationExtractio
             }
             String[] relatedIdsArray = relatedIds.toArray(new String[relatedIds.size()]);
             MessageRelation relation = new MessageRelation(MessageRelationType.RELATION,
-                    relatedIdsArray);
+                    message.getGlobalId(), relatedIdsArray);
             LOGGER.debug("Message relation for {} = {}", message.getGlobalId(), relation);
             persistence.storeMessageRelation(message, relation);
         }
     }
-
-    private Set<String> getUniqueMatches(Collection<Pattern> patterns, String text) {
-        Set<String> result = new HashSet<String>();
-        for (Pattern pattern : patterns) {
-            Matcher matcher = pattern.matcher(text);
-            while (matcher.find()) {
-                result.add(matcher.group());
-            }
-        }
-        return result;
-    }
-
 }

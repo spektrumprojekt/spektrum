@@ -117,6 +117,11 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
+    public MessageRelation getMessageRelation(Message message) {
+        return null;
+    }
+
+    @Override
     public Collection<Message> getMessagesForPattern(String pattern) {
         return null;
     }

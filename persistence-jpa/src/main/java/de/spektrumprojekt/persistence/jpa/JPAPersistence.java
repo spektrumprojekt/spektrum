@@ -59,7 +59,7 @@ public class JPAPersistence implements Persistence {
     private MessagePersistence messagePersistence;
     private DuplicationDetectionPersistence duplicationDetectionPersistence;
 
-    private JPAConfiguration jpaConfiguration;
+    private final JPAConfiguration jpaConfiguration;
 
     public JPAPersistence(Configuration configuration) {
         this(new JPAConfiguration(configuration));
@@ -141,6 +141,11 @@ public class JPAPersistence implements Persistence {
     @Override
     public MessageRank getMessageRank(String userGlobalId, String messageGlobalId) {
         return this.messagePersistence.getMessageRank(userGlobalId, messageGlobalId);
+    }
+
+    @Override
+    public MessageRelation getMessageRelation(Message message) {
+        return messagePersistence.getMessageRelation(message);
     }
 
     @Override
@@ -262,8 +267,7 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public void storeMessageRelation(Message message,
-            MessageRelation relatedMessages) {
+    public void storeMessageRelation(Message message, MessageRelation relatedMessages) {
         messagePersistence.storeMessageRelation(message, relatedMessages);
     }
 
@@ -297,5 +301,4 @@ public class JPAPersistence implements Persistence {
     public void updateTerms(Collection<Term> termsChanged) {
         this.messagePersistence.updateTerms(termsChanged);
     }
-
 }
