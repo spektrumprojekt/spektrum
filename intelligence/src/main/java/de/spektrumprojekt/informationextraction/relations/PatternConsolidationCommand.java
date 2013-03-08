@@ -94,6 +94,7 @@ public class PatternConsolidationCommand implements Command<InformationExtractio
                     message.getGlobalId(), relatedIdsArray);
             LOGGER.debug("Message relation for {} = {}", message.getGlobalId(), relation);
             persistence.storeMessageRelation(message, relation);
+            context.add(relation);
         }
     }
 }
