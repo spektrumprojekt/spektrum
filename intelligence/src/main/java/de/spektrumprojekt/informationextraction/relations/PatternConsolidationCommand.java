@@ -81,7 +81,8 @@ public class PatternConsolidationCommand implements Command<InformationExtractio
         Set<String> matches = getUniqueMatches(patterns, messageContent);
         for (String match : matches) {
             Collection<Message> relatedMessages = persistence.getMessagesForPattern(match);
-            persistence.storeMessagePattern(match, message);
+            // persistence.storeMessagePattern(match, message);
+            context.add(match);
             if (relatedMessages.isEmpty()) {
                 continue;
             }

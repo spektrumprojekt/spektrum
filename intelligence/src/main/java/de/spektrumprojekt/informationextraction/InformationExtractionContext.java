@@ -38,6 +38,8 @@ public class InformationExtractionContext {
 
     private List<MessageRelation> detectedMessageRelations = new ArrayList<MessageRelation>();
 
+    private List<String> messagePatterns = new ArrayList<String>();
+
     public InformationExtractionContext(Persistence persistence, Message message,
             MessagePart messagePart) {
         if (persistence == null) {
@@ -58,6 +60,10 @@ public class InformationExtractionContext {
         return detectedMessageRelations.add(e);
     }
 
+    public boolean add(String e) {
+        return messagePatterns.add(e);
+    }
+
     public String getCleanText() {
         return cleanText;
     }
@@ -74,6 +80,10 @@ public class InformationExtractionContext {
         return messagePart;
     }
 
+    public List<String> getMessagePatterns() {
+        return messagePatterns;
+    }
+
     public Persistence getPersistence() {
         return persistence;
     }
@@ -84,6 +94,10 @@ public class InformationExtractionContext {
 
     public void setDetectedMessageRelations(List<MessageRelation> detectedMessageRelations) {
         this.detectedMessageRelations = detectedMessageRelations;
+    }
+
+    public void setMessagePatterns(List<String> messagePatterns) {
+        this.messagePatterns = messagePatterns;
     }
 
 }

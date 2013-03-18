@@ -19,6 +19,8 @@
 
 package de.spektrumprojekt.i.ranker.chain;
 
+import java.util.Collection;
+
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
@@ -26,6 +28,7 @@ import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
+import de.spektrumprojekt.informationextraction.InformationExtractionContext;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**
@@ -36,7 +39,7 @@ import de.spektrumprojekt.persistence.Persistence;
  */
 public class StoreMessageCommand implements Command<MessageFeatureContext> {
 
-    private Persistence persistence;
+    private final Persistence persistence;
 
     /**
      * 
@@ -85,6 +88,16 @@ public class StoreMessageCommand implements Command<MessageFeatureContext> {
             persistence.storeMessageRelation(message, context.getMessageRelation());
         }
 
+        Collection<InformationExtractionContext> informationExtractionContexts = context
+                .getInformationExtractionContexts();
+        if (informationExtractionContexts != null) {
+            for (InformationExtractionContext informationExtractionContext : informationExtractionContexts) {
+                for (String pattern : informationExtractionContext.getMessagePatterns()) {
+                    persistence.storeMessagePattern(pattern, message);
+                }
+            }
+        }
+
     }
 
     /**
@@ -98,8 +111,8 @@ public class StoreMessageCommand implements Command<MessageFeatureContext> {
             for (ScoredTerm scoredTerm : messagePart.getScoredTerms()) {
                 Term term = scoredTerm.getTerm();
 
-                Term persistedTerm = persistence
-                        .getOrCreateTerm(term.getCategory(), term.getValue());
+                Term persistedTerm = persistence.getOrCreateTerm(term.getCategory(),
+                        term.getValue());
                 scoredTerm.setTerm(persistedTerm);
             }
         }
