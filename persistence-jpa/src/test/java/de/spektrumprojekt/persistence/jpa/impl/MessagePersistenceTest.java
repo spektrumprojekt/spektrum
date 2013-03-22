@@ -100,6 +100,7 @@ public class MessagePersistenceTest {
 
         Message message1 = createTestMessage("TICKET-1 opened");
         Message message2 = createTestMessage("TICKET-2 modified");
+        Thread.sleep(1000);
         Message message3 = createTestMessage("TICKET-1 closed");
 
         message1 = persistence.storeMessage(message1);
@@ -118,6 +119,15 @@ public class MessagePersistenceTest {
         assertEquals(2, p2msgs.size());
 
         Collection<Message> p3msgs = persistence.getMessagesForPattern(pattern3);
+        assertEquals(0, p3msgs.size());
+
+        p1msgs = persistence.getMessagesForPattern(pattern1, 990L);
+        assertEquals(1, p1msgs.size());
+
+        p2msgs = persistence.getMessagesForPattern(pattern2, 990L);
+        assertEquals(0, p2msgs.size());
+
+        p3msgs = persistence.getMessagesForPattern(pattern3, 990L);
         assertEquals(0, p3msgs.size());
     }
 

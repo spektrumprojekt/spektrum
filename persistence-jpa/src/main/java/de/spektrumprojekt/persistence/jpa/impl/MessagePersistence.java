@@ -22,6 +22,7 @@ package de.spektrumprojekt.persistence.jpa.impl;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -228,6 +229,27 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
                 "SELECT mp.message FROM MessagePattern mp WHERE mp.pattern =:pattern",
                 Message.class);
         query.setParameter("pattern", pattern);
+        try {
+            return query.getResultList();
+        } finally {
+            entityManager.close();
+        }
+    }
+
+    public Collection<Message> getMessagesForPattern(String pattern, Long period) {
+        Validate.notNull(pattern, "pattern must not be null");
+        if (period == null) {
+            return getMessagesForPattern(pattern);
+        }
+        GregorianCalendar calendar = new GregorianCalendar();
+        calendar.add(GregorianCalendar.MILLISECOND, -period.intValue());
+        EntityManager entityManager = getEntityManager();
+        TypedQuery<Message> query = entityManager.createQuery(
+                "SELECT mp.message FROM MessagePattern mp INNER JOIN mp.message mes "
+                        + "WHERE mp.pattern =:pattern AND mes.publicationDate > :startDate",
+                Message.class);
+        query.setParameter("pattern", pattern);
+        query.setParameter("startDate", calendar.getTime());
         try {
             return query.getResultList();
         } finally {

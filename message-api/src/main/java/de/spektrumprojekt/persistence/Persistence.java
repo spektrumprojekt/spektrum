@@ -93,6 +93,15 @@ public interface Persistence {
 
     Collection<Message> getMessagesForPattern(String pattern);
 
+    /**
+     * 
+     * @param pattern
+     * @param poeriod
+     *            period of time in which {@link Message}s must have been creates in ms
+     * @return
+     */
+    Collection<Message> getMessagesForPattern(String pattern, Long poeriod);
+
     Collection<Message> getMessagesSince(Date fromDate);
 
     Collection<Message> getMessagesSince(String messageGroupGlobalId, Date fromDate);

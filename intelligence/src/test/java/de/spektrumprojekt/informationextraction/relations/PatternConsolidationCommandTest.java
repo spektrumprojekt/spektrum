@@ -24,7 +24,8 @@ public class PatternConsolidationCommandTest {
         try {
             testFile = SpektrumUtils.getTestResource(RELATION_SAMPLE_FILE);
         } catch (Exception e) {
-            System.out.println("Skipping " + PatternConsolidationCommandTest.class + " because test file is missing.");
+            System.out.println("Skipping " + PatternConsolidationCommandTest.class
+                    + " because test file is missing.");
             Assume.assumeTrue(false);
         }
 
@@ -32,13 +33,17 @@ public class PatternConsolidationCommandTest {
 
         InformationExtractionConfiguration config = new InformationExtractionConfiguration();
 
-        PatternConsolidationCommand consolidationCommand = new PatternConsolidationCommand(
+        PatternConsolidationConfiguration patternProvider = new PatternConsolidationConfigurationImpl(
                 config.getPatternsForConsolidation());
+
+        PatternConsolidationCommand consolidationCommand = new PatternConsolidationCommand(
+                patternProvider);
         Persistence persistence = new SimplePersistence();
 
         for (Message message : dataSource) {
             MessagePart messagePart = message.getMessageParts().iterator().next();
-            InformationExtractionContext context = new InformationExtractionContext(persistence, message, messagePart);
+            InformationExtractionContext context = new InformationExtractionContext(persistence,
+                    message, messagePart);
             consolidationCommand.process(context);
         }
 

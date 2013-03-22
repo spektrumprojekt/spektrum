@@ -31,8 +31,10 @@ public class PatternConsolidationCommand implements Command<InformationExtractio
     /** The logger for this class. */
     private static final Logger LOGGER = LoggerFactory.getLogger(PatternConsolidationCommand.class);
 
-    /** The patterns which are used for establishing relations. */
-    private final Collection<Pattern> patterns;
+    // /** The patterns which are used for establishing relations. */
+    // private final Collection<Pattern> patterns;
+
+    private final PatternConsolidationConfiguration patternProvider;
 
     /**
      * <p>
@@ -43,18 +45,19 @@ public class PatternConsolidationCommand implements Command<InformationExtractio
      * @param regExes
      *            The collections of regexes.
      */
-    public PatternConsolidationCommand(Collection<String> regExes) {
-        patterns = new HashSet<Pattern>();
-        for (String regEx : regExes) {
-            patterns.add(Pattern.compile(regEx));
-        }
+    public PatternConsolidationCommand(PatternConsolidationConfiguration patternProvider) {
+        this.patternProvider = patternProvider;
+        // patterns = new HashSet<Pattern>();
+        // for (String regEx : regExes) {
+        // patterns.add(Pattern.compile(regEx));
+        // }
     }
 
     @Override
     public String getConfigurationDescription() {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("PatternConsolidationCommand");
-        stringBuilder.append(" patterns=").append(patterns);
+        stringBuilder.append(" patterns=").append(patternProvider.getPatterns());
         return stringBuilder.toString();
     }
 
@@ -78,9 +81,10 @@ public class PatternConsolidationCommand implements Command<InformationExtractio
         String messageContent = messagePart.getContent();
         Persistence persistence = context.getPersistence();
 
-        Set<String> matches = getUniqueMatches(patterns, messageContent);
+        Set<String> matches = getUniqueMatches(patternProvider.getPatterns(), messageContent);
         for (String match : matches) {
-            Collection<Message> relatedMessages = persistence.getMessagesForPattern(match);
+            Collection<Message> relatedMessages = persistence.getMessagesForPattern(match,
+                    patternProvider.getPeriodOfTime());
             // persistence.storeMessagePattern(match, message);
             context.add(match);
             if (relatedMessages.isEmpty()) {
