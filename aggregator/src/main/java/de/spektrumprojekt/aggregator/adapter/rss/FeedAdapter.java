@@ -108,6 +108,25 @@ public final class FeedAdapter extends BasePollingAdapter {
 
     public static final String AUTOR_NAME = "autor.name";
 
+    /**
+     * Encode the login and password as base 64
+     * 
+     * @param login
+     *            the login
+     * @param password
+     *            the password
+     * @return the credentials string for the base authentication, that is login + ":" + password
+     *         and encoded as Base64, using utf8
+     * @throws UnsupportedEncodingException
+     */
+    public static String getBaseAuthenticationCredentials(String login, String password)
+            throws UnsupportedEncodingException {
+        String auth = login + ":" + password;
+        String base64EncodedCredentials = new String(Base64.encodeBase64(auth.getBytes("UTF-8")),
+                "UTF-8");
+        return base64EncodedCredentials;
+    }
+
     public FeedAdapter(Communicator communicator, Persistence persistence,
             AggregatorConfiguration aggregatorConfiguration) {
         super(communicator, persistence, aggregatorConfiguration, aggregatorConfiguration
@@ -266,8 +285,8 @@ public final class FeedAdapter extends BasePollingAdapter {
         // only if login + password were supplied
         if (login.length() > 0 && password.length() > 0) {
             try {
-                base64EncodedCredentials = Base64
-                        .encodeBase64URLSafeString((login + ":" + password).getBytes("UTF-8"));
+                base64EncodedCredentials = getBaseAuthenticationCredentials(login, password);
+
             } catch (UnsupportedEncodingException e) {
                 throw new AdapterException("Unsupported encoding", e,
                         StatusType.ERROR_INTERNAL_ADAPTER);

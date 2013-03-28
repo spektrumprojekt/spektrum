@@ -29,6 +29,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -130,6 +131,39 @@ public class FeedAdapterTest {
         List<Message> messages = adapter.poll(subscriptionStatus);
         assertEquals(1, messages.size());
         assertTrue(messages.get(0).getMessageType().equals(MessageType.ERROR));
+
+    }
+
+    @Test
+    public void testManuellFeed() throws AdapterException, EncryptionException {
+        String url = "";
+        String login = "r";
+        String realPassword = "";
+        String encryptedPassword = null;
+
+        if (StringUtils.isBlank(url)) {
+            return;
+        }
+
+        if (encryptedPassword == null) {
+            encryptedPassword = EncryptionUtils.encrypt(realPassword, "123456");
+        }
+
+        Subscription subscription = new Subscription(FeedAdapter.SOURCE_TYPE);
+        SubscriptionStatus subscriptionStatus = new SubscriptionStatus(subscription);
+
+        subscription
+                .addAccessParameter(new Property(
+                        FeedAdapter.ACCESS_PARAMETER_URI, url));
+        subscription.addAccessParameter(new Property(
+                FeedAdapter.ACCESS_PARAMETER_CREDENTIALS_LOGIN, login));
+        subscription.addAccessParameter(new Property(
+                FeedAdapter.ACCESS_PARAMETER_CREDENTIALS_PASSWORD, encryptedPassword));
+
+        FeedAdapter adapter = new FeedAdapter(communicator, persistence, aggregatorConfiguration);
+        List<Message> messages = adapter.poll(subscriptionStatus);
+        assertTrue(messages.size() > 0);
+        assertTrue(messages.get(0).getMessageType().equals(MessageType.CONTENT));
 
     }
 
