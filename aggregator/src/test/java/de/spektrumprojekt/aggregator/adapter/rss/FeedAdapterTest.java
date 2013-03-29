@@ -111,6 +111,36 @@ public class FeedAdapterTest {
         assertTrue(messages.get(0).getMessageType().equals(MessageType.CONTENT));
     }
 
+    private void testFeed(String feedUrl) throws AdapterException {
+        Subscription subscription = new Subscription(FeedAdapter.SOURCE_TYPE);
+        SubscriptionStatus subscriptionStatus = new SubscriptionStatus(subscription);
+
+        subscription.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_URI,
+                feedUrl));
+        FeedAdapter feedAdapter = new FeedAdapter(communicator, persistence,
+                aggregatorConfiguration);
+        List<Message> messages = feedAdapter.poll(subscriptionStatus);
+        assertTrue(messages.size() > 0);
+        assertTrue(messages.get(0) instanceof Message);
+        assertNotNull(subscriptionStatus.getLastContentTimestamp());
+
+        // this is dirty, and might fail.
+        messages = feedAdapter.poll(subscriptionStatus);
+        assertTrue(messages.size() == 0);
+    }
+
+    @Test
+    public void testFeedFeedBurner() throws AdapterException {
+
+        testFeed("http://feeds2.feedburner.com/stadt-bremerhaven/dqXM");
+    }
+
+    @Test
+    public void testFeedNetzwertig() throws AdapterException {
+
+        testFeed("http://netzwertig.com/feed/");
+    }
+
     @Test(expected = AdapterException.class)
     public void testFeedUnauthorized() throws EncryptionException, AdapterException {
 
@@ -132,6 +162,12 @@ public class FeedAdapterTest {
         assertEquals(1, messages.size());
         assertTrue(messages.get(0).getMessageType().equals(MessageType.ERROR));
 
+    }
+
+    @Test
+    public void testHeiseFeed() throws AdapterException {
+
+        testFeed("http://www.heise.de/newsticker/heise-atom.xml");
     }
 
     @Test
@@ -176,29 +212,6 @@ public class FeedAdapterTest {
                 "http://example.com/nofeedhere"));
         FeedAdapter adapter = new FeedAdapter(communicator, persistence, aggregatorConfiguration);
         adapter.poll(subscriptionStatus);
-    }
-
-    @Test
-    public void testNormalFeed() throws AdapterException {
-
-        Subscription subscription = new Subscription(FeedAdapter.SOURCE_TYPE);
-        SubscriptionStatus subscriptionStatus = new SubscriptionStatus(subscription);
-        String feedUrl;
-        // was errenous
-        // feedUrl = "http://feeds.arstechnica.com/arstechnica/everything?format=xml";
-        feedUrl = "http://www.heise.de/newsticker/heise-atom.xml";
-        subscription.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_URI,
-                feedUrl));
-        FeedAdapter feedAdapter = new FeedAdapter(communicator, persistence,
-                aggregatorConfiguration);
-        List<Message> messages = feedAdapter.poll(subscriptionStatus);
-        assertTrue(messages.size() > 0);
-        assertTrue(messages.get(0) instanceof Message);
-        assertNotNull(subscriptionStatus.getLastContentTimestamp());
-
-        // this is dirty, and might fail.
-        messages = feedAdapter.poll(subscriptionStatus);
-        assertTrue(messages.size() == 0);
     }
 
 }
