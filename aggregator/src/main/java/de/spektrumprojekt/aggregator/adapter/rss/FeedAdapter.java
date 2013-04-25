@@ -241,7 +241,7 @@ public final class FeedAdapter extends BasePollingAdapter {
         }
         if (publishedDate == null) {
             publishedDate = new Date();
-            LOGGER.warn("For an entry in subscription {} no date was found. Using current time.",
+            LOGGER.debug("For an entry in subscription {} no date was found. Using current time.",
                     subscriptionId);
         }
         return publishedDate;
