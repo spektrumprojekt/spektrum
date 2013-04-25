@@ -47,6 +47,7 @@ import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
+import de.spektrumprojekt.persistence.MessageRankVisitor;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.Statistics;
 
@@ -593,6 +594,16 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
+    public void updateMessageRank(MessageRank rankToUpdate) {
+        UserMessageIdentifier userMessageIdentifier = new UserMessageIdentifier(rankToUpdate);
+        MessageRank existingRank = this.messageRanks.get(userMessageIdentifier);
+
+        if (existingRank != rankToUpdate) {
+            this.messageRanks.put(userMessageIdentifier, rankToUpdate);
+        }
+    }
+
+    @Override
     public void updateTermFrequency(TermFrequency termFrequency) {
         this.termFrequency = termFrequency;
     }
@@ -605,6 +616,21 @@ public class SimplePersistence implements Persistence {
                         + "' is not created within this persistence. Cannot update!");
 
             }
+        }
+    }
+
+    @Override
+    public void visitAllMessageRanks(MessageRankVisitor visitor, Date startDate, Date endDate)
+            throws Exception {
+        for (MessageRank messageRank : this.messageRanks.values()) {
+            Message message = this.getMessageByGlobalId(messageRank.getMessageGlobalId());
+            if (startDate.after(message.getPublicationDate())) {
+                continue;
+            }
+            if (endDate.before(message.getPublicationDate())) {
+                continue;
+            }
+            visitor.visit(messageRank, message);
         }
     }
 }

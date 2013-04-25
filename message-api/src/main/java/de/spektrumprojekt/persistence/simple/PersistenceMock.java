@@ -39,6 +39,7 @@ import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
+import de.spektrumprojekt.persistence.MessageRankVisitor;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.Statistics;
 
@@ -255,12 +256,22 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
+    public void updateMessageRank(MessageRank rankToUpdate) {
+
+    }
+
+    @Override
     public void updateTermFrequency(TermFrequency termFrequency) {
 
     }
 
     @Override
     public void updateTerms(Collection<Term> termsChanged) {
+    }
+
+    @Override
+    public void visitAllMessageRanks(MessageRankVisitor visitor, Date startDate, Date endDate) {
+
     }
 
 }

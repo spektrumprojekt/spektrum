@@ -50,7 +50,7 @@ import de.spektrumprojekt.persistence.Persistence;
  */
 public class InformationExtractionCommand<T extends MessageFeatureContext> implements Command<T> {
 
-    private static final String PROPERTY_INFORMATION_EXTRACTION_EXECUTION_DATE = "informationExtractionExecutionDate";
+    public static final String PROPERTY_INFORMATION_EXTRACTION_EXECUTION_DATE = "informationExtractionExecutionDate";
 
     /**
      * TODO use an information extraction configuration

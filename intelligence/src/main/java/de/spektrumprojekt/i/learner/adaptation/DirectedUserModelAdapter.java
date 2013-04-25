@@ -46,16 +46,8 @@ public class DirectedUserModelAdapter implements
 
     private final static Logger LOGGER = LoggerFactory.getLogger(DirectedUserModelAdapter.class);
 
-    private static long adaptedCount = 0;
-    private static long requestedAdaptedCount = 0;
-
-    public static long getAdaptedCount() {
-        return adaptedCount;
-    }
-
-    public static long getRequestAdaptedCount() {
-        return requestedAdaptedCount;
-    }
+    private long adaptedCount = 0;
+    private long requestedAdaptedCount = 0;
 
     private double userSimilarityThreshold = 0.1;
 
@@ -141,16 +133,18 @@ public class DirectedUserModelAdapter implements
                         entry = new UserModelEntry(userModelToAdapt, scoredTerm);
                         entries.put(scoredTerm.getTerm(), entry);
                     }
-                    entry.getScoredTerm().setWeight((float) statEntry.getValue().getValue());
-                    entry.setAdapted(true);
-                    adaptedCount++;
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug(
-                                "Adapted user model entry for user '{}' set term '{}' to score '{}'. ",
-                                new Object[] {
-                                        message.getUserGlobalId(),
-                                        entry.getScoredTerm().getTerm().getValue(),
-                                        entry.getScoredTerm().getWeight() });
+                    if (entry.getScoredTerm().getWeight() < statEntry.getValue().getValue()) {
+                        entry.getScoredTerm().setWeight((float) statEntry.getValue().getValue());
+                        entry.setAdapted(true);
+                        adaptedCount++;
+                        if (LOGGER.isTraceEnabled()) {
+                            LOGGER.trace(
+                                    "Adapted user model entry for user '{}' set term '{}' to score '{}'. ",
+                                    new Object[] {
+                                            message.getUserGlobalId(),
+                                            entry.getScoredTerm().getTerm().getValue(),
+                                            entry.getScoredTerm().getWeight() });
+                        }
                     }
                 }
             }
@@ -165,6 +159,10 @@ public class DirectedUserModelAdapter implements
 
     }
 
+    public long getAdaptedCount() {
+        return adaptedCount;
+    }
+
     @Override
     public String getConfigurationDescription() {
         return this.getClass().getSimpleName() + " userSimilarityThreshold="
@@ -174,6 +172,10 @@ public class DirectedUserModelAdapter implements
     @Override
     public Class<DirectedUserModelAdaptationMessage> getMessageClass() {
         return DirectedUserModelAdaptationMessage.class;
+    }
+
+    public long getRequestAdaptedCount() {
+        return requestedAdaptedCount;
     }
 
     private void integrateStat(IncrementalWeightedAverage stat, UserSimilarity userSimilarity,

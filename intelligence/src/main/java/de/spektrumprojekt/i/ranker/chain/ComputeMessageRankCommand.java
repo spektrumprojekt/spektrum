@@ -20,6 +20,7 @@
 package de.spektrumprojekt.i.ranker.chain;
 
 import de.spektrumprojekt.commons.chain.Command;
+import de.spektrumprojekt.datamodel.message.InteractionLevel;
 import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.i.datamodel.MessageFeature;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
@@ -73,10 +74,14 @@ public class ComputeMessageRankCommand implements Command<UserSpecificMessageFea
         if (!onlyUseContentMatchFeature) {
             if (context.check(Feature.AUTHOR_FEATURE, 1)) {
                 messageRank.setRank(1f);
+                messageRank.setAuthor(true);
+                messageRank.setInteractionLevel(InteractionLevel.DIRECT);
             } else if (context.check(Feature.MENTION_FEATURE, 1)) {
                 messageRank.setRank(0.95f);
+                messageRank.setInteractionLevel(InteractionLevel.DIRECT);
             } else if (context.check(Feature.LIKE_FEATURE, 1)) {
                 messageRank.setRank(0.95f);
+                messageRank.setInteractionLevel(InteractionLevel.DIRECT);
             } else if (context.check(Feature.DISCUSSION_PARTICIPATION_FEATURE, 1)) {
                 messageRank.setRank(0.9f);
             } else if (context.check(Feature.DISCUSSION_MENTION_FEATURE, 1)) {

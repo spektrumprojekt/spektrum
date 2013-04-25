@@ -50,6 +50,8 @@ public class InvokeLearnerCommand implements Command<UserSpecificMessageFeatureC
     private final boolean learnFromParent;
     private final boolean learnFromParents;
     private final boolean learnLowInterest;
+    private final boolean learnFromDiscussions;
+    private final boolean learnFromEveryMessage;
 
     /**
      * 
@@ -57,26 +59,34 @@ public class InvokeLearnerCommand implements Command<UserSpecificMessageFeatureC
      *            the persistence to use
      */
     public InvokeLearnerCommand(Persistence persistence, Communicator communicator,
-            boolean learnLowInterest, boolean learnFromParent, boolean learnFromParents) {
+            boolean learnLowInterest, boolean learnFromParent, boolean learnFromParents,
+            boolean learnFromDiscussions, boolean learnFromEveryMessage) {
         this.learnLowInterest = learnLowInterest;
         this.communicator = communicator;
         this.persistence = persistence;
 
         this.learnFromParent = learnFromParent;
         this.learnFromParents = learnFromParents;
+        this.learnFromDiscussions = learnFromDiscussions;
+        this.learnFromEveryMessage = learnFromEveryMessage;
     }
 
     private Interest generateInterest(UserSpecificMessageFeatureContext context) {
         Interest value = null;
+        if (learnFromEveryMessage) {
+            value = Interest.EXTREME;
+            return value;
+        }
         if (context.check(Feature.AUTHOR_FEATURE, 1)) {
             value = Interest.EXTREME;
         } else if (context.check(Feature.MENTION_FEATURE, 1)) {
             value = Interest.HIGH;
         } else if (context.check(Feature.LIKE_FEATURE, 1)) {
             value = Interest.HIGH;
-        } else if (context.check(Feature.DISCUSSION_PARTICIPATION_FEATURE, 1)) {
+        } else if (learnFromDiscussions
+                && context.check(Feature.DISCUSSION_PARTICIPATION_FEATURE, 1)) {
             value = Interest.HIGH;
-        } else if (context.check(Feature.DISCUSSION_MENTION_FEATURE, 1)) {
+        } else if (learnFromDiscussions && context.check(Feature.DISCUSSION_MENTION_FEATURE, 1)) {
             value = Interest.HIGH;
         } else if (learnLowInterest && !context.check(Feature.DISCUSSION_ROOT_FEATURE, 1)) {
             if (context.getMessageRank().getRank() < 0.5f) {
@@ -98,7 +108,8 @@ public class InvokeLearnerCommand implements Command<UserSpecificMessageFeatureC
         return this.getClass().getSimpleName()
                 + " learnFromParent=" + learnFromParent
                 + " learnFromParents=" + learnFromParents
-                + " learnLowInterest=" + learnLowInterest;
+                + " learnLowInterest=" + learnLowInterest
+                + " learnFromDiscussions=" + learnFromDiscussions;
 
     }
 

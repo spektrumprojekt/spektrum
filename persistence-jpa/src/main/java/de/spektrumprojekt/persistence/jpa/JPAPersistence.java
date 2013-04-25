@@ -40,6 +40,7 @@ import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
+import de.spektrumprojekt.persistence.MessageRankVisitor;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.Statistics;
 import de.spektrumprojekt.persistence.jpa.impl.AggregationSubscriptionPersistence;
@@ -298,6 +299,12 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
+    public void updateMessageRank(MessageRank rankToUpdate) {
+        this.messagePersistence.updateMessageRank(rankToUpdate);
+
+    }
+
+    @Override
     public void updateTermFrequency(TermFrequency termFrequency) {
         this.messagePersistence.updateTermFrequency(termFrequency);
     }
@@ -305,5 +312,11 @@ public class JPAPersistence implements Persistence {
     @Override
     public void updateTerms(Collection<Term> termsChanged) {
         this.messagePersistence.updateTerms(termsChanged);
+    }
+
+    @Override
+    public void visitAllMessageRanks(MessageRankVisitor visitor, Date startDate, Date endDate) {
+        this.messagePersistence.visitAllMessageRanks(visitor, startDate, endDate);
+
     }
 }

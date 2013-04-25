@@ -39,7 +39,7 @@ public class CosinusTermVectorSimilarityComputer extends TermWeightTermVectorSim
             squareSum2 += termWeight * termWeight;
         }
 
-        if (squareSum1 + squareSum2 == 0) {
+        if (squareSum1 * squareSum2 == 0) {
             return 0;
         }
         return (float) (sumTop / Math.sqrt(squareSum1 * squareSum2));

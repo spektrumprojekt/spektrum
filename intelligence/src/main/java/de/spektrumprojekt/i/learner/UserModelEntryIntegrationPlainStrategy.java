@@ -108,6 +108,7 @@ public class UserModelEntryIntegrationPlainStrategy implements
 
             if (interestScore >= 0) {
                 entry.setScoreCount(entry.getScoreCount() + 1);
+                entry.setAdapted(false);
             } else {
                 entry.setScoreCount(entry.getScoreCount() - 1);
             }

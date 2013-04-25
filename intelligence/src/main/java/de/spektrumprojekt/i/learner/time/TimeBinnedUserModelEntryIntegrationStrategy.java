@@ -22,6 +22,8 @@ package de.spektrumprojekt.i.learner.time;
 import java.util.Date;
 import java.util.HashSet;
 
+import org.apache.commons.lang3.time.DateUtils;
+
 import de.spektrumprojekt.commons.time.TimeProviderHolder;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.observation.Interest;
@@ -32,8 +34,8 @@ import de.spektrumprojekt.i.learner.UserModelEntryIntegrationPlainStrategy;
 public class TimeBinnedUserModelEntryIntegrationStrategy extends
         UserModelEntryIntegrationPlainStrategy {
 
-    public static long DAY = 24 * 60 * 60 * 1000;
-    public static long WEEK = 7 * DAY;
+    public static long DAY = DateUtils.MILLIS_PER_DAY;
+    public static long WEEK = 7 * DateUtils.MILLIS_PER_DAY;
     public static long MONTH = 4 * WEEK;
 
     public final static TimeBinnedUserModelEntryIntegrationStrategy MONTH_WEEK =
@@ -41,6 +43,12 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
                     0,
                     TimeBinnedUserModelEntryIntegrationStrategy.MONTH,
                     TimeBinnedUserModelEntryIntegrationStrategy.WEEK);
+
+    public final static TimeBinnedUserModelEntryIntegrationStrategy MONTH_DAY =
+            new TimeBinnedUserModelEntryIntegrationStrategy(
+                    0,
+                    TimeBinnedUserModelEntryIntegrationStrategy.MONTH,
+                    TimeBinnedUserModelEntryIntegrationStrategy.DAY);
 
     private long startTime;
     private long binSizeInMs;

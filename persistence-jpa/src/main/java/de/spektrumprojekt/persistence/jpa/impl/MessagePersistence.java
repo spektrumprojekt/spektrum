@@ -57,6 +57,7 @@ import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserModelEntryTimeBin;
+import de.spektrumprojekt.persistence.MessageRankVisitor;
 import de.spektrumprojekt.persistence.Statistics;
 import de.spektrumprojekt.persistence.jpa.JPAConfiguration;
 import de.spektrumprojekt.persistence.jpa.transaction.Transaction;
@@ -467,6 +468,10 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
         this.save(observation);
     }
 
+    public void updateMessageRank(MessageRank rankToUpdate) {
+        this.save(rankToUpdate);
+    }
+
     public void updateTermFrequency(TermFrequency termFrequency) {
         termFrequency.prepareForStore();
         this.save(termFrequency);
@@ -474,6 +479,10 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
 
     public void updateTerms(Collection<Term> termsChanged) {
         this.saveAll(termsChanged);
+    }
+
+    public void visitAllMessageRanks(MessageRankVisitor visitor, Date startDate, Date endDate) {
+        throw new UnsupportedOperationException("not yet implemented");
     }
 
 }

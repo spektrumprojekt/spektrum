@@ -219,8 +219,13 @@ public interface Persistence {
 
     void updateAggregationSubscription(SubscriptionStatus aggregationStatus);
 
+    void updateMessageRank(MessageRank rankToUpdate);
+
     void updateTermFrequency(TermFrequency termFrequency);
 
     void updateTerms(Collection<Term> termsChanged);
+
+    void visitAllMessageRanks(MessageRankVisitor visitor, Date startDate, Date endDate)
+            throws Exception;
 
 }
