@@ -44,7 +44,7 @@ public class Term extends Identifiable {
     private String value;
     private TermCategory category;
     @Column(name = "TERMCOUNT")
-    private transient int count;
+    private int count;
 
     protected Term() {
         // constructor only for ORM.

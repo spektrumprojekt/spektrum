@@ -149,6 +149,7 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         informationExtractionConfiguration.matchTextAgainstTagSource = this.rankerConfiguration
                 .isMatchTextAgainstTagSource();
         informationExtractionConfiguration.tagSource = this.rankerConfiguration.getTagSource();
+        informationExtractionConfiguration.termFrequencyComputer = this.termFrequencyComputer;
 
         this.informationExtractionChain = InformationExtractionCommand
                 .createDefaultGermanEnglish(informationExtractionConfiguration);
