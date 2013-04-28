@@ -41,6 +41,7 @@ import de.spektrumprojekt.i.informationextraction.InformationExtractionConfigura
 import de.spektrumprojekt.i.learner.similarity.UserSimilarityComputer;
 import de.spektrumprojekt.i.ranker.chain.AdaptMessageRankByCMFOfSimilarUsersCommand;
 import de.spektrumprojekt.i.ranker.chain.ComputeMessageRankCommand;
+import de.spektrumprojekt.i.ranker.chain.DetermineInteractionLevelCommand;
 import de.spektrumprojekt.i.ranker.chain.FeatureStatisticsCommand;
 import de.spektrumprojekt.i.ranker.chain.InvokeLearnerCommand;
 import de.spektrumprojekt.i.ranker.chain.StoreMessageCommand;
@@ -97,6 +98,8 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
     private final TriggerUserModelAdaptationCommand triggerUserModelAdaptationCommand;
 
     private final UpdateInteractionLevelOfMessageRanksCommand updateInteractionLevelOfMessageRanksCommand;
+
+    private final DetermineInteractionLevelCommand determineInteractionLevelCommand;
 
     private final StoreMessageRankCommand storeMessageRankCommand;
 
@@ -192,6 +195,7 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         termMatchFeatureCommand = new ContentMatchFeatureCommand(
                 persistence, termVectorSimilarityComputer,
                 rankerConfiguration.getInterestTermTreshold());
+        determineInteractionLevelCommand = new DetermineInteractionLevelCommand();
         computeMessageRankCommand = new ComputeMessageRankCommand(
                 this.rankerConfiguration
                         .hasFlag(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE_BUT_LEARN_FROM_FEATURES)
@@ -268,6 +272,7 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
                 .hasFlag(RankerConfigurationFlag.DO_NOT_USE_CONTENT_MATCHER_FEATURE)) {
             userFeatureCommand.addCommand(termMatchFeatureCommand);
         }
+        userFeatureCommand.addCommand(determineInteractionLevelCommand);
         userFeatureCommand.addCommand(computeMessageRankCommand);
         if (!this.rankerConfiguration.hasFlag(RankerConfigurationFlag.NO_LEARNING_ONLY_RANKING)) {
             userFeatureCommand.addCommand(invokeLearnerCommand);
