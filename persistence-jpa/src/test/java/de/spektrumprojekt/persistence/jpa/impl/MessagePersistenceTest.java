@@ -121,13 +121,13 @@ public class MessagePersistenceTest {
         Collection<Message> p3msgs = persistence.getMessagesForPattern(pattern3);
         assertEquals(0, p3msgs.size());
 
-        p1msgs = persistence.getMessagesForPattern(pattern1, 990L);
-        assertEquals(1, p1msgs.size());
+        p1msgs = persistence.getMessagesForPattern(pattern1, 1990L);
+        assertEquals(2, p1msgs.size());
 
-        p2msgs = persistence.getMessagesForPattern(pattern2, 990L);
-        assertEquals(0, p2msgs.size());
+        p2msgs = persistence.getMessagesForPattern(pattern2, 1990L);
+        assertEquals(2, p2msgs.size());
 
-        p3msgs = persistence.getMessagesForPattern(pattern3, 990L);
+        p3msgs = persistence.getMessagesForPattern(pattern3, 1990L);
         assertEquals(0, p3msgs.size());
     }
 
