@@ -43,7 +43,7 @@ public class Term extends Identifiable {
 
     private String value;
     private TermCategory category;
-    @Column(name = "TERMCOUNT")
+    @Column(name = "termcount")
     private int count;
 
     protected Term() {

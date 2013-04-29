@@ -268,11 +268,13 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
             userFeatureCommand.addCommand(
                     discussionMentionFeatureCommand);
         }
+
         if (!this.rankerConfiguration
                 .hasFlag(RankerConfigurationFlag.DO_NOT_USE_CONTENT_MATCHER_FEATURE)) {
             userFeatureCommand.addCommand(termMatchFeatureCommand);
         }
         userFeatureCommand.addCommand(determineInteractionLevelCommand);
+        userFeatureCommand.addCommand(updateInteractionLevelOfMessageRanksCommand);
         userFeatureCommand.addCommand(computeMessageRankCommand);
         if (!this.rankerConfiguration.hasFlag(RankerConfigurationFlag.NO_LEARNING_ONLY_RANKING)) {
             userFeatureCommand.addCommand(invokeLearnerCommand);
@@ -296,7 +298,6 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
             rankerChain.addCommand(adaptMessageRankByCMFOfSimilarUsersCommand);
         }
 
-        rankerChain.addCommand(updateInteractionLevelOfMessageRanksCommand);
         rankerChain.addCommand(storeMessageRankCommand);
 
         initReRankChain();

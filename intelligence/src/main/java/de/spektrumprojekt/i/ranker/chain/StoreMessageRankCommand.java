@@ -68,6 +68,11 @@ public class StoreMessageRankCommand implements Command<MessageFeatureContext> {
             if (userContext.getMessageRank() != null) {
                 ranks.add(userContext.getMessageRank());
             }
+
+            for (MessageRank rankToUpdate : userContext.getRanksToUpdate()) {
+
+                persistence.updateMessageRank(rankToUpdate);
+            }
         }
 
         if (!ranks.isEmpty()) {

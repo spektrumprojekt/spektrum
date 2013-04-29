@@ -20,9 +20,7 @@
 package de.spektrumprojekt.i.ranker.chain;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 
 import de.spektrumprojekt.commons.chain.Command;
@@ -31,7 +29,6 @@ import de.spektrumprojekt.datamodel.message.InteractionLevel;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.helper.MessageHelper;
-import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 import de.spektrumprojekt.persistence.Persistence;
 
@@ -41,7 +38,8 @@ import de.spektrumprojekt.persistence.Persistence;
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 
  */
-public class UpdateInteractionLevelOfMessageRanksCommand implements Command<MessageFeatureContext> {
+public class UpdateInteractionLevelOfMessageRanksCommand implements
+        Command<UserSpecificMessageFeatureContext> {
 
     private final Persistence persistence;
 
@@ -99,33 +97,25 @@ public class UpdateInteractionLevelOfMessageRanksCommand implements Command<Mess
      * {@inheritDoc}
      */
     @Override
-    public void process(MessageFeatureContext context) {
+    public void process(UserSpecificMessageFeatureContext context) {
         if (context.isNoRankingOnlyLearning()) {
             return;
         }
 
         List<Message> parentMessages = getParentMessages(context.getMessage());
 
-        Collection<MessageRank> ranksToUpdate = new HashSet<MessageRank>();
-        for (UserSpecificMessageFeatureContext userContext : context.getUserContexts()) {
-            MessageRank messageRank = userContext.getMessageRank();
-            if (messageRank != null) {
-                if (messageRank.isAuthor()) {
-                    for (Message message : parentMessages) {
-                        MessageRank parentRank = this.persistence.getMessageRank(
-                                messageRank.getUserGlobalId(), message.getGlobalId());
-                        if (parentRank != null) {
-                            parentRank.setInteractionLevel(InteractionLevel.DIRECT);
-                            ranksToUpdate.add(parentRank);
-                        }
+        MessageRank messageRank = context.getMessageRank();
+        if (messageRank != null) {
+            if (messageRank.isAuthor()) {
+                for (Message message : parentMessages) {
+                    MessageRank parentRank = this.persistence.getMessageRank(
+                            messageRank.getUserGlobalId(), message.getGlobalId());
+                    if (parentRank != null) {
+                        parentRank.setInteractionLevel(InteractionLevel.DIRECT);
+                        context.addRankToUpdate(parentRank);
                     }
                 }
             }
-
-        }
-
-        for (MessageRank rankToUpdate : ranksToUpdate) {
-            persistence.updateMessageRank(rankToUpdate);
         }
     }
 }

@@ -19,6 +19,8 @@
 
 package de.spektrumprojekt.i.ranker;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 
 import de.spektrumprojekt.datamodel.message.InteractionLevel;
@@ -59,9 +61,11 @@ public class UserSpecificMessageFeatureContext extends MessageFeatureContext {
         return context;
     }
 
+    private MessageRank messageRank;
+
     private InteractionLevel interactionLevel;
 
-    private MessageRank messageRank;
+    private final Collection<MessageRank> ranksToUpdate = new HashSet<MessageRank>();
 
     private final String userGlobalId;
 
@@ -88,6 +92,11 @@ public class UserSpecificMessageFeatureContext extends MessageFeatureContext {
         this.userGlobalId = userGlobalId;
     }
 
+    public void addRankToUpdate(MessageRank messageRank) {
+        this.ranksToUpdate.add(messageRank);
+
+    }
+
     public InteractionLevel getInteractionLevel() {
         return interactionLevel;
     }
@@ -107,6 +116,10 @@ public class UserSpecificMessageFeatureContext extends MessageFeatureContext {
      */
     public MessageRank getMessageRank() {
         return messageRank;
+    }
+
+    public Collection<MessageRank> getRanksToUpdate() {
+        return ranksToUpdate;
     }
 
     /**
