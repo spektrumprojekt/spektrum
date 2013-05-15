@@ -61,6 +61,7 @@ public class ComputeMessageRankCommand implements Command<UserSpecificMessageFea
         MessageRank messageRank = new MessageRank(context.getMessage().getGlobalId(),
                 context.getUserGlobalId());
         context.setMessageRank(messageRank);
+        messageRank.setInteractionLevel(context.getInteractionLevel());
 
         if (context.check(Feature.AUTHOR_FEATURE, 1)) {
             messageRank.setAuthor(true);

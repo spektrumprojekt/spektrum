@@ -51,8 +51,9 @@ public class MessageRank /* extends Identifiable */implements SpektrumEntity {
 
     @Transient
     private boolean author;
+
     @Transient
-    private InteractionLevel interactionLevel = InteractionLevel.NONE;
+    private InteractionLevel interactionLevel = InteractionLevel.UNKNOWN;
 
     /**
      * for jpa

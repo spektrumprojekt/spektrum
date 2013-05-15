@@ -1,6 +1,8 @@
 package de.spektrumprojekt.datamodel.message;
 
 public enum InteractionLevel {
+    /** unknown */
+    UNKNOWN(-1),
     /** nothing known */
     NONE(0),
     /**
