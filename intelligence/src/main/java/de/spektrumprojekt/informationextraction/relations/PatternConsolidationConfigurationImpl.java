@@ -4,11 +4,13 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.time.DateUtils;
+
 public class PatternConsolidationConfigurationImpl implements PatternConsolidationConfiguration {
 
     private Collection<Pattern> patterns;
 
-    private Long periodOfTime = 1000 * 60 * 60 * 4L;
+    private Long periodOfTime = 4 * DateUtils.MILLIS_PER_HOUR;
 
     public PatternConsolidationConfigurationImpl(Collection<String> regExes) {
         super();
