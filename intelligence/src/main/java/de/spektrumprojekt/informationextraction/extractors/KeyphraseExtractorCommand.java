@@ -179,9 +179,12 @@ public class KeyphraseExtractorCommand implements Command<InformationExtractionC
     @Override
     public void process(InformationExtractionContext context) {
         String subscriptionId = context.getMessage().getSubscriptionGlobalId();
-        SubscriptionStatus subscription = context.getPersistence().getAggregationSubscription(
-                subscriptionId);
-        Property enabledProperty = subscription.getSubscription().getAccessParameter(
+        SubscriptionStatus subscriptionStatus = context.getPersistence()
+                .getAggregationSubscription(subscriptionId);
+        if (subscriptionStatus == null || subscriptionStatus.getSubscription() == null) {
+            return;
+        }
+        Property enabledProperty = subscriptionStatus.getSubscription().getAccessParameter(
                 ENABLE_PROPERTY_KEY);
         if (enabledProperty == null || !Boolean.valueOf(enabledProperty.getPropertyValue())) {
             return;
