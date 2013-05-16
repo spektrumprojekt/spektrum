@@ -102,4 +102,15 @@ public class UserFeatureCommand implements Command<MessageFeatureContext>,
         context.addUserContext(userContext);
     }
 
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("UserFeatureCommand [userSpecificCommandChain=");
+        builder.append(userSpecificCommandChain);
+        builder.append(", messageGroupMemberRunner=");
+        builder.append(messageGroupMemberRunner);
+        builder.append("]");
+        return builder.toString();
+    }
+
 }
