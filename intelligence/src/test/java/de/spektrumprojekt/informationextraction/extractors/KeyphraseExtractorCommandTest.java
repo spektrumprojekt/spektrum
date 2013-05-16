@@ -15,8 +15,11 @@ import de.spektrumprojekt.datamodel.message.MessageType;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
+import de.spektrumprojekt.datamodel.subscription.Subscription;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
+import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.simple.SimplePersistence;
 
 public class KeyphraseExtractorCommandTest {
@@ -31,15 +34,22 @@ public class KeyphraseExtractorCommandTest {
 
     private Collection<ScoredTerm> test(KeyphraseExtractorCommand command, String language,
             String title, String text) {
-        Message message = new Message(MessageType.CONTENT, StatusType.OK, new Date());
+        Persistence persistence = new SimplePersistence();
+        Subscription subscription = new Subscription("RSS");
+        Property prop = new Property(KeyphraseExtractorCommand.ENABLE_PROPERTY_KEY, "true");
+        subscription.addAccessParameter(prop);
+        SubscriptionStatus aggregationSubscription = new SubscriptionStatus(subscription);
+        persistence.saveAggregationSubscription(aggregationSubscription);
+        Message message = new Message(MessageType.CONTENT, StatusType.OK,
+                subscription.getGlobalId(), new Date());
         message.addProperty(new Property(Property.PROPERTY_KEY_TITLE, title));
         message.addProperty(new Property(LanguageDetectorCommand.LANGUAGE, language));
         // message.addProperty(new Property(Property.PROPERTY_KEY_EXTERNAL,
         // Property.PROPERTY_VALUE_EXTERNAL));
 
         MessagePart messagePart = new MessagePart(MimeType.TEXT_PLAIN, text);
-        InformationExtractionContext context = new InformationExtractionContext(
-                new SimplePersistence(), message, messagePart);
+        InformationExtractionContext context = new InformationExtractionContext(persistence,
+                message, messagePart);
         context.setCleanText(text);
         command.process(context);
         return messagePart.getScoredTerms();

@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -162,6 +163,8 @@ public class SimplePersistence implements Persistence {
 
     private final Map<ObservationKey, Collection<Observation>> observations = new HashMap<SimplePersistence.ObservationKey, Collection<Observation>>();
 
+    private final Map<String, SubscriptionStatus> subscriptionStatusMap = new HashMap<String, SubscriptionStatus>();
+
     private TermFrequency termFrequency = new TermFrequency();
 
     public void clearMessageRanks() {
@@ -225,12 +228,14 @@ public class SimplePersistence implements Persistence {
 
     @Override
     public SubscriptionStatus getAggregationSubscription(String subscriptionId) {
-        throw new UnsupportedOperationException("Not yet implemented.");
+        return subscriptionStatusMap.get(subscriptionId);
     }
 
     @Override
     public List<SubscriptionStatus> getAggregationSubscriptions() {
-        throw new UnsupportedOperationException("Not yet implemented.");
+        LinkedList<SubscriptionStatus> result = new LinkedList<SubscriptionStatus>();
+        result.addAll(subscriptionStatusMap.values());
+        return result;
     }
 
     @Override
@@ -497,7 +502,9 @@ public class SimplePersistence implements Persistence {
 
     @Override
     public SubscriptionStatus saveAggregationSubscription(SubscriptionStatus aggregationSubscription) {
-        throw new UnsupportedOperationException("Not yet implemented.");
+        subscriptionStatusMap.put(aggregationSubscription.getSubscription().getGlobalId(),
+                aggregationSubscription);
+        return aggregationSubscription;
     }
 
     @Override
@@ -590,7 +597,8 @@ public class SimplePersistence implements Persistence {
 
     @Override
     public void updateAggregationSubscription(SubscriptionStatus aggregationStatus) {
-        throw new UnsupportedOperationException("Not yet implemented.");
+        subscriptionStatusMap.put(aggregationStatus.getSubscription().getGlobalId(),
+                aggregationStatus);
     }
 
     @Override
