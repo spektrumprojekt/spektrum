@@ -284,24 +284,15 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
-    public Collection<Message> getMessagesForPattern(String pattern) {
-        List<Message> messages = patternMessages.get(pattern);
-        if (messages == null) {
-            return Collections.emptyList();
-        }
-        return new ArrayList<Message>(messages);
-    }
-
-    @Override
-    public Collection<Message> getMessagesForPattern(String pattern, Long poeriod) {
+    public Collection<Message> getMessagesForPattern(String pattern,
+            Date messagePublicationFilterDate) {
         List<Message> messages = patternMessages.get(pattern);
         if (messages == null) {
             return Collections.emptyList();
         }
         List<Message> result = new ArrayList<Message>();
-        Long currentTime = new Date().getTime();
         for (Message message : messages) {
-            if (currentTime - message.getPublicationDate().getTime() < poeriod) {
+            if (message.getPublicationDate().after(messagePublicationFilterDate)) {
                 messages.add(message);
             }
         }

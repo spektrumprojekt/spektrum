@@ -91,16 +91,14 @@ public interface Persistence {
 
     public MessageRelation getMessageRelation(Message message);
 
-    Collection<Message> getMessagesForPattern(String pattern);
-
     /**
      * 
      * @param pattern
-     * @param poeriod
-     *            period of time in which {@link Message}s must have been creates in ms
-     * @return
+     * @param messagePublicationFilterDate
+     *            publication date of the messages to consider
+     * @return the messages that match the pattern
      */
-    Collection<Message> getMessagesForPattern(String pattern, Long poeriod);
+    Collection<Message> getMessagesForPattern(String pattern, Date messagePublicationFilterDate);
 
     Collection<Message> getMessagesSince(Date fromDate);
 

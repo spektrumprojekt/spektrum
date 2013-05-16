@@ -1,6 +1,7 @@
 package de.spektrumprojekt.informationextraction.relations;
 
 import java.util.Collection;
+import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -83,9 +84,14 @@ public class PatternConsolidationCommand implements Command<InformationExtractio
 
         Set<String> matches = getUniqueMatches(patternProvider.getPatterns(), messageContent);
         for (String match : matches) {
+
+            GregorianCalendar calendar = new GregorianCalendar();
+            calendar.setTime(message.getPublicationDate());
+            calendar.add(GregorianCalendar.MILLISECOND, -patternProvider.getPeriodOfTime()
+                    .intValue());
+
             Collection<Message> relatedMessages = persistence.getMessagesForPattern(match,
-                    patternProvider.getPeriodOfTime());
-            // persistence.storeMessagePattern(match, message);
+                    calendar.getTime());
             context.add(match);
             if (relatedMessages.isEmpty()) {
                 continue;

@@ -150,13 +150,9 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public Collection<Message> getMessagesForPattern(String pattern) {
-        return messagePersistence.getMessagesForPattern(pattern);
-    }
-
-    @Override
-    public Collection<Message> getMessagesForPattern(String pattern, Long poeriod) {
-        return messagePersistence.getMessagesForPattern(pattern, poeriod);
+    public Collection<Message> getMessagesForPattern(String pattern,
+            Date messagePublicationFilterDate) {
+        return messagePersistence.getMessagesForPattern(pattern, messagePublicationFilterDate);
     }
 
     @Override

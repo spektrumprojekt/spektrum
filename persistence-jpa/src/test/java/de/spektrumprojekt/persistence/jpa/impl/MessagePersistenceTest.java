@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -94,6 +95,8 @@ public class MessagePersistenceTest {
     @Test
     public void MessagePatterns() throws Exception {
 
+        Date date = new Date(new Date().getTime() - 4 * DateUtils.MILLIS_PER_HOUR);
+
         String pattern1 = "TICKET-1";
         String pattern2 = "TICKET-2";
         String pattern3 = "TICKET-3";
@@ -112,22 +115,22 @@ public class MessagePersistenceTest {
         persistence.storeMessagePattern(pattern1, message3);
         persistence.storeMessagePattern(pattern2, message1);
 
-        Collection<Message> p1msgs = persistence.getMessagesForPattern(pattern1);
+        Collection<Message> p1msgs = persistence.getMessagesForPattern(pattern1, date);
         assertEquals(2, p1msgs.size());
 
-        Collection<Message> p2msgs = persistence.getMessagesForPattern(pattern2);
+        Collection<Message> p2msgs = persistence.getMessagesForPattern(pattern2, date);
         assertEquals(2, p2msgs.size());
 
-        Collection<Message> p3msgs = persistence.getMessagesForPattern(pattern3);
+        Collection<Message> p3msgs = persistence.getMessagesForPattern(pattern3, date);
         assertEquals(0, p3msgs.size());
 
-        p1msgs = persistence.getMessagesForPattern(pattern1, 1990L);
+        p1msgs = persistence.getMessagesForPattern(pattern1, date);
         assertEquals(2, p1msgs.size());
 
-        p2msgs = persistence.getMessagesForPattern(pattern2, 1990L);
+        p2msgs = persistence.getMessagesForPattern(pattern2, date);
         assertEquals(2, p2msgs.size());
 
-        p3msgs = persistence.getMessagesForPattern(pattern3, 1990L);
+        p3msgs = persistence.getMessagesForPattern(pattern3, date);
         assertEquals(0, p3msgs.size());
     }
 

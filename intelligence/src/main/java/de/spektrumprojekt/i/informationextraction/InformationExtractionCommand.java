@@ -109,17 +109,17 @@ public class InformationExtractionCommand<T extends MessageFeatureContext> imple
                     new TagExtractorCommand(
                             informationExtractionConfiguration.beMessageGroupSpecific));
         }
-        if (informationExtractionConfiguration.termFrequencyComputer != null) {
-            command.getInformationExtractionCommandChain().addCommand(
-                    new TermCounterCommand(informationExtractionConfiguration.persistence,
-                            informationExtractionConfiguration.termFrequencyComputer));
-        }
         if (informationExtractionConfiguration.matchTextAgainstTagSource
                 && informationExtractionConfiguration.tagSource != null) {
             command.getInformationExtractionCommandChain().addCommand(
                     new ExecuteOnlyForExternalMessagesCommand(new KeyphraseExtractorCommand(
                             informationExtractionConfiguration.tagSource)));
 
+        }
+        if (informationExtractionConfiguration.termFrequencyComputer != null) {
+            command.getInformationExtractionCommandChain().addCommand(
+                    new TermCounterCommand(informationExtractionConfiguration.persistence,
+                            informationExtractionConfiguration.termFrequencyComputer));
         }
         return command;
     }
