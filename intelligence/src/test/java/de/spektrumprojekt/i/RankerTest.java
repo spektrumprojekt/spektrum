@@ -138,7 +138,8 @@ public class RankerTest extends IntelligenceSpektrumTest {
 
         communicator = new VirtualMachineCommunicator(rankerQueue, rankerQueue);
 
-        RankerConfiguration rankerConfiguration = new RankerConfiguration(TermWeightStrategy.TRIVIAL,
+        RankerConfiguration rankerConfiguration = new RankerConfiguration(
+                TermWeightStrategy.TRIVIAL,
                 TermVectorSimilarityStrategy.AVG, flags);
 
         Ranker ranker = new Ranker(

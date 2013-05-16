@@ -401,6 +401,7 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         // setup the reranker chain. the reranker only uses the term match feature and assumes the
         // message has been ranked before
         rerankerChain.addCommand(reRankUserFeatureCommand);
+        reRankUserFeatureCommand.addCommand(determineInteractionLevelCommand);
         reRankUserFeatureCommand.addCommand(termMatchFeatureCommand);
         reRankUserFeatureCommand.addCommand(computeMessageRankCommand);
         rerankerChain.addCommand(getStoreMessageRankCommand());
