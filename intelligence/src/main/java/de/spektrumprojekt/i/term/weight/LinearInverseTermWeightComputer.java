@@ -1,9 +1,16 @@
 package de.spektrumprojekt.i.term.weight;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.i.term.frequency.TermFrequencyComputer;
 
 public class LinearInverseTermWeightComputer implements TermWeightComputer {
+
+    private final static Logger LOGGER = LoggerFactory
+            .getLogger(LinearInverseTermWeightComputer.class);
+
     private final TermFrequencyComputer termFrequencyComputer;
     private boolean failOnZeroTermCounts = true;
 
@@ -16,9 +23,12 @@ public class LinearInverseTermWeightComputer implements TermWeightComputer {
         float numMessageWithTerm = termFrequencyComputer.getMessageCount(messageGroupId);
         if (failOnZeroTermCounts) {
             if (term.getCount() == 0) {
-                throw new RuntimeException("No! term.count cannot be 0! " + term);
-            } else if (numMessageWithTerm == 0) {
-                throw new RuntimeException("No! numMessageWithTerm cannot be 0! " + term);
+                LOGGER.warn("term.count is 0. term: " + term);
+                return 0;
+            }
+            if (numMessageWithTerm == 0) {
+                LOGGER.warn("numMessageWithTerm2 is 0. term: " + term);
+                return 0;
             }
         }
         float weight = 1 - term.getCount() / numMessageWithTerm;
