@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.net.ssl.SSLException;
@@ -38,12 +39,16 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.ContentEncodingHttpClient;
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
 
 import com.sun.syndication.feed.module.DCModule;
 import com.sun.syndication.feed.synd.SyndCategory;
+import com.sun.syndication.feed.synd.SyndCategoryImpl;
 import com.sun.syndication.feed.synd.SyndContent;
 import com.sun.syndication.feed.synd.SyndEntry;
 import com.sun.syndication.feed.synd.SyndFeed;
@@ -108,6 +113,8 @@ public final class FeedAdapter extends BasePollingAdapter {
 
     public static final String AUTOR_NAME = "autor.name";
 
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
     /**
      * Encode the login and password as base 64
      * 
@@ -170,9 +177,13 @@ public final class FeedAdapter extends BasePollingAdapter {
     @SuppressWarnings("unchecked")
     private Message convertMessage(String subscriptionId, SyndEntry syndEntry) {
         Date publishedDate = extractDate(subscriptionId, syndEntry);
+        String tags = extractTags(syndEntry);
         Message message = new Message(MessageType.CONTENT, StatusType.OK, subscriptionId,
                 publishedDate);
         message.addProperty(new Property(Property.PROPERTY_KEY_TITLE, syndEntry.getTitle()));
+        if (tags != null) {
+            message.addProperty(new Property(Property.PROPERTY_KEY_TAGS, tags));
+        }
 
         if (syndEntry.getUri() != null) {
             message.addProperty(new Property(MESSAGE_PROPERTY_ID, syndEntry.getUri()));
@@ -245,6 +256,26 @@ public final class FeedAdapter extends BasePollingAdapter {
                     subscriptionId);
         }
         return publishedDate;
+    }
+
+    private String extractTags(SyndEntry syndEntry) {
+        List<String> tags = new LinkedList<String>();
+        for (Object category : syndEntry.getCategories()) {
+            SyndCategoryImpl categoryImpl = (SyndCategoryImpl) category;
+            tags.add(categoryImpl.getName());
+        }
+        if (tags.size() > 0) {
+            try {
+                return MAPPER.writeValueAsString(tags.toArray(new String[] {}));
+            } catch (JsonGenerationException e) {
+                LOGGER.error("Error processing tags: {}", e);
+            } catch (JsonMappingException e) {
+                LOGGER.error("Error processing tags: {}", e);
+            } catch (IOException e) {
+                LOGGER.error("Error processing tags: {}", e);
+            }
+        }
+        return null;
     }
 
     @Override

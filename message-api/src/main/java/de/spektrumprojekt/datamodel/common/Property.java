@@ -68,6 +68,11 @@ public class Property extends Identifiable {
      */
     public static final String PROPERTY_VALUE_ACTIVITY = "activity";
 
+    /**
+     * Key of the property which contains tags copied from the source
+     */
+    public static final String PROPERTY_KEY_TAGS = "tags";
+
     private String propertyKey;
 
     @Lob
