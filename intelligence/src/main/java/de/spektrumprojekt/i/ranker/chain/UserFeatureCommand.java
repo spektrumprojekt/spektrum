@@ -96,8 +96,8 @@ public class UserFeatureCommand implements Command<MessageFeatureContext>,
             return;
         }
 
-        UserSpecificMessageFeatureContext userContext = UserSpecificMessageFeatureContext
-                .createAndCopy(context, userGlobalId);
+        UserSpecificMessageFeatureContext userContext = new UserSpecificMessageFeatureContext(
+                userGlobalId, context);
         userSpecificCommandChain.process(userContext);
         context.addUserContext(userContext);
     }

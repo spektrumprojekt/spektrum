@@ -55,6 +55,7 @@ import de.spektrumprojekt.i.ranker.chain.features.ContentMatchFeatureCommand;
 import de.spektrumprojekt.i.ranker.chain.features.DiscussionMentionFeatureCommand;
 import de.spektrumprojekt.i.ranker.chain.features.DiscussionParticipationFeatureCommand;
 import de.spektrumprojekt.i.ranker.chain.features.DiscussionRootFeatureCommand;
+import de.spektrumprojekt.i.ranker.chain.features.FeatureAggregateCommand;
 import de.spektrumprojekt.i.ranker.chain.features.MentionFeatureCommand;
 import de.spektrumprojekt.i.term.TermSimilarityWeightComputerFactory;
 import de.spektrumprojekt.i.term.frequency.TermFrequencyComputer;
@@ -96,6 +97,8 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
     private final InvokeLearnerCommand invokeLearnerCommand;
 
     private final TriggerUserModelAdaptationCommand triggerUserModelAdaptationCommand;
+
+    private final FeatureAggregateCommand featureAggregateCommand;
 
     private final UpdateInteractionLevelOfMessageRanksCommand updateInteractionLevelOfMessageRanksCommand;
 
@@ -201,20 +204,11 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
                         .hasFlag(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE_BUT_LEARN_FROM_FEATURES)
                         || this.rankerConfiguration
                                 .hasFlag(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE),
-                this.rankerConfiguration
-                        .hasFlag(RankerConfigurationFlag.USE_HALF_SCORE_ON_NON_PARTICIPATING_ANSWERS));
+                this.rankerConfiguration.getNonParticipationFactor());
         invokeLearnerCommand = new InvokeLearnerCommand(
                 this.persistence,
                 this.communicator,
-                this.rankerConfiguration.hasFlag(RankerConfigurationFlag.LEARN_NEGATIVE),
-                this.rankerConfiguration
-                        .hasFlag(RankerConfigurationFlag.DISCUSSION_PARTICIPATION_LEARN_FROM_PARENT_MESSAGE),
-                this.rankerConfiguration
-                        .hasFlag(RankerConfigurationFlag.DISCUSSION_PARTICIPATION_LEARN_FROM_ALL_PARENT_MESSAGES),
-                !this.rankerConfiguration
-                        .hasFlag(RankerConfigurationFlag.DO_NOT_LEARN_FROM_DISCUSSION_PARTICIPATION),
-                this.rankerConfiguration
-                        .hasFlag(RankerConfigurationFlag.LEARN_FROM_EVERY_MESSAGE));
+                this.rankerConfiguration);
         triggerUserModelAdaptationCommand = new TriggerUserModelAdaptationCommand(
                 this.communicator);
 
@@ -273,9 +267,14 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
                 .hasFlag(RankerConfigurationFlag.DO_NOT_USE_CONTENT_MATCHER_FEATURE)) {
             userFeatureCommand.addCommand(termMatchFeatureCommand);
         }
+        featureAggregateCommand = new FeatureAggregateCommand(
+                this.persistence);
+
+        userFeatureCommand.addCommand(featureAggregateCommand);
         userFeatureCommand.addCommand(determineInteractionLevelCommand);
         userFeatureCommand.addCommand(updateInteractionLevelOfMessageRanksCommand);
         userFeatureCommand.addCommand(computeMessageRankCommand);
+
         if (!this.rankerConfiguration.hasFlag(RankerConfigurationFlag.NO_LEARNING_ONLY_RANKING)) {
             userFeatureCommand.addCommand(invokeLearnerCommand);
         }

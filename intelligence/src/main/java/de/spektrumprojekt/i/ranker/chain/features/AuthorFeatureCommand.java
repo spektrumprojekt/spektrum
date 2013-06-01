@@ -54,7 +54,7 @@ public class AuthorFeatureCommand implements Command<UserSpecificMessageFeatureC
     public void process(UserSpecificMessageFeatureContext context) {
         MessageFeature feature = new MessageFeature(getFeatureId());
 
-        if (context.getUserGlobalId().equals(context.getMessage().getAuthorGlobalId())) {
+        if (context.getUserGlobalId().equals(context.getMessageFeatureContext().getMessage().getAuthorGlobalId())) {
             feature.setValue(1f);
         }
 

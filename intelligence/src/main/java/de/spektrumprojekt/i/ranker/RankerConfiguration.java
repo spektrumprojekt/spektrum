@@ -23,30 +23,37 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     // the message rank threshold determines for which users the adaption will take place.
     private float messageRankThreshold = 0.5f;
+    private float nonParticipationFactor = 1f;
 
     private boolean doTags;
+
     private boolean doTokens = true;
+
     private boolean doKeyphrase;
     private boolean addTagsToText;
+    private int minimumCleanTextLengthForInvokingLearner;
     private int minimumTermLength;
-    private TermWeightStrategy termWeightStrategy;
 
+    private TermWeightStrategy termWeightStrategy;
     private TermVectorSimilarityStrategy termVectorSimilarityStrategy;
 
     private boolean immutable;
 
     private float interestTermTreshold = 0.75f;
-
     private boolean useWordNGrams;
+
     private boolean useCharNGrams;
+
     private int nGramsLength = 2;
+
     private boolean treatMissingUserModelEntriesAsZero;
 
     private boolean charNGramsRemoveStopwords;
     private String termUniquenessLogfile;
-
     private boolean matchTextAgainstTagSource;
     private TagSource tagSource;
+
+    private int rankerConfiguration;
 
     public RankerConfiguration(TermWeightStrategy strategy, TermVectorSimilarityStrategy aggregation) {
         this(strategy, aggregation, (RankerConfigurationFlag[]) null);
@@ -119,6 +126,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         return minContentMessageScore;
     }
 
+    public int getMinimumCleanTextLengthForInvokingLearner() {
+        return minimumCleanTextLengthForInvokingLearner;
+    }
+
     public int getMinimumTermLength() {
         return minimumTermLength;
     }
@@ -129,6 +140,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     public int getNGramsLength() {
         return nGramsLength;
+    }
+
+    public float getNonParticipationFactor() {
+        return nonParticipationFactor;
     }
 
     public TagSource getTagSource() {
@@ -248,6 +263,11 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         this.minContentMessageScore = minContentMessageScore;
     }
 
+    public void setMinimumCleanTextLengthForInvokingLearner(
+            int minimumCleanTextLengthForInvokingLearner) {
+        this.minimumCleanTextLengthForInvokingLearner = minimumCleanTextLengthForInvokingLearner;
+    }
+
     public void setMinimumTermLength(int minimumTermLength) {
         assertCanSet();
         this.minimumTermLength = minimumTermLength;
@@ -261,6 +281,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
     public void setNGramsLength(int nGramsLength) {
         assertCanSet();
         this.nGramsLength = nGramsLength;
+    }
+
+    public void setNonParticipationFactor(float nonParticipationFactor) {
+        this.nonParticipationFactor = nonParticipationFactor;
     }
 
     public void setTagSource(TagSource tagSource) {
