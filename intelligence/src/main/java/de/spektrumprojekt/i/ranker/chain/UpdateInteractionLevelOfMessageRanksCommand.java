@@ -30,6 +30,7 @@ import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
+import de.spektrumprojekt.i.ranker.chain.features.Feature;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**
@@ -104,18 +105,17 @@ public class UpdateInteractionLevelOfMessageRanksCommand implements
 
         List<Message> parentMessages = getParentMessages(context.getMessage());
 
-        MessageRank messageRank = context.getMessageRank();
-        if (messageRank != null) {
-            if (messageRank.isAuthor()) {
-                for (Message message : parentMessages) {
-                    MessageRank parentRank = this.persistence.getMessageRank(
-                            messageRank.getUserGlobalId(), message.getGlobalId());
-                    if (parentRank != null) {
-                        parentRank.setInteractionLevel(InteractionLevel.DIRECT);
-                        context.addRankToUpdate(parentRank);
-                    }
+        if (context.check(Feature.AUTHOR_FEATURE, 1)) {
+
+            for (Message message : parentMessages) {
+                MessageRank parentRank = this.persistence.getMessageRank(
+                        context.getUserGlobalId(), message.getGlobalId());
+                if (parentRank != null) {
+                    parentRank.setInteractionLevel(InteractionLevel.DIRECT);
+                    context.addRankToUpdate(parentRank);
                 }
             }
         }
+
     }
 }
