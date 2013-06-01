@@ -20,6 +20,7 @@
 package de.spektrumprojekt.i.ranker.chain;
 
 import de.spektrumprojekt.commons.chain.Command;
+import de.spektrumprojekt.datamodel.message.InteractionLevel;
 import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.i.datamodel.MessageFeature;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
@@ -35,12 +36,12 @@ public class ComputeMessageRankCommand implements Command<UserSpecificMessageFea
 
     private final boolean onlyUseContentMatchFeature;
 
-    private final boolean useHalfScoreOnNonParticipatingAnswers;
+    private final float nonParticipationFactor;
 
     public ComputeMessageRankCommand(boolean onlyUseContentMatchFeature,
-            boolean useHalfScoreOnNonParticipatingAnswers) {
+            float nonParticipationFactor) {
         this.onlyUseContentMatchFeature = onlyUseContentMatchFeature;
-        this.useHalfScoreOnNonParticipatingAnswers = useHalfScoreOnNonParticipatingAnswers;
+        this.nonParticipationFactor = nonParticipationFactor;
     }
 
     /**
@@ -49,7 +50,7 @@ public class ComputeMessageRankCommand implements Command<UserSpecificMessageFea
     @Override
     public String getConfigurationDescription() {
         return this.getClass().getSimpleName() + " onlyUseContentMatchFeature: "
-                + onlyUseContentMatchFeature;
+                + onlyUseContentMatchFeature + " nonParticipationFactor: " + nonParticipationFactor;
     }
 
     /**
@@ -76,6 +77,7 @@ public class ComputeMessageRankCommand implements Command<UserSpecificMessageFea
         // => no not yet. assume the author is always interested, specially for discussions?
         boolean isNonParticipatingAnswer = false;
         if (!onlyUseContentMatchFeature) {
+            boolean interaction = false;
             if (context.check(Feature.AUTHOR_FEATURE, 1)) {
                 messageRank.setRank(1f);
             } else if (context.check(Feature.MENTION_FEATURE, 1)) {
@@ -89,13 +91,17 @@ public class ComputeMessageRankCommand implements Command<UserSpecificMessageFea
             } else if (!context.check(Feature.DISCUSSION_ROOT_FEATURE, 1)) {
                 isNonParticipatingAnswer = true;
             }
+            if (interaction && context.getInteractionLevel().equals(InteractionLevel.NONE)) {
+                throw new IllegalStateException(
+                        "We have an interaction but InteractionLevel is none! context: " + context);
+            }
         }
         MessageFeature termMatch = context.getFeature(Feature.CONTENT_MATCH_FEATURE);
         if (termMatch != null && termMatch.getValue() > messageRank.getRank()) {
 
             float value = termMatch.getValue();
-            if (useHalfScoreOnNonParticipatingAnswers && isNonParticipatingAnswer) {
-                value = value / 2;
+            if (isNonParticipatingAnswer) {
+                value = value * nonParticipationFactor;
             }
             messageRank.setRank(value);
         }

@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 
 import de.spektrumprojekt.datamodel.message.Message;
@@ -39,11 +40,11 @@ import de.spektrumprojekt.persistence.Persistence;
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 
  */
-public class MessageFeatureContext {
+public class MessageFeatureContext extends FeatureContext {
 
     private final Message message;
+
     private final MessageRelation messageRelation;
-    private final Map<Feature, MessageFeature> features = new HashMap<Feature, MessageFeature>();
 
     private final Collection<InformationExtractionContext> informationExtractionContexts =
             new HashSet<InformationExtractionContext>();
@@ -51,9 +52,10 @@ public class MessageFeatureContext {
             new HashMap<String, UserSpecificMessageFeatureContext>();
 
     private transient Map<String, Message> relatedMessage = null;
-
     private final Persistence persistence;
+
     private Collection<String> userGlobalIdsToProcess;
+
     private boolean noRankingOnlyLearning;
 
     /**
@@ -91,15 +93,6 @@ public class MessageFeatureContext {
     }
 
     /**
-     * 
-     * @param feature
-     *            add the message feature
-     */
-    public void addMessageFeature(MessageFeature feature) {
-        this.features.put(feature.getFeatureId(), feature);
-    }
-
-    /**
      * A {@link UserSpecificMessageFeatureContext} is the context of the a message per user.
      * 
      * @param userContext
@@ -107,39 +100,6 @@ public class MessageFeatureContext {
      */
     public void addUserContext(UserSpecificMessageFeatureContext userContext) {
         this.userContexts.put(userContext.getUserGlobalId(), userContext);
-    }
-
-    /**
-     * Check if the context contains a the given feature, and if so check if it has a minimum value
-     * ((greater or equal) as provided.
-     * 
-     * @param feature
-     *            the feature to get
-     * @param minValue
-     *            the minimum value to reach (0.5 means >= 0.5)
-     * @return true if the feature has a score of minValue or bigger
-     */
-    public boolean check(Feature feature, float minValue) {
-        MessageFeature messageFeature = this.getFeature(feature);
-        return messageFeature != null && messageFeature.getValue() >= minValue;
-    }
-
-    /**
-     * 
-     * @param feature
-     *            the feature to get
-     * @return the according message feature or null
-     */
-    public MessageFeature getFeature(Feature feature) {
-        return this.features.get(feature);
-    }
-
-    /**
-     * 
-     * @return the features (only for this context, not the user specific ones)
-     */
-    public Map<Feature, MessageFeature> getFeatures() {
-        return features;
     }
 
     public Map<Feature, MessageFeature> getFeaturesForUser(String userGlobalId) {
@@ -153,16 +113,6 @@ public class MessageFeatureContext {
             }
         }
         return Collections.unmodifiableMap(features);
-    }
-
-    /**
-     * 
-     * @param feature
-     * @return the value of the feature or 0 if not existing
-     */
-    public float getFeatureValue(Feature feature) {
-        MessageFeature messageFeature = this.getFeature(feature);
-        return messageFeature == null ? 0 : messageFeature.getValue();
     }
 
     /**
@@ -270,5 +220,39 @@ public class MessageFeatureContext {
 
     public void setUserGlobalIdsToProcess(Collection<String> userGlobalIdsToProcess) {
         this.userGlobalIdsToProcess = userGlobalIdsToProcess;
+    }
+
+    @Override
+    public String toString() {
+        final int maxLen = 5;
+        return "MessageFeatureContext [message="
+                + message
+                + ", messageRelation="
+                + messageRelation
+                + ", informationExtractionContexts="
+                + (informationExtractionContexts != null ? toString(informationExtractionContexts,
+                        maxLen) : null)
+                + ", userContexts="
+                + (userContexts != null ? toString(userContexts.entrySet(), maxLen) : null)
+                + ", persistence="
+                + persistence
+                + ", userGlobalIdsToProcess="
+                + (userGlobalIdsToProcess != null ? toString(userGlobalIdsToProcess, maxLen) : null)
+                + ", noRankingOnlyLearning=" + noRankingOnlyLearning + ", getFeatures()="
+                + (getFeatures() != null ? toString(getFeatures().entrySet(), maxLen) : null) + "]";
+    }
+
+    private String toString(Collection<?> collection, int maxLen) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("[");
+        int i = 0;
+        for (Iterator<?> iterator = collection.iterator(); iterator.hasNext() && i < maxLen; i++) {
+            if (i > 0) {
+                builder.append(", ");
+            }
+            builder.append(iterator.next());
+        }
+        builder.append("]");
+        return builder.toString();
     }
 }

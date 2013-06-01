@@ -21,8 +21,6 @@ public enum RankerConfigurationFlag {
 
     LEARN_NEGATIVE("learnNegative"),
 
-    USE_HALF_SCORE_ON_NON_PARTICIPATING_ANSWERS("halfOnNonPart"),
-
     // USE_INVERSE_TERM_FREQUENCY,
 
     USE_CONTENT_MATCH_FEATURE_OF_SIMILAR_USERS("userSimCMF"),

@@ -99,7 +99,7 @@ public class UpdateInteractionLevelOfMessageRanksCommand implements
      */
     @Override
     public void process(UserSpecificMessageFeatureContext context) {
-        if (context.isNoRankingOnlyLearning()) {
+        if (context.getMessageFeatureContext().isNoRankingOnlyLearning()) {
             return;
         }
 

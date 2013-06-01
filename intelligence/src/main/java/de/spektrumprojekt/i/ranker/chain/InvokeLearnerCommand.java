@@ -32,6 +32,8 @@ import de.spektrumprojekt.datamodel.observation.ObservationPriority;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.i.learner.LearningMessage;
+import de.spektrumprojekt.i.ranker.RankerConfiguration;
+import de.spektrumprojekt.i.ranker.RankerConfigurationFlag;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 import de.spektrumprojekt.i.ranker.chain.features.Feature;
 import de.spektrumprojekt.persistence.Persistence;
@@ -52,15 +54,22 @@ public class InvokeLearnerCommand implements Command<UserSpecificMessageFeatureC
     private final boolean learnLowInterest;
     private final boolean learnFromDiscussions;
     private final boolean learnFromEveryMessage;
+    private final int minimumCleanTextLength;
 
     /**
      * 
      * @param persistence
      *            the persistence to use
      */
-    public InvokeLearnerCommand(Persistence persistence, Communicator communicator,
-            boolean learnLowInterest, boolean learnFromParent, boolean learnFromParents,
-            boolean learnFromDiscussions, boolean learnFromEveryMessage) {
+    public InvokeLearnerCommand(
+            Persistence persistence,
+            Communicator communicator,
+            boolean learnLowInterest,
+            boolean learnFromParent,
+            boolean learnFromParents,
+            boolean learnFromDiscussions,
+            boolean learnFromEveryMessage,
+            int minimumCleanTextLength) {
         this.learnLowInterest = learnLowInterest;
         this.communicator = communicator;
         this.persistence = persistence;
@@ -69,10 +78,36 @@ public class InvokeLearnerCommand implements Command<UserSpecificMessageFeatureC
         this.learnFromParents = learnFromParents;
         this.learnFromDiscussions = learnFromDiscussions;
         this.learnFromEveryMessage = learnFromEveryMessage;
+        this.minimumCleanTextLength = minimumCleanTextLength;
+    }
+
+    /**
+     * 
+     * @param persistence
+     *            the persistence to use
+     */
+    public InvokeLearnerCommand(Persistence persistence, Communicator communicator,
+            RankerConfiguration rankerConfiguration) {
+        this(
+                persistence,
+                communicator,
+                rankerConfiguration.hasFlag(RankerConfigurationFlag.LEARN_NEGATIVE),
+                rankerConfiguration
+                        .hasFlag(RankerConfigurationFlag.DISCUSSION_PARTICIPATION_LEARN_FROM_PARENT_MESSAGE),
+                rankerConfiguration
+                        .hasFlag(RankerConfigurationFlag.DISCUSSION_PARTICIPATION_LEARN_FROM_ALL_PARENT_MESSAGES),
+                !rankerConfiguration
+                        .hasFlag(RankerConfigurationFlag.DO_NOT_LEARN_FROM_DISCUSSION_PARTICIPATION),
+                rankerConfiguration
+                        .hasFlag(RankerConfigurationFlag.LEARN_FROM_EVERY_MESSAGE),
+                rankerConfiguration.getMinimumCleanTextLengthForInvokingLearner());
     }
 
     private Interest generateInterest(UserSpecificMessageFeatureContext context) {
         Interest value = null;
+        if (context.getFeatureAggregate().cleanedTextLength < minimumCleanTextLength) {
+            return null;
+        }
         if (learnFromEveryMessage) {
             value = Interest.EXTREME;
             return value;
@@ -109,7 +144,8 @@ public class InvokeLearnerCommand implements Command<UserSpecificMessageFeatureC
                 + " learnFromParent=" + learnFromParent
                 + " learnFromParents=" + learnFromParents
                 + " learnLowInterest=" + learnLowInterest
-                + " learnFromDiscussions=" + learnFromDiscussions;
+                + " learnFromDiscussions=" + learnFromDiscussions
+                + " minimumCleanTextLength=" + minimumCleanTextLength;
 
     }
 

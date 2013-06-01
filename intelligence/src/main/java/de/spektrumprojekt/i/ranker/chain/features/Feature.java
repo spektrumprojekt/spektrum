@@ -34,49 +34,53 @@ import de.spektrumprojekt.i.datamodel.MessageFeature;
  */
 public class Feature {
 
+    public enum FeatureType {
+        BOOLEAN, NUMERIC, ORDINAL, NOMINAL;
+    }
+
     private final String id;
+
+    private final FeatureType featureType;
 
     /**
      * NULL Feature indicating no feature matched
      */
-    public final static Feature NULL_FEATURE = new Feature("NullFeature");
-
+    public final static Feature NULL_FEATURE = new Feature("NullFeature", FeatureType.BOOLEAN);
     /**
      * The author feature
      */
-    public final static Feature AUTHOR_FEATURE = new Feature("AuthorFeature");
-
+    public final static Feature AUTHOR_FEATURE = new Feature("AuthorFeature", FeatureType.BOOLEAN);
     /**
      * The discussion root feature
      */
-    public final static Feature DISCUSSION_ROOT_FEATURE = new Feature("DiscussionRootFeature");
-
+    public final static Feature DISCUSSION_ROOT_FEATURE = new Feature("DiscussionRootFeature",
+            FeatureType.BOOLEAN);
     /**
      * The discussion participation feature
      */
     public final static Feature DISCUSSION_PARTICIPATION_FEATURE = new Feature(
-            "DiscussionParticipationFeature");
-
+            "DiscussionParticipationFeature", FeatureType.BOOLEAN);
     /**
      * The discussion mention feature
      */
     public final static Feature DISCUSSION_MENTION_FEATURE = new Feature(
-            "DiscussionMentionFeature");
+            "DiscussionMentionFeature", FeatureType.BOOLEAN);
 
     /**
      * The mention
      */
-    public final static Feature MENTION_FEATURE = new Feature("MentionFeature");
+    public final static Feature MENTION_FEATURE = new Feature("MentionFeature", FeatureType.BOOLEAN);
 
     /**
      * The like
      */
-    public final static Feature LIKE_FEATURE = new Feature("LikeFeature");
+    public final static Feature LIKE_FEATURE = new Feature("LikeFeature", FeatureType.BOOLEAN);
 
     /**
      * The mention
      */
-    public final static Feature CONTENT_MATCH_FEATURE = new Feature("TermMatch");
+    public final static Feature CONTENT_MATCH_FEATURE = new Feature("TermMatch",
+            FeatureType.NUMERIC);
 
     public final static List<Feature> ALL_FEATURES;
 
@@ -126,16 +130,17 @@ public class Feature {
      * @param id
      *            the feature of the id
      */
-    public Feature(String id) {
+    public Feature(String id, FeatureType featureType) {
         if (id == null) {
             throw new IllegalArgumentException("id cannot be null");
         }
+        if (featureType == null) {
+            throw new IllegalArgumentException("featureType cannot be null");
+        }
         this.id = id;
+        this.featureType = featureType;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -148,6 +153,9 @@ public class Feature {
             return false;
         }
         Feature other = (Feature) obj;
+        if (featureType != other.featureType) {
+            return false;
+        }
         if (id == null) {
             if (other.id != null) {
                 return false;
@@ -158,18 +166,41 @@ public class Feature {
         return true;
     }
 
+    public FeatureType getFeatureType() {
+        return featureType;
+    }
+
     public String getId() {
         return id;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
+        result = prime * result + (featureType == null ? 0 : featureType.hashCode());
         result = prime * result + (id == null ? 0 : id.hashCode());
         return result;
+    }
+
+    public boolean isBooleanFeature() {
+        return FeatureType.BOOLEAN.equals(this.featureType);
+    }
+
+    public boolean isNominalFeature() {
+        return FeatureType.NOMINAL.equals(this.featureType);
+    }
+
+    public boolean isNumericFeature() {
+        return FeatureType.NUMERIC.equals(this.featureType);
+    }
+
+    public boolean isOrdinalFeature() {
+        return FeatureType.ORDINAL.equals(this.featureType);
+    }
+
+    @Override
+    public String toString() {
+        return "Feature [id=" + id + ", featureType=" + featureType + "]";
     }
 }

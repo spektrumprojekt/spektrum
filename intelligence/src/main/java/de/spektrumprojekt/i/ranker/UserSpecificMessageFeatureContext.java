@@ -21,6 +21,7 @@ package de.spektrumprojekt.i.ranker;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 
 import de.spektrumprojekt.datamodel.message.InteractionLevel;
@@ -30,36 +31,18 @@ import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.i.datamodel.MessageFeature;
-import de.spektrumprojekt.persistence.Persistence;
+import de.spektrumprojekt.i.ranker.chain.features.FeatureAggregate;
 
 /**
  * 
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 
  */
-public class UserSpecificMessageFeatureContext extends MessageFeatureContext {
+public class UserSpecificMessageFeatureContext extends FeatureContext {
 
-    /**
-     * Copy the features of the given context to the returned one
-     * 
-     * @param copyContext
-     *            the context to copy from
-     * @param userGlobalId
-     *            the global id
-     * @return the fresh create context
-     */
-    public static UserSpecificMessageFeatureContext createAndCopy(
-            MessageFeatureContext copyContext, String userGlobalId) {
+    private final MessageFeatureContext messageFeatureContext;
 
-        UserSpecificMessageFeatureContext context = new UserSpecificMessageFeatureContext(
-                copyContext.getPersistence(), userGlobalId, copyContext.getMessage(),
-                copyContext.getMessageRelation());
-        for (MessageFeature mf : copyContext.getFeatures().values()) {
-            context.addMessageFeature(mf);
-        }
-
-        return context;
-    }
+    private FeatureAggregate featureAggregate;
 
     private MessageRank messageRank;
 
@@ -82,19 +65,29 @@ public class UserSpecificMessageFeatureContext extends MessageFeatureContext {
      * @param relation
      *            the relation of this context
      */
-    public UserSpecificMessageFeatureContext(Persistence persistence, String userGlobalId,
-            Message message,
-            MessageRelation relation) {
-        super(persistence, message, relation);
+    public UserSpecificMessageFeatureContext(String userGlobalId,
+            MessageFeatureContext messageFeatureContext) {
         if (userGlobalId == null) {
             throw new IllegalArgumentException("userGlobalId cannot be null");
         }
+        if (messageFeatureContext == null) {
+            throw new IllegalArgumentException("messageFeatureContext cannot be null");
+        }
+        this.messageFeatureContext = messageFeatureContext;
         this.userGlobalId = userGlobalId;
+
+        for (MessageFeature mf : messageFeatureContext.getFeatures().values()) {
+            this.addMessageFeature(mf);
+        }
     }
 
     public void addRankToUpdate(MessageRank messageRank) {
         this.ranksToUpdate.add(messageRank);
 
+    }
+
+    public FeatureAggregate getFeatureAggregate() {
+        return featureAggregate;
     }
 
     public InteractionLevel getInteractionLevel() {
@@ -110,12 +103,24 @@ public class UserSpecificMessageFeatureContext extends MessageFeatureContext {
         return matchingUserModelEntries;
     }
 
+    public Message getMessage() {
+        return this.messageFeatureContext.getMessage();
+    }
+
+    public MessageFeatureContext getMessageFeatureContext() {
+        return messageFeatureContext;
+    }
+
     /**
      * 
      * @return the rank (null if not computed or uncomputeable)
      */
     public MessageRank getMessageRank() {
         return messageRank;
+    }
+
+    public MessageRelation getMessageRelation() {
+        return this.messageFeatureContext.getMessageRelation();
     }
 
     public Collection<MessageRank> getRanksToUpdate() {
@@ -128,6 +133,10 @@ public class UserSpecificMessageFeatureContext extends MessageFeatureContext {
      */
     public String getUserGlobalId() {
         return userGlobalId;
+    }
+
+    public void setFeatureAggregate(FeatureAggregate featureAggregate) {
+        this.featureAggregate = featureAggregate;
     }
 
     public void setInteractionLevel(InteractionLevel interactionLevel) {
@@ -145,5 +154,35 @@ public class UserSpecificMessageFeatureContext extends MessageFeatureContext {
      */
     public void setMessageRank(MessageRank messageRank) {
         this.messageRank = messageRank;
+    }
+
+    @Override
+    public String toString() {
+        final int maxLen = 5;
+        return "UserSpecificMessageFeatureContext [messageRank="
+                + messageRank
+                + ", interactionLevel="
+                + interactionLevel
+                + ", ranksToUpdate="
+                + (ranksToUpdate != null ? toString(ranksToUpdate, maxLen) : null)
+                + ", userGlobalId="
+                + userGlobalId
+                + ", matchingUserModelEntries="
+                + (matchingUserModelEntries != null ? toString(matchingUserModelEntries.entrySet(),
+                        maxLen) : null) + ", toString()=" + super.toString() + "]";
+    }
+
+    private String toString(Collection<?> collection, int maxLen) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("[");
+        int i = 0;
+        for (Iterator<?> iterator = collection.iterator(); iterator.hasNext() && i < maxLen; i++) {
+            if (i > 0) {
+                builder.append(", ");
+            }
+            builder.append(iterator.next());
+        }
+        builder.append("]");
+        return builder.toString();
     }
 }
