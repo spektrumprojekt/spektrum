@@ -51,7 +51,7 @@ public class MessageFeatureContext extends FeatureContext {
     private final Map<String, UserSpecificMessageFeatureContext> userContexts =
             new HashMap<String, UserSpecificMessageFeatureContext>();
 
-    private transient Map<String, Message> relatedMessage = null;
+    private transient Map<String, Message> relatedMessages = null;
     private final Persistence persistence;
 
     private Collection<String> userGlobalIdsToProcess;
@@ -147,10 +147,10 @@ public class MessageFeatureContext extends FeatureContext {
      * @return the related messages
      */
     public Map<String, Message> getMessagesOfRelation() {
-        if (relatedMessage == null && this.messageRelation != null) {
+        if (relatedMessages == null) {
             resolveMessagesOfMessageRelation();
         }
-        return this.relatedMessage;
+        return this.relatedMessages;
     }
 
     /**
@@ -194,11 +194,15 @@ public class MessageFeatureContext extends FeatureContext {
      */
     private synchronized void resolveMessagesOfMessageRelation() {
 
-        if (relatedMessage != null) {
+        if (relatedMessages != null) {
+            return;
+        }
+        if (messageRelation == null) {
+            relatedMessages = Collections.emptyMap();
             return;
         }
 
-        relatedMessage = new HashMap<String, Message>();
+        relatedMessages = new HashMap<String, Message>();
         if (this.messageRelation.getRelatedMessageGlobalIds() != null) {
             for (String messageGlobalId : this.messageRelation
                     .getRelatedMessageGlobalIds()) {
@@ -208,7 +212,7 @@ public class MessageFeatureContext extends FeatureContext {
                 }
                 message = persistence.getMessageByGlobalId(messageGlobalId);
                 if (message != null) {
-                    relatedMessage.put(messageGlobalId, message);
+                    relatedMessages.put(messageGlobalId, message);
                 }
             }
         }
