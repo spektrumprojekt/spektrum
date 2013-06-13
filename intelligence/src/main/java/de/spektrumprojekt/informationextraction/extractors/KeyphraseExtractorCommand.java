@@ -26,6 +26,8 @@ import java.util.regex.Pattern;
 import org.apache.commons.collections.Bag;
 import org.apache.commons.collections.bag.HashBag;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.datamodel.common.Property;
@@ -61,6 +63,8 @@ public class KeyphraseExtractorCommand implements Command<InformationExtractionC
      * extracted
      **/
     public static final String ENABLE_PROPERTY_KEY = "tag_extraction_enabled";
+
+    private final static Logger LOGGER = LoggerFactory.getLogger(KeyphraseExtractorCommand.class);
 
     /**
      * <p>
@@ -179,9 +183,15 @@ public class KeyphraseExtractorCommand implements Command<InformationExtractionC
     @Override
     public void process(InformationExtractionContext context) {
         String subscriptionId = context.getMessage().getSubscriptionGlobalId();
-        SubscriptionStatus subscriptionStatus = context.getPersistence()
-                .getAggregationSubscription(subscriptionId);
+        SubscriptionStatus subscriptionStatus = null;
+        if (subscriptionId != null) {
+            subscriptionStatus = context.getPersistence()
+                    .getAggregationSubscription(subscriptionId);
+        }
         if (subscriptionStatus == null || subscriptionStatus.getSubscription() == null) {
+            LOGGER.warn("Cannot determine subscription for message: "
+                    + context.getMessage().getGlobalId() + " subscriptionId=" + subscriptionId
+                    + "message=" + context.getMessage());
             return;
         }
         Property enabledProperty = subscriptionStatus.getSubscription().getAccessParameter(
