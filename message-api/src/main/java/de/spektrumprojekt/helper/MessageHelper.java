@@ -180,7 +180,20 @@ public final class MessageHelper {
     }
 
     public static String getLink(Message message) {
-        return message.getProperty(Property.PROPERTY_KEY_LINK).getPropertyValue();
+        Property property = message.getProperty(Property.PROPERTY_KEY_LINK);
+        return property != null ? property.getPropertyValue() : null;
+    }
+
+    public static String getAuthor(Message message) {
+        Property property = message.getProperty(Property.PROPERTY_KEY_AUTHOR_NAME);
+        if (property != null) {
+            return property.getPropertyValue();
+        }
+        property = message.getProperty(Property.PROPERTY_KEY_DC_CREATOR);
+        if (property != null) {
+            return property.getPropertyValue();
+        }
+        return null;
     }
 
     public static Collection<String> getUserLikes(Message message) {
