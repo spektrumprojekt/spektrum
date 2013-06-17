@@ -84,6 +84,7 @@ public class PatternConsolidationCommand implements Command<InformationExtractio
 
         Set<String> matches = getUniqueMatches(patternProvider.getPatterns(), messageContent);
         for (String match : matches) {
+            persistence.storeMessagePattern(match, message);
 
             GregorianCalendar calendar = new GregorianCalendar();
             calendar.setTime(message.getPublicationDate());

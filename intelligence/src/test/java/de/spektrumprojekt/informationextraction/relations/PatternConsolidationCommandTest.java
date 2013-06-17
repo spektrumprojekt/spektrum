@@ -1,7 +1,10 @@
 package de.spektrumprojekt.informationextraction.relations;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Map;
 
 import org.junit.Assume;
 import org.junit.Test;
@@ -9,9 +12,9 @@ import org.junit.Test;
 import de.spektrumprojekt.commons.SpektrumUtils;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessagePart;
+import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.informationextraction.InformationExtractionConfiguration;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
-import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.simple.SimplePersistence;
 
 public class PatternConsolidationCommandTest {
@@ -38,7 +41,7 @@ public class PatternConsolidationCommandTest {
 
         PatternConsolidationCommand consolidationCommand = new PatternConsolidationCommand(
                 patternProvider);
-        Persistence persistence = new SimplePersistence();
+        SimplePersistence persistence = new SimplePersistence();
 
         for (Message message : dataSource) {
             MessagePart messagePart = message.getMessageParts().iterator().next();
@@ -47,7 +50,8 @@ public class PatternConsolidationCommandTest {
             consolidationCommand.process(context);
         }
 
-        System.out.println(consolidationCommand.getConfigurationDescription());
+        Map<String, MessageRelation> relations = persistence.getMessageRelations();
+        assertEquals(322, relations.size());
     }
 
 }
