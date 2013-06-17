@@ -36,9 +36,6 @@ import de.spektrumprojekt.datamodel.identifiable.Identifiable;
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = "globalId"))
 public class MessagePart extends Identifiable {
 
-    /**
-     * 
-     */
     private static final long serialVersionUID = 1L;
 
     private MimeType mimeType;

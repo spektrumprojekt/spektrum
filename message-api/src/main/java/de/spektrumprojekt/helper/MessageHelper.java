@@ -179,6 +179,10 @@ public final class MessageHelper {
         return property.getPropertyValue();
     }
 
+    public static String getLink(Message message) {
+        return message.getProperty(Property.PROPERTY_KEY_LINK).getPropertyValue();
+    }
+
     public static Collection<String> getUserLikes(Message message) {
         return getListProperty(message, PROPERTY_KEY_USERS_LIKE, USERS_LIKE_SEPERATOR_CHAR_STR);
     }

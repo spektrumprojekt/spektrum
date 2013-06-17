@@ -633,7 +633,7 @@ public class SimplePersistence implements Persistence {
         }
     }
 
-    public Map<String, MessageRelation> getMessageRelations() {
-        return messageRelations;
+    public Map<String, List<Message>> getPatternMessages() {
+        return patternMessages;
     }
 }
