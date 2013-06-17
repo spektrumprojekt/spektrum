@@ -102,7 +102,7 @@ public final class FeedTestDataSource implements Iterable<Message> {
         message.addMessagePart(new MessagePart(MimeType.TEXT_HTML, description.getValue()));
         message.addProperty(new Property(Property.PROPERTY_KEY_LINK, syndEntry.getLink()));
         message.addProperty(new Property(Property.PROPERTY_KEY_TITLE, syndEntry.getTitle()));
-        message.addProperty(new Property("autor.name", syndEntry.getAuthor()));
+        message.addProperty(new Property(Property.PROPERTY_KEY_AUTHOR_NAME, syndEntry.getAuthor()));
         return message;
     }
 

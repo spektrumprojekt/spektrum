@@ -109,9 +109,17 @@ public final class FeedAdapter extends BasePollingAdapter {
 
     private static final int THREAD_POOL_SIZE = 100;
 
-    public static final String DC_CREATOR = "dc:creator";
+    /**
+     * @deprecated Use {@link Property#PROPERTY_KEY_DC_CREATOR} instead.
+     */
+    @Deprecated
+    public static final String DC_CREATOR = Property.PROPERTY_KEY_DC_CREATOR;
 
-    public static final String AUTOR_NAME = "autor.name";
+    /**
+     * @deprecated Use {@link Property#PROPERTY_KEY_AUTHOR_NAME} instead.
+     */
+    @Deprecated
+    public static final String AUTOR_NAME = Property.PROPERTY_KEY_AUTHOR_NAME;
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -218,19 +226,19 @@ public final class FeedAdapter extends BasePollingAdapter {
         if (SpektrumUtils.notNullOrEmpty(link)) {
             message.addProperty(new Property(Property.PROPERTY_KEY_LINK, link));
         }
-        DCModule module = (DCModule) syndEntry.getModule(DCModule.URI);
+        DCModule module = (DCModule)syndEntry.getModule(DCModule.URI);
         userextraction: {
             String creator;
             if (module != null) {
                 creator = module.getCreator();
                 if (SpektrumUtils.notNullOrEmpty(creator)) {
-                    message.addProperty(new Property(DC_CREATOR, creator));
+                    message.addProperty(new Property(Property.PROPERTY_KEY_DC_CREATOR, creator));
                     break userextraction;
                 }
             }
             creator = syndEntry.getAuthor();
             if (SpektrumUtils.notNullOrEmpty(creator)) {
-                message.addProperty(new Property(AUTOR_NAME, creator));
+                message.addProperty(new Property(Property.PROPERTY_KEY_AUTHOR_NAME, creator));
             }
         }
 

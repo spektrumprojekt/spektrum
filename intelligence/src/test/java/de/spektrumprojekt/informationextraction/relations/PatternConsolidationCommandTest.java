@@ -7,12 +7,11 @@ import java.io.FileNotFoundException;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Assume;
 import org.junit.Test;
 
-import de.spektrumprojekt.commons.SpektrumUtils;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessagePart;
+import de.spektrumprojekt.i.TestHelper;
 import de.spektrumprojekt.informationextraction.InformationExtractionConfiguration;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
 import de.spektrumprojekt.persistence.simple.SimplePersistence;
@@ -34,7 +33,7 @@ public class PatternConsolidationCommandTest {
     }
 
     private final Map<String, List<Message>> process(String file) {
-        File testFile = getTestFile(file);
+        File testFile = TestHelper.getTestFile(file);
 
         FeedTestDataSource dataSource = new FeedTestDataSource(testFile);
 
@@ -58,16 +57,6 @@ public class PatternConsolidationCommandTest {
         return relations;
     }
 
-    private final File getTestFile(String file) {
-        File testFile = null;
-        try {
-            testFile = SpektrumUtils.getTestResource(file);
-        } catch (Exception e) {
-            System.out.println("Skipping " + PatternConsolidationCommandTest.class
-                    + " because test file is missing.");
-            Assume.assumeTrue(false);
-        }
-        return testFile;
-    }
+
 
 }
