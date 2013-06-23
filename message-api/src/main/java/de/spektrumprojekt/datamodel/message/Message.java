@@ -178,6 +178,15 @@ public class Message extends Identifiable {
         return propertyMap;
     }
 
+    public Property getProperty(String propertyKey) {
+        for (Property property : properties) {
+            if (property.getPropertyKey().equals(propertyKey)) {
+                return property;
+            }
+        }
+        return null;
+    }
+
     public Date getPublicationDate() {
         return publicationDate;
     }

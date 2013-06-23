@@ -1,24 +1,27 @@
 package de.spektrumprojekt.informationextraction.relations;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.time.DateUtils;
 
 public class PatternConsolidationConfigurationImpl implements PatternConsolidationConfiguration {
 
-    private Collection<Pattern> patterns;
+    private Collection<NamePattern> patterns;
 
     private Long periodOfTime = 4 * DateUtils.MILLIS_PER_HOUR;
 
-    public PatternConsolidationConfigurationImpl(Collection<String> regExes) {
-        super();
-        setPatters(regExes);
+    public PatternConsolidationConfigurationImpl(NamePattern pattern) {
+        this(Collections.singleton(pattern));
+    }
+
+    public PatternConsolidationConfigurationImpl(Collection<NamePattern> patterns) {
+        setPatterns(patterns);
     }
 
     @Override
-    public Collection<Pattern> getPatterns() {
+    public Collection<NamePattern> getPatterns() {
         return patterns;
     }
 
@@ -28,11 +31,9 @@ public class PatternConsolidationConfigurationImpl implements PatternConsolidati
     }
 
     @Override
-    public void setPatters(Collection<String> regExes) {
-        patterns = new HashSet<Pattern>();
-        for (String regEx : regExes) {
-            patterns.add(Pattern.compile(regEx));
-        }
+    public void setPatterns(Collection<NamePattern> patterns) {
+        this.patterns = new HashSet<NamePattern>();
+        this.patterns.addAll(patterns);
     }
 
     @Override

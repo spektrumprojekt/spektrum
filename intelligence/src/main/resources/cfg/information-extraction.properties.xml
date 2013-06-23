@@ -1,4 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <information-extraction-configuration>
-	<pattern>https://jira.communardo.de/browse/[\\d\\w-]+</pattern>
+	<!-- 
+		define your patterns for establishing relations here; they are currently just a plain list,
+		with elements "pattern-name-n" and "pattern-regex-n", to be compatible to the flat structure
+		used in the rest of the project. Make sure to have exactly *one* capturing group per regex;
+		this is the identifier for establishing the relations. 
+	--> 
+	<pattern-name-0>jira-1</pattern-name-0>
+	<pattern-regex-0>https://jira\.communardo\.de/browse/([\d\w-]+)</pattern-regex-0>
+	<pattern-name-1>confluence-1</pattern-name-1>
+	<pattern-regex-1>https://wiki\.communardo\.de/display/([^~?\s"]+)</pattern-regex-1>
+	<pattern-name-2>confluence-2</pattern-name-2>
+	<pattern-regex-2>https://wiki\.communardo\.de/pages/viewpage\.action\?pageId=(\d+)</pattern-regex-2>
+	<pattern-name-3>confluence-3</pattern-name-3>
+	<pattern-regex-3>https://wiki\.communardo\.de/download/attachments/(\d+)/.*</pattern-regex-3>
+
 </information-extraction-configuration>

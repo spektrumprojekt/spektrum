@@ -73,6 +73,10 @@ public class Property extends Identifiable {
      */
     public static final String PROPERTY_KEY_TAGS = "tags";
 
+    public static final String PROPERTY_KEY_DC_CREATOR = "dc:creator";
+
+    public static final String PROPERTY_KEY_AUTHOR_NAME = "autor.name";
+
     private String propertyKey;
 
     @Lob

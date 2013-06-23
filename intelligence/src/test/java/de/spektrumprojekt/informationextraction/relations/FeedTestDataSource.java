@@ -31,7 +31,7 @@ import de.spektrumprojekt.datamodel.subscription.status.StatusType;
  * 
  * @author Philipp Katz
  */
-public final class CommunoteTestDataSource implements Iterable<Message> {
+public final class FeedTestDataSource implements Iterable<Message> {
 
     /** The RSS file being read. */
     private final File feedXmlFile;
@@ -44,7 +44,7 @@ public final class CommunoteTestDataSource implements Iterable<Message> {
      * @param feedXmlFile
      *            The file with the RSS feed, not <code>null</code>.
      */
-    public CommunoteTestDataSource(File feedXmlFile) {
+    public FeedTestDataSource(File feedXmlFile) {
         Validate.notNull(feedXmlFile, "feedXmlFile must not be null");
         this.feedXmlFile = feedXmlFile;
     }
@@ -102,7 +102,7 @@ public final class CommunoteTestDataSource implements Iterable<Message> {
         message.addMessagePart(new MessagePart(MimeType.TEXT_HTML, description.getValue()));
         message.addProperty(new Property(Property.PROPERTY_KEY_LINK, syndEntry.getLink()));
         message.addProperty(new Property(Property.PROPERTY_KEY_TITLE, syndEntry.getTitle()));
-        message.addProperty(new Property("autor.name", syndEntry.getAuthor()));
+        message.addProperty(new Property(Property.PROPERTY_KEY_AUTHOR_NAME, syndEntry.getAuthor()));
         return message;
     }
 

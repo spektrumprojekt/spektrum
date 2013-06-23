@@ -179,6 +179,23 @@ public final class MessageHelper {
         return property.getPropertyValue();
     }
 
+    public static String getLink(Message message) {
+        Property property = message.getProperty(Property.PROPERTY_KEY_LINK);
+        return property != null ? property.getPropertyValue() : null;
+    }
+
+    public static String getAuthor(Message message) {
+        Property property = message.getProperty(Property.PROPERTY_KEY_AUTHOR_NAME);
+        if (property != null) {
+            return property.getPropertyValue();
+        }
+        property = message.getProperty(Property.PROPERTY_KEY_DC_CREATOR);
+        if (property != null) {
+            return property.getPropertyValue();
+        }
+        return null;
+    }
+
     public static Collection<String> getUserLikes(Message message) {
         return getListProperty(message, PROPERTY_KEY_USERS_LIKE, USERS_LIKE_SEPERATOR_CHAR_STR);
     }
