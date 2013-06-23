@@ -19,30 +19,20 @@
 
 package de.spektrumprojekt.i.learner.similarity;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.spektrumprojekt.commons.time.TimeProviderHolder;
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
-import de.spektrumprojekt.datamodel.identifiable.Identifiable;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
-import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
-import de.spektrumprojekt.helper.IdentifiableHelper;
 import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.persistence.Persistence;
 
@@ -65,89 +55,6 @@ public class UserSimilarityComputer implements ConfigurationDescriptable {
             throw new IllegalArgumentException("persistence cannot be null.");
         }
         this.persistence = persistence;
-    }
-
-    public List<String> dumpUserSimilarities() {
-
-        LOGGER.debug("Dumping UserSimilarities ...");
-
-        List<User> users = new ArrayList<User>(this.persistence.getAllUsers());
-        List<MessageGroup> messageGroups = new ArrayList<MessageGroup>(
-                this.persistence.getAllMessageGroups());
-
-        Comparator<Identifiable> comp = new Comparator<Identifiable>() {
-
-            @Override
-            public int compare(Identifiable o1, Identifiable o2) {
-                return o1.getGlobalId().compareTo(o2.getGlobalId());
-            }
-
-        };
-
-        Comparator<UserSimilarity> compSim = new Comparator<UserSimilarity>() {
-
-            @Override
-            public int compare(UserSimilarity o1, UserSimilarity o2) {
-                int result = o1.getUserGlobalIdFrom().compareTo(o2.getUserGlobalIdFrom());
-                if (result == 0) {
-                    result = o1.getUserGlobalIdTo().compareTo(o2.getUserGlobalIdTo());
-                }
-                return result;
-            }
-
-        };
-
-        Collections.sort(users, comp);
-        Collections.sort(messageGroups, comp);
-
-        Collection<String> userIds = IdentifiableHelper.getGlobalIds(users);
-        List<String> rows = new ArrayList<String>();
-        // header
-        rows.add("MessageGroupId UserIdFrom UserIdTo Sim");
-
-        for (MessageGroup messageGroup : messageGroups) {
-            for (User user : this.persistence.getAllUsers()) {
-
-                List<UserSimilarity> sims = new ArrayList<UserSimilarity>(
-                        this.persistence.getUserSimilarities(
-                                user.getGlobalId(), userIds, messageGroup.getGlobalId(), 0.01d));
-                Collections.sort(sims, compSim);
-
-                for (UserSimilarity sim : sims) {
-                    String row = "MG: " + sim.getMessageGroupGlobalId() + " "
-                            + sim.getUserGlobalIdFrom()
-                            + " -> " + sim.getUserGlobalIdTo() + " " + sim.getSimilarity();
-                    row += " numMentions: " + sim.getNumberOfMentions();
-                    rows.add(row);
-                }
-            }
-        }
-
-        for (User user : users) {
-            Integer from = this.overallMentionsPerUserFrom.get(user.getGlobalId());
-            Integer to = this.overallMentionsPerUserTo.get(user.getGlobalId());
-
-            if (from != null || to != null) {
-                if (from == null) {
-                    from = 0;
-                }
-                if (to == null) {
-                    to = 0;
-                }
-
-                rows.add("overallMentions " + user.getGlobalId() + " from ->: " + from
-                        + "  to <-: " + to);
-            }
-        }
-
-        LOGGER.info("Dumping UserSimilarities done with {} rows." + rows.size());
-
-        return rows;
-    }
-
-    public void dumpUserSimilarities(File file) throws IOException {
-        List<String> rows = dumpUserSimilarities();
-        FileUtils.writeLines(file, rows);
     }
 
     @Override

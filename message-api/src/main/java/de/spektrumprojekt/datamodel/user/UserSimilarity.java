@@ -45,9 +45,13 @@ public class UserSimilarity extends Identifiable {
 
     }
 
-    private final String userGlobalIdFrom;
+    public static String getUserSimilarityHeader() {
+        return "#MessageGroupId UserIdFrom UserIdTo Sim numberOfMentions";
+    }
 
+    private final String userGlobalIdFrom;
     private final String userGlobalIdTo;
+
     private final String messageGroupGlobalId;
 
     private double similarity;
@@ -62,6 +66,22 @@ public class UserSimilarity extends Identifiable {
         userGlobalIdFrom = null;
         userGlobalIdTo = null;
         messageGroupGlobalId = null;
+    }
+
+    public UserSimilarity(String line) {
+        if (line == null) {
+            throw new IllegalArgumentException("line cannot be null.");
+        }
+        int index = 0;
+        String[] vals = line.split(" ");
+        this.messageGroupGlobalId = vals[index] == null || vals[index].trim().length() == 0 ? null
+                : vals[index];
+        index++;
+        this.userGlobalIdFrom = vals[index++];
+        this.userGlobalIdTo = vals[index++];
+        this.similarity = Double.parseDouble(vals[index++]);
+        this.numberOfMentions = Integer.parseInt(vals[index++]);
+
     }
 
     public UserSimilarity(String userGlobalIdFrom, String userGlobalIdTo,
@@ -146,6 +166,17 @@ public class UserSimilarity extends Identifiable {
                     + similarity);
         }
         this.similarity = similarity;
+    }
+
+    public String toParseableString() {
+        return StringUtils.join(new String[] {
+                messageGroupGlobalId,
+                getUserGlobalIdFrom(),
+                getUserGlobalIdTo(),
+                "" + getSimilarity(),
+                "" + getNumberOfMentions()
+        }, " ");
+
     }
 
     @Override
