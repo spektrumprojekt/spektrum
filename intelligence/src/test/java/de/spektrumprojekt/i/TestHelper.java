@@ -3,15 +3,13 @@ package de.spektrumprojekt.i;
 import java.io.File;
 
 import org.junit.Assume;
+import org.junit.Ignore;
 
 import de.spektrumprojekt.commons.SpektrumUtils;
 import de.spektrumprojekt.informationextraction.relations.PatternConsolidationCommandTest;
 
-public class TestHelper {
-
-    private TestHelper() {
-
-    }
+@Ignore
+public final class TestHelper {
 
     public static final File getTestFile(String file) {
         File testFile = null;
@@ -23,6 +21,10 @@ public class TestHelper {
             Assume.assumeTrue(false);
         }
         return testFile;
+    }
+
+    private TestHelper() {
+
     }
 
 }
