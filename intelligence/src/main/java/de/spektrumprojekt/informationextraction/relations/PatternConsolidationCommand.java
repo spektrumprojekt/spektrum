@@ -78,44 +78,48 @@ public class PatternConsolidationCommand implements Command<InformationExtractio
 
     @Override
     public void process(InformationExtractionContext context) {
-        LOGGER.debug("Process {}", MessageHelper.getTitle(context.getMessage()));
+        try {
+            LOGGER.debug("Process {}", MessageHelper.getTitle(context.getMessage()));
 
-        Message message = context.getMessage();
-        MessagePart messagePart = context.getMessagePart();
-        String messageContent = messagePart.getContent();
-        Persistence persistence = context.getPersistence();
-        String title = MessageHelper.getTitle(message);
-        String link = MessageHelper.getLink(message);
+            Message message = context.getMessage();
+            MessagePart messagePart = context.getMessagePart();
+            String messageContent = messagePart.getContent();
+            Persistence persistence = context.getPersistence();
+            String title = MessageHelper.getTitle(message);
+            String link = MessageHelper.getLink(message);
 
-        String fullContent = StringUtils.join(Arrays.asList(title, link, messageContent), "\n");
+            String fullContent = StringUtils.join(Arrays.asList(title, link, messageContent), "\n");
 
-        Set<String> matches = getUniqueMatches(patternProvider.getPatterns(), fullContent);
-        LOGGER.trace("Extracted matches: {}", matches);
+            Set<String> matches = getUniqueMatches(patternProvider.getPatterns(), fullContent);
+            LOGGER.trace("Extracted matches: {}", matches);
 
-        for (String match : matches) {
-            persistence.storeMessagePattern(match, message);
+            for (String match : matches) {
+                persistence.storeMessagePattern(match, message);
 
-            GregorianCalendar calendar = new GregorianCalendar();
-            calendar.setTime(message.getPublicationDate());
-            calendar.add(GregorianCalendar.MILLISECOND, -patternProvider.getPeriodOfTime()
-                    .intValue());
+                GregorianCalendar calendar = new GregorianCalendar();
+                calendar.setTime(message.getPublicationDate());
+                calendar.add(GregorianCalendar.MILLISECOND, -patternProvider.getPeriodOfTime()
+                        .intValue());
 
-            Collection<Message> relatedMessages = persistence.getMessagesForPattern(match,
-                    calendar.getTime());
-            context.add(match);
-            if (relatedMessages.isEmpty()) {
-                continue;
+                Collection<Message> relatedMessages = persistence.getMessagesForPattern(match,
+                        calendar.getTime());
+                context.add(match);
+                if (relatedMessages.isEmpty()) {
+                    continue;
+                }
+                Set<String> relatedIds = new HashSet<String>();
+                for (Message relatedMessage : relatedMessages) {
+                    relatedIds.add(relatedMessage.getGlobalId());
+                }
+                String[] relatedIdsArray = relatedIds.toArray(new String[relatedIds.size()]);
+                MessageRelation relation = new MessageRelation(MessageRelationType.RELATION,
+                        message.getGlobalId(), relatedIdsArray);
+                LOGGER.debug("Message relation for {} = {}", message.getGlobalId(), relation);
+                persistence.storeMessageRelation(message, relation);
+                context.add(relation);
             }
-            Set<String> relatedIds = new HashSet<String>();
-            for (Message relatedMessage : relatedMessages) {
-                relatedIds.add(relatedMessage.getGlobalId());
-            }
-            String[] relatedIdsArray = relatedIds.toArray(new String[relatedIds.size()]);
-            MessageRelation relation = new MessageRelation(MessageRelationType.RELATION,
-                    message.getGlobalId(), relatedIdsArray);
-            LOGGER.debug("Message relation for {} = {}", message.getGlobalId(), relation);
-            persistence.storeMessageRelation(message, relation);
-            context.add(relation);
+        } catch (Exception e) {
+            LOGGER.error("Error handling pattern for message=" + context.getMessage(), e);
         }
     }
 }
