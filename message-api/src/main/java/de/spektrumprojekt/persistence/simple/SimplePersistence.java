@@ -293,7 +293,7 @@ public class SimplePersistence implements Persistence {
         List<Message> result = new ArrayList<Message>();
         for (Message message : messages) {
             if (message.getPublicationDate().after(messagePublicationFilterDate)) {
-                messages.add(message);
+                result.add(message);
             }
         }
         return result;
@@ -631,5 +631,9 @@ public class SimplePersistence implements Persistence {
             }
             visitor.visit(messageRank, message);
         }
+    }
+
+    public Map<String, List<Message>> getPatternMessages() {
+        return patternMessages;
     }
 }

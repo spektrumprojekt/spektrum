@@ -1,12 +1,13 @@
 package de.spektrumprojekt.informationextraction.relations;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,9 +33,6 @@ public class PatternConsolidationCommand implements Command<InformationExtractio
     /** The logger for this class. */
     private static final Logger LOGGER = LoggerFactory.getLogger(PatternConsolidationCommand.class);
 
-    // /** The patterns which are used for establishing relations. */
-    // private final Collection<Pattern> patterns;
-
     private final PatternConsolidationConfiguration patternProvider;
 
     /**
@@ -43,15 +41,13 @@ public class PatternConsolidationCommand implements Command<InformationExtractio
      * regexes. They are used for creating relations from processed to existing messages.
      * </p>
      * 
-     * @param regExes
-     *            The collections of regexes.
+     * @param patternProvider
+     *            The configuration options.
      */
     public PatternConsolidationCommand(PatternConsolidationConfiguration patternProvider) {
         this.patternProvider = patternProvider;
-        // patterns = new HashSet<Pattern>();
-        // for (String regEx : regExes) {
-        // patterns.add(Pattern.compile(regEx));
-        // }
+        LOGGER.debug("Initalized {} with {} patterns", getClass().getName(), patternProvider
+                .getPatterns().size());
     }
 
     @Override
@@ -62,12 +58,19 @@ public class PatternConsolidationCommand implements Command<InformationExtractio
         return stringBuilder.toString();
     }
 
-    private Set<String> getUniqueMatches(Collection<Pattern> patterns, String text) {
+    private Set<String> getUniqueMatches(Collection<NamePattern> patterns, String text) {
         Set<String> result = new HashSet<String>();
-        for (Pattern pattern : patterns) {
-            Matcher matcher = pattern.matcher(text);
+        for (NamePattern pattern : patterns) {
+            Matcher matcher = pattern.getPattern().matcher(text);
             while (matcher.find()) {
-                result.add(matcher.group());
+                String matchedGroup = matcher.group(1);
+                if (matchedGroup == null) {
+                    LOGGER.warn(
+                            "Could not extract information for {}, make sure to configure capturing group correctly!",
+                            pattern.getRegex());
+                }
+                String identifier = pattern.getName() + "#" + matchedGroup;
+                result.add(identifier);
             }
         }
         return result;
@@ -75,37 +78,48 @@ public class PatternConsolidationCommand implements Command<InformationExtractio
 
     @Override
     public void process(InformationExtractionContext context) {
-        LOGGER.debug("Process {}", MessageHelper.getTitle(context.getMessage()));
+        try {
+            LOGGER.debug("Process {}", MessageHelper.getTitle(context.getMessage()));
 
-        Message message = context.getMessage();
-        MessagePart messagePart = context.getMessagePart();
-        String messageContent = messagePart.getContent();
-        Persistence persistence = context.getPersistence();
+            Message message = context.getMessage();
+            MessagePart messagePart = context.getMessagePart();
+            String messageContent = messagePart.getContent();
+            Persistence persistence = context.getPersistence();
+            String title = MessageHelper.getTitle(message);
+            String link = MessageHelper.getLink(message);
 
-        Set<String> matches = getUniqueMatches(patternProvider.getPatterns(), messageContent);
-        for (String match : matches) {
+            String fullContent = StringUtils.join(Arrays.asList(title, link, messageContent), "\n");
 
-            GregorianCalendar calendar = new GregorianCalendar();
-            calendar.setTime(message.getPublicationDate());
-            calendar.add(GregorianCalendar.MILLISECOND, -patternProvider.getPeriodOfTime()
-                    .intValue());
+            Set<String> matches = getUniqueMatches(patternProvider.getPatterns(), fullContent);
+            LOGGER.trace("Extracted matches: {}", matches);
 
-            Collection<Message> relatedMessages = persistence.getMessagesForPattern(match,
-                    calendar.getTime());
-            context.add(match);
-            if (relatedMessages.isEmpty()) {
-                continue;
+            for (String match : matches) {
+                persistence.storeMessagePattern(match, message);
+
+                GregorianCalendar calendar = new GregorianCalendar();
+                calendar.setTime(message.getPublicationDate());
+                calendar.add(GregorianCalendar.MILLISECOND, -patternProvider.getPeriodOfTime()
+                        .intValue());
+
+                Collection<Message> relatedMessages = persistence.getMessagesForPattern(match,
+                        calendar.getTime());
+                context.add(match);
+                if (relatedMessages.isEmpty()) {
+                    continue;
+                }
+                Set<String> relatedIds = new HashSet<String>();
+                for (Message relatedMessage : relatedMessages) {
+                    relatedIds.add(relatedMessage.getGlobalId());
+                }
+                String[] relatedIdsArray = relatedIds.toArray(new String[relatedIds.size()]);
+                MessageRelation relation = new MessageRelation(MessageRelationType.RELATION,
+                        message.getGlobalId(), relatedIdsArray);
+                LOGGER.debug("Message relation for {} = {}", message.getGlobalId(), relation);
+                persistence.storeMessageRelation(message, relation);
+                context.add(relation);
             }
-            Set<String> relatedIds = new HashSet<String>();
-            for (Message relatedMessage : relatedMessages) {
-                relatedIds.add(relatedMessage.getGlobalId());
-            }
-            String[] relatedIdsArray = relatedIds.toArray(new String[relatedIds.size()]);
-            MessageRelation relation = new MessageRelation(MessageRelationType.RELATION,
-                    message.getGlobalId(), relatedIdsArray);
-            LOGGER.debug("Message relation for {} = {}", message.getGlobalId(), relation);
-            persistence.storeMessageRelation(message, relation);
-            context.add(relation);
+        } catch (Exception e) {
+            LOGGER.error("Error handling pattern for message=" + context.getMessage(), e);
         }
     }
 }

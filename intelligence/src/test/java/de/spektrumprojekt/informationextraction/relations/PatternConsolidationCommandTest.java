@@ -1,35 +1,41 @@
 package de.spektrumprojekt.informationextraction.relations;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.List;
+import java.util.Map;
 
-import org.junit.Assume;
 import org.junit.Test;
 
-import de.spektrumprojekt.commons.SpektrumUtils;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessagePart;
+import de.spektrumprojekt.i.TestHelper;
 import de.spektrumprojekt.informationextraction.InformationExtractionConfiguration;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
-import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.simple.SimplePersistence;
 
 public class PatternConsolidationCommandTest {
 
     private static final String RELATION_SAMPLE_FILE = "/relations/testFeed.xml";
 
-    @Test
-    public void testInteractionConsolidationCommand() throws FileNotFoundException {
-        File testFile = null;
-        try {
-            testFile = SpektrumUtils.getTestResource(RELATION_SAMPLE_FILE);
-        } catch (Exception e) {
-            System.out.println("Skipping " + PatternConsolidationCommandTest.class
-                    + " because test file is missing.");
-            Assume.assumeTrue(false);
-        }
+    private static final String RELATION_SAMPLE_FILE_2 = "/relations/confluence.xml";
 
-        CommunoteTestDataSource dataSource = new CommunoteTestDataSource(testFile);
+    @Test
+    public void testPatternConsolidationCommand() throws FileNotFoundException {
+        assertEquals(119, process(RELATION_SAMPLE_FILE).size());
+    }
+
+    @Test
+    public void testPatternConsolidationCommand2() throws FileNotFoundException {
+        assertEquals(39, process(RELATION_SAMPLE_FILE_2).size());
+    }
+
+    private final Map<String, List<Message>> process(String file) {
+        File testFile = TestHelper.getTestFile(file);
+
+        FeedTestDataSource dataSource = new FeedTestDataSource(testFile);
 
         InformationExtractionConfiguration config = new InformationExtractionConfiguration();
 
@@ -38,7 +44,7 @@ public class PatternConsolidationCommandTest {
 
         PatternConsolidationCommand consolidationCommand = new PatternConsolidationCommand(
                 patternProvider);
-        Persistence persistence = new SimplePersistence();
+        SimplePersistence persistence = new SimplePersistence();
 
         for (Message message : dataSource) {
             MessagePart messagePart = message.getMessageParts().iterator().next();
@@ -47,7 +53,10 @@ public class PatternConsolidationCommandTest {
             consolidationCommand.process(context);
         }
 
-        System.out.println(consolidationCommand.getConfigurationDescription());
+        Map<String, List<Message>> relations = persistence.getPatternMessages();
+        return relations;
     }
+
+
 
 }

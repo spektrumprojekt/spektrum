@@ -1,15 +1,14 @@
 package de.spektrumprojekt.informationextraction.relations;
 
 import java.util.Collection;
-import java.util.regex.Pattern;
 
 public interface PatternConsolidationConfiguration {
 
-    public abstract Collection<Pattern> getPatterns();
+    Collection<NamePattern> getPatterns();
 
-    public abstract Long getPeriodOfTime();
+    Long getPeriodOfTime();
 
-    public abstract void setPatters(Collection<String> regExes);
+    void setPatterns(Collection<NamePattern> patterns);
 
-    public abstract void setPeriodOfTime(Long millis);
+    void setPeriodOfTime(Long millis);
 }
