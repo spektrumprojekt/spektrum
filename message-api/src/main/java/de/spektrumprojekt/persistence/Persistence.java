@@ -143,6 +143,8 @@ public interface Persistence {
     Map<Term, UserModelEntry> getUserModelEntriesForTerms(UserModel userModel,
             Collection<Term> terms);
 
+    Collection<UserSimilarity> getUserSimilarities(String messageGroupGlobalId);
+
     Collection<UserSimilarity> getUserSimilarities(String userGlobalId, Collection<String> users,
             String messageGroupGlobalId, double userSimilarityThreshold);
 

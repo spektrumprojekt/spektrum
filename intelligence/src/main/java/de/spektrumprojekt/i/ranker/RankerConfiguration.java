@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
+import de.spektrumprojekt.i.learner.adaptation.UserModelAdapterConfiguration;
 import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
 import de.spektrumprojekt.i.term.TermWeightStrategy;
 import de.spektrumprojekt.informationextraction.extractors.TagSource;
@@ -53,7 +54,8 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
     private boolean matchTextAgainstTagSource;
     private TagSource tagSource;
 
-    private int rankerConfiguration;
+    private final UserModelAdapterConfiguration userModelAdapterConfiguration =
+            new UserModelAdapterConfiguration();
 
     public RankerConfiguration(TermWeightStrategy strategy, TermVectorSimilarityStrategy aggregation) {
         this(strategy, aggregation, (RankerConfigurationFlag[]) null);
@@ -160,6 +162,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     public TermWeightStrategy getTermWeightStrategy() {
         return termWeightStrategy;
+    }
+
+    public UserModelAdapterConfiguration getUserModelAdapterConfiguration() {
+        return userModelAdapterConfiguration;
     }
 
     public boolean hasFlag(RankerConfigurationFlag flag) {

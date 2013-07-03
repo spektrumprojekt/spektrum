@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package de.spektrumprojekt.i.learner.similarity;
+package de.spektrumprojekt.i.user.similarity;
 
 import java.util.Collection;
 import java.util.Date;
@@ -28,6 +28,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.spektrumprojekt.commons.computer.Computer;
 import de.spektrumprojekt.commons.time.TimeProviderHolder;
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 import de.spektrumprojekt.datamodel.message.Message;
@@ -36,7 +37,7 @@ import de.spektrumprojekt.datamodel.user.UserSimilarity;
 import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.persistence.Persistence;
 
-public class UserSimilarityComputer implements ConfigurationDescriptable {
+public class UserSimilarityComputer implements ConfigurationDescriptable, Computer {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(UserSimilarityComputer.class);
 
@@ -50,11 +51,26 @@ public class UserSimilarityComputer implements ConfigurationDescriptable {
 
     private Map<String, Integer> overallMentionsPerUserTo = new HashMap<String, Integer>();
 
+    private final boolean holdComputedSimilarites;
+
+    private Collection<UserSimilarity> userSimilarities;
+
     public UserSimilarityComputer(Persistence persistence) {
+        this(persistence, false);
+    }
+
+    /**
+     * 
+     * @param persistence
+     * @param holdComputedSimilarites
+     *            true to keep the user similarities in this class after computation
+     */
+    public UserSimilarityComputer(Persistence persistence, boolean holdComputedSimilarites) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
         }
         this.persistence = persistence;
+        this.holdComputedSimilarites = holdComputedSimilarites;
     }
 
     @Override
@@ -62,7 +78,16 @@ public class UserSimilarityComputer implements ConfigurationDescriptable {
         return this.getClass().getSimpleName() + " intervall: " + intervall;
     }
 
-    public Collection<UserSimilarity> run() {
+    public Collection<UserSimilarity> getUserSimilarities() {
+        if (!this.holdComputedSimilarites) {
+            throw new IllegalStateException(
+                    "holdComputedSimilarites is false, therefore similarities are not stored!");
+        }
+        return userSimilarities;
+    }
+
+    @Override
+    public void run() {
 
         overallMentionsPerUserFrom.clear();
         overallMentionsPerUserTo.clear();
@@ -114,7 +139,10 @@ public class UserSimilarityComputer implements ConfigurationDescriptable {
                 similarities.values());
         persistence.deleteAndCreateUserSimilarities(userSimilarities);
 
-        return userSimilarities;
+        if (this.holdComputedSimilarites) {
+            this.userSimilarities = userSimilarities;
+        }
+
     }
 
     public void runForMessage(Message message) {

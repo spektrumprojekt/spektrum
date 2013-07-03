@@ -38,7 +38,6 @@ import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionConfiguration;
-import de.spektrumprojekt.i.learner.similarity.UserSimilarityComputer;
 import de.spektrumprojekt.i.ranker.chain.AdaptMessageRankByCMFOfSimilarUsersCommand;
 import de.spektrumprojekt.i.ranker.chain.ComputeMessageRankCommand;
 import de.spektrumprojekt.i.ranker.chain.DetermineInteractionLevelCommand;
@@ -60,6 +59,7 @@ import de.spektrumprojekt.i.ranker.chain.features.MentionFeatureCommand;
 import de.spektrumprojekt.i.term.TermSimilarityWeightComputerFactory;
 import de.spektrumprojekt.i.term.frequency.TermFrequencyComputer;
 import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
+import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**

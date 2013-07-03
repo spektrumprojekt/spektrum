@@ -171,6 +171,11 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
+    public Collection<UserSimilarity> getUserSimilarities(String messageGroupGlobalId) {
+        return null;
+    }
+
+    @Override
     public Collection<UserSimilarity> getUserSimilarities(String userGlobalId,
             Collection<String> users, String messageGroupGlobalId, double userSimilarityThreshold) {
         return null;

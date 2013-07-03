@@ -37,33 +37,39 @@ import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
-import de.spektrumprojekt.datamodel.user.UserSimilarity;
 import de.spektrumprojekt.i.ranker.Ranker;
+import de.spektrumprojekt.i.user.UserScore;
+import de.spektrumprojekt.i.user.UserToUserInterestSelector;
 import de.spektrumprojekt.persistence.Persistence;
 
 public class DirectedUserModelAdapter implements
         MessageHandler<DirectedUserModelAdaptationMessage>, ConfigurationDescriptable {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(DirectedUserModelAdapter.class);
-
     private long adaptedCount = 0;
-    private long requestedAdaptedCount = 0;
 
-    private double userSimilarityThreshold = 0.1;
+    private long requestedAdaptedCount = 0;
 
     private final Persistence persistence;
 
     private final Ranker ranker;
 
-    public DirectedUserModelAdapter(Persistence persistence, Ranker ranker) {
+    private final UserToUserInterestSelector userToUserInterestRetriever;
+
+    public DirectedUserModelAdapter(Persistence persistence, Ranker ranker,
+            UserToUserInterestSelector userToUserInterestRetriever) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
         }
         if (ranker == null) {
             throw new IllegalArgumentException("ranker cannot be null.");
         }
+        if (userToUserInterestRetriever == null) {
+            throw new IllegalArgumentException("userToUserInterestRetriever cannot be null.");
+        }
         this.persistence = persistence;
         this.ranker = ranker;
+        this.userToUserInterestRetriever = userToUserInterestRetriever;
     }
 
     /**
@@ -91,14 +97,15 @@ public class DirectedUserModelAdapter implements
         String messageGroupGlobalId = message.getMessageGroupGlobalId();
 
         // 3. Compute user similarity between the u and the users of the found user models.
-        Collection<UserSimilarity> similarities = persistence.getUserSimilarities(
-                message.getUserGlobalId(), users, messageGroupGlobalId, userSimilarityThreshold);
+
+        Collection<UserScore> userToUserInterestScores = this.userToUserInterestRetriever
+                .getUserToUserInterest(message.getUserGlobalId(), messageGroupGlobalId, users);
 
         // 4. If the user similarity satisfies a threshold u take the weight of the term and apply
         // it to UMu. If there are more weights available use a weighted average of the term weights
         // and the user similarity
 
-        if (similarities != null && similarities.size() > 0) {
+        if (userToUserInterestScores != null && userToUserInterestScores.size() > 0) {
             // there are similarities to use
 
             Map<Term, IncrementalWeightedAverage> stats = new HashMap<Term, IncrementalWeightedAverage>();
@@ -106,17 +113,16 @@ public class DirectedUserModelAdapter implements
                 stats.put(term, new IncrementalWeightedAverage());
             }
 
-            for (UserSimilarity userSimilarity : similarities) {
-                assert userSimilarity.getUserGlobalIdFrom().equals(message.getUserGlobalId());
+            for (UserScore userScore : userToUserInterestScores) {
 
-                UserModel userModel = userToUserModels.get(userSimilarity.getUserGlobalIdTo());
+                UserModel userModel = userToUserModels.get(userScore.getUserGlobalId());
                 if (userModel != null) {
 
                     Map<Term, UserModelEntry> entries = persistence.getUserModelEntriesForTerms(
                             userModel, termsToAdapt);
                     for (Entry<Term, UserModelEntry> entry : entries.entrySet()) {
                         IncrementalWeightedAverage stat = stats.get(entry.getKey());
-                        integrateStat(stat, userSimilarity, entry.getValue());
+                        integrateStat(stat, userScore, entry.getValue());
                     }
                 }
             }
@@ -165,8 +171,9 @@ public class DirectedUserModelAdapter implements
 
     @Override
     public String getConfigurationDescription() {
-        return this.getClass().getSimpleName() + " userSimilarityThreshold="
-                + userSimilarityThreshold;
+        return this.getClass().getSimpleName()
+                + " userToUserInterestRetriever="
+                + this.userToUserInterestRetriever.getConfigurationDescription();
     }
 
     @Override
@@ -178,9 +185,9 @@ public class DirectedUserModelAdapter implements
         return requestedAdaptedCount;
     }
 
-    private void integrateStat(IncrementalWeightedAverage stat, UserSimilarity userSimilarity,
+    private void integrateStat(IncrementalWeightedAverage stat, UserScore userScore,
             UserModelEntry value) {
-        stat.add(value.getScoredTerm().getWeight(), userSimilarity.getSimilarity());
+        stat.add(value.getScoredTerm().getWeight(), userScore.getScore());
     }
 
     @Override

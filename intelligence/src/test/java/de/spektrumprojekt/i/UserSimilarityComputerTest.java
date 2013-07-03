@@ -14,7 +14,7 @@ import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
 import de.spektrumprojekt.helper.MessageHelper;
-import de.spektrumprojekt.i.learner.similarity.UserSimilarityComputer;
+import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer;
 
 /**
  * Test the ranker

@@ -20,8 +20,8 @@
 package de.spektrumprojekt.i.ranker.chain;
 
 import de.spektrumprojekt.commons.chain.Command;
-import de.spektrumprojekt.i.learner.similarity.UserSimilarityComputer;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
+import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer;
 
 /**
  * A command to store the message ranks
