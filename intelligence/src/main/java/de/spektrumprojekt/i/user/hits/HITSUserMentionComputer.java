@@ -112,6 +112,9 @@ public class HITSUserMentionComputer implements Computer {
         List<UserScore> scores = new ArrayList<UserScore>(userGlobalIdsToConsider.size());
         users: for (String userGlobalIdToConsider : userGlobalIdsToConsider) {
 
+            if (!struct.graph.containsVertex(userGlobalIdToConsider)) {
+                continue users;
+            }
             Scores hitsScores = struct.pageRank.getVertexScore(userGlobalIdToConsider);
             if (hitsScores == null) {
                 continue users;
