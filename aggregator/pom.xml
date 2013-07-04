@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>de.spektrumprojekt</groupId>
 		<artifactId>spektrumprojekt-parent</artifactId>
-		<version>0.1.0-SNAPSHOT</version>
+		<version>0.2.0-SNAPSHOT</version>
 	</parent>
 	<artifactId>spektrumprojekt-aggregator</artifactId>
 	<packaging>jar</packaging>
@@ -73,12 +73,12 @@
 		<dependency>
 			<groupId>de.spektrumprojekt</groupId>
 			<artifactId>spektrumprojekt-message-api</artifactId>
-			<version>0.1.0-SNAPSHOT</version>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>de.spektrumprojekt</groupId>
 			<artifactId>spektrumprojekt-persistence-jpa</artifactId>
-			<version>0.1.0-SNAPSHOT</version>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-configuration</groupId>
