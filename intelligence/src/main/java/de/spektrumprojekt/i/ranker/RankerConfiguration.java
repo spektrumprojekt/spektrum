@@ -10,6 +10,7 @@ import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 import de.spektrumprojekt.i.learner.adaptation.UserModelAdapterConfiguration;
 import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
 import de.spektrumprojekt.i.term.TermWeightStrategy;
+import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer.UserSimilaritySimType;
 import de.spektrumprojekt.informationextraction.extractors.TagSource;
 
 public class RankerConfiguration implements ConfigurationDescriptable, Cloneable {
@@ -56,6 +57,7 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     private final UserModelAdapterConfiguration userModelAdapterConfiguration =
             new UserModelAdapterConfiguration();
+    private UserSimilaritySimType userSimilaritySimType;
 
     public RankerConfiguration(TermWeightStrategy strategy, TermVectorSimilarityStrategy aggregation) {
         this(strategy, aggregation, (RankerConfigurationFlag[]) null);
@@ -166,6 +168,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     public UserModelAdapterConfiguration getUserModelAdapterConfiguration() {
         return userModelAdapterConfiguration;
+    }
+
+    public UserSimilaritySimType getUserSimilaritySimType() {
+        return userSimilaritySimType;
     }
 
     public boolean hasFlag(RankerConfigurationFlag flag) {
@@ -329,6 +335,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         this.useCharNGrams = useCharNGrams;
     }
 
+    public void setUserSimilaritySimType(UserSimilaritySimType userSimilaritySimType) {
+        this.userSimilaritySimType = userSimilaritySimType;
+    }
+
     public void setUseWordNGrams(boolean useWordNGrams) {
         assertCanSet();
         this.useWordNGrams = useWordNGrams;
@@ -336,33 +346,23 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("RankerConfiguration [flags=");
-        builder.append(flags);
-        builder.append(", minUserSimilarity=");
-        builder.append(minUserSimilarity);
-        builder.append(", minContentMessageScore=");
-        builder.append(minContentMessageScore);
-        builder.append(", messageRankThreshold=");
-        builder.append(messageRankThreshold);
-        builder.append(", doTags=");
-        builder.append(doTags);
-        builder.append(", doTokens=");
-        builder.append(doTokens);
-        builder.append(", doKeyphrase=");
-        builder.append(doKeyphrase);
-        builder.append(", addTagsToText=");
-        builder.append(addTagsToText);
-        builder.append(", termWeightStrategy=");
-        builder.append(termWeightStrategy);
-        builder.append(", termWeightAggregation=");
-        builder.append(termVectorSimilarityStrategy);
-        builder.append(", immutable=");
-        builder.append(immutable);
-        builder.append(", interestTermTreshold=");
-        builder.append(interestTermTreshold);
-        builder.append("]");
-        return builder.toString();
+        return "RankerConfiguration [flags=" + flags + ", minUserSimilarity=" + minUserSimilarity
+                + ", minContentMessageScore=" + minContentMessageScore + ", messageRankThreshold="
+                + messageRankThreshold + ", nonParticipationFactor=" + nonParticipationFactor
+                + ", doTags=" + doTags + ", doTokens=" + doTokens + ", doKeyphrase=" + doKeyphrase
+                + ", addTagsToText=" + addTagsToText
+                + ", minimumCleanTextLengthForInvokingLearner="
+                + minimumCleanTextLengthForInvokingLearner + ", minimumTermLength="
+                + minimumTermLength + ", termWeightStrategy=" + termWeightStrategy
+                + ", termVectorSimilarityStrategy=" + termVectorSimilarityStrategy + ", immutable="
+                + immutable + ", interestTermTreshold=" + interestTermTreshold + ", useWordNGrams="
+                + useWordNGrams + ", useCharNGrams=" + useCharNGrams + ", nGramsLength="
+                + nGramsLength + ", treatMissingUserModelEntriesAsZero="
+                + treatMissingUserModelEntriesAsZero + ", charNGramsRemoveStopwords="
+                + charNGramsRemoveStopwords + ", termUniquenessLogfile=" + termUniquenessLogfile
+                + ", matchTextAgainstTagSource=" + matchTextAgainstTagSource + ", tagSource="
+                + tagSource + ", userModelAdapterConfiguration=" + userModelAdapterConfiguration
+                + ", userSimilaritySimType=" + userSimilaritySimType + "]";
     }
 
 }

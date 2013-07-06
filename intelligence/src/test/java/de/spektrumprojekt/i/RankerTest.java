@@ -58,6 +58,7 @@ import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
 import de.spektrumprojekt.i.term.TermWeightStrategy;
 import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer;
+import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer.UserSimilaritySimType;
 import de.spektrumprojekt.i.user.similarity.UserSimilarityRetriever;
 
 /**
@@ -101,7 +102,8 @@ public class RankerTest extends IntelligenceSpektrumTest {
     }
 
     private void runSimilarityComputerAndCheck(User user1, User user2) {
-        UserSimilarityComputer computer = new UserSimilarityComputer(getPersistence(), true);
+        UserSimilarityComputer computer = new UserSimilarityComputer(getPersistence(),
+                UserSimilaritySimType.VOODOO, true);
         computer.run();
         Collection<UserSimilarity> similarities = computer.getUserSimilarities();
 

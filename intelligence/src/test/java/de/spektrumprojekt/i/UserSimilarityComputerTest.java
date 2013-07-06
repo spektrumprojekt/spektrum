@@ -15,6 +15,7 @@ import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
 import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer;
+import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer.UserSimilaritySimType;
 
 /**
  * Test the ranker
@@ -37,7 +38,8 @@ public class UserSimilarityComputerTest extends IntelligenceSpektrumTest {
      */
     @Test
     public void testUserSimilarityComputer() throws Exception {
-        UserSimilarityComputer userSimilarityComputer = new UserSimilarityComputer(getPersistence());
+        UserSimilarityComputer userSimilarityComputer = new UserSimilarityComputer(
+                getPersistence(), UserSimilaritySimType.FROM_PERCENTAGE);
 
         // create some users
 

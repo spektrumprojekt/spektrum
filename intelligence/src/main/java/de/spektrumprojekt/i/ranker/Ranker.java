@@ -60,6 +60,7 @@ import de.spektrumprojekt.i.term.TermSimilarityWeightComputerFactory;
 import de.spektrumprojekt.i.term.frequency.TermFrequencyComputer;
 import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
 import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer;
+import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer.UserSimilaritySimType;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**
@@ -184,7 +185,13 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         this.informationExtractionChain = InformationExtractionCommand
                 .createDefaultGermanEnglish(informationExtractionConfiguration);
 
-        userSimilarityComputer = new UserSimilarityComputer(this.persistence);
+        UserSimilaritySimType userSimilaritySimType = this.rankerConfiguration
+                .getUserSimilaritySimType();
+        if (userSimilaritySimType == null) {
+            userSimilaritySimType = UserSimilaritySimType.VOODOO;
+        }
+        userSimilarityComputer = new UserSimilarityComputer(this.persistence,
+                userSimilaritySimType);
 
         storeMessageCommand = new StoreMessageCommand(persistence);
         userSimilarityIntegrationCommand = new UserSimilarityIntegrationCommand(
@@ -270,8 +277,8 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         featureAggregateCommand = new FeatureAggregateCommand(
                 this.persistence);
 
-        userFeatureCommand.addCommand(featureAggregateCommand);
         userFeatureCommand.addCommand(determineInteractionLevelCommand);
+        userFeatureCommand.addCommand(featureAggregateCommand);
         userFeatureCommand.addCommand(updateInteractionLevelOfMessageRanksCommand);
         userFeatureCommand.addCommand(computeMessageRankCommand);
 
