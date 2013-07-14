@@ -10,7 +10,6 @@ import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 import de.spektrumprojekt.i.learner.adaptation.UserModelAdapterConfiguration;
 import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
 import de.spektrumprojekt.i.term.TermWeightStrategy;
-import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer.UserSimilaritySimType;
 import de.spektrumprojekt.informationextraction.extractors.TagSource;
 
 public class RankerConfiguration implements ConfigurationDescriptable, Cloneable {
@@ -57,7 +56,6 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     private final UserModelAdapterConfiguration userModelAdapterConfiguration =
             new UserModelAdapterConfiguration();
-    private UserSimilaritySimType userSimilaritySimType;
 
     public RankerConfiguration(TermWeightStrategy strategy, TermVectorSimilarityStrategy aggregation) {
         this(strategy, aggregation, (RankerConfigurationFlag[]) null);
@@ -168,10 +166,6 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     public UserModelAdapterConfiguration getUserModelAdapterConfiguration() {
         return userModelAdapterConfiguration;
-    }
-
-    public UserSimilaritySimType getUserSimilaritySimType() {
-        return userSimilaritySimType;
     }
 
     public boolean hasFlag(RankerConfigurationFlag flag) {
@@ -335,10 +329,6 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         this.useCharNGrams = useCharNGrams;
     }
 
-    public void setUserSimilaritySimType(UserSimilaritySimType userSimilaritySimType) {
-        this.userSimilaritySimType = userSimilaritySimType;
-    }
-
     public void setUseWordNGrams(boolean useWordNGrams) {
         assertCanSet();
         this.useWordNGrams = useWordNGrams;
@@ -362,7 +352,7 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
                 + charNGramsRemoveStopwords + ", termUniquenessLogfile=" + termUniquenessLogfile
                 + ", matchTextAgainstTagSource=" + matchTextAgainstTagSource + ", tagSource="
                 + tagSource + ", userModelAdapterConfiguration=" + userModelAdapterConfiguration
-                + ", userSimilaritySimType=" + userSimilaritySimType + "]";
+                + "]";
     }
 
 }

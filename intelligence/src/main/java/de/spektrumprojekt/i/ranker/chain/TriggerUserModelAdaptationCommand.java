@@ -41,16 +41,24 @@ import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 public class TriggerUserModelAdaptationCommand implements
         Command<UserSpecificMessageFeatureContext> {
 
-    private float rankThreshold = 0.75f; // => interest term?
-    private float confidenceThreshold = 0.5f;
+    private final float rankThreshold; // => interest term?
+    private final float confidenceThreshold;
 
     private final Communicator communicator;
 
     public TriggerUserModelAdaptationCommand(Communicator communicator) {
+        this(communicator, 0.75f, 0.75f);
+    }
+
+    public TriggerUserModelAdaptationCommand(Communicator communicator, float confidenceThreshold,
+            float rankThreshold) {
         if (communicator == null) {
             throw new IllegalArgumentException("communicator cannot be null!");
         }
         this.communicator = communicator;
+        this.confidenceThreshold = confidenceThreshold;
+        this.rankThreshold = rankThreshold;
+
     }
 
     /**
@@ -93,7 +101,7 @@ public class TriggerUserModelAdaptationCommand implements
                     if (termsToAdaptArray.length > 0) {
                         DirectedUserModelAdaptationMessage adaptationMessage = new DirectedUserModelAdaptationMessage(
                                 context.getUserGlobalId(), context.getMessage().getGlobalId(),
-                                messageGroupGlobalId, termsToAdaptArray);
+                                messageGroupGlobalId, termsToAdaptArray, messageRank);
                         communicator.sendMessage(adaptationMessage);
                     }
                 }

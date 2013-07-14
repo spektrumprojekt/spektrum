@@ -186,6 +186,7 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
                 .createDefaultGermanEnglish(informationExtractionConfiguration);
 
         UserSimilaritySimType userSimilaritySimType = this.rankerConfiguration
+                .getUserModelAdapterConfiguration()
                 .getUserSimilaritySimType();
         if (userSimilaritySimType == null) {
             userSimilaritySimType = UserSimilaritySimType.VOODOO;
@@ -217,7 +218,11 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
                 this.communicator,
                 this.rankerConfiguration);
         triggerUserModelAdaptationCommand = new TriggerUserModelAdaptationCommand(
-                this.communicator);
+                this.communicator,
+                this.rankerConfiguration.getUserModelAdapterConfiguration()
+                        .getConfidenceThreshold(),
+                this.rankerConfiguration
+                        .getUserModelAdapterConfiguration().getRankThreshold());
 
         // TODO where to take the configuration values from ?
         adaptMessageRankByCMFOfSimilarUsersCommand = new AdaptMessageRankByCMFOfSimilarUsersCommand(

@@ -26,9 +26,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.spektrumprojekt.commons.event.EventHandler;
 import de.spektrumprojekt.communication.CommunicationMessage;
 import de.spektrumprojekt.communication.MessageHandler;
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
@@ -37,6 +39,7 @@ import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
+import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.Ranker;
 import de.spektrumprojekt.i.user.UserScore;
 import de.spektrumprojekt.i.user.UserToUserInterestSelector;
@@ -56,8 +59,25 @@ public class DirectedUserModelAdapter implements
 
     private final UserToUserInterestSelector userToUserInterestRetriever;
 
-    public DirectedUserModelAdapter(Persistence persistence, Ranker ranker,
+    private final DescriptiveStatistics descriptiveStatistics;
+
+    private final boolean useWeightedAverage;
+
+    private final EventHandler<UserModelAdaptationReRankEvent> userModelAdaptationReRankEventHandler = new EventHandler<UserModelAdaptationReRankEvent>();
+
+    public DirectedUserModelAdapter(
+            Persistence persistence,
+            Ranker ranker,
             UserToUserInterestSelector userToUserInterestRetriever) {
+        this(persistence, ranker, userToUserInterestRetriever, true, false);
+    }
+
+    public DirectedUserModelAdapter(
+            Persistence persistence,
+            Ranker ranker,
+            UserToUserInterestSelector userToUserInterestRetriever,
+            boolean useWeightedAverage,
+            boolean keepStatistics) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
         }
@@ -70,6 +90,17 @@ public class DirectedUserModelAdapter implements
         this.persistence = persistence;
         this.ranker = ranker;
         this.userToUserInterestRetriever = userToUserInterestRetriever;
+
+        if (keepStatistics) {
+            descriptiveStatistics = new DescriptiveStatistics();
+        } else {
+            descriptiveStatistics = null;
+        }
+        this.useWeightedAverage = useWeightedAverage;
+    }
+
+    private ValueAggregator createNewValueAggregator() {
+        return useWeightedAverage ? new IncrementalWeightedAverage() : new MaxValueAggregator();
     }
 
     /**
@@ -108,9 +139,9 @@ public class DirectedUserModelAdapter implements
         if (userToUserInterestScores != null && userToUserInterestScores.size() > 0) {
             // there are similarities to use
 
-            Map<Term, IncrementalWeightedAverage> stats = new HashMap<Term, IncrementalWeightedAverage>();
+            Map<Term, ValueAggregator> statsForTermsToAdaptFrom = new HashMap<Term, ValueAggregator>();
             for (Term term : termsToAdapt) {
-                stats.put(term, new IncrementalWeightedAverage());
+                statsForTermsToAdaptFrom.put(term, createNewValueAggregator());
             }
 
             for (UserScore userScore : userToUserInterestScores) {
@@ -121,7 +152,8 @@ public class DirectedUserModelAdapter implements
                     Map<Term, UserModelEntry> entries = persistence.getUserModelEntriesForTerms(
                             userModel, termsToAdapt);
                     for (Entry<Term, UserModelEntry> entry : entries.entrySet()) {
-                        IncrementalWeightedAverage stat = stats.get(entry.getKey());
+                        ValueAggregator stat = statsForTermsToAdaptFrom.get(entry
+                                .getKey());
                         integrateStat(stat, userScore, entry.getValue());
                     }
                 }
@@ -130,26 +162,35 @@ public class DirectedUserModelAdapter implements
             Map<Term, UserModelEntry> entries = persistence.getUserModelEntriesForTerms(
                     userModelToAdapt, termsToAdapt);
 
-            for (Entry<Term, IncrementalWeightedAverage> statEntry : stats.entrySet()) {
-                if (statEntry.getValue().getValue() > 0) {
+            for (Entry<Term, ValueAggregator> statEntryToAdaptFrom : statsForTermsToAdaptFrom
+                    .entrySet()) {
+                if (statEntryToAdaptFrom.getValue().getValue() > 0) {
                     // adapt
-                    UserModelEntry entry = entries.get(statEntry.getKey());
-                    if (entry == null) {
-                        ScoredTerm scoredTerm = new ScoredTerm(statEntry.getKey(), 0);
-                        entry = new UserModelEntry(userModelToAdapt, scoredTerm);
-                        entries.put(scoredTerm.getTerm(), entry);
+                    UserModelEntry entryToAdapt = entries.get(statEntryToAdaptFrom.getKey());
+                    if (entryToAdapt == null) {
+                        ScoredTerm scoredTerm = new ScoredTerm(statEntryToAdaptFrom.getKey(), 0);
+                        entryToAdapt = new UserModelEntry(userModelToAdapt, scoredTerm);
+                        entries.put(scoredTerm.getTerm(), entryToAdapt);
                     }
-                    if (entry.getScoredTerm().getWeight() < statEntry.getValue().getValue()) {
-                        entry.getScoredTerm().setWeight((float) statEntry.getValue().getValue());
-                        entry.setAdapted(true);
+                    if (entryToAdapt.getScoredTerm().getWeight() < statEntryToAdaptFrom.getValue()
+                            .getValue()) {
+                        entryToAdapt.getScoredTerm().setWeight(
+                                (float) statEntryToAdaptFrom.getValue().getValue());
+
+                        entryToAdapt.setAdapted(true);
                         adaptedCount++;
                         if (LOGGER.isTraceEnabled()) {
                             LOGGER.trace(
                                     "Adapted user model entry for user '{}' set term '{}' to score '{}'. ",
                                     new Object[] {
                                             message.getUserGlobalId(),
-                                            entry.getScoredTerm().getTerm().getValue(),
-                                            entry.getScoredTerm().getWeight() });
+                                            entryToAdapt.getScoredTerm().getTerm().getValue(),
+                                            entryToAdapt.getScoredTerm().getWeight() });
+                        }
+
+                        if (descriptiveStatistics != null) {
+                            descriptiveStatistics
+                                    .addValue(entryToAdapt.getScoredTerm().getWeight());
                         }
                     }
                 }
@@ -159,8 +200,15 @@ public class DirectedUserModelAdapter implements
 
             Message messageToRerate = this.persistence.getMessageByGlobalId(message.getMessageId());
 
-            ranker.rerank(messageToRerate, message.getUserGlobalId());
+            MessageFeatureContext messageFeatureContextOfReRank = ranker.rerank(messageToRerate,
+                    message.getUserGlobalId());
 
+            if (this.userModelAdaptationReRankEventHandler.getEventListenersSize() > 0) {
+                UserModelAdaptationReRankEvent reRankEvent = new UserModelAdaptationReRankEvent();
+                reRankEvent.setMessageFeatureContextOfReRank(messageFeatureContextOfReRank);
+                reRankEvent.setAdaptationMessage(message);
+                this.userModelAdaptationReRankEventHandler.fire(reRankEvent);
+            }
         }
 
     }
@@ -176,6 +224,12 @@ public class DirectedUserModelAdapter implements
                 + this.userToUserInterestRetriever.getConfigurationDescription();
     }
 
+    public String getDebugInformation() {
+        return descriptiveStatistics == null ? "debug information not maintained." :
+                "Stats about the term scores that have been set for adapation: "
+                        + this.descriptiveStatistics.toString().replace("\n", " ");
+    }
+
     @Override
     public Class<DirectedUserModelAdaptationMessage> getMessageClass() {
         return DirectedUserModelAdaptationMessage.class;
@@ -185,7 +239,11 @@ public class DirectedUserModelAdapter implements
         return requestedAdaptedCount;
     }
 
-    private void integrateStat(IncrementalWeightedAverage stat, UserScore userScore,
+    public EventHandler<UserModelAdaptationReRankEvent> getUserModelAdaptationReRankEventHandler() {
+        return userModelAdaptationReRankEventHandler;
+    }
+
+    private void integrateStat(ValueAggregator stat, UserScore userScore,
             UserModelEntry value) {
         stat.add(value.getScoredTerm().getWeight(), userScore.getScore());
     }
