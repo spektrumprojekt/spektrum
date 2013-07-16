@@ -100,8 +100,11 @@ public class TriggerUserModelAdaptationCommand implements
 
                     if (termsToAdaptArray.length > 0) {
                         DirectedUserModelAdaptationMessage adaptationMessage = new DirectedUserModelAdaptationMessage(
-                                context.getUserGlobalId(), context.getMessage().getGlobalId(),
-                                messageGroupGlobalId, termsToAdaptArray, messageRank);
+                                context.getUserGlobalId(),
+                                context.getMessage().getGlobalId(),
+                                messageGroupGlobalId,
+                                termsToAdaptArray,
+                                messageRank);
                         communicator.sendMessage(adaptationMessage);
                     }
                 }
