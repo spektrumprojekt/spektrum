@@ -66,8 +66,18 @@ public class CommandChain<T extends Object> implements Command<T> {
      */
     @Override
     public void process(T context) {
-        for (Command<T> command : commands) {
-            command.process(context);
+
+        commands: for (Command<T> command : commands) {
+            try {
+
+                command.process(context);
+
+            } catch (CommandException ce) {
+
+                if (!ce.isContinueChain()) {
+                    break commands;
+                }
+            }
         }
     }
 

@@ -1,21 +1,21 @@
 /*
-* Licensed to the Apache Software Foundation (ASF) under one
-* or more contributor license agreements.  See the NOTICE file
-* distributed with this work for additional information
-* regarding copyright ownership.  The ASF licenses this file
-* to you under the Apache License, Version 2.0 (the
-* "License"); you may not use this file except in compliance
-* with the License.  You may obtain a copy of the License at
-* 
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package de.spektrumprojekt.aggregator.adapter.twitter;
 
@@ -36,9 +36,9 @@ import twitter4j.UserStreamAdapter;
 import twitter4j.conf.Configuration;
 import twitter4j.conf.ConfigurationBuilder;
 import de.spektrumprojekt.aggregator.adapter.BaseAdapter;
+import de.spektrumprojekt.aggregator.chain.AggregatorChain;
 import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
 import de.spektrumprojekt.commons.SpektrumUtils;
-import de.spektrumprojekt.communication.Communicator;
 import de.spektrumprojekt.datamodel.common.MimeType;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.Message;
@@ -47,7 +47,6 @@ import de.spektrumprojekt.datamodel.message.MessageType;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
-import de.spektrumprojekt.persistence.Persistence;
 
 /**
  * <p>
@@ -55,6 +54,7 @@ import de.spektrumprojekt.persistence.Persistence;
  * </p>
  * 
  * @see <a href="http://twitter4j.org/">Twitter4J</a>
+ * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * @author Philipp Katz
  */
 public final class TwitterAdapter extends BaseAdapter {
@@ -145,9 +145,9 @@ public final class TwitterAdapter extends BaseAdapter {
      * {@value #ACCESS_PARAMETER_TOKEN_SECRET}.
      * </p>
      */
-    public TwitterAdapter(Communicator communicator, Persistence persistence,
+    public TwitterAdapter(AggregatorChain aggregatorChain,
             AggregatorConfiguration aggregatorConfiguration) {
-        this(communicator, persistence, aggregatorConfiguration, aggregatorConfiguration
+        this(aggregatorChain, aggregatorConfiguration, aggregatorConfiguration
                 .getTwitterConsumerKey(), aggregatorConfiguration
                 .getTwitterConsumerSecret());
     }
@@ -162,13 +162,15 @@ public final class TwitterAdapter extends BaseAdapter {
      * @param consumerSecret
      *            The consumer secret, not <code>null</code> or empty.
      */
-    public TwitterAdapter(Communicator communicator, Persistence persistence,
+    public TwitterAdapter(AggregatorChain aggregatorChain,
             AggregatorConfiguration aggregatorConfiguration,
             String consumerKey, String consumerSecret) {
-        super(communicator, persistence, aggregatorConfiguration);
+        super(aggregatorChain, aggregatorConfiguration);
+
         Validate.notEmpty(consumerKey, "consumerKey must not be empty or null");
         Validate.notEmpty(consumerSecret,
                 "consumerSecret must not be empty or null");
+
         this.consumerKey = consumerKey;
         this.consumerSecret = consumerSecret;
         this.twitterStreams = new ConcurrentHashMap<String, TwitterStream>();

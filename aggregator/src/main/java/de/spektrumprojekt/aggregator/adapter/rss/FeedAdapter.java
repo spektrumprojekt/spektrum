@@ -57,11 +57,11 @@ import com.sun.syndication.io.SyndFeedInput;
 
 import de.spektrumprojekt.aggregator.adapter.AdapterException;
 import de.spektrumprojekt.aggregator.adapter.BasePollingAdapter;
+import de.spektrumprojekt.aggregator.chain.AggregatorChain;
 import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
 import de.spektrumprojekt.commons.SpektrumUtils;
 import de.spektrumprojekt.commons.encryption.EncryptionException;
 import de.spektrumprojekt.commons.encryption.EncryptionUtils;
-import de.spektrumprojekt.communication.Communicator;
 import de.spektrumprojekt.datamodel.common.MimeType;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.Message;
@@ -72,14 +72,12 @@ import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
-import de.spektrumprojekt.persistence.Persistence;
 
 /**
  * <p>
  * An adapter handling RSS and Atom feeds.
  * </p>
  * 
- * @author Marius Feldmann
  * @author Philipp Katz
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  */
@@ -142,9 +140,9 @@ public final class FeedAdapter extends BasePollingAdapter {
         return base64EncodedCredentials;
     }
 
-    public FeedAdapter(Communicator communicator, Persistence persistence,
+    public FeedAdapter(AggregatorChain aggregatorChain,
             AggregatorConfiguration aggregatorConfiguration) {
-        super(communicator, persistence, aggregatorConfiguration, aggregatorConfiguration
+        super(aggregatorChain, aggregatorConfiguration, aggregatorConfiguration
                 .getPollingInterval(), THREAD_POOL_SIZE);
 
     }
@@ -226,7 +224,7 @@ public final class FeedAdapter extends BasePollingAdapter {
         if (SpektrumUtils.notNullOrEmpty(link)) {
             message.addProperty(new Property(Property.PROPERTY_KEY_LINK, link));
         }
-        DCModule module = (DCModule)syndEntry.getModule(DCModule.URI);
+        DCModule module = (DCModule) syndEntry.getModule(DCModule.URI);
         userextraction: {
             String creator;
             if (module != null) {
@@ -274,7 +272,7 @@ public final class FeedAdapter extends BasePollingAdapter {
         }
         if (tags.size() > 0) {
             try {
-                return MAPPER.writeValueAsString(tags.toArray(new String[] {}));
+                return MAPPER.writeValueAsString(tags.toArray(new String[] { }));
             } catch (JsonGenerationException e) {
                 LOGGER.error("Error processing tags: {}", e);
             } catch (JsonMappingException e) {

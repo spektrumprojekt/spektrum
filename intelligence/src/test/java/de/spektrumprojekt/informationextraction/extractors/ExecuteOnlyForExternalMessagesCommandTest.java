@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import de.spektrumprojekt.commons.chain.Command;
+import de.spektrumprojekt.commons.chain.CommandException;
 import de.spektrumprojekt.datamodel.common.MimeType;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.Message;
@@ -46,7 +47,7 @@ public class ExecuteOnlyForExternalMessagesCommandTest {
     }
 
     @Test
-    public void testExternalMessage() {
+    public void testExternalMessage() throws CommandException {
         Assert.assertEquals(MESSAGE_ID_BEFORE, message.getId());
         message.addProperty(new Property(Property.PROPERTY_KEY_EXTERNAL,
                 Property.PROPERTY_VALUE_EXTERNAL));
@@ -56,7 +57,7 @@ public class ExecuteOnlyForExternalMessagesCommandTest {
     }
 
     @Test
-    public void testInternalMessage() {
+    public void testInternalMessage() throws CommandException {
         Assert.assertEquals(MESSAGE_ID_BEFORE, message.getId());
         command.process(informationExtractionContext);
         Assert.assertEquals(MESSAGE_ID_BEFORE, message.getId());

@@ -36,8 +36,10 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.spektrumprojekt.aggregator.Aggregator;
 import de.spektrumprojekt.aggregator.adapter.AdapterException;
 import de.spektrumprojekt.aggregator.adapter.ConfigurationForT;
+import de.spektrumprojekt.aggregator.chain.AggregatorChain;
 import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
 import de.spektrumprojekt.commons.encryption.EncryptionException;
 import de.spektrumprojekt.commons.encryption.EncryptionUtils;
@@ -58,16 +60,19 @@ import de.spektrumprojekt.persistence.simple.PersistenceMock;
  * </p>
  * 
  * @author Philipp Katz
+ * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  */
 public class FeedAdapterTest {
 
     /** The logger for this class. */
     private static final Logger LOGGER = LoggerFactory.getLogger(FeedAdapterTest.class);
 
-    private AggregatorConfiguration aggregatorConfiguration;
     private Communicator communicator;
-
     private Persistence persistence = new PersistenceMock();
+
+    private Aggregator aggregator;
+    private AggregatorConfiguration aggregatorConfiguration;
+    private AggregatorChain aggregatorChain;
 
     @Before
     public void readConfig() throws ConfigurationException {
@@ -78,6 +83,9 @@ public class FeedAdapterTest {
                 new LinkedBlockingQueue<CommunicationMessage>(),
                 new LinkedBlockingQueue<CommunicationMessage>());
 
+        aggregator = new Aggregator(communicator, persistence, aggregatorConfiguration);
+
+        aggregatorChain = aggregator.getAggregatorChain();
     }
 
     @Test
@@ -105,7 +113,7 @@ public class FeedAdapterTest {
         subscription.addAccessParameter(new Property(
                 FeedAdapter.ACCESS_PARAMETER_CREDENTIALS_PASSWORD, password));
 
-        FeedAdapter adapter = new FeedAdapter(communicator, persistence, aggregatorConfiguration);
+        FeedAdapter adapter = new FeedAdapter(aggregatorChain, aggregatorConfiguration);
         List<Message> messages = adapter.poll(subscriptionStatus);
         assertTrue(messages.size() > 0);
         assertTrue(messages.get(0).getMessageType().equals(MessageType.CONTENT));
@@ -117,8 +125,7 @@ public class FeedAdapterTest {
 
         subscription.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_URI,
                 feedUrl));
-        FeedAdapter feedAdapter = new FeedAdapter(communicator, persistence,
-                aggregatorConfiguration);
+        FeedAdapter feedAdapter = new FeedAdapter(aggregatorChain, aggregatorConfiguration);
         List<Message> messages = feedAdapter.poll(subscriptionStatus);
         assertTrue(messages.size() > 0);
         assertTrue(messages.get(0) instanceof Message);
@@ -157,8 +164,8 @@ public class FeedAdapterTest {
         subscription.addAccessParameter(new Property(
                 FeedAdapter.ACCESS_PARAMETER_CREDENTIALS_PASSWORD, EncryptionUtils
                         .encrypt("abcdefghijklmnopqrstuvwxyz")));
-        FeedAdapter adapter = new FeedAdapter(communicator, persistence, aggregatorConfiguration);
-        List<Message> messages = adapter.poll(subscriptionStatus);
+        FeedAdapter feedAdapter = new FeedAdapter(aggregatorChain, aggregatorConfiguration);
+        List<Message> messages = feedAdapter.poll(subscriptionStatus);
         assertEquals(1, messages.size());
         assertTrue(messages.get(0).getMessageType().equals(MessageType.ERROR));
 
@@ -196,8 +203,8 @@ public class FeedAdapterTest {
         subscription.addAccessParameter(new Property(
                 FeedAdapter.ACCESS_PARAMETER_CREDENTIALS_PASSWORD, encryptedPassword));
 
-        FeedAdapter adapter = new FeedAdapter(communicator, persistence, aggregatorConfiguration);
-        List<Message> messages = adapter.poll(subscriptionStatus);
+        FeedAdapter feedAdapter = new FeedAdapter(aggregatorChain, aggregatorConfiguration);
+        List<Message> messages = feedAdapter.poll(subscriptionStatus);
         assertTrue(messages.size() > 0);
         assertTrue(messages.get(0).getMessageType().equals(MessageType.CONTENT));
 
@@ -210,8 +217,8 @@ public class FeedAdapterTest {
         SubscriptionStatus subscriptionStatus = new SubscriptionStatus(subscription);
         subscription.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_URI,
                 "http://example.com/nofeedhere"));
-        FeedAdapter adapter = new FeedAdapter(communicator, persistence, aggregatorConfiguration);
-        adapter.poll(subscriptionStatus);
+        FeedAdapter feedAdapter = new FeedAdapter(aggregatorChain, aggregatorConfiguration);
+        feedAdapter.poll(subscriptionStatus);
     }
 
 }
