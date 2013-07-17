@@ -6,3 +6,4 @@ bin
 .pmd
 
 */src/test/resources/relations/
+/aggregator/test-output
