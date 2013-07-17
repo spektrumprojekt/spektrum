@@ -49,8 +49,8 @@ import de.spektrumprojekt.communication.vm.VirtualMachineCommunicator;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageType;
+import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
-import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.simple.PersistenceMock;
 
@@ -103,7 +103,7 @@ public class FeedAdapterTest {
         String password = EncryptionUtils.encrypt(config.getString("feed.password"));
 
         Subscription subscription = new Subscription(FeedAdapter.SOURCE_TYPE);
-        SubscriptionStatus subscriptionStatus = new SubscriptionStatus(subscription);
+        SourceStatus subscriptionStatus = new SourceStatus(subscription);
 
         subscription
                 .addAccessParameter(new Property(
@@ -121,7 +121,7 @@ public class FeedAdapterTest {
 
     private void testFeed(String feedUrl) throws AdapterException {
         Subscription subscription = new Subscription(FeedAdapter.SOURCE_TYPE);
-        SubscriptionStatus subscriptionStatus = new SubscriptionStatus(subscription);
+        SourceStatus subscriptionStatus = new SourceStatus(subscription);
 
         subscription.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_URI,
                 feedUrl));
@@ -155,7 +155,7 @@ public class FeedAdapterTest {
         String url = "";
 
         Subscription subscription = new Subscription(FeedAdapter.SOURCE_TYPE);
-        SubscriptionStatus subscriptionStatus = new SubscriptionStatus(subscription);
+        SourceStatus subscriptionStatus = new SourceStatus(subscription);
         subscription
                 .addAccessParameter(new Property(
                         FeedAdapter.ACCESS_PARAMETER_URI, url));
@@ -193,7 +193,7 @@ public class FeedAdapterTest {
         }
 
         Subscription subscription = new Subscription(FeedAdapter.SOURCE_TYPE);
-        SubscriptionStatus subscriptionStatus = new SubscriptionStatus(subscription);
+        SourceStatus subscriptionStatus = new SourceStatus(subscription);
 
         subscription
                 .addAccessParameter(new Property(
@@ -214,7 +214,7 @@ public class FeedAdapterTest {
     public void testNoFeed() throws AdapterException {
 
         Subscription subscription = new Subscription(FeedAdapter.SOURCE_TYPE);
-        SubscriptionStatus subscriptionStatus = new SubscriptionStatus(subscription);
+        SourceStatus subscriptionStatus = new SourceStatus(subscription);
         subscription.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_URI,
                 "http://example.com/nofeedhere"));
         FeedAdapter feedAdapter = new FeedAdapter(aggregatorChain, aggregatorConfiguration);

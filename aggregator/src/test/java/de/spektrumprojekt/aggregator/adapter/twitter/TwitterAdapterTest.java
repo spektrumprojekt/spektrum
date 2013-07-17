@@ -38,8 +38,8 @@ import de.spektrumprojekt.communication.CommunicationMessage;
 import de.spektrumprojekt.communication.Communicator;
 import de.spektrumprojekt.communication.vm.VirtualMachineCommunicator;
 import de.spektrumprojekt.datamodel.common.Property;
+import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
-import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.simple.PersistenceMock;
 
@@ -90,7 +90,7 @@ public class TwitterAdapterTest {
     public void testTwitterAdapter() throws InterruptedException {
 
         Subscription subscription = new Subscription(TwitterAdapter.SOURCE_TYPE);
-        SubscriptionStatus subscriptionStatus = new SubscriptionStatus(subscription);
+        SourceStatus subscriptionStatus = new SourceStatus(subscription);
 
         subscription.addAccessParameter(new Property(TwitterAdapter.ACCESS_PARAMETER_TOKEN,
                 accessToken));

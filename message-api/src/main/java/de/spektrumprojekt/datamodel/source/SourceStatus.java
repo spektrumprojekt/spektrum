@@ -1,23 +1,23 @@
 /*
-* Licensed to the Apache Software Foundation (ASF) under one
-* or more contributor license agreements.  See the NOTICE file
-* distributed with this work for additional information
-* regarding copyright ownership.  The ASF licenses this file
-* to you under the Apache License, Version 2.0 (the
-* "License"); you may not use this file except in compliance
-* with the License.  You may obtain a copy of the License at
-* 
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
-package de.spektrumprojekt.datamodel.subscription;
+package de.spektrumprojekt.datamodel.source;
 
 import java.util.Date;
 
@@ -32,6 +32,7 @@ import javax.persistence.UniqueConstraint;
 import org.apache.commons.lang3.Validate;
 
 import de.spektrumprojekt.datamodel.identifiable.Identifiable;
+import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 
 /**
@@ -41,11 +42,12 @@ import de.spektrumprojekt.datamodel.subscription.status.StatusType;
  * tracking, and information necessary for determining which items are new.
  * </p>
  * 
+ * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * @author Philipp Katz
  */
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = "globalId"))
-public class SubscriptionStatus extends Identifiable {
+public class SourceStatus extends Identifiable {
 
     /**
      * 
@@ -53,7 +55,7 @@ public class SubscriptionStatus extends Identifiable {
     private static final long serialVersionUID = 1L;
 
     @OneToOne(cascade = CascadeType.ALL, optional = false)
-    private Subscription subscription;
+    private Source source;
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date lastSuccessfulCheck;
@@ -88,22 +90,22 @@ public class SubscriptionStatus extends Identifiable {
     private String lastContentHash;
 
     /** Constructor for ORM layer. */
-    protected SubscriptionStatus() {
+    protected SourceStatus() {
 
     }
 
     /**
      * <p>
-     * Initialize a new {@link SubscriptionStatus} for the specified {@link Subscription}, with all
-     * fields set to initial values.
+     * Initialize a new {@link SourceStatus} for the specified {@link Subscription}, with all fields
+     * set to initial values.
      * </p>
      * 
-     * @param subscription
-     *            The subscription for which to create the {@link SubscriptionStatus}, no
+     * @param source
+     *            The subscription for which to create the {@link SourceStatus}, no
      *            <code>null</code>.
      */
-    public SubscriptionStatus(Subscription subscription) {
-        this.subscription = subscription;
+    public SourceStatus(Source source) {
+        this.source = source;
 
         this.successfulCheckCount = 0;
         this.errorCount = 0;
@@ -161,8 +163,8 @@ public class SubscriptionStatus extends Identifiable {
         return lastSuccessfulCheck;
     }
 
-    public Subscription getSubscription() {
-        return subscription;
+    public Source getSource() {
+        return source;
     }
 
     /**
@@ -203,52 +205,33 @@ public class SubscriptionStatus extends Identifiable {
         this.lastSuccessfulCheck = lastSuccessfulCheck;
     }
 
-    public void setSubscription(Subscription subscription) {
-        this.subscription = subscription;
+    public void setSource(Source source) {
+        this.source = source;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("AggregationSubscription [");
-        if (successfulCheckCount != null) {
-            builder.append("successfulCheckCount=");
-            builder.append(successfulCheckCount);
-            builder.append(", ");
-        }
-        if (errorCount != null) {
-            builder.append("errorCount=");
-            builder.append(errorCount);
-            builder.append(", ");
-        }
-        if (consecutiveErrorCount != null) {
-            builder.append("consecutiveErrorCount=");
-            builder.append(consecutiveErrorCount);
-            builder.append(", ");
-        }
-        if (lastStatusType != null) {
-            builder.append("lastStatusType=");
-            builder.append(lastStatusType);
-            builder.append(", ");
-        }
-        if (lastError != null) {
-            builder.append("lastError=");
-            builder.append(lastError);
-            builder.append(", ");
-        }
-        builder.append("blocked=");
+        builder.append("SourceStatus [source=");
+        builder.append(source);
+        builder.append(", lastSuccessfulCheck=");
+        builder.append(lastSuccessfulCheck);
+        builder.append(", successfulCheckCount=");
+        builder.append(successfulCheckCount);
+        builder.append(", errorCount=");
+        builder.append(errorCount);
+        builder.append(", consecutiveErrorCount=");
+        builder.append(consecutiveErrorCount);
+        builder.append(", lastStatusType=");
+        builder.append(lastStatusType);
+        builder.append(", lastError=");
+        builder.append(lastError);
+        builder.append(", blocked=");
         builder.append(blocked);
-        builder.append(", ");
-        if (getLastSuccessfulCheck() != null) {
-            builder.append("getLastSuccessfulCheck()=");
-            builder.append(getLastSuccessfulCheck());
-            builder.append(", ");
-        }
+        builder.append(", lastContentTimestamp=");
+        builder.append(lastContentTimestamp);
+        builder.append(", lastContentHash=");
+        builder.append(lastContentHash);
         builder.append("]");
         return builder.toString();
     }
@@ -278,7 +261,7 @@ public class SubscriptionStatus extends Identifiable {
 
     /**
      * <p>
-     * Updates this {@link SubscriptionStatus} after a poll.
+     * Updates this {@link SourceStatus} after a poll.
      * </p>
      * 
      * @param statusType

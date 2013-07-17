@@ -70,7 +70,7 @@ import de.spektrumprojekt.datamodel.message.MessageType;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
-import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
+import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 
 /**
@@ -290,7 +290,7 @@ public final class FeedAdapter extends BasePollingAdapter {
     }
 
     @Override
-    public List<Message> poll(SubscriptionStatus subscriptionStatus) throws AdapterException {
+    public List<Message> poll(SourceStatus subscriptionStatus) throws AdapterException {
         LOGGER.trace(">handleSubscription {}", subscriptionStatus);
         boolean success = false;
         List<Message> messages = new ArrayList<Message>();
@@ -383,7 +383,7 @@ public final class FeedAdapter extends BasePollingAdapter {
         return messages;
     }
 
-    private List<Message> processMessages(SyndFeed feed, SubscriptionStatus subscription) {
+    private List<Message> processMessages(SyndFeed feed, SourceStatus subscription) {
         @SuppressWarnings("unchecked")
         List<SyndEntry> entries = feed.getEntries();
         List<Message> messages = new ArrayList<Message>();

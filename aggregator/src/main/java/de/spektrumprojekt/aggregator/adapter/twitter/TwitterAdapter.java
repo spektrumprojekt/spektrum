@@ -44,8 +44,8 @@ import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.datamodel.message.MessageType;
+import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
-import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 
 /**
@@ -64,9 +64,9 @@ public final class TwitterAdapter extends BaseAdapter {
      * {@link Message}s.
      */
     private final class UserListener extends UserStreamAdapter {
-        private final SubscriptionStatus subscriptionStatus;
+        private final SourceStatus subscriptionStatus;
 
-        private UserListener(SubscriptionStatus subscription) {
+        private UserListener(SourceStatus subscription) {
             this.subscriptionStatus = subscription;
         }
 
@@ -177,7 +177,7 @@ public final class TwitterAdapter extends BaseAdapter {
     }
 
     @Override
-    public void addSubscription(SubscriptionStatus subscriptionStatus) {
+    public void addSubscription(SourceStatus subscriptionStatus) {
 
         Subscription subscription = subscriptionStatus.getSubscription();
         Property token = subscription
@@ -227,7 +227,7 @@ public final class TwitterAdapter extends BaseAdapter {
     }
 
     private void subscribe(String accessToken, String accessTokenSecret,
-            final SubscriptionStatus subscription) {
+            final SourceStatus subscription) {
         ConfigurationBuilder configBuilder = new ConfigurationBuilder();
         configBuilder.setOAuthConsumerKey(consumerKey);
         configBuilder.setOAuthConsumerSecret(consumerSecret);

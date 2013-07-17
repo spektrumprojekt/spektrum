@@ -38,8 +38,8 @@ import org.slf4j.LoggerFactory;
 import de.spektrumprojekt.aggregator.chain.AggregatorChain;
 import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
 import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
-import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 
 /**
@@ -126,7 +126,7 @@ public abstract class BasePollingAdapter extends BaseAdapter {
     }
 
     @Override
-    public void addSubscription(final SubscriptionStatus subscriptionStatus) {
+    public void addSubscription(final SourceStatus subscriptionStatus) {
         LOGGER.debug("adding subscription " + subscriptionStatus);
         Runnable task = new Runnable() {
             @Override
@@ -183,7 +183,7 @@ public abstract class BasePollingAdapter extends BaseAdapter {
      * @throws AdapterException
      *             In case polling fails.
      */
-    public abstract List<Message> poll(SubscriptionStatus subscription)
+    public abstract List<Message> poll(SourceStatus subscription)
             throws AdapterException;
 
     @Override

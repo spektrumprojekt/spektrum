@@ -27,8 +27,8 @@ import de.spektrumprojekt.aggregator.chain.AggregatorChain;
 import de.spektrumprojekt.aggregator.chain.AggregatorMessageContext;
 import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
 import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
-import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 
 /**
@@ -101,8 +101,8 @@ public abstract class BaseAdapter implements IAdapter {
     }
 
     @Override
-    public void addSubscriptions(Collection<SubscriptionStatus> subscriptions) {
-        for (SubscriptionStatus subscription : subscriptions) {
+    public void addSubscriptions(Collection<SourceStatus> subscriptions) {
+        for (SourceStatus subscription : subscriptions) {
             addSubscription(subscription);
         }
     }

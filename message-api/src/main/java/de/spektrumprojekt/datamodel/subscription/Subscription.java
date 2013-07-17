@@ -1,21 +1,21 @@
 /*
-* Licensed to the Apache Software Foundation (ASF) under one
-* or more contributor license agreements.  See the NOTICE file
-* distributed with this work for additional information
-* regarding copyright ownership.  The ASF licenses this file
-* to you under the Apache License, Version 2.0 (the
-* "License"); you may not use this file except in compliance
-* with the License.  You may obtain a copy of the License at
-* 
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package de.spektrumprojekt.datamodel.subscription;
 
@@ -24,30 +24,36 @@ import java.util.HashSet;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.identifiable.Identifiable;
+import de.spektrumprojekt.datamodel.source.Source;
 import de.spektrumprojekt.datamodel.subscription.filter.FilterExpression;
 
+/**
+ * 
+ * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
+ * @author Philipp Katz
+ */
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = "globalId"))
 public class Subscription extends Identifiable {
 
+    @ManyToOne(cascade = { CascadeType.PERSIST }, fetch = FetchType.EAGER, optional = false)
+    private Source source;
+
     /**
      * 
      */
     private static final long serialVersionUID = 1L;
-
-    /**
-     * Example: RSS, Twitter, Communote; defines the associated connector.
-     */
-    private String connectorType;
 
     // private String serializedFilterExpression;
 
@@ -60,18 +66,24 @@ public class Subscription extends Identifiable {
     private transient FilterExpression filterExpression;
 
     @OneToMany(cascade = CascadeType.ALL)
-    private final Collection<Property> accessParameters = new HashSet<Property>();
+    private final Collection<Property> subscriptionParameters = new HashSet<Property>();
 
     protected Subscription() {
     }
 
-    public Subscription(String connectorType) {
-        this.connectorType = connectorType;
+    public Subscription(Source source) {
+        if (source == null) {
+            throw new IllegalArgumentException("source cannot be null.");
+        }
+        this.source = source;
     }
 
-    public Subscription(String globalId, String connectorType) {
+    public Subscription(String globalId, Source source) {
         super(globalId);
-        this.connectorType = connectorType;
+        if (source == null) {
+            throw new IllegalArgumentException("source cannot be null.");
+        }
+        this.source = source;
     }
 
     /**
@@ -86,16 +98,20 @@ public class Subscription extends Identifiable {
     public Subscription(Subscription subscription) {
         super(subscription.getGlobalId());
 
-        this.connectorType = subscription.getConnectorType();
-        this.accessParameters.addAll(subscription.getAccessParameters());
+        this.source = subscription.getSource();
+        this.subscriptionParameters.addAll(subscription.getSubscriptionParameters());
 
         // if (subscription.getFilterExpression() != null) {
         // this.setSerializedFilterExpression(subscription.getSerializedFilterExpression());
         // }
     }
 
-    public void addAccessParameter(Property prop) {
-        this.accessParameters.add(prop);
+    public void addSubscriptionParameter(Property prop) {
+        this.subscriptionParameters.add(prop);
+    }
+
+    public FilterExpression getFilterExpression() {
+        return filterExpression;
     }
 
     // private FilterExpression deserialze(String serializedFilterExpression) {
@@ -103,8 +119,12 @@ public class Subscription extends Identifiable {
     // throw new UnsupportedOperationException("Not yet implemented.");
     // }
 
-    public Property getAccessParameter(String propertyKey) {
-        for (Property parameter : accessParameters) {
+    public Source getSource() {
+        return source;
+    }
+
+    public Property getSubscriptionParameter(String propertyKey) {
+        for (Property parameter : subscriptionParameters) {
             if (parameter.getPropertyKey().equals(propertyKey)) {
                 return parameter;
             }
@@ -112,16 +132,8 @@ public class Subscription extends Identifiable {
         return null;
     }
 
-    public Collection<Property> getAccessParameters() {
-        return accessParameters;
-    }
-
-    public String getConnectorType() {
-        return connectorType;
-    }
-
-    public FilterExpression getFilterExpression() {
-        return filterExpression;
+    public Collection<Property> getSubscriptionParameters() {
+        return subscriptionParameters;
     }
 
     // public String getSerializedFilterExpression() {
@@ -146,18 +158,12 @@ public class Subscription extends Identifiable {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("Subscription [connectorType=");
-        builder.append(connectorType);
-        // builder.append(", serializedFilterExpression=");
-        // builder.append(serializedFilterExpression);
+        builder.append("Subscription [source=");
+        builder.append(source);
         builder.append(", filterExpression=");
         builder.append(filterExpression);
-        builder.append(", accessParameters=");
-        builder.append(accessParameters);
-        builder.append(", getGlobalId()=");
-        builder.append(getGlobalId());
-        builder.append(", getId()=");
-        builder.append(getId());
+        builder.append(", subscriptionParameters=");
+        builder.append(subscriptionParameters);
         builder.append("]");
         return builder.toString();
     }

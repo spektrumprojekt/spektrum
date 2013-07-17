@@ -39,8 +39,8 @@ import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.datamodel.message.MessageType;
+import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
-import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 import de.spektrumprojekt.persistence.Persistence;
 
@@ -111,11 +111,11 @@ public class SubscriptionManager implements
      * @return
      */
     private void addPersistentSubscriptions() {
-        List<SubscriptionStatus> persistentSubscriptions = persistence
+        List<SourceStatus> persistentSubscriptions = persistence
                 .getAggregationSubscriptions();
         LOGGER.debug("adding {} subscriptions from persistence",
                 persistentSubscriptions.size());
-        for (SubscriptionStatus subscription : persistentSubscriptions) {
+        for (SourceStatus subscription : persistentSubscriptions) {
             // LOGGER.warn("To schedule ...: {}", subscription);
             if (subscription.isBlocked()) {
                 continue;
@@ -175,9 +175,9 @@ public class SubscriptionManager implements
         status.append("subscriptionId;sourceType;successfulCheckCount;errorCount;consecutiveErrorCount;lastStatus;lastSuccessfulCheck;lastError;blocked");
         status.append('\n');
 
-        List<SubscriptionStatus> aggregationSubscriptions = persistence
+        List<SourceStatus> aggregationSubscriptions = persistence
                 .getAggregationSubscriptions();
-        for (SubscriptionStatus subscriptionStatus : aggregationSubscriptions) {
+        for (SourceStatus subscriptionStatus : aggregationSubscriptions) {
             Subscription subscription = subscriptionStatus.getSubscription();
             status.append(subscription.getGlobalId()).append(';');
             status.append(subscription.getConnectorType()).append(';');
@@ -218,7 +218,7 @@ public class SubscriptionManager implements
     public void processed(Subscription subscription, StatusType statusType,
             Exception exception) {
         String subscriptionId = subscription.getGlobalId();
-        SubscriptionStatus aggregationStatus = persistence
+        SourceStatus aggregationStatus = persistence
                 .getAggregationSubscription(subscriptionId);
         aggregationStatus.updateCheck(statusType);
         Integer errors = aggregationStatus.getConsecutiveErrorCount();
@@ -323,14 +323,14 @@ public class SubscriptionManager implements
 
             return;
         }
-        SubscriptionStatus existingSubscription = persistence
+        SourceStatus existingSubscription = persistence
                 .getAggregationSubscription(subscriptionId);
         if (existingSubscription != null) {
             LOGGER.debug("subscription with ID {} already exists, replacing",
                     subscriptionId);
             unsubscribe(subscriptionId);
         }
-        SubscriptionStatus aggregationSubscription = new SubscriptionStatus(
+        SourceStatus aggregationSubscription = new SourceStatus(
                 subscription);
         aggregationSubscription = persistence
                 .saveAggregationSubscription(aggregationSubscription);
@@ -378,7 +378,7 @@ public class SubscriptionManager implements
 
     @Override
     public void unsubscribe(String subscriptionId) {
-        SubscriptionStatus subscription = persistence
+        SourceStatus subscription = persistence
                 .getAggregationSubscription(subscriptionId);
         if (subscription == null) {
             LOGGER.warn("no subscription with id {}", subscriptionId);
@@ -408,7 +408,7 @@ public class SubscriptionManager implements
      * @return true if it needed to be updated
      */
     public boolean updateOrCreate(Subscription subscription) {
-        SubscriptionStatus persistentSubscriptionStatus = persistence
+        SourceStatus persistentSubscriptionStatus = persistence
                 .getAggregationSubscription(subscription.getGlobalId());
         if (persistentSubscriptionStatus != null) {
             Subscription persistentSubscription = persistentSubscriptionStatus

@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import java.util.Collection;
 import java.util.Date;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import de.spektrumprojekt.datamodel.common.MimeType;
@@ -15,8 +16,8 @@ import de.spektrumprojekt.datamodel.message.MessageType;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
-import de.spektrumprojekt.datamodel.subscription.Subscription;
-import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
+import de.spektrumprojekt.datamodel.source.Source;
+import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
 import de.spektrumprojekt.persistence.Persistence;
@@ -32,26 +33,38 @@ public class KeyphraseExtractorCommandTest {
     private static final String title5 = "Filling in the gaps: great enterprise focused add-ons for OS X Server";
     private static final String text5 = "In our review of OS X Server, we found that Mountain Lion has a lot to offer home users or Mac-centric small businesses. Enterprise-level features, however, have fallen by the wayside. Luckily, some great first- and third-party tools exist to help close the gap between Apple's server product and more robust enterprise management systems from the likes of Microsoft and Dell.Some of the products are free open-source programs, and some are strong, for-pay products intended for use with hundreds if not thousands of Macs. Whatever your needs are, this list of applications should point you in the right direction if you're looking to extend OS X Server's capabilities.Apple Remote DesktopSending a Software Update UNIX command with Apple Remote Desktop. One of OS X Server's most glaring blind spots relative to Windows Server and Active Directory is software management. There's no way to install third-party applications on Macs that are already out in the field. And if you use a program like DeployStudio to install applications when you set up your Mac, it isn't much help to you once the Mac is off your desk and out in the field.";
 
+    private Persistence persistence;
+
+    @Before
+    public void setup() {
+        persistence = new SimplePersistence();
+    }
+
     private Collection<ScoredTerm> test(KeyphraseExtractorCommand command, String language,
             String title, String text) {
-        Persistence persistence = new SimplePersistence();
-        Subscription subscription = new Subscription("RSS");
-        Property prop = new Property(KeyphraseExtractorCommand.ENABLE_PROPERTY_KEY, "true");
-        subscription.addAccessParameter(prop);
-        SubscriptionStatus aggregationSubscription = new SubscriptionStatus(subscription);
-        persistence.saveAggregationSubscription(aggregationSubscription);
-        Message message = new Message(MessageType.CONTENT, StatusType.OK,
-                subscription.getGlobalId(), new Date());
+
+        Source source = new Source("RSS");
+        SourceStatus sourceStatus = new SourceStatus(source);
+
+        source.addAccessParameter(new Property(KeyphraseExtractorCommand.ENABLE_PROPERTY_KEY,
+                "true"));
+
+        persistence.saveSourceStatus(sourceStatus);
+
+        Message message = new Message(
+                MessageType.CONTENT,
+                StatusType.OK,
+                source.getGlobalId(),
+                new Date());
         message.addProperty(new Property(Property.PROPERTY_KEY_TITLE, title));
         message.addProperty(new Property(LanguageDetectorCommand.LANGUAGE, language));
-        // message.addProperty(new Property(Property.PROPERTY_KEY_EXTERNAL,
-        // Property.PROPERTY_VALUE_EXTERNAL));
 
         MessagePart messagePart = new MessagePart(MimeType.TEXT_PLAIN, text);
         InformationExtractionContext context = new InformationExtractionContext(persistence,
                 message, messagePart);
         context.setCleanText(text);
         command.process(context);
+
         return messagePart.getScoredTerms();
     }
 

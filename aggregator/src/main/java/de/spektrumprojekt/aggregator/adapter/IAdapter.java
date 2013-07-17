@@ -21,7 +21,7 @@ package de.spektrumprojekt.aggregator.adapter;
 
 import java.util.Collection;
 
-import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
+import de.spektrumprojekt.datamodel.source.SourceStatus;
 
 /**
  * <p>
@@ -44,7 +44,7 @@ public interface IAdapter {
 	 * @param subscription
 	 *            The subscription to add.
 	 */
-	void addSubscription(SubscriptionStatus subscription);
+	void addSubscription(SourceStatus subscription);
 
 	/**
 	 * <p>
@@ -54,7 +54,7 @@ public interface IAdapter {
 	 * @param subscriptions
 	 *            The subscriptions to add.
 	 */
-	void addSubscriptions(Collection<SubscriptionStatus> subscriptions);
+	void addSubscriptions(Collection<SourceStatus> subscriptions);
 
 	/**
 	 * <p>

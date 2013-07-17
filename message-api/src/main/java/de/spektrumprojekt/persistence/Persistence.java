@@ -34,7 +34,8 @@ import de.spektrumprojekt.datamodel.message.Term.TermCategory;
 import de.spektrumprojekt.datamodel.message.TermFrequency;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
-import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
+import de.spektrumprojekt.datamodel.source.Source;
+import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
@@ -58,9 +59,7 @@ public interface Persistence {
 
     void deleteHashWithDates(List<HashWithDate> hashesToDelete);
 
-    SubscriptionStatus getAggregationSubscription(String subscriptionId);
-
-    List<SubscriptionStatus> getAggregationSubscriptions();
+    void deleteSource(String sourceGlobalId);
 
     Collection<MessageGroup> getAllMessageGroups();
 
@@ -129,6 +128,12 @@ public interface Persistence {
      */
     UserModel getOrCreateUserModelByUser(String userGlobalId);
 
+    Source getSourceByGlobalId(String sourceGlobalId);
+
+    SourceStatus getSourceStatusBySourceGlobalId(String subscriptionId);
+
+    List<SourceStatus> getSourceStatusList();
+
     TermFrequency getTermFrequency();
 
     /**
@@ -159,9 +164,11 @@ public interface Persistence {
 
     void resetTermCount();
 
-    SubscriptionStatus saveAggregationSubscription(SubscriptionStatus aggregationSubscription);
-
     HashWithDate saveHashWithDate(HashWithDate hashWithDate);
+
+    Source saveSource(Source source);
+
+    SourceStatus saveSourceStatus(SourceStatus sourceStatus);
 
     /**
      * 
@@ -217,9 +224,11 @@ public interface Persistence {
 
     void storeUserSimilarity(UserSimilarity stat);
 
-    void updateAggregationSubscription(SubscriptionStatus aggregationStatus);
-
     void updateMessageRank(MessageRank rankToUpdate);
+
+    Source updateSource(Source source);
+
+    void updateSourceStatus(SourceStatus sourceStatus);
 
     void updateTermFrequency(TermFrequency termFrequency);
 

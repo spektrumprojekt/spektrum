@@ -43,7 +43,8 @@ import de.spektrumprojekt.datamodel.message.Term.TermCategory;
 import de.spektrumprojekt.datamodel.message.TermFrequency;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
-import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
+import de.spektrumprojekt.datamodel.source.Source;
+import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
@@ -163,7 +164,7 @@ public class SimplePersistence implements Persistence {
 
     private final Map<ObservationKey, Collection<Observation>> observations = new HashMap<SimplePersistence.ObservationKey, Collection<Observation>>();
 
-    private final Map<String, SubscriptionStatus> subscriptionStatusMap = new HashMap<String, SubscriptionStatus>();
+    private final Map<String, SourceStatus> sourceStatusMap = new HashMap<String, SourceStatus>();
 
     private TermFrequency termFrequency = new TermFrequency();
 
@@ -217,24 +218,17 @@ public class SimplePersistence implements Persistence {
         throw new UnsupportedOperationException("Not yet implemented.");
     }
 
+    @Override
+    public void deleteSource(String sourceGlobalId) {
+        throw new UnsupportedOperationException("Implement me ...");
+    }
+
     public String dumpUserModelSizes() {
         String result = "UserModel Sizes (userId => userModelEntries.size) \n";
         for (Entry<User, UserModelHolder> entry : this.userModelHolders.entrySet()) {
             result += entry.getKey().getGlobalId() + " "
                     + entry.getValue().getUserModelEntries().size() + "\n";
         }
-        return result;
-    }
-
-    @Override
-    public SubscriptionStatus getAggregationSubscription(String subscriptionId) {
-        return subscriptionStatusMap.get(subscriptionId);
-    }
-
-    @Override
-    public List<SubscriptionStatus> getAggregationSubscriptions() {
-        LinkedList<SubscriptionStatus> result = new LinkedList<SubscriptionStatus>();
-        result.addAll(subscriptionStatusMap.values());
         return result;
     }
 
@@ -380,6 +374,23 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
+    public Source getSourceByGlobalId(String sourceGlobalId) {
+        throw new UnsupportedOperationException("Implement me ...");
+    }
+
+    @Override
+    public SourceStatus getSourceStatusBySourceGlobalId(String subscriptionId) {
+        return sourceStatusMap.get(subscriptionId);
+    }
+
+    @Override
+    public List<SourceStatus> getSourceStatusList() {
+        LinkedList<SourceStatus> result = new LinkedList<SourceStatus>();
+        result.addAll(sourceStatusMap.values());
+        return result;
+    }
+
+    @Override
     public TermFrequency getTermFrequency() {
         termFrequency.init();
         return termFrequency;
@@ -510,15 +521,20 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
-    public SubscriptionStatus saveAggregationSubscription(SubscriptionStatus aggregationSubscription) {
-        subscriptionStatusMap.put(aggregationSubscription.getSubscription().getGlobalId(),
-                aggregationSubscription);
-        return aggregationSubscription;
+    public HashWithDate saveHashWithDate(HashWithDate hashWithDate) {
+        throw new UnsupportedOperationException("Not yet implemented.");
     }
 
     @Override
-    public HashWithDate saveHashWithDate(HashWithDate hashWithDate) {
-        throw new UnsupportedOperationException("Not yet implemented.");
+    public Source saveSource(Source source) {
+        throw new UnsupportedOperationException("Implement me ...");
+    }
+
+    @Override
+    public SourceStatus saveSourceStatus(SourceStatus sourceStatus) {
+        sourceStatusMap.put(sourceStatus.getSource().getGlobalId(),
+                sourceStatus);
+        return sourceStatus;
     }
 
     @Override
@@ -605,12 +621,6 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
-    public void updateAggregationSubscription(SubscriptionStatus aggregationStatus) {
-        subscriptionStatusMap.put(aggregationStatus.getSubscription().getGlobalId(),
-                aggregationStatus);
-    }
-
-    @Override
     public void updateMessageRank(MessageRank rankToUpdate) {
         UserMessageIdentifier userMessageIdentifier = new UserMessageIdentifier(rankToUpdate);
         MessageRank existingRank = this.messageRanks.get(userMessageIdentifier);
@@ -618,6 +628,16 @@ public class SimplePersistence implements Persistence {
         if (existingRank != rankToUpdate) {
             this.messageRanks.put(userMessageIdentifier, rankToUpdate);
         }
+    }
+
+    @Override
+    public Source updateSource(Source source) {
+        throw new UnsupportedOperationException("Implement me ...");
+    }
+
+    @Override
+    public void updateSourceStatus(SourceStatus sourceStatus) {
+        sourceStatusMap.put(sourceStatus.getSource().getGlobalId(), sourceStatus);
     }
 
     @Override

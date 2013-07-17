@@ -7,17 +7,21 @@
 		transaction-type="RESOURCE_LOCAL">
 		<provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
 
+		<class>de.spektrumprojekt.datamodel.common.Property</class>
+		
 		<class>de.spektrumprojekt.datamodel.identifiable.Identifiable</class>
-		<class>de.spektrumprojekt.datamodel.subscription.Subscription</class>
+		
 		<class>de.spektrumprojekt.datamodel.message.Message</class>
 		<class>de.spektrumprojekt.datamodel.message.MessagePart</class>
 		<class>de.spektrumprojekt.datamodel.message.ScoredTerm</class>
 		<class>de.spektrumprojekt.datamodel.message.Term</class>
-		<class>de.spektrumprojekt.datamodel.subscription.SubscriptionStatus</class>
-		<class>de.spektrumprojekt.datamodel.common.Property</class>
 		<class>de.spektrumprojekt.datamodel.message.MessageGroup</class>
 		<class>de.spektrumprojekt.datamodel.message.ScoredTerm</class>
-		<class>de.spektrumprojekt.datamodel.common.Property</class>
+		
+		<class>de.spektrumprojekt.datamodel.source.Source</class>
+		<class>de.spektrumprojekt.datamodel.source.SourceStatus</class>
+		<class>de.spektrumprojekt.datamodel.subscription.Subscription</class>
+		
 		<exclude-unlisted-classes>false</exclude-unlisted-classes>
 		<properties>
 			<property name="eclipselink.jdbc.batch-writing" value="JDBC" />
@@ -59,17 +63,13 @@
 
 		<class>de.spektrumprojekt.datamodel.identifiable.Identifiable</class>
 
+		<class>de.spektrumprojekt.datamodel.source.Source</class>
+		<class>de.spektrumprojekt.datamodel.source.SourceStatus</class>
+		
 		<class>de.spektrumprojekt.datamodel.subscription.Subscription</class>
-		<class>de.spektrumprojekt.datamodel.subscription.SubscriptionStatus</class>
 		<class>de.spektrumprojekt.datamodel.subscription.filter.FilterSpecification</class>
 		<class>de.spektrumprojekt.datamodel.subscription.filter.FilterExpression</class>
 		<class>de.spektrumprojekt.datamodel.subscription.filter.FilterExpressionConnector</class>
-
-		<class>de.spektrumprojekt.datamodel.subscription.source.AccessParameter</class>
-		<class>de.spektrumprojekt.datamodel.subscription.source.AccessProtocol</class>
-		<class>de.spektrumprojekt.datamodel.subscription.source.AuthenticationData</class>
-		<class>de.spektrumprojekt.datamodel.subscription.source.CredentialElement</class>
-		<class>de.spektrumprojekt.datamodel.subscription.source.SourceSpecification</class>
 
 		<class>de.spektrumprojekt.datamodel.message.Keyphrase</class>
 		<class>de.spektrumprojekt.datamodel.message.KeyphraseMetaInformation</class>
