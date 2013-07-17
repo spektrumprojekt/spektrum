@@ -81,7 +81,8 @@ public abstract class BaseAdapter implements IAdapter {
      *            The message to put into the queue.
      */
     protected final void addMessage(Message message) {
-        AggregatorMessageContext aggregatorMessageContext = new AggregatorMessageContext(message);
+        AggregatorMessageContext aggregatorMessageContext = new AggregatorMessageContext(
+                this.aggregatorChain.getPersistence(), message);
         this.aggregatorChain.process(aggregatorMessageContext);
     }
 

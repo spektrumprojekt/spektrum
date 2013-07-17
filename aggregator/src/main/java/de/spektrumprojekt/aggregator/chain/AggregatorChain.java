@@ -4,16 +4,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.spektrumprojekt.commons.chain.CommandChain;
+import de.spektrumprojekt.persistence.Persistence;
 
 public class AggregatorChain extends CommandChain<AggregatorMessageContext> {
 
     /** The logger for this class. */
     private static final Logger LOGGER = LoggerFactory.getLogger(AggregatorChain.class);
 
-    @Override
-    public void process(AggregatorMessageContext context) {
-        // TODO Auto-generated method stub
-        super.process(context);
+    private final Persistence persistence;
+
+    public AggregatorChain(Persistence persistence) {
+        if (persistence == null) {
+            throw new IllegalArgumentException("persistence cannot be null.");
+        }
+        this.persistence = persistence;
+    }
+
+    public Persistence getPersistence() {
+        return persistence;
     }
 
 }

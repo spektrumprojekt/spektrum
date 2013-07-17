@@ -140,8 +140,14 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         if (rankerConfiguration == null) {
             throw new IllegalArgumentException("rankerConfiguration cannot be null.");
         }
+        if (rankerConfiguration.getInformationExtractionConfiguration() == null) {
+            throw new IllegalArgumentException(
+                    "rankerConfiguration.informationExtractionConfiguration cannot be null.");
+        }
         this.rankerConfiguration = rankerConfiguration;
         this.rankerConfiguration.immutable();
+        this.informationExtractionConfiguration = rankerConfiguration
+                .getInformationExtractionConfiguration();
 
         this.persistence = persistence;
         this.communicator = communicator;
@@ -151,6 +157,7 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         if (this.rankerConfiguration.getTermUniquenessLogfile() != null) {
             this.termFrequencyComputer.init(this.rankerConfiguration.getTermUniquenessLogfile());
         }
+        this.informationExtractionConfiguration.setTermFrequencyComputer(termFrequencyComputer);
 
         termVectorSimilarityComputer = TermSimilarityWeightComputerFactory.getInstance()
                 .createTermVectorSimilarityComputer(rankerConfiguration, termFrequencyComputer);
@@ -162,28 +169,9 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         userFeatureCommand = new UserFeatureCommand(memberRunner);
         reRankUserFeatureCommand = new UserFeatureCommand(memberRunner);
 
-        informationExtractionConfiguration = new InformationExtractionConfiguration(
-                this.persistence, this.termFrequencyComputer,
-                this.rankerConfiguration.isAddTagsToText(), this.rankerConfiguration.isDoTokens(),
-                this.rankerConfiguration.isDoTags(), this.rankerConfiguration.isDoKeyphrase(),
-                this.rankerConfiguration
-                        .hasFlag(RankerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL),
-                this.rankerConfiguration.getMinimumTermLength());
-        informationExtractionConfiguration.useWordNGramsInsteadOfStemming = this.rankerConfiguration
-                .isUseWordNGrams();
-        informationExtractionConfiguration.useCharNGramsInsteadOfStemming = this.rankerConfiguration
-                .isUseCharNGrams();
-        informationExtractionConfiguration.nGramsLength = this.rankerConfiguration
-                .getNGramsLength();
-        informationExtractionConfiguration.charNGramsRemoveStopwords = this.rankerConfiguration
-                .isCharNGramsRemoveStopwords();
-        informationExtractionConfiguration.matchTextAgainstTagSource = this.rankerConfiguration
-                .isMatchTextAgainstTagSource();
-        informationExtractionConfiguration.tagSource = this.rankerConfiguration.getTagSource();
-        informationExtractionConfiguration.termFrequencyComputer = this.termFrequencyComputer;
-
         this.informationExtractionChain = InformationExtractionCommand
-                .createDefaultGermanEnglish(informationExtractionConfiguration);
+                .createDefaultGermanEnglish(persistence,
+                        this.rankerConfiguration.getInformationExtractionConfiguration());
 
         UserSimilaritySimType userSimilaritySimType = this.rankerConfiguration
                 .getUserModelAdapterConfiguration()

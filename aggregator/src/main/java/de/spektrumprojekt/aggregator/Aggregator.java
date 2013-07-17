@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.spektrumprojekt.aggregator.chain.AggregatorChain;
+import de.spektrumprojekt.aggregator.chain.AggregatorProxyMessageFeatureCommand;
 import de.spektrumprojekt.aggregator.chain.DuplicationDetectionCommand;
 import de.spektrumprojekt.aggregator.chain.PublicationDateFilterCommand;
 import de.spektrumprojekt.aggregator.chain.SendAggregatorMessageCommand;
@@ -39,6 +40,9 @@ import de.spektrumprojekt.aggregator.subscription.handler.SynchronizeSubscriptio
 import de.spektrumprojekt.communication.Communicator;
 import de.spektrumprojekt.communication.MessageHandler;
 import de.spektrumprojekt.configuration.Configuration;
+import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
+import de.spektrumprojekt.i.ranker.MessageFeatureContext;
+import de.spektrumprojekt.i.ranker.chain.StoreMessageCommand;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**
@@ -61,10 +65,18 @@ public class Aggregator {
 
     private final Persistence persistence;
 
+    private final InformationExtractionCommand<MessageFeatureContext> informationExtractionCommand;
+
     private AggregatorChain aggregatorChain;
 
     public Aggregator(Communicator communicator, Persistence persistence,
             AggregatorConfiguration aggregatorConfiguration) {
+        this(communicator, persistence, aggregatorConfiguration, null);
+    }
+
+    public Aggregator(Communicator communicator, Persistence persistence,
+            AggregatorConfiguration aggregatorConfiguration,
+            InformationExtractionCommand<MessageFeatureContext> informationExtractionCommand) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
         }
@@ -78,14 +90,16 @@ public class Aggregator {
         this.persistence = persistence;
         this.communicator = communicator;
         this.aggregatorConfiguration = aggregatorConfiguration;
+        this.informationExtractionCommand = informationExtractionCommand;
 
         this.setupChain();
     }
 
     public Aggregator(Communicator communicator, Persistence persistence,
-            Configuration configuration) {
+            Configuration configuration,
+            InformationExtractionCommand<MessageFeatureContext> informationExtractionCommand) {
         this(communicator, persistence, new AggregatorConfiguration(
-                configuration));
+                configuration), informationExtractionCommand);
     }
 
     /**
@@ -118,12 +132,20 @@ public class Aggregator {
 
     private void setupChain() {
 
-        aggregatorChain = new AggregatorChain();
+        aggregatorChain = new AggregatorChain(this.persistence);
 
         aggregatorChain.addCommand(new PublicationDateFilterCommand(this.aggregatorConfiguration
                 .getMinimumPublicationDate()));
         aggregatorChain.addCommand(new DuplicationDetectionCommand(new HashDuplicationDetection(
                 aggregatorConfiguration, persistence)));
+
+        if (this.informationExtractionCommand != null) {
+            aggregatorChain.addCommand(new AggregatorProxyMessageFeatureCommand(
+                    informationExtractionCommand));
+        }
+        aggregatorChain.addCommand(new AggregatorProxyMessageFeatureCommand(
+                new StoreMessageCommand(persistence)));
+
         aggregatorChain.addCommand(new SendAggregatorMessageCommand(this.communicator));
     }
 
