@@ -221,14 +221,16 @@ public abstract class AbstractPersistenceLayer {
      */
     protected final <T extends SpektrumEntity> T save(T object) {
         Validate.notNull(object, "object cannot be null");
-        LOGGER.trace(">save {}", object);
+
         EntityManager entityManager = getEntityManager();
         EntityTransaction transaction = entityManager.getTransaction();
         transaction.begin();
+
         T result = entityManager.merge(object);
+
         transaction.commit();
         entityManager.close();
-        LOGGER.trace("<save {}", result);
+
         return result;
     }
 

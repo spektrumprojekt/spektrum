@@ -38,8 +38,8 @@ import de.spektrumprojekt.communication.CommunicationMessage;
 import de.spektrumprojekt.communication.Communicator;
 import de.spektrumprojekt.communication.vm.VirtualMachineCommunicator;
 import de.spektrumprojekt.datamodel.common.Property;
+import de.spektrumprojekt.datamodel.source.Source;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
-import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.simple.PersistenceMock;
 
@@ -89,17 +89,17 @@ public class TwitterAdapterTest {
     @Test
     public void testTwitterAdapter() throws InterruptedException {
 
-        Subscription subscription = new Subscription(TwitterAdapter.SOURCE_TYPE);
-        SourceStatus subscriptionStatus = new SourceStatus(subscription);
+        Source source = new Source(TwitterAdapter.SOURCE_TYPE);
+        SourceStatus sourceStatus = new SourceStatus(source);
 
-        subscription.addAccessParameter(new Property(TwitterAdapter.ACCESS_PARAMETER_TOKEN,
+        source.addAccessParameter(new Property(TwitterAdapter.ACCESS_PARAMETER_TOKEN,
                 accessToken));
-        subscription.addAccessParameter(new Property(TwitterAdapter.ACCESS_PARAMETER_TOKEN_SECRET,
+        source.addAccessParameter(new Property(TwitterAdapter.ACCESS_PARAMETER_TOKEN_SECRET,
                 accessTokenSecret));
 
         TwitterAdapter twitterAdapter = new TwitterAdapter(aggregatorChain,
                 aggregatorConfiguration);
-        twitterAdapter.addSubscription(subscriptionStatus);
+        twitterAdapter.addSource(sourceStatus);
         Thread.sleep(10 * 1000);
         // System.out.println(twitterAdapter.getMessageQueue());
     }

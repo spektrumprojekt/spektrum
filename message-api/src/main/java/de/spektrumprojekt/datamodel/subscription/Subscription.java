@@ -114,14 +114,14 @@ public class Subscription extends Identifiable {
         return filterExpression;
     }
 
+    public Source getSource() {
+        return source;
+    }
+
     // private FilterExpression deserialze(String serializedFilterExpression) {
     // // TODO serialize the filter expression into JSON or XML or something else
     // throw new UnsupportedOperationException("Not yet implemented.");
     // }
-
-    public Source getSource() {
-        return source;
-    }
 
     public Property getSubscriptionParameter(String propertyKey) {
         for (Property parameter : subscriptionParameters) {
@@ -136,6 +136,10 @@ public class Subscription extends Identifiable {
         return subscriptionParameters;
     }
 
+    public void setFilterExpression(FilterExpression filterExpression) {
+        this.filterExpression = filterExpression;
+    }
+
     // public String getSerializedFilterExpression() {
     // serializedFilterExpression = serialize(this.filterExpression);
     // return serializedFilterExpression;
@@ -146,8 +150,11 @@ public class Subscription extends Identifiable {
     // throw new UnsupportedOperationException("Not yet implemented.");
     // }
 
-    public void setFilterExpression(FilterExpression filterExpression) {
-        this.filterExpression = filterExpression;
+    public void setSource(Source source) {
+        if (source == null) {
+            throw new IllegalArgumentException("source cannot be null.");
+        }
+        this.source = source;
     }
 
     // public void setSerializedFilterExpression(String serializedFilterExpression) {

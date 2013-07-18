@@ -21,7 +21,6 @@ package de.spektrumprojekt.datamodel.source;
 
 import java.util.Date;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
@@ -54,7 +53,7 @@ public class SourceStatus extends Identifiable {
      */
     private static final long serialVersionUID = 1L;
 
-    @OneToOne(cascade = CascadeType.ALL, optional = false)
+    @OneToOne(cascade = { }, optional = false)
     private Source source;
 
     @Temporal(TemporalType.TIMESTAMP)

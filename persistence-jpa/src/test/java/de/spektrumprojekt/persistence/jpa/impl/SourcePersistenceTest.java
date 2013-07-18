@@ -1,5 +1,7 @@
 package de.spektrumprojekt.persistence.jpa.impl;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -59,6 +61,7 @@ public class SourcePersistenceTest {
 
         persistedSource = persistence.getSourceByGlobalId(source.getGlobalId());
 
+        source.getAccessParameters().clear();
         source.addAccessParameter(new Property(ACCESS_PARAM1, VAL2));
 
         persistence.updateSource(source);
@@ -72,5 +75,45 @@ public class SourcePersistenceTest {
 
         Assert.assertNull(persistedSource);
 
+    }
+
+    @Test
+    public void testFindSource() {
+        Source source = new Source("newConnectorType");
+
+        Assert.assertNull(this.persistence.findSource(source.getConnectorType(), null));
+        Assert.assertNull(this.persistence.findSource(source.getConnectorType(),
+                new ArrayList<Property>()));
+        Assert.assertNull(this.persistence.findSource(source.getConnectorType(),
+                Arrays.asList(new Property[] { new Property("key", "val") })));
+
+        this.persistence.saveSource(source);
+
+        Source foundSource = this.persistence.findSource(source.getConnectorType(),
+                source.getAccessParameters());
+        Assert.assertNotNull(foundSource);
+        Assert.assertEquals(source.getGlobalId(), foundSource.getGlobalId());
+
+        source = new Source("newConnectorType");
+        source.addAccessParameter(new Property("key", "val"));
+
+        this.persistence.saveSource(source);
+
+        foundSource = this.persistence.findSource(source.getConnectorType(),
+                source.getAccessParameters());
+        Assert.assertNotNull(foundSource);
+        Assert.assertEquals(source.getGlobalId(), foundSource.getGlobalId());
+        Assert.assertEquals(source.getAccessParameters().size(), foundSource.getAccessParameters()
+                .size());
+        Assert.assertEquals(source.getAccessParameter("key").getPropertyValue(), foundSource
+                .getAccessParameter("key").getPropertyValue());
+
+        source = new Source("newConnectorType");
+        source.addAccessParameter(new Property("key", "val"));
+        source.addAccessParameter(new Property("key2", "val"));
+
+        foundSource = this.persistence.findSource(source.getConnectorType(),
+                source.getAccessParameters());
+        Assert.assertNull(foundSource);
     }
 }

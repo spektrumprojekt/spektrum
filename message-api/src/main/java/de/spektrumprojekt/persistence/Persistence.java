@@ -24,6 +24,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
@@ -36,6 +37,7 @@ import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.source.Source;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
+import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
@@ -59,9 +61,20 @@ public interface Persistence {
 
     void deleteHashWithDates(List<HashWithDate> hashesToDelete);
 
+    /**
+     * Delete the source including the source status
+     * 
+     * @param sourceGlobalId
+     */
     void deleteSource(String sourceGlobalId);
 
+    void deleteSubscription(String subscriptionGlobalId);
+
+    Source findSource(String connectorType, Collection<Property> accessParameters);
+
     Collection<MessageGroup> getAllMessageGroups();
+
+    List<Subscription> getAllSubscriptionsBySourceGlobalId(String sourceGlobalId);
 
     Collection<Term> getAllTerms();
 
@@ -88,7 +101,7 @@ public interface Persistence {
 
     MessageRank getMessageRank(String userGlobalId, String messageGlobalId);
 
-    public MessageRelation getMessageRelation(Message message);
+    MessageRelation getMessageRelation(Message message);
 
     /**
      * 
@@ -102,6 +115,8 @@ public interface Persistence {
     Collection<Message> getMessagesSince(Date fromDate);
 
     Collection<Message> getMessagesSince(String messageGroupGlobalId, Date fromDate);
+
+    int getNumberOfSubscriptionsBySourceGlobalId(String globalId);
 
     Collection<Observation> getObservations(String userGlobalId, String messageGlobalId,
             ObservationType observationType);
@@ -130,9 +145,11 @@ public interface Persistence {
 
     Source getSourceByGlobalId(String sourceGlobalId);
 
-    SourceStatus getSourceStatusBySourceGlobalId(String subscriptionId);
+    SourceStatus getSourceStatusBySourceGlobalId(String sourceGlobalId);
 
     List<SourceStatus> getSourceStatusList();
+
+    Subscription getSubscriptionByGlobalId(String subscriptionGlobalId);
 
     TermFrequency getTermFrequency();
 
@@ -222,6 +239,8 @@ public interface Persistence {
     Collection<UserModelEntry> storeOrUpdateUserModelEntries(UserModel userModel,
             Collection<UserModelEntry> changedEntries);
 
+    Subscription storeSubscription(Subscription subscription);
+
     void storeUserSimilarity(UserSimilarity stat);
 
     void updateMessageRank(MessageRank rankToUpdate);
@@ -229,6 +248,8 @@ public interface Persistence {
     Source updateSource(Source source);
 
     void updateSourceStatus(SourceStatus sourceStatus);
+
+    Subscription updateSubscription(Subscription subscription);
 
     void updateTermFrequency(TermFrequency termFrequency);
 

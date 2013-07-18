@@ -124,7 +124,7 @@ public class SourceStatusPersistence extends AbstractPersistenceLayer {
         return getAll(SourceStatus.class);
     }
 
-    public SourceStatus saveSourceStatus(SourceStatus source) {
+    public SourceStatus storeSourceStatus(SourceStatus source) {
         Validate.notNull(source, "status must not be null");
         return save(source);
     }

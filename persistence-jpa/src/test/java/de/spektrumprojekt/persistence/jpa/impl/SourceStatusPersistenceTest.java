@@ -75,9 +75,9 @@ public class SourceStatusPersistenceTest {
         id1 = status1.getSource().getGlobalId();
         id2 = status2.getSource().getGlobalId();
 
-        persistence.saveSourceStatus(status1);
-        persistence.saveSourceStatus(status2);
-        persistence.saveSourceStatus(status3);
+        persistence.storeSourceStatus(status1);
+        persistence.storeSourceStatus(status2);
+        persistence.storeSourceStatus(status3);
 
         assertEquals(3, persistence.getSourceStatusList().size());
 
@@ -98,8 +98,8 @@ public class SourceStatusPersistenceTest {
 
         SourceStatus sourceStatus1 = new SourceStatus(source1);
         SourceStatus sourceStatus2 = new SourceStatus(source2);
-        persistence.saveSourceStatus(sourceStatus1);
-        persistence.saveSourceStatus(sourceStatus2);
+        persistence.storeSourceStatus(sourceStatus1);
+        persistence.storeSourceStatus(sourceStatus2);
 
         SourceStatus persistentSourceStatus = persistence
                 .getSourceStatusBySourceGlobalId(id1);
@@ -114,11 +114,11 @@ public class SourceStatusPersistenceTest {
         List<SourceStatus> sourceStatusList = persistence.getSourceStatusList();
         assertEquals(0, sourceStatusList.size());
 
-        persistence.saveSourceStatus(new SourceStatus(new Source(
+        persistence.storeSourceStatus(new SourceStatus(new Source(
                 "connectorType")));
-        persistence.saveSourceStatus(new SourceStatus(new Source(
+        persistence.storeSourceStatus(new SourceStatus(new Source(
                 "connectorType")));
-        persistence.saveSourceStatus(new SourceStatus(new Source(
+        persistence.storeSourceStatus(new SourceStatus(new Source(
                 "connectorType")));
 
         sourceStatusList = persistence.getSourceStatusList();
@@ -129,7 +129,7 @@ public class SourceStatusPersistenceTest {
     public void testSaveAggregationSubscription() {
         Source subscription = new Source("connectorType");
         SourceStatus status = new SourceStatus(subscription);
-        persistence.saveSourceStatus(status);
+        persistence.storeSourceStatus(status);
     }
 
     /*
@@ -152,7 +152,7 @@ public class SourceStatusPersistenceTest {
         Assert.assertNotNull(id);
 
         SourceStatus status = new SourceStatus(subscription);
-        status = persistence.saveSourceStatus(status);
+        status = persistence.storeSourceStatus(status);
 
         // status.updateCheck(StatusType.ERROR_UNSPECIFIED);
         status.updateCheck(StatusType.ERROR_UNSPECIFIED, new Date(), "contentHash");

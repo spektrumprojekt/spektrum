@@ -22,6 +22,7 @@ package de.spektrumprojekt.persistence.jpa.impl;
 import static org.junit.Assert.assertEquals;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.persistence.RollbackException;
@@ -46,8 +47,8 @@ public class SubscriptionPersistenceTest {
      */
     private static final String PERSISTENCE_UNIT_NAME = "de.spektrumprojekt.datamodel.test";
 
-    // private EntityManagerFactory entityManagerFactory;
-    private SubscriptionPersistence persistenceLayer;
+    private SubscriptionPersistence subsciptionPersistence;
+    private SourcePersistence sourcePersistence;
 
     @Before
     public void setUp() {
@@ -57,13 +58,43 @@ public class SubscriptionPersistenceTest {
         JPAConfiguration jpaConfiguration = new JPAConfiguration(
                 new SimpleProperties(properties));
 
-        persistenceLayer = new SubscriptionPersistence(jpaConfiguration);
+        subsciptionPersistence = new SubscriptionPersistence(jpaConfiguration);
+        sourcePersistence = new SourcePersistence(jpaConfiguration);
     }
 
     @After
     public void tearDown() {
-        persistenceLayer.deleteAllSubscriptions();
-        assertEquals(0, persistenceLayer.getSubscriptions().size());
+        subsciptionPersistence.deleteAllSubscriptions();
+        assertEquals(0, subsciptionPersistence.getSubscriptions().size());
+    }
+
+    @Test
+    public void testGetAll() {
+
+        Source mySource = new Source("mySource", "someConnector");
+        Source anotherMySource = new Source(
+                "anotherMySource", "someConnector");
+
+        mySource = sourcePersistence.saveSource(mySource);
+        anotherMySource = sourcePersistence.saveSource(anotherMySource);
+
+        for (int i = 0; i < 10; i++) {
+            Subscription subscription = new Subscription("findMeId" + i, mySource);
+            subsciptionPersistence.storeSubscription(subscription);
+        }
+        for (int i = 0; i < 10; i++) {
+            Subscription subscription = new Subscription("dontFindMeId" + i, anotherMySource);
+            subsciptionPersistence.storeSubscription(subscription);
+        }
+
+        List<Subscription> subscriptions = subsciptionPersistence
+                .getAllSubscriptionsBySourceGlobalId("mySource");
+        Assert.assertNotNull(subscriptions);
+        Assert.assertEquals(10, subscriptions.size());
+        for (Subscription sub : subscriptions) {
+            Assert.assertEquals("someConnector", sub.getSource().getConnectorType());
+            Assert.assertTrue(sub.getGlobalId().startsWith("findMeId"));
+        }
     }
 
     @Test(expected = RollbackException.class)
@@ -73,8 +104,8 @@ public class SubscriptionPersistenceTest {
         Subscription subscription = new Subscription("test", source);
         Subscription subscription2 = new Subscription("test", source);
 
-        persistenceLayer.save(subscription);
-        persistenceLayer.save(subscription2);
+        subsciptionPersistence.save(subscription);
+        subsciptionPersistence.save(subscription2);
     }
 
     @Test
@@ -84,12 +115,12 @@ public class SubscriptionPersistenceTest {
         Subscription subscription = new Subscription("subId", source);
 
         String globalId = subscription.getGlobalId();
-        persistenceLayer.saveSubscription(subscription);
+        subsciptionPersistence.storeSubscription(subscription);
 
-        assertEquals(1, persistenceLayer.getSubscriptions().size());
+        assertEquals(1, subsciptionPersistence.getSubscriptions().size());
 
-        Subscription persistentSubscription = persistenceLayer
-                .getSubscription(globalId);
+        Subscription persistentSubscription = subsciptionPersistence
+                .getSubscriptionByGlobalId(globalId);
 
         assertEquals(persistentSubscription != null, true);
         assertEquals(globalId, persistentSubscription.getGlobalId());
@@ -98,9 +129,9 @@ public class SubscriptionPersistenceTest {
         Assert.assertEquals(source.getGlobalId(), persistentSubscription.getSource().getGlobalId());
 
         persistentSubscription.getSource().addAccessParameter(new Property("dummy", "test"));
-        persistenceLayer.update(persistentSubscription);
+        subsciptionPersistence.updateSubscription(persistentSubscription);
 
-        persistentSubscription = persistenceLayer.getSubscription(globalId);
+        persistentSubscription = subsciptionPersistence.getSubscriptionByGlobalId(globalId);
         assertEquals(persistentSubscription != null, true);
         assertEquals(globalId, persistentSubscription.getGlobalId());
 
@@ -110,5 +141,4 @@ public class SubscriptionPersistenceTest {
         Assert.assertNull(persistentSubscription.getSource().getAccessParameter("dummy"));
 
     }
-
 }

@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
@@ -45,6 +46,7 @@ import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.source.Source;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
+import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
@@ -110,20 +112,8 @@ public class SimplePersistence implements Persistence {
             return true;
         }
 
-        public String getMessageGlobalId() {
-            return messageGlobalId;
-        }
-
-        public ObservationType getObservationType() {
-            return observationType;
-        }
-
         private SimplePersistence getOuterType() {
             return SimplePersistence.this;
-        }
-
-        public String getUserGlobalId() {
-            return userGlobalId;
         }
 
         @Override
@@ -223,6 +213,11 @@ public class SimplePersistence implements Persistence {
         throw new UnsupportedOperationException("Implement me ...");
     }
 
+    @Override
+    public void deleteSubscription(String subscriptionGlobalId) {
+        throw new UnsupportedOperationException("Implement me ...");
+    }
+
     public String dumpUserModelSizes() {
         String result = "UserModel Sizes (userId => userModelEntries.size) \n";
         for (Entry<User, UserModelHolder> entry : this.userModelHolders.entrySet()) {
@@ -233,8 +228,18 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
+    public Source findSource(String connectorType, Collection<Property> accessParameters) {
+        throw new UnsupportedOperationException("Implement me.");
+    }
+
+    @Override
     public Collection<MessageGroup> getAllMessageGroups() {
         return this.messageGroups.values();
+    }
+
+    @Override
+    public List<Subscription> getAllSubscriptionsBySourceGlobalId(String sourceGlobalId) {
+        throw new UnsupportedOperationException("implement me.");
     }
 
     @Override
@@ -315,6 +320,11 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
+    public int getNumberOfSubscriptionsBySourceGlobalId(String globalId) {
+        throw new UnsupportedOperationException("Implement me.");
+    }
+
+    @Override
     public Collection<Observation> getObservations(String userGlobalId, String messageGlobalId,
             ObservationType observationType) {
         ObservationKey key = new ObservationKey(userGlobalId, messageGlobalId, observationType);
@@ -388,6 +398,11 @@ public class SimplePersistence implements Persistence {
         LinkedList<SourceStatus> result = new LinkedList<SourceStatus>();
         result.addAll(sourceStatusMap.values());
         return result;
+    }
+
+    @Override
+    public Subscription getSubscriptionByGlobalId(String subscriptionGlobalId) {
+        throw new UnsupportedOperationException("Implement me ...");
     }
 
     @Override
@@ -615,6 +630,11 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
+    public Subscription storeSubscription(Subscription subscription) {
+        throw new UnsupportedOperationException("Implement me ...");
+    }
+
+    @Override
     public void storeUserSimilarity(UserSimilarity stat) {
         this.userSimilarities.put(stat.getKey(), stat);
 
@@ -638,6 +658,11 @@ public class SimplePersistence implements Persistence {
     @Override
     public void updateSourceStatus(SourceStatus sourceStatus) {
         sourceStatusMap.put(sourceStatus.getSource().getGlobalId(), sourceStatus);
+    }
+
+    @Override
+    public Subscription updateSubscription(Subscription subscription) {
+        throw new UnsupportedOperationException("Implement me ...");
     }
 
     @Override

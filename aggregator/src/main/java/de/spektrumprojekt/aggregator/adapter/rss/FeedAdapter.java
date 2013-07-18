@@ -295,7 +295,7 @@ public final class FeedAdapter extends BasePollingAdapter {
         boolean success = false;
         List<Message> messages = new ArrayList<Message>();
 
-        Collection<Property> accParams = subscriptionStatus.getSubscription().getAccessParameters();
+        Collection<Property> accParams = subscriptionStatus.getSource().getAccessParameters();
         // logger.debug("access parameters for {}: {}", subscription,
         // accParams);
         String uri = "";
@@ -303,7 +303,6 @@ public final class FeedAdapter extends BasePollingAdapter {
         String login = "";
         String password = "";
 
-        // FIXME shouldn't this be set via CredentialElement???
         for (Property accessParam : accParams) {
             if (accessParam.getPropertyKey().equals(ACCESS_PARAMETER_URI)) {
                 uri = accessParam.getPropertyValue();
@@ -383,11 +382,11 @@ public final class FeedAdapter extends BasePollingAdapter {
         return messages;
     }
 
-    private List<Message> processMessages(SyndFeed feed, SourceStatus subscription) {
+    private List<Message> processMessages(SyndFeed feed, SourceStatus sourceStatus) {
         @SuppressWarnings("unchecked")
         List<SyndEntry> entries = feed.getEntries();
         List<Message> messages = new ArrayList<Message>();
-        Date lastContentTime = subscription.getLastContentTimestamp();
+        Date lastContentTime = sourceStatus.getLastContentTimestamp();
         Date mostRecentTime = null;
 
         // TODO for feeds which provide no date information for their items,
@@ -402,7 +401,7 @@ public final class FeedAdapter extends BasePollingAdapter {
                 continue;
             }
 
-            Message message = convertMessage(subscription.getSubscription().getGlobalId(), entry);
+            Message message = convertMessage(sourceStatus.getSource().getGlobalId(), entry);
             messages.add(message);
 
             if (mostRecentTime == null || mostRecentTime.before(itemPublishDate)) {
@@ -410,9 +409,9 @@ public final class FeedAdapter extends BasePollingAdapter {
             }
         }
         if (mostRecentTime != null) {
-            subscription.setLastContentTimestamp(mostRecentTime);
+            sourceStatus.setLastContentTimestamp(mostRecentTime);
         }
-        LOGGER.debug("# new items in subscription {}: {}", subscription.getGlobalId(),
+        LOGGER.debug("# new items in subscription {}: {}", sourceStatus.getGlobalId(),
                 messages.size());
         return messages;
     }
