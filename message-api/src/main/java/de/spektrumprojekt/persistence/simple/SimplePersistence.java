@@ -109,20 +109,8 @@ public class SimplePersistence implements Persistence {
             return true;
         }
 
-        public String getMessageGlobalId() {
-            return messageGlobalId;
-        }
-
-        public ObservationType getObservationType() {
-            return observationType;
-        }
-
         private SimplePersistence getOuterType() {
             return SimplePersistence.this;
-        }
-
-        public String getUserGlobalId() {
-            return userGlobalId;
         }
 
         @Override
