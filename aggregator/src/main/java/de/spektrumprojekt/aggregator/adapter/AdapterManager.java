@@ -1,21 +1,21 @@
 /*
-* Licensed to the Apache Software Foundation (ASF) under one
-* or more contributor license agreements.  See the NOTICE file
-* distributed with this work for additional information
-* regarding copyright ownership.  The ASF licenses this file
-* to you under the Apache License, Version 2.0 (the
-* "License"); you may not use this file except in compliance
-* with the License.  You may obtain a copy of the License at
-* 
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package de.spektrumprojekt.aggregator.adapter;
 
@@ -28,9 +28,8 @@ import org.apache.commons.lang3.Validate;
 import de.spektrumprojekt.aggregator.adapter.ping.PingAdapter;
 import de.spektrumprojekt.aggregator.adapter.rss.FeedAdapter;
 import de.spektrumprojekt.aggregator.adapter.twitter.TwitterAdapter;
+import de.spektrumprojekt.aggregator.chain.AggregatorChain;
 import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
-import de.spektrumprojekt.communication.Communicator;
-import de.spektrumprojekt.persistence.Persistence;
 
 /**
  * <p>
@@ -39,6 +38,7 @@ import de.spektrumprojekt.persistence.Persistence;
  * </p>
  * 
  * @author Philipp Katz
+ * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  */
 public final class AdapterManager {
 
@@ -57,19 +57,22 @@ public final class AdapterManager {
      *            The message queue which is injected into the instantiated {@link IAdapter}
      *            implementations.
      */
-    public AdapterManager(Communicator communicator, Persistence persistence,
+    public AdapterManager(AggregatorChain aggregatorChain,
             AggregatorConfiguration aggregatorConfiguration,
             IAdapterListener adapterListener) {
-        Validate.notNull(communicator, "messageQueue must not be null");
+
+        Validate.notNull(aggregatorChain, "aggregatorChain must not be null");
+        Validate.notNull(aggregatorConfiguration, "aggregatorConfiguration must not be null");
+
         this.adapterListener = adapterListener;
-        adapters = new HashMap<String, IAdapter>();
-        addAdapter(new FeedAdapter(communicator, persistence, aggregatorConfiguration));
+        this.adapters = new HashMap<String, IAdapter>();
+        addAdapter(new FeedAdapter(aggregatorChain, aggregatorConfiguration));
 
         if (aggregatorConfiguration.getTwitterConsumerKey() != null
                 && aggregatorConfiguration.getTwitterConsumerSecret() != null) {
-            addAdapter(new TwitterAdapter(communicator, persistence, aggregatorConfiguration));
+            addAdapter(new TwitterAdapter(aggregatorChain, aggregatorConfiguration));
         }
-        addAdapter(new PingAdapter(communicator, persistence, aggregatorConfiguration));
+        addAdapter(new PingAdapter(aggregatorChain, aggregatorConfiguration));
     }
 
     /**

@@ -139,11 +139,11 @@ public class LearnerTest extends IntelligenceSpektrumTest {
                 null, null);
         message = getPersistence().storeMessage(message);
 
+        InformationExtractionConfiguration informationExtractionConfiguration = new InformationExtractionConfiguration();
+
         // extract the terms
         InformationExtractionCommand<MessageFeatureContext> ieCommand = InformationExtractionCommand
-                .createDefaultGermanEnglish(new InformationExtractionConfiguration(
-                        getPersistence(), null, false, true, false, false,
-                        false, 0));
+                .createDefaultGermanEnglish(getPersistence(), informationExtractionConfiguration);
         MessageFeatureContext context = new MessageFeatureContext(getPersistence(), message, null);
         ieCommand.process(context);
         checkScoredTerms(context);
