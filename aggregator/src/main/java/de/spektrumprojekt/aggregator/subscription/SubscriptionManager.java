@@ -1,21 +1,21 @@
 /*
-* Licensed to the Apache Software Foundation (ASF) under one
-* or more contributor license agreements.  See the NOTICE file
-* distributed with this work for additional information
-* regarding copyright ownership.  The ASF licenses this file
-* to you under the Apache License, Version 2.0 (the
-* "License"); you may not use this file except in compliance
-* with the License.  You may obtain a copy of the License at
-* 
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package de.spektrumprojekt.aggregator.subscription;
 
@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import de.spektrumprojekt.aggregator.adapter.AdapterManager;
 import de.spektrumprojekt.aggregator.adapter.IAdapter;
 import de.spektrumprojekt.aggregator.adapter.IAdapterListener;
+import de.spektrumprojekt.aggregator.chain.AggregatorChain;
 import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
 import de.spektrumprojekt.communication.Communicator;
 import de.spektrumprojekt.communication.transfer.MessageCommunicationMessage;
@@ -50,8 +51,8 @@ import de.spektrumprojekt.persistence.Persistence;
  * initialized, already existing, persistent subscriptions are read from the persistence layer.
  * </p>
  * 
- * @author Marius Feldmann
  * @author Philipp Katz
+ * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  */
 public class SubscriptionManager implements
         /* IDispatcher, */ISubscriptionManager, IAdapterListener {
@@ -82,17 +83,23 @@ public class SubscriptionManager implements
      */
     public SubscriptionManager(Communicator communicator,
             Persistence persistence,
+            AggregatorChain aggregatorChain,
             AggregatorConfiguration aggregatorConfiguration) {
+
         Validate.notNull(communicator, "Communicator cannot be null.");
+        Validate.notNull(persistence, "persistence cannot be null.");
+        Validate.notNull(aggregatorChain, "aggregatorChain cannot be null.");
         Validate.notNull(aggregatorConfiguration,
                 "AggregatorConfiguration cannot be null.");
+
         this.communicator = communicator;
-        this.aggregatorConfiguration = aggregatorConfiguration;
-        this.adapterManager = new AdapterManager(communicator, persistence,
-                aggregatorConfiguration, this);
         this.persistence = persistence;
-        // this.subscriptionToJid = new HashMap<String, String>();
+        this.aggregatorConfiguration = aggregatorConfiguration;
+        this.adapterManager = new AdapterManager(aggregatorChain,
+                aggregatorConfiguration, this);
+
         addPersistentSubscriptions();
+
         LOGGER.debug("SubscriptionHandler has been initialized.");
     }
 

@@ -375,6 +375,10 @@ public class SimplePersistence implements Persistence {
         return userModelHolder.getUserModel();
     }
 
+    public Map<String, List<Message>> getPatternMessages() {
+        return patternMessages;
+    }
+
     @Override
     public TermFrequency getTermFrequency() {
         termFrequency.init();
@@ -411,6 +415,20 @@ public class SimplePersistence implements Persistence {
 
     public Map<User, UserModelHolder> getUserModelHolders() {
         return userModelHolders;
+    }
+
+    @Override
+    public Collection<UserSimilarity> getUserSimilarities(String messageGroupGlobalId) {
+        if (messageGroupGlobalId == null) {
+            return new HashSet<UserSimilarity>(this.userSimilarities.values());
+        }
+        Collection<UserSimilarity> sims = new HashSet<UserSimilarity>();
+        for (UserSimilarity similarity : this.userSimilarities.values()) {
+            if (messageGroupGlobalId.equals(similarity.getMessageGroupGlobalId())) {
+                sims.add(similarity);
+            }
+        }
+        return sims;
     }
 
     @Override
@@ -631,9 +649,5 @@ public class SimplePersistence implements Persistence {
             }
             visitor.visit(messageRank, message);
         }
-    }
-
-    public Map<String, List<Message>> getPatternMessages() {
-        return patternMessages;
     }
 }

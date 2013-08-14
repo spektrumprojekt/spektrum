@@ -233,6 +233,32 @@ public class UserPersistence extends AbstractPersistenceLayer {
         return transaction.executeTransaction(getEntityManager());
     }
 
+    public Collection<UserSimilarity> getUserSimilarities(final String messageGroupGlobalId) {
+
+        Transaction<Collection<UserSimilarity>> transaction = new Transaction<Collection<UserSimilarity>>() {
+
+            @Override
+            protected Collection<UserSimilarity> doTransaction(EntityManager entityManager) {
+                CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+                CriteriaQuery<UserSimilarity> query = cb
+                        .createQuery(UserSimilarity.class);
+                Root<UserSimilarity> userSim = query.from(UserSimilarity.class);
+                if (messageGroupGlobalId != null) {
+                    Predicate mg = cb.equal(userSim.get("messageGroupGlobalId"),
+                            messageGroupGlobalId);
+                    query.where(mg);
+                }
+
+                try {
+                    return entityManager.createQuery(query).getResultList();
+                } catch (NoResultException e) {
+                    return Collections.emptyList();
+                }
+            }
+        };
+        return transaction.executeTransaction(getEntityManager());
+    }
+
     public Collection<UserSimilarity> getUserSimilarities(final String userGlobalId,
             final Collection<String> users, final String messageGroupGlobalId,
             final double userSimilarityThreshold) {

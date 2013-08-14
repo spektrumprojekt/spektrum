@@ -114,6 +114,11 @@ public class FeatureAggregateCommand implements Command<UserSpecificMessageFeatu
         featureAggregate.numAuthors = authors.size();
         featureAggregate.numDiscussionMentions = mentions.size();
         featureAggregate.numDiscussionTags = tags.size();
+        featureAggregate.interactionLevel = context.getInteractionLevel();
+        if (featureAggregate.interactionLevel == null) {
+            throw new IllegalArgumentException("interactionLevel cannot be null! context="
+                    + context);
+        }
 
         context.setFeatureAggregate(featureAggregate);
     }

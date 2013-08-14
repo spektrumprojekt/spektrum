@@ -50,7 +50,6 @@ import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.i.learner.Learner;
 import de.spektrumprojekt.i.learner.UserModelEntryIntegrationPlainStrategy;
 import de.spektrumprojekt.i.learner.adaptation.DirectedUserModelAdapter;
-import de.spektrumprojekt.i.learner.similarity.UserSimilarityComputer;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.Ranker;
 import de.spektrumprojekt.i.ranker.RankerConfiguration;
@@ -58,6 +57,9 @@ import de.spektrumprojekt.i.ranker.RankerConfigurationFlag;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
 import de.spektrumprojekt.i.term.TermWeightStrategy;
+import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer;
+import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer.UserSimilaritySimType;
+import de.spektrumprojekt.i.user.similarity.UserSimilarityRetriever;
 
 /**
  * Test the ranker
@@ -100,8 +102,10 @@ public class RankerTest extends IntelligenceSpektrumTest {
     }
 
     private void runSimilarityComputerAndCheck(User user1, User user2) {
-        UserSimilarityComputer computer = new UserSimilarityComputer(getPersistence());
-        Collection<UserSimilarity> similarities = computer.run();
+        UserSimilarityComputer computer = new UserSimilarityComputer(getPersistence(),
+                UserSimilaritySimType.VOODOO, true);
+        computer.run();
+        Collection<UserSimilarity> similarities = computer.getUserSimilarities();
 
         dump(similarities);
 
@@ -158,7 +162,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
 
         if (rankerConfiguration.hasFlag(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)) {
             DirectedUserModelAdapter adapter = new DirectedUserModelAdapter(getPersistence(),
-                    ranker);
+                    ranker, new UserSimilarityRetriever(getPersistence()));
             communicator.registerMessageHandler(adapter);
         }
 

@@ -2,36 +2,136 @@ package de.spektrumprojekt.i.informationextraction;
 
 import de.spektrumprojekt.i.term.frequency.TermFrequencyComputer;
 import de.spektrumprojekt.informationextraction.extractors.TagSource;
-import de.spektrumprojekt.persistence.Persistence;
 
 public class InformationExtractionConfiguration {
 
-    public TagSource tagSource;
-    public Persistence persistence;
-    public TermFrequencyComputer termFrequencyComputer;
-    public boolean addTagsToText;
-    public boolean doTokens;
-    public boolean doTags;
-    public boolean doKeyphrase;
-    public boolean beMessageGroupSpecific;
-    public int minimumTermLength;
-    public boolean useWordNGramsInsteadOfStemming;
-    public int nGramsLength;
-    public boolean useCharNGramsInsteadOfStemming;
-    public boolean charNGramsRemoveStopwords;
-    public boolean matchTextAgainstTagSource;
+    private TagSource tagSource;
 
-    public InformationExtractionConfiguration(Persistence persistence,
-            TermFrequencyComputer termFrequencyComputer, boolean addTagsToText, boolean doTokens,
-            boolean doTags, boolean doKeyphrase, boolean beMessageGroupSpecific,
-            int minimumTermLength) {
-        this.persistence = persistence;
-        this.termFrequencyComputer = termFrequencyComputer;
+    private TermFrequencyComputer termFrequencyComputer;
+
+    private boolean addTagsToText;
+
+    private boolean beMessageGroupSpecific;
+
+    private boolean charNGramsRemoveStopwords;
+
+    private boolean doTokens = true;
+
+    private boolean doTags;
+
+    private boolean doKeyphrase;
+
+    private boolean matchTextAgainstTagSource;
+
+    private int minimumTermLength;
+
+    private int nGramsLength = 2;
+
+    private boolean useWordNGramsInsteadOfStemming;
+
+    private boolean useCharNGramsInsteadOfStemming;
+
+    public int getMinimumTermLength() {
+        return minimumTermLength;
+    }
+
+    public int getnGramsLength() {
+        return nGramsLength;
+    }
+
+    public TagSource getTagSource() {
+        return tagSource;
+    }
+
+    public TermFrequencyComputer getTermFrequencyComputer() {
+        return termFrequencyComputer;
+    }
+
+    public boolean isAddTagsToText() {
+        return addTagsToText;
+    }
+
+    public boolean isBeMessageGroupSpecific() {
+        return beMessageGroupSpecific;
+    }
+
+    public boolean isCharNGramsRemoveStopwords() {
+        return charNGramsRemoveStopwords;
+    }
+
+    public boolean isDoKeyphrase() {
+        return doKeyphrase;
+    }
+
+    public boolean isDoTags() {
+        return doTags;
+    }
+
+    public boolean isDoTokens() {
+        return doTokens;
+    }
+
+    public boolean isMatchTextAgainstTagSource() {
+        return matchTextAgainstTagSource;
+    }
+
+    public boolean isUseCharNGramsInsteadOfStemming() {
+        return useCharNGramsInsteadOfStemming;
+    }
+
+    public boolean isUseWordNGramsInsteadOfStemming() {
+        return useWordNGramsInsteadOfStemming;
+    }
+
+    public void setAddTagsToText(boolean addTagsToText) {
         this.addTagsToText = addTagsToText;
-        this.doTokens = doTokens;
-        this.doTags = doTags;
-        this.doKeyphrase = doKeyphrase;
+    }
+
+    public void setBeMessageGroupSpecific(boolean beMessageGroupSpecific) {
         this.beMessageGroupSpecific = beMessageGroupSpecific;
+    }
+
+    public void setCharNGramsRemoveStopwords(boolean charNGramsRemoveStopwords) {
+        this.charNGramsRemoveStopwords = charNGramsRemoveStopwords;
+    }
+
+    public void setDoKeyphrase(boolean doKeyphrase) {
+        this.doKeyphrase = doKeyphrase;
+    }
+
+    public void setDoTags(boolean doTags) {
+        this.doTags = doTags;
+    }
+
+    public void setDoTokens(boolean doTokens) {
+        this.doTokens = doTokens;
+    }
+
+    public void setMatchTextAgainstTagSource(boolean matchTextAgainstTagSource) {
+        this.matchTextAgainstTagSource = matchTextAgainstTagSource;
+    }
+
+    public void setMinimumTermLength(int minimumTermLength) {
         this.minimumTermLength = minimumTermLength;
+    }
+
+    public void setnGramsLength(int nGramsLength) {
+        this.nGramsLength = nGramsLength;
+    }
+
+    public void setTagSource(TagSource tagSource) {
+        this.tagSource = tagSource;
+    }
+
+    public void setTermFrequencyComputer(TermFrequencyComputer termFrequencyComputer) {
+        this.termFrequencyComputer = termFrequencyComputer;
+    }
+
+    public void setUseCharNGramsInsteadOfStemming(boolean useCharNGramsInsteadOfStemming) {
+        this.useCharNGramsInsteadOfStemming = useCharNGramsInsteadOfStemming;
+    }
+
+    public void setUseWordNGramsInsteadOfStemming(boolean useWordNGramsInsteadOfStemming) {
+        this.useWordNGramsInsteadOfStemming = useWordNGramsInsteadOfStemming;
     }
 }

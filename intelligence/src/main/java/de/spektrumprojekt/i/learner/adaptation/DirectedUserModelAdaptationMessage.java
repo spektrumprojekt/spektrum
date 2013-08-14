@@ -22,6 +22,7 @@ package de.spektrumprojekt.i.learner.adaptation;
 import java.util.Arrays;
 
 import de.spektrumprojekt.communication.CommunicationMessage;
+import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.Term;
 
 public class DirectedUserModelAdaptationMessage implements CommunicationMessage {
@@ -36,6 +37,7 @@ public class DirectedUserModelAdaptationMessage implements CommunicationMessage 
     private String userGlobalId;
 
     private Term[] termsToAdapt;
+    private MessageRank rankBeforeAdaptation;
 
     /**
      * for json deserialization
@@ -46,7 +48,8 @@ public class DirectedUserModelAdaptationMessage implements CommunicationMessage 
 
     public DirectedUserModelAdaptationMessage(String userGlobalId, String messageId,
             String messageGroupGlobalId,
-            Term[] termsToAdapt) {
+            Term[] termsToAdapt,
+            MessageRank rankBeforeAdaptation) {
         if (userGlobalId == null) {
             throw new IllegalArgumentException("userGlobalId cannot be null.");
         }
@@ -59,10 +62,14 @@ public class DirectedUserModelAdaptationMessage implements CommunicationMessage 
         if (termsToAdapt == null || termsToAdapt.length == 0) {
             throw new IllegalArgumentException("termsToAdapt cannot be null or empty.");
         }
+        if (rankBeforeAdaptation == null) {
+            throw new IllegalArgumentException("rankBeforeAdaptation cannot be null.");
+        }
         this.userGlobalId = userGlobalId;
         this.messageId = messageId;
         this.messageGroupGlobalId = messageGroupGlobalId;
         this.termsToAdapt = termsToAdapt;
+        this.rankBeforeAdaptation = rankBeforeAdaptation;
     }
 
     public String getMessageGroupGlobalId() {
@@ -71,6 +78,10 @@ public class DirectedUserModelAdaptationMessage implements CommunicationMessage 
 
     public String getMessageId() {
         return messageId;
+    }
+
+    public MessageRank getRankBeforeAdaptation() {
+        return rankBeforeAdaptation;
     }
 
     public Term[] getTermsToAdapt() {
@@ -91,19 +102,10 @@ public class DirectedUserModelAdaptationMessage implements CommunicationMessage 
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("DirectedUserModelAdaptationMessage [messageId=");
-        builder.append(messageId);
-        builder.append(", messageGroupGlobalId=");
-        builder.append(messageGroupGlobalId);
-        builder.append(", userGlobalId=");
-        builder.append(userGlobalId);
-        builder.append(", termsToAdapt=");
-        builder.append(Arrays.toString(termsToAdapt));
-        builder.append(", retrieveMessageType()=");
-        builder.append(retrieveMessageType());
-        builder.append("]");
-        return builder.toString();
+        return "DirectedUserModelAdaptationMessage [messageId=" + messageId
+                + ", messageGroupGlobalId=" + messageGroupGlobalId + ", userGlobalId="
+                + userGlobalId + ", termsToAdapt=" + Arrays.toString(termsToAdapt)
+                + ", rankBeforeAdaptation=" + rankBeforeAdaptation + "]";
     }
 
 }

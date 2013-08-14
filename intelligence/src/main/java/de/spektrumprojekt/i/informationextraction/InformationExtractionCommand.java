@@ -61,6 +61,7 @@ public class InformationExtractionCommand<T extends MessageFeatureContext> imple
      * @return a default information extraction command with german english as allowed language
      */
     public static <T extends MessageFeatureContext> InformationExtractionCommand<T> createDefaultGermanEnglish(
+            Persistence persistence,
             InformationExtractionConfiguration informationExtractionConfiguration) {
         Collection<String> allowedLanguages = new HashSet<String>();
 
@@ -68,71 +69,81 @@ public class InformationExtractionCommand<T extends MessageFeatureContext> imple
         allowedLanguages.add("en");
 
         InformationExtractionCommand<T> command = new InformationExtractionCommand<T>(
-                informationExtractionConfiguration.persistence);
-        if (informationExtractionConfiguration.doTokens
-                || informationExtractionConfiguration.doKeyphrase) {
+                persistence, informationExtractionConfiguration);
+        if (informationExtractionConfiguration.isDoTokens()
+                || informationExtractionConfiguration.isDoKeyphrase()) {
             command.getInformationExtractionCommandChain()
                     .addCommand(
                             new JerichoTextCleanerCommand(
-                                    informationExtractionConfiguration.addTagsToText));
+                                    informationExtractionConfiguration.isAddTagsToText()));
         }
         command.getInformationExtractionCommandChain().addCommand(
                 new LanguageDetectorCommand("de", allowedLanguages));
-        if (informationExtractionConfiguration.doTokens) {
+        if (informationExtractionConfiguration.isDoTokens()) {
 
-            if (informationExtractionConfiguration.useWordNGramsInsteadOfStemming) {
+            if (informationExtractionConfiguration.isUseCharNGramsInsteadOfStemming()) {
                 command.getInformationExtractionCommandChain().addCommand(
                         new WordNGramsExtractorCommand(
-                                informationExtractionConfiguration.beMessageGroupSpecific, false,
-                                informationExtractionConfiguration.nGramsLength,
-                                informationExtractionConfiguration.minimumTermLength));
+                                informationExtractionConfiguration.isBeMessageGroupSpecific(),
+                                false,
+                                informationExtractionConfiguration.getnGramsLength(),
+                                informationExtractionConfiguration.getMinimumTermLength()));
 
-            } else if (informationExtractionConfiguration.useCharNGramsInsteadOfStemming) {
+            } else if (informationExtractionConfiguration.isUseCharNGramsInsteadOfStemming()) {
                 command.getInformationExtractionCommandChain().addCommand(
                         new CharNGramsExtractorCommand(
-                                informationExtractionConfiguration.beMessageGroupSpecific, false,
-                                informationExtractionConfiguration.nGramsLength,
-                                informationExtractionConfiguration.charNGramsRemoveStopwords));
+                                informationExtractionConfiguration.isBeMessageGroupSpecific(),
+                                false,
+                                informationExtractionConfiguration.getnGramsLength(),
+                                informationExtractionConfiguration.isCharNGramsRemoveStopwords()));
             } else {
                 command.getInformationExtractionCommandChain().addCommand(
                         new StemmedTokenExtractorCommand(
-                                informationExtractionConfiguration.beMessageGroupSpecific, false,
-                                informationExtractionConfiguration.minimumTermLength));
+                                informationExtractionConfiguration.isBeMessageGroupSpecific(),
+                                false,
+                                informationExtractionConfiguration.getMinimumTermLength()));
             }
         }
-        if (informationExtractionConfiguration.doKeyphrase) {
+        if (informationExtractionConfiguration.isDoKeyphrase()) {
             command.getInformationExtractionCommandChain().addCommand(
                     new ExecuteOnlyForExternalMessagesCommand(new KeyphraseExtractorCommand()));
         }
-        if (informationExtractionConfiguration.doTags) {
+        if (informationExtractionConfiguration.isDoTags()) {
             command.getInformationExtractionCommandChain().addCommand(
                     new TagExtractorCommand(
-                            informationExtractionConfiguration.beMessageGroupSpecific));
+                            informationExtractionConfiguration.isBeMessageGroupSpecific()));
         }
-        if (informationExtractionConfiguration.matchTextAgainstTagSource
-                && informationExtractionConfiguration.tagSource != null) {
+        if (informationExtractionConfiguration.isMatchTextAgainstTagSource()
+                && informationExtractionConfiguration.getTagSource() != null) {
             command.getInformationExtractionCommandChain().addCommand(
                     new ExecuteOnlyForExternalMessagesCommand(new KeyphraseExtractorCommand(
-                            informationExtractionConfiguration.tagSource)));
+                            informationExtractionConfiguration.getTagSource())));
 
         }
-        if (informationExtractionConfiguration.termFrequencyComputer != null) {
+        if (informationExtractionConfiguration.getTermFrequencyComputer() != null) {
             command.getInformationExtractionCommandChain().addCommand(
-                    new TermCounterCommand(informationExtractionConfiguration.persistence,
-                            informationExtractionConfiguration.termFrequencyComputer));
+                    new TermCounterCommand(persistence,
+                            informationExtractionConfiguration.getTermFrequencyComputer()));
         }
         return command;
     }
+
+    private final InformationExtractionConfiguration informationExtractionConfiguration;
 
     private final Persistence persistence;
 
     private final CommandChain<InformationExtractionContext> informationExtractionCommandChain = new CommandChain<InformationExtractionContext>();
 
-    public InformationExtractionCommand(Persistence persistence) {
+    public InformationExtractionCommand(Persistence persistence,
+            InformationExtractionConfiguration informationExtractionConfiguration) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
         }
+        if (informationExtractionConfiguration == null) {
+            throw new IllegalArgumentException("informationExtractionConfiguration cannot be null.");
+        }
         this.persistence = persistence;
+        this.informationExtractionConfiguration = informationExtractionConfiguration;
     }
 
     /**
@@ -151,6 +162,10 @@ public class InformationExtractionCommand<T extends MessageFeatureContext> imple
      */
     public CommandChain<InformationExtractionContext> getInformationExtractionCommandChain() {
         return informationExtractionCommandChain;
+    }
+
+    public InformationExtractionConfiguration getInformationExtractionConfiguration() {
+        return informationExtractionConfiguration;
     }
 
     /**

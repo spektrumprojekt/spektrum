@@ -1,21 +1,21 @@
 /*
-* Licensed to the Apache Software Foundation (ASF) under one
-* or more contributor license agreements.  See the NOTICE file
-* distributed with this work for additional information
-* regarding copyright ownership.  The ASF licenses this file
-* to you under the Apache License, Version 2.0 (the
-* "License"); you may not use this file except in compliance
-* with the License.  You may obtain a copy of the License at
-* 
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package de.spektrumprojekt.configuration.properties;
 
@@ -60,6 +60,35 @@ public abstract class DefaultPropertiesConfiguration implements Configuration {
      * {@inheritDoc}
      */
     @Override
+    public final boolean getBoolProperty(String key) {
+        if (existsProperty(key)) {
+            return internalGetBoolProperty(key);
+        }
+        if (defaultProperties.containsKey(key)) {
+            return Boolean.parseBoolean(defaultProperties.getProperty(key));
+        }
+        // this assure defined behavior of getting a not existing null property.
+        throw new NumberFormatException("property key=" + key + " not defined.");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean getBoolProperty(String key, boolean defaultValue) {
+        if (internalExistsProperty(key)) {
+            return internalGetBoolProperty(key);
+        }
+        if (defaultProperties.containsKey(key)) {
+            return Boolean.parseBoolean(defaultProperties.getProperty(key));
+        }
+        return defaultValue;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public Properties getDefaultProperties() {
         return defaultProperties;
     }
@@ -93,6 +122,22 @@ public abstract class DefaultPropertiesConfiguration implements Configuration {
         return defaultValue;
     }
 
+    @Override
+    public List<String> getListProperty(String key) {
+        return getListProperty(key, Collections.singletonList(defaultProperties.getProperty(key)));
+    }
+
+    @Override
+    public List<String> getListProperty(String key, List<String> defaultValues) {
+        if (internalExistsProperty(key)) {
+            return internalGetListProperty(key);
+        }
+        if (defaultProperties.containsKey(key)) {
+            return Collections.singletonList(defaultProperties.getProperty(key));
+        }
+        return defaultValues;
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -115,22 +160,6 @@ public abstract class DefaultPropertiesConfiguration implements Configuration {
         return defaultValue;
     }
 
-    @Override
-    public List<String> getListProperty(String key) {
-        return getListProperty(key, Collections.singletonList(defaultProperties.getProperty(key)));
-    }
-
-    @Override
-    public List<String> getListProperty(String key, List<String> defaultValues) {
-        if (internalExistsProperty(key)) {
-            return internalGetListProperty(key);
-        }
-        if (defaultProperties.containsKey(key)) {
-            return Collections.singletonList(defaultProperties.getProperty(key));
-        }
-        return defaultValues;
-    }
-
     /**
      * Internal method the actually get the property from an underlying configuration (file,
      * database, etc)
@@ -149,7 +178,27 @@ public abstract class DefaultPropertiesConfiguration implements Configuration {
      *            the key
      * @return the value to the key. throws exception if key is null or cannot be parsed.
      */
+    protected abstract boolean internalGetBoolProperty(String key);
+
+    /**
+     * Internal method the actually get the property from an underlying configuration (file,
+     * database, etc)
+     * 
+     * @param key
+     *            the key
+     * @return the value to the key. throws exception if key is null or cannot be parsed.
+     */
     protected abstract int internalGetIntProperty(String key);
+
+    /**
+     * Internal method the actually get the property from an underlying configuration (file,
+     * database, etc)
+     * 
+     * @param key
+     *            the key.
+     * @return the value.
+     */
+    protected abstract List<String> internalGetListProperty(String key);
 
     /**
      * Internal method the actually get the property from an underlying configuration (file,
@@ -160,14 +209,5 @@ public abstract class DefaultPropertiesConfiguration implements Configuration {
      * @return the value.
      */
     protected abstract String internalGetStringProperty(String key);
-
-    /**
-     * Internal method the actually get the property from an underlying configuration (file,
-     * database, etc)
-     * 
-     * @param key the key.
-     * @return the value.
-     */
-    protected abstract List<String> internalGetListProperty(String key);
 
 }

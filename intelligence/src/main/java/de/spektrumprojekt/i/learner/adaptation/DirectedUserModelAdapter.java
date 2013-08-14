@@ -26,9 +26,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.spektrumprojekt.commons.event.EventHandler;
 import de.spektrumprojekt.communication.CommunicationMessage;
 import de.spektrumprojekt.communication.MessageHandler;
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
@@ -37,33 +39,68 @@ import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
-import de.spektrumprojekt.datamodel.user.UserSimilarity;
+import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.Ranker;
+import de.spektrumprojekt.i.user.UserScore;
+import de.spektrumprojekt.i.user.UserToUserInterestSelector;
 import de.spektrumprojekt.persistence.Persistence;
 
 public class DirectedUserModelAdapter implements
         MessageHandler<DirectedUserModelAdaptationMessage>, ConfigurationDescriptable {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(DirectedUserModelAdapter.class);
-
     private long adaptedCount = 0;
-    private long requestedAdaptedCount = 0;
 
-    private double userSimilarityThreshold = 0.1;
+    private long requestedAdaptedCount = 0;
 
     private final Persistence persistence;
 
     private final Ranker ranker;
 
-    public DirectedUserModelAdapter(Persistence persistence, Ranker ranker) {
+    private final UserToUserInterestSelector userToUserInterestRetriever;
+
+    private final DescriptiveStatistics descriptiveStatistics;
+
+    private final boolean useWeightedAverage;
+
+    private final EventHandler<UserModelAdaptationReRankEvent> userModelAdaptationReRankEventHandler = new EventHandler<UserModelAdaptationReRankEvent>();
+
+    public DirectedUserModelAdapter(
+            Persistence persistence,
+            Ranker ranker,
+            UserToUserInterestSelector userToUserInterestRetriever) {
+        this(persistence, ranker, userToUserInterestRetriever, true, false);
+    }
+
+    public DirectedUserModelAdapter(
+            Persistence persistence,
+            Ranker ranker,
+            UserToUserInterestSelector userToUserInterestRetriever,
+            boolean useWeightedAverage,
+            boolean keepStatistics) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
         }
         if (ranker == null) {
             throw new IllegalArgumentException("ranker cannot be null.");
         }
+        if (userToUserInterestRetriever == null) {
+            throw new IllegalArgumentException("userToUserInterestRetriever cannot be null.");
+        }
         this.persistence = persistence;
         this.ranker = ranker;
+        this.userToUserInterestRetriever = userToUserInterestRetriever;
+
+        if (keepStatistics) {
+            descriptiveStatistics = new DescriptiveStatistics();
+        } else {
+            descriptiveStatistics = null;
+        }
+        this.useWeightedAverage = useWeightedAverage;
+    }
+
+    private ValueAggregator createNewValueAggregator() {
+        return useWeightedAverage ? new IncrementalWeightedAverage() : new MaxValueAggregator();
     }
 
     /**
@@ -91,32 +128,33 @@ public class DirectedUserModelAdapter implements
         String messageGroupGlobalId = message.getMessageGroupGlobalId();
 
         // 3. Compute user similarity between the u and the users of the found user models.
-        Collection<UserSimilarity> similarities = persistence.getUserSimilarities(
-                message.getUserGlobalId(), users, messageGroupGlobalId, userSimilarityThreshold);
+
+        Collection<UserScore> userToUserInterestScores = this.userToUserInterestRetriever
+                .getUserToUserInterest(message.getUserGlobalId(), messageGroupGlobalId, users);
 
         // 4. If the user similarity satisfies a threshold u take the weight of the term and apply
         // it to UMu. If there are more weights available use a weighted average of the term weights
         // and the user similarity
 
-        if (similarities != null && similarities.size() > 0) {
+        if (userToUserInterestScores != null && userToUserInterestScores.size() > 0) {
             // there are similarities to use
 
-            Map<Term, IncrementalWeightedAverage> stats = new HashMap<Term, IncrementalWeightedAverage>();
+            Map<Term, ValueAggregator> statsForTermsToAdaptFrom = new HashMap<Term, ValueAggregator>();
             for (Term term : termsToAdapt) {
-                stats.put(term, new IncrementalWeightedAverage());
+                statsForTermsToAdaptFrom.put(term, createNewValueAggregator());
             }
 
-            for (UserSimilarity userSimilarity : similarities) {
-                assert userSimilarity.getUserGlobalIdFrom().equals(message.getUserGlobalId());
+            for (UserScore userScore : userToUserInterestScores) {
 
-                UserModel userModel = userToUserModels.get(userSimilarity.getUserGlobalIdTo());
+                UserModel userModel = userToUserModels.get(userScore.getUserGlobalId());
                 if (userModel != null) {
 
                     Map<Term, UserModelEntry> entries = persistence.getUserModelEntriesForTerms(
                             userModel, termsToAdapt);
                     for (Entry<Term, UserModelEntry> entry : entries.entrySet()) {
-                        IncrementalWeightedAverage stat = stats.get(entry.getKey());
-                        integrateStat(stat, userSimilarity, entry.getValue());
+                        ValueAggregator stat = statsForTermsToAdaptFrom.get(entry
+                                .getKey());
+                        integrateStat(stat, userScore, entry.getValue());
                     }
                 }
             }
@@ -124,26 +162,35 @@ public class DirectedUserModelAdapter implements
             Map<Term, UserModelEntry> entries = persistence.getUserModelEntriesForTerms(
                     userModelToAdapt, termsToAdapt);
 
-            for (Entry<Term, IncrementalWeightedAverage> statEntry : stats.entrySet()) {
-                if (statEntry.getValue().getValue() > 0) {
+            for (Entry<Term, ValueAggregator> statEntryToAdaptFrom : statsForTermsToAdaptFrom
+                    .entrySet()) {
+                if (statEntryToAdaptFrom.getValue().getValue() > 0) {
                     // adapt
-                    UserModelEntry entry = entries.get(statEntry.getKey());
-                    if (entry == null) {
-                        ScoredTerm scoredTerm = new ScoredTerm(statEntry.getKey(), 0);
-                        entry = new UserModelEntry(userModelToAdapt, scoredTerm);
-                        entries.put(scoredTerm.getTerm(), entry);
+                    UserModelEntry entryToAdapt = entries.get(statEntryToAdaptFrom.getKey());
+                    if (entryToAdapt == null) {
+                        ScoredTerm scoredTerm = new ScoredTerm(statEntryToAdaptFrom.getKey(), 0);
+                        entryToAdapt = new UserModelEntry(userModelToAdapt, scoredTerm);
+                        entries.put(scoredTerm.getTerm(), entryToAdapt);
                     }
-                    if (entry.getScoredTerm().getWeight() < statEntry.getValue().getValue()) {
-                        entry.getScoredTerm().setWeight((float) statEntry.getValue().getValue());
-                        entry.setAdapted(true);
+                    if (entryToAdapt.getScoredTerm().getWeight() < statEntryToAdaptFrom.getValue()
+                            .getValue()) {
+                        entryToAdapt.getScoredTerm().setWeight(
+                                (float) statEntryToAdaptFrom.getValue().getValue());
+
+                        entryToAdapt.setAdapted(true);
                         adaptedCount++;
                         if (LOGGER.isTraceEnabled()) {
                             LOGGER.trace(
                                     "Adapted user model entry for user '{}' set term '{}' to score '{}'. ",
                                     new Object[] {
                                             message.getUserGlobalId(),
-                                            entry.getScoredTerm().getTerm().getValue(),
-                                            entry.getScoredTerm().getWeight() });
+                                            entryToAdapt.getScoredTerm().getTerm().getValue(),
+                                            entryToAdapt.getScoredTerm().getWeight() });
+                        }
+
+                        if (descriptiveStatistics != null) {
+                            descriptiveStatistics
+                                    .addValue(entryToAdapt.getScoredTerm().getWeight());
                         }
                     }
                 }
@@ -153,8 +200,15 @@ public class DirectedUserModelAdapter implements
 
             Message messageToRerate = this.persistence.getMessageByGlobalId(message.getMessageId());
 
-            ranker.rerank(messageToRerate, message.getUserGlobalId());
+            MessageFeatureContext messageFeatureContextOfReRank = ranker.rerank(messageToRerate,
+                    message.getUserGlobalId());
 
+            if (this.userModelAdaptationReRankEventHandler.getEventListenersSize() > 0) {
+                UserModelAdaptationReRankEvent reRankEvent = new UserModelAdaptationReRankEvent();
+                reRankEvent.setMessageFeatureContextOfReRank(messageFeatureContextOfReRank);
+                reRankEvent.setAdaptationMessage(message);
+                this.userModelAdaptationReRankEventHandler.fire(reRankEvent);
+            }
         }
 
     }
@@ -165,8 +219,15 @@ public class DirectedUserModelAdapter implements
 
     @Override
     public String getConfigurationDescription() {
-        return this.getClass().getSimpleName() + " userSimilarityThreshold="
-                + userSimilarityThreshold;
+        return this.getClass().getSimpleName()
+                + " userToUserInterestRetriever="
+                + this.userToUserInterestRetriever.getConfigurationDescription();
+    }
+
+    public String getDebugInformation() {
+        return descriptiveStatistics == null ? "debug information not maintained." :
+                "Stats about the term scores that have been set for adapation: "
+                        + this.descriptiveStatistics.toString().replace("\n", " ");
     }
 
     @Override
@@ -178,9 +239,13 @@ public class DirectedUserModelAdapter implements
         return requestedAdaptedCount;
     }
 
-    private void integrateStat(IncrementalWeightedAverage stat, UserSimilarity userSimilarity,
+    public EventHandler<UserModelAdaptationReRankEvent> getUserModelAdaptationReRankEventHandler() {
+        return userModelAdaptationReRankEventHandler;
+    }
+
+    private void integrateStat(ValueAggregator stat, UserScore userScore,
             UserModelEntry value) {
-        stat.add(value.getScoredTerm().getWeight(), userSimilarity.getSimilarity());
+        stat.add(value.getScoredTerm().getWeight(), userScore.getScore());
     }
 
     @Override

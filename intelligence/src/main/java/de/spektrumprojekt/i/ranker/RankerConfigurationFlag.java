@@ -1,5 +1,8 @@
 package de.spektrumprojekt.i.ranker;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 public enum RankerConfigurationFlag {
     ONLY_USE_TERM_MATCHER_FEATURE("onlyTerms"),
 
@@ -33,6 +36,22 @@ public enum RankerConfigurationFlag {
 
     // learns from every message. usefull for validation evaluation purposes
     LEARN_FROM_EVERY_MESSAGE("learnFromAll");
+
+    private static RankerConfigurationFlag[] VALUES_WITH_NULL;
+
+    public static RankerConfigurationFlag[] valuesWithNull() {
+        if (VALUES_WITH_NULL == null) {
+            synchronized (RankerConfigurationFlag.class) {
+                if (VALUES_WITH_NULL == null) {
+                    ArrayList<RankerConfigurationFlag> list = new ArrayList<RankerConfigurationFlag>();
+                    list.add(null);
+                    list.addAll(Arrays.asList(RankerConfigurationFlag.values()));
+                    VALUES_WITH_NULL = list.toArray(new RankerConfigurationFlag[] { });
+                }
+            }
+        }
+        return VALUES_WITH_NULL;
+    }
 
     private final String shortName;
 

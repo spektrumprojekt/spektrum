@@ -1,6 +1,7 @@
 package de.spektrumprojekt.informationextraction.extractors;
 
 import de.spektrumprojekt.commons.chain.Command;
+import de.spektrumprojekt.commons.chain.CommandException;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
@@ -27,7 +28,7 @@ public class ExecuteOnlyForExternalMessagesCommand implements Command<Informatio
     }
 
     @Override
-    public void process(InformationExtractionContext context) {
+    public void process(InformationExtractionContext context) throws CommandException {
         Property externalProperty = context.getMessage().getPropertiesAsMap()
                 .get(Property.PROPERTY_KEY_EXTERNAL);
         if (externalProperty != null

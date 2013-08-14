@@ -35,13 +35,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.spektrumprojekt.aggregator.chain.AggregatorChain;
 import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
-import de.spektrumprojekt.communication.Communicator;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
-import de.spektrumprojekt.persistence.Persistence;
 
 /**
  * <p>
@@ -50,6 +49,7 @@ import de.spektrumprojekt.persistence.Persistence;
  * {@link #poll(Subscription)} method.
  * </p>
  * 
+ * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * @author Philipp Katz
  */
 public abstract class BasePollingAdapter extends BaseAdapter {
@@ -114,10 +114,10 @@ public abstract class BasePollingAdapter extends BaseAdapter {
      *            The size of the thread pool for this adapter, i.e. the maximum number of
      *            simultaneous polls.
      */
-    public BasePollingAdapter(Communicator communicator, Persistence persistence,
-            AggregatorConfiguration aggregatorConfiguration,
-            int pollingInterval, int threadPoolSize) {
-        super(communicator, persistence, aggregatorConfiguration);
+    public BasePollingAdapter(AggregatorChain aggregatorChain,
+            AggregatorConfiguration aggregatorConfiguration, int pollingInterval, int threadPoolSize) {
+        super(aggregatorChain, aggregatorConfiguration);
+
         this.pollingInterval = pollingInterval;
         executor = new ScheduledThreadPoolExecutor(threadPoolSize,
                 new PollThreadFactory<BasePollingAdapter>(this));

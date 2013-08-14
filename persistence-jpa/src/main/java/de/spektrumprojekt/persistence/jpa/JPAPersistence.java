@@ -199,6 +199,11 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
+    public Collection<UserSimilarity> getUserSimilarities(String messageGroupGlobalId) {
+        return this.userPersistence.getUserSimilarities(messageGroupGlobalId);
+    }
+
+    @Override
     public Collection<UserSimilarity> getUserSimilarities(String userGlobalId,
             Collection<String> users, String messageGroupGlobalId, double userSimilarityThreshold) {
         return this.userPersistence.getUserSimilarities(userGlobalId, users, messageGroupGlobalId,

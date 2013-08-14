@@ -38,7 +38,6 @@ import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionConfiguration;
-import de.spektrumprojekt.i.learner.similarity.UserSimilarityComputer;
 import de.spektrumprojekt.i.ranker.chain.AdaptMessageRankByCMFOfSimilarUsersCommand;
 import de.spektrumprojekt.i.ranker.chain.ComputeMessageRankCommand;
 import de.spektrumprojekt.i.ranker.chain.DetermineInteractionLevelCommand;
@@ -60,6 +59,8 @@ import de.spektrumprojekt.i.ranker.chain.features.MentionFeatureCommand;
 import de.spektrumprojekt.i.term.TermSimilarityWeightComputerFactory;
 import de.spektrumprojekt.i.term.frequency.TermFrequencyComputer;
 import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
+import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer;
+import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer.UserSimilaritySimType;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**
@@ -139,8 +140,14 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         if (rankerConfiguration == null) {
             throw new IllegalArgumentException("rankerConfiguration cannot be null.");
         }
+        if (rankerConfiguration.getInformationExtractionConfiguration() == null) {
+            throw new IllegalArgumentException(
+                    "rankerConfiguration.informationExtractionConfiguration cannot be null.");
+        }
         this.rankerConfiguration = rankerConfiguration;
         this.rankerConfiguration.immutable();
+        this.informationExtractionConfiguration = rankerConfiguration
+                .getInformationExtractionConfiguration();
 
         this.persistence = persistence;
         this.communicator = communicator;
@@ -150,6 +157,7 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         if (this.rankerConfiguration.getTermUniquenessLogfile() != null) {
             this.termFrequencyComputer.init(this.rankerConfiguration.getTermUniquenessLogfile());
         }
+        this.informationExtractionConfiguration.setTermFrequencyComputer(termFrequencyComputer);
 
         termVectorSimilarityComputer = TermSimilarityWeightComputerFactory.getInstance()
                 .createTermVectorSimilarityComputer(rankerConfiguration, termFrequencyComputer);
@@ -161,30 +169,18 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         userFeatureCommand = new UserFeatureCommand(memberRunner);
         reRankUserFeatureCommand = new UserFeatureCommand(memberRunner);
 
-        informationExtractionConfiguration = new InformationExtractionConfiguration(
-                this.persistence, this.termFrequencyComputer,
-                this.rankerConfiguration.isAddTagsToText(), this.rankerConfiguration.isDoTokens(),
-                this.rankerConfiguration.isDoTags(), this.rankerConfiguration.isDoKeyphrase(),
-                this.rankerConfiguration
-                        .hasFlag(RankerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL),
-                this.rankerConfiguration.getMinimumTermLength());
-        informationExtractionConfiguration.useWordNGramsInsteadOfStemming = this.rankerConfiguration
-                .isUseWordNGrams();
-        informationExtractionConfiguration.useCharNGramsInsteadOfStemming = this.rankerConfiguration
-                .isUseCharNGrams();
-        informationExtractionConfiguration.nGramsLength = this.rankerConfiguration
-                .getNGramsLength();
-        informationExtractionConfiguration.charNGramsRemoveStopwords = this.rankerConfiguration
-                .isCharNGramsRemoveStopwords();
-        informationExtractionConfiguration.matchTextAgainstTagSource = this.rankerConfiguration
-                .isMatchTextAgainstTagSource();
-        informationExtractionConfiguration.tagSource = this.rankerConfiguration.getTagSource();
-        informationExtractionConfiguration.termFrequencyComputer = this.termFrequencyComputer;
-
         this.informationExtractionChain = InformationExtractionCommand
-                .createDefaultGermanEnglish(informationExtractionConfiguration);
+                .createDefaultGermanEnglish(persistence,
+                        this.rankerConfiguration.getInformationExtractionConfiguration());
 
-        userSimilarityComputer = new UserSimilarityComputer(this.persistence);
+        UserSimilaritySimType userSimilaritySimType = this.rankerConfiguration
+                .getUserModelAdapterConfiguration()
+                .getUserSimilaritySimType();
+        if (userSimilaritySimType == null) {
+            userSimilaritySimType = UserSimilaritySimType.VOODOO;
+        }
+        userSimilarityComputer = new UserSimilarityComputer(this.persistence,
+                userSimilaritySimType);
 
         storeMessageCommand = new StoreMessageCommand(persistence);
         userSimilarityIntegrationCommand = new UserSimilarityIntegrationCommand(
@@ -210,7 +206,11 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
                 this.communicator,
                 this.rankerConfiguration);
         triggerUserModelAdaptationCommand = new TriggerUserModelAdaptationCommand(
-                this.communicator);
+                this.communicator,
+                this.rankerConfiguration.getUserModelAdapterConfiguration()
+                        .getConfidenceThreshold(),
+                this.rankerConfiguration
+                        .getUserModelAdapterConfiguration().getRankThreshold());
 
         // TODO where to take the configuration values from ?
         adaptMessageRankByCMFOfSimilarUsersCommand = new AdaptMessageRankByCMFOfSimilarUsersCommand(
@@ -270,8 +270,8 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         featureAggregateCommand = new FeatureAggregateCommand(
                 this.persistence);
 
-        userFeatureCommand.addCommand(featureAggregateCommand);
         userFeatureCommand.addCommand(determineInteractionLevelCommand);
+        userFeatureCommand.addCommand(featureAggregateCommand);
         userFeatureCommand.addCommand(updateInteractionLevelOfMessageRanksCommand);
         userFeatureCommand.addCommand(computeMessageRankCommand);
 

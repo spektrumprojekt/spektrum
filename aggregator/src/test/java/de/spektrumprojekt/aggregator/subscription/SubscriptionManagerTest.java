@@ -30,9 +30,12 @@ import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import de.spektrumprojekt.aggregator.Aggregator;
 import de.spektrumprojekt.aggregator.adapter.rss.FeedAdapter;
+import de.spektrumprojekt.aggregator.chain.AggregatorChain;
 import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
 import de.spektrumprojekt.communication.CommunicationMessage;
+import de.spektrumprojekt.communication.Communicator;
 import de.spektrumprojekt.communication.vm.VirtualMachineCommunicator;
 import de.spektrumprojekt.configuration.properties.SimpleProperties;
 import de.spektrumprojekt.datamodel.common.Property;
@@ -41,7 +44,7 @@ import de.spektrumprojekt.persistence.jpa.JPAConfiguration;
 import de.spektrumprojekt.persistence.jpa.JPAPersistence;
 import de.spektrumprojekt.persistence.jpa.impl.SubscriptionPersistence;
 
-public class TestSubscriptionManager {
+public class SubscriptionManagerTest {
 
     private static final String PERSISTENCE_UNIT_NAME = "de.spektrumprojekt.datamodel.test";
 
@@ -54,6 +57,12 @@ public class TestSubscriptionManager {
     private SubscriptionPersistence subscriptionPersistence;
 
     private SubscriptionManager manager;
+
+    private Aggregator aggregator;
+    private AggregatorConfiguration aggregatorConfiguration;
+    private AggregatorChain aggregatorChain;
+
+    private Communicator communicator;
 
     private int getNumberOfSubscriptions() {
         return subscriptionPersistence.getSubscriptions().size();
@@ -77,9 +86,9 @@ public class TestSubscriptionManager {
 
     @Before
     public void setup() throws Exception {
+
         Queue<CommunicationMessage> queue = new ConcurrentLinkedQueue<CommunicationMessage>();
-        AggregatorConfiguration configuration = AggregatorConfiguration.loadXmlConfig();
-        Assert.assertNotNull(configuration);
+        communicator = new VirtualMachineCommunicator(queue, queue);
 
         Map<String, String> properties = new HashMap<String, String>();
         properties.put("persistenceUnit", PERSISTENCE_UNIT_NAME);
@@ -89,8 +98,15 @@ public class TestSubscriptionManager {
         subscriptionPersistence = new SubscriptionPersistence(new JPAConfiguration(
                 new SimpleProperties(properties)));
 
-        manager = new SubscriptionManager(new VirtualMachineCommunicator(queue, queue),
-                persistence, configuration);
+        aggregatorConfiguration = AggregatorConfiguration.loadXmlConfig();
+        Assert.assertNotNull(aggregatorConfiguration);
+
+        aggregator = new Aggregator(communicator, persistence, aggregatorConfiguration);
+
+        aggregatorChain = aggregator.getAggregatorChain();
+
+        manager = new SubscriptionManager(communicator,
+                persistence, aggregatorChain, aggregatorConfiguration);
     }
 
     @Test

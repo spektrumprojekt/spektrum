@@ -5,12 +5,13 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import de.spektrumprojekt.datamodel.message.InteractionLevel;
 import de.spektrumprojekt.i.datamodel.MessageFeature;
 
 public class FeatureAggregate {
 
     public static int getLength() {
-        return Feature.ALL_FEATURES.size() + 12;
+        return Feature.ALL_FEATURES.size() + 13;
     }
 
     public static String getSimpleFeaturesHeader() {
@@ -27,7 +28,8 @@ public class FeatureAggregate {
                 "NumnerOfDiscussion",
                 "DiscussionParticipaters",
                 "DiscussionMentions",
-                "DiscussionTags"
+                "DiscussionTags",
+                "InteractionLevel"
         }, " ");
     }
 
@@ -43,6 +45,7 @@ public class FeatureAggregate {
     public int numAuthors;
     public int numDiscussionMentions;
     public int numDiscussionTags;
+    public InteractionLevel interactionLevel;
 
     public final Map<Feature, MessageFeature> features = new HashMap<Feature, MessageFeature>();
 
@@ -70,6 +73,11 @@ public class FeatureAggregate {
         numAuthors = Integer.parseInt(stats[index++]);
         numDiscussionMentions = Integer.parseInt(stats[index++]);
         numDiscussionTags = Integer.parseInt(stats[index++]);
+        interactionLevel = InteractionLevel.fromNumberValue(Integer.parseInt(stats[index++]));
+        if (interactionLevel == null) {
+            throw new IllegalArgumentException("Error reading rank. Invalid interactionLevel: "
+                    + stats[index - 1] + " Line was: " + stats);
+        }
     }
 
     private int parseFeatures(String[] stats) {
@@ -100,7 +108,8 @@ public class FeatureAggregate {
                         "" + numDiscussion,
                         "" + numAuthors,
                         "" + numDiscussionMentions,
-                        "" + numDiscussionTags
+                        "" + numDiscussionTags,
+                        "" + interactionLevel.getNumberValue()
                 }, " ");
     }
 
