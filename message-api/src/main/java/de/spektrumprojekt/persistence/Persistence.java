@@ -127,9 +127,11 @@ public interface Persistence {
      *            the users id
      * @return the user model
      */
-    UserModel getOrCreateUserModelByUser(String userGlobalId);
+    UserModel getOrCreateUserModelByUser(String userGlobalId, String userModelType);
 
     TermFrequency getTermFrequency();
+
+    Map<String, String> getUserModelEntriesCountDescription();
 
     /**
      * 
@@ -151,7 +153,7 @@ public interface Persistence {
     UserSimilarity getUserSimilarity(String userGlobalIdFrom, String userGlobalIdTo,
             String messageGroupGlobalId);
 
-    Collection<UserModel> getUsersWithUserModel(Collection<Term> terms);
+    Collection<UserModel> getUsersWithUserModel(Collection<Term> terms, String userModelType);
 
     void initialize();
 
@@ -227,5 +229,4 @@ public interface Persistence {
 
     void visitAllMessageRanks(MessageRankVisitor visitor, Date startDate, Date endDate)
             throws Exception;
-
 }

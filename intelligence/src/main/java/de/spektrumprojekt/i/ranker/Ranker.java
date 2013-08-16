@@ -192,7 +192,9 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         DiscussionMentionFeatureCommand discussionMentionFeatureCommand = new DiscussionMentionFeatureCommand();
 
         termMatchFeatureCommand = new ContentMatchFeatureCommand(
-                persistence, termVectorSimilarityComputer,
+                persistence,
+                rankerConfiguration.getUserModelType(),
+                termVectorSimilarityComputer,
                 rankerConfiguration.getInterestTermTreshold());
         determineInteractionLevelCommand = new DetermineInteractionLevelCommand();
         computeMessageRankCommand = new ComputeMessageRankCommand(
