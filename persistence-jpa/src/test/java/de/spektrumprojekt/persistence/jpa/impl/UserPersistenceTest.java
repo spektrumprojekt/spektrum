@@ -1,28 +1,32 @@
 /*
-* Licensed to the Apache Software Foundation (ASF) under one
-* or more contributor license agreements.  See the NOTICE file
-* distributed with this work for additional information
-* regarding copyright ownership.  The ASF licenses this file
-* to you under the Apache License, Version 2.0 (the
-* "License"); you may not use this file except in compliance
-* with the License.  You may obtain a copy of the License at
-* 
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package de.spektrumprojekt.persistence.jpa.impl;
 
+import static de.spektrumprojekt.datamodel.user.UserModel.DEFAULT_USER_MODEL_TYPE;
+
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 
 import org.junit.Assert;
@@ -62,6 +66,25 @@ public class UserPersistenceTest {
 
     private final static String userGlobalId2 = "testUserId2";
 
+    public void addTermsToUserModel(UserModel userModel, float score, Term... terms) {
+        Collection<UserModelEntry> entries;
+
+        entries = new HashSet<UserModelEntry>();
+        for (Term term : terms) {
+            entries.add(new UserModelEntry(userModel, new ScoredTerm(term, score)));
+        }
+
+        persistence.storeOrUpdateUserModelEntries(userModel, entries);
+    }
+
+    public void checkTerms(Map<Term, UserModelEntry> modelEntries, int size, float weight) {
+        // 4 terms
+        Assert.assertEquals(size, modelEntries.size());
+        for (Entry<Term, UserModelEntry> entry : modelEntries.entrySet()) {
+            Assert.assertEquals(weight, entry.getValue().getScoredTerm().getWeight(), 0.001);
+        }
+    }
+
     private void checkUser(User user, Long id, String userGlobalId) {
         Assert.assertNotNull("user cannot be null", user);
         Assert.assertNotNull("id of user cannot be null", user.getId());
@@ -93,7 +116,8 @@ public class UserPersistenceTest {
 
     private UserModel getNewUserModel() {
         String userGlobalId = UUID.randomUUID().toString();
-        UserModel userModel = persistence.getOrCreateUserModelByUser(userGlobalId);
+        UserModel userModel = persistence.getOrCreateUserModelByUser(userGlobalId,
+                DEFAULT_USER_MODEL_TYPE);
         checkUserModel(userModel, null, userGlobalId);
         return userModel;
     }
@@ -116,6 +140,69 @@ public class UserPersistenceTest {
     }
 
     @Test
+    public void testDifferentUserModelTypes() {
+        final String userModelType = "TEST_USER_MODEL_TYPE_";
+        final String userGlobalId = UUID.randomUUID().toString();
+        final String refUserGlobalId = UUID.randomUUID().toString();
+
+        Term term1 = persistence.getOrCreateTerm(TermCategory.TERM, "term_1_"
+                + UUID.randomUUID().toString());
+        Term term2 = persistence.getOrCreateTerm(TermCategory.TERM, "term_2_"
+                + UUID.randomUUID().toString());
+        Term term3 = persistence.getOrCreateTerm(TermCategory.TERM, "term_3_"
+                + UUID.randomUUID().toString());
+        Term term4 = persistence.getOrCreateTerm(TermCategory.TERM, "term_4_"
+                + UUID.randomUUID().toString());
+
+        // just add some other values (with a score that is distinct
+        UserModel refUserModel = persistence.getOrCreateUserModelByUser(refUserGlobalId,
+                DEFAULT_USER_MODEL_TYPE);
+        checkUserModel(refUserModel, null, refUserGlobalId);
+        addTermsToUserModel(refUserModel, 0.55f, term1, term2, term3, term4);
+
+        for (int i = 0; i < 10; i++) {
+            UserModel userModel = persistence.getOrCreateUserModelByUser(userGlobalId,
+                    userModelType + i);
+            refUserModel = persistence.getOrCreateUserModelByUser(refUserGlobalId,
+                    userModelType + i);
+            checkUserModel(userModel, null, userGlobalId);
+            checkUserModel(refUserModel, null, refUserGlobalId);
+
+            addTermsToUserModel(userModel, i / 10f, term1, term2, term3, term4);
+
+            addTermsToUserModel(refUserModel, 0.55f, term1, term2, term3, term4);
+
+        }
+
+        Collection<Term> terms = Arrays.asList(term1, term2, term3, term4);
+
+        // the reference user
+        Map<Term, UserModelEntry> modelEntries = persistence.getUserModelEntriesForTerms(
+                persistence.getOrCreateUserModelByUser(refUserGlobalId,
+                        DEFAULT_USER_MODEL_TYPE), terms);
+
+        checkTerms(modelEntries, 4, 0.55f);
+
+        for (int i = 0; i < 10; i++) {
+            modelEntries = persistence.getUserModelEntriesForTerms(
+                    persistence.getOrCreateUserModelByUser(userGlobalId,
+                            userModelType + i), terms);
+
+            // 4 terms
+            checkTerms(modelEntries, 4, i / 10f);
+
+            // the same for the reference user
+            modelEntries = persistence.getUserModelEntriesForTerms(
+                    persistence.getOrCreateUserModelByUser(refUserGlobalId,
+                            userModelType + i), terms);
+
+            checkTerms(modelEntries, 4, 0.55f);
+
+        }
+
+    }
+
+    @Test
     public void testGetAllusers() {
 
         final int numberOfUsersToCreate = 25;
@@ -130,7 +217,7 @@ public class UserPersistenceTest {
             String userGlobalId = UUID.randomUUID().toString();
             User user = persistence.getOrCreateUser(userGlobalId);
             checkUser(user, null, userGlobalId);
-            ids.add(userGlobalId);
+            Assert.assertTrue(ids.add(userGlobalId));
         }
 
         Collection<User> usersAfter = persistence.getAllUsers();
@@ -141,7 +228,8 @@ public class UserPersistenceTest {
         for (User user : usersAfter) {
             if (!ids.remove(user.getGlobalId())) {
                 // users must have been created before, so remove it from this list
-                Assert.assertTrue(!usersBefore.remove(user));
+                Assert.assertTrue(usersBefore.contains(user));
+                usersBefore.remove(user);
             }
         }
 
@@ -188,17 +276,20 @@ public class UserPersistenceTest {
         checkUser(newUser, null, newUserGlobalId);
 
         // test one create user model for existing user
-        UserModel userModel1 = persistence.getOrCreateUserModelByUser(newUserGlobalId);
+        UserModel userModel1 = persistence.getOrCreateUserModelByUser(newUserGlobalId,
+                DEFAULT_USER_MODEL_TYPE);
         checkUserModel(userModel1, null, newUserGlobalId);
 
         // test one.one get user model again
-        UserModel userModel1LoadedAgain = persistence.getOrCreateUserModelByUser(newUserGlobalId);
+        UserModel userModel1LoadedAgain = persistence.getOrCreateUserModelByUser(newUserGlobalId,
+                DEFAULT_USER_MODEL_TYPE);
         checkUserModel(userModel1LoadedAgain, userModel1.getGlobalId(), newUserGlobalId);
 
         // test create user model for new user
         String unknownUserGlobalId = UUID.randomUUID().toString();
 
-        UserModel userModel2 = persistence.getOrCreateUserModelByUser(unknownUserGlobalId);
+        UserModel userModel2 = persistence.getOrCreateUserModelByUser(unknownUserGlobalId,
+                DEFAULT_USER_MODEL_TYPE);
         checkUserModel(userModel2, null, null);
         checkUser(userModel2.getUser(), userModel2.getUser().getId(), unknownUserGlobalId);
 
@@ -208,7 +299,7 @@ public class UserPersistenceTest {
 
         // test the 2nd user model again
         UserModel userModel2LoadedAgain = persistence
-                .getOrCreateUserModelByUser(unknownUserGlobalId);
+                .getOrCreateUserModelByUser(unknownUserGlobalId, DEFAULT_USER_MODEL_TYPE);
         checkUserModel(userModel2LoadedAgain, userModel2.getGlobalId(), unknownUserGlobalId);
         checkUser(userModel2LoadedAgain.getUser(), unknownUser.getId(), unknownUserGlobalId);
 
@@ -403,21 +494,21 @@ public class UserPersistenceTest {
         terms.add(term1);
 
         Collection<UserModel> userModels;
-        userModels = persistence.getUsersWithUserModel(terms);
+        userModels = persistence.getUsersWithUserModel(terms, DEFAULT_USER_MODEL_TYPE);
 
         Assert.assertEquals(2, userModels.size());
         Assert.assertTrue(userModels.contains(userModel1));
         Assert.assertTrue(userModels.contains(userModel2));
 
         terms.add(term2);
-        userModels = persistence.getUsersWithUserModel(terms);
+        userModels = persistence.getUsersWithUserModel(terms, DEFAULT_USER_MODEL_TYPE);
 
         Assert.assertEquals(2, userModels.size());
         Assert.assertTrue(userModels.contains(userModel1));
         Assert.assertTrue(userModels.contains(userModel2));
 
         terms.add(term3);
-        userModels = persistence.getUsersWithUserModel(terms);
+        userModels = persistence.getUsersWithUserModel(terms, DEFAULT_USER_MODEL_TYPE);
 
         Assert.assertEquals(3, userModels.size());
         Assert.assertTrue(userModels.contains(userModel1));
@@ -427,7 +518,7 @@ public class UserPersistenceTest {
         terms = new HashSet<Term>();
         terms.add(term1);
         terms.add(term4);
-        userModels = persistence.getUsersWithUserModel(terms);
+        userModels = persistence.getUsersWithUserModel(terms, DEFAULT_USER_MODEL_TYPE);
 
         Assert.assertEquals(3, userModels.size());
         Assert.assertTrue(userModels.contains(userModel1));
@@ -436,7 +527,7 @@ public class UserPersistenceTest {
 
         terms = new HashSet<Term>();
         terms.add(term4);
-        userModels = persistence.getUsersWithUserModel(terms);
+        userModels = persistence.getUsersWithUserModel(terms, DEFAULT_USER_MODEL_TYPE);
 
         Assert.assertEquals(1, userModels.size());
         Assert.assertTrue(userModels.contains(userModel3));

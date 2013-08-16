@@ -21,6 +21,7 @@ package de.spektrumprojekt.persistence.jpa;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -183,13 +184,20 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public UserModel getOrCreateUserModelByUser(String userGlobalId) {
-        return this.userPersistence.getOrCreateUserModelByUser(userGlobalId);
+    public UserModel getOrCreateUserModelByUser(String userGlobalId, String userModelType) {
+        return this.userPersistence.getOrCreateUserModelByUser(userGlobalId, userModelType);
     }
 
     @Override
     public TermFrequency getTermFrequency() {
         return this.messagePersistence.getTermFrequency();
+    }
+
+    @Override
+    public Map<String, String> getUserModelEntriesCountDescription() {
+        Map<String, String> countDesc = new HashMap<String, String>();
+        countDesc.put("N/A", "N/A");
+        return countDesc;
     }
 
     @Override
@@ -219,8 +227,8 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public Collection<UserModel> getUsersWithUserModel(Collection<Term> terms) {
-        return this.userPersistence.getUsersWithUserModel(terms);
+    public Collection<UserModel> getUsersWithUserModel(Collection<Term> terms, String userModelType) {
+        return this.userPersistence.getUsersWithUserModel(terms, userModelType);
     }
 
     @Override

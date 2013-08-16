@@ -38,22 +38,19 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
     public static long WEEK = 7 * DateUtils.MILLIS_PER_DAY;
     public static long MONTH = 4 * WEEK;
 
-    public final static TimeBinnedUserModelEntryIntegrationStrategy MONTH_WEEK =
-            new TimeBinnedUserModelEntryIntegrationStrategy(
-                    0,
-                    TimeBinnedUserModelEntryIntegrationStrategy.MONTH,
-                    TimeBinnedUserModelEntryIntegrationStrategy.WEEK);
+    public final static TimeBinnedUserModelEntryIntegrationStrategy MONTH_WEEK = new TimeBinnedUserModelEntryIntegrationStrategy(
+            0, TimeBinnedUserModelEntryIntegrationStrategy.MONTH,
+            TimeBinnedUserModelEntryIntegrationStrategy.WEEK);
 
-    public final static TimeBinnedUserModelEntryIntegrationStrategy MONTH_DAY =
-            new TimeBinnedUserModelEntryIntegrationStrategy(
-                    0,
-                    TimeBinnedUserModelEntryIntegrationStrategy.MONTH,
-                    TimeBinnedUserModelEntryIntegrationStrategy.DAY);
+    public final static TimeBinnedUserModelEntryIntegrationStrategy MONTH_DAY = new TimeBinnedUserModelEntryIntegrationStrategy(
+            0, TimeBinnedUserModelEntryIntegrationStrategy.MONTH,
+            TimeBinnedUserModelEntryIntegrationStrategy.DAY);
 
-    private long startTime;
-    private long binSizeInMs;
+    private final long startTime;
 
-    private long binPrecisionInMs;
+    private final long binSizeInMs;
+
+    private final long binPrecisionInMs;
 
     public TimeBinnedUserModelEntryIntegrationStrategy(long startTime, long binSizeInMs,
             long binPrecisionInMs) {
@@ -81,6 +78,14 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
         return updateEntry(entry, -1 * interest.getScore(), scoredTerm, observationDate);
     }
 
+    public long getBinPrecisionInMs() {
+        return binPrecisionInMs;
+    }
+
+    public long getBinSizeInMs() {
+        return binSizeInMs;
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -88,6 +93,10 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
     public String getConfigurationDescription() {
         return getClass().getSimpleName() + " binSizeInMs=" + binSizeInMs + " binPrecisionInMs="
                 + binPrecisionInMs + " startTime=" + startTime;
+    }
+
+    public long getStartTime() {
+        return startTime;
     }
 
     @Override
@@ -133,6 +142,7 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
                 }
 
                 entry.consolidateByTimeBins();
+                entry.addToTimeBinEntriesHistory(timeBin);
 
                 int size = entry.getTimeBinEntries() == null ? 0 : entry.getTimeBinEntries().size();
                 assert size <= this.binSizeInMs / this.binPrecisionInMs : "timeBinEntries.size="

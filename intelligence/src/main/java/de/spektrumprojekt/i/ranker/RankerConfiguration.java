@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
+import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionConfiguration;
 import de.spektrumprojekt.i.learner.adaptation.UserModelAdapterConfiguration;
@@ -40,7 +41,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     private String termUniquenessLogfile;
 
+    private String userModelType = UserModel.DEFAULT_USER_MODEL_TYPE;
+
     private final InformationExtractionConfiguration informationExtractionConfiguration;
+
     private final InformationExtractionCommand<MessageFeatureContext> informationExtractionCommand;
 
     private final UserModelAdapterConfiguration userModelAdapterConfiguration =
@@ -188,6 +192,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         return userModelAdapterConfiguration;
     }
 
+    public String getUserModelType() {
+        return userModelType;
+    }
+
     public boolean hasFlag(RankerConfigurationFlag flag) {
         return this.flags.contains(flag);
     }
@@ -272,39 +280,30 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         this.treatMissingUserModelEntriesAsZero = treatMissingUserModelEntriesAsZero;
     }
 
+    public void setUserModelType(String userModelType) {
+        if (userModelType == null) {
+            throw new IllegalArgumentException("userModelType cannot be null.");
+        }
+        assertCanSet();
+        this.userModelType = userModelType;
+    }
+
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("RankerConfiguration [flags=");
-        builder.append(flags);
-        builder.append(", minUserSimilarity=");
-        builder.append(minUserSimilarity);
-        builder.append(", minContentMessageScore=");
-        builder.append(minContentMessageScore);
-        builder.append(", messageRankThreshold=");
-        builder.append(messageRankThreshold);
-        builder.append(", nonParticipationFactor=");
-        builder.append(nonParticipationFactor);
-        builder.append(", minimumCleanTextLengthForInvokingLearner=");
-        builder.append(minimumCleanTextLengthForInvokingLearner);
-        builder.append(", termWeightStrategy=");
-        builder.append(termWeightStrategy);
-        builder.append(", termVectorSimilarityStrategy=");
-        builder.append(termVectorSimilarityStrategy);
-        builder.append(", immutable=");
-        builder.append(immutable);
-        builder.append(", interestTermTreshold=");
-        builder.append(interestTermTreshold);
-        builder.append(", treatMissingUserModelEntriesAsZero=");
-        builder.append(treatMissingUserModelEntriesAsZero);
-        builder.append(", termUniquenessLogfile=");
-        builder.append(termUniquenessLogfile);
-        builder.append(", informationExtractionConfiguration=");
-        builder.append(informationExtractionConfiguration);
-        builder.append(", userModelAdapterConfiguration=");
-        builder.append(userModelAdapterConfiguration);
-        builder.append("]");
-        return builder.toString();
+        return "RankerConfiguration [flags=" + flags + ", minUserSimilarity=" + minUserSimilarity
+                + ", minContentMessageScore=" + minContentMessageScore + ", messageRankThreshold="
+                + messageRankThreshold + ", nonParticipationFactor=" + nonParticipationFactor
+                + ", minimumCleanTextLengthForInvokingLearner="
+                + minimumCleanTextLengthForInvokingLearner + ", termWeightStrategy="
+                + termWeightStrategy + ", termVectorSimilarityStrategy="
+                + termVectorSimilarityStrategy + ", immutable=" + immutable
+                + ", interestTermTreshold=" + interestTermTreshold
+                + ", treatMissingUserModelEntriesAsZero=" + treatMissingUserModelEntriesAsZero
+                + ", termUniquenessLogfile=" + termUniquenessLogfile + ", userModelType="
+                + userModelType + ", informationExtractionConfiguration="
+                + informationExtractionConfiguration + ", informationExtractionCommand="
+                + informationExtractionCommand + ", userModelAdapterConfiguration="
+                + userModelAdapterConfiguration + "]";
     }
 
 }

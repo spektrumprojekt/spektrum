@@ -36,6 +36,8 @@ import de.spektrumprojekt.datamodel.identifiable.Identifiable;
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = "globalId"))
 public class UserModel extends Identifiable {
 
+    public static final String DEFAULT_USER_MODEL_TYPE = "DEFAULT_USER_MODEL";
+
     /**
      * 
      */
@@ -47,11 +49,21 @@ public class UserModel extends Identifiable {
     @ManyToOne
     private User user;
 
+    private String userModelType;
+
     protected UserModel() {
+        // for jpa only
     }
 
-    public UserModel(User user) {
+    public UserModel(User user, String userModelType) {
+        if (user == null) {
+            throw new IllegalArgumentException("user cannot be null.");
+        }
+        if (userModelType == null) {
+            throw new IllegalArgumentException("userModelType cannot be null.");
+        }
         this.user = user;
+        this.userModelType = userModelType;
     }
 
     /**
@@ -60,6 +72,10 @@ public class UserModel extends Identifiable {
      */
     public User getUser() {
         return user;
+    }
+
+    public String getUserModelType() {
+        return userModelType;
     }
 
     /**
@@ -73,15 +89,7 @@ public class UserModel extends Identifiable {
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("UserModel [user=");
-        builder.append(user);
-        builder.append(", getGlobalId()=");
-        builder.append(getGlobalId());
-        builder.append(", getId()=");
-        builder.append(getId());
-        builder.append("]");
-        return builder.toString();
+        return "UserModel [user=" + user + ", userModelType=" + userModelType + "]";
     }
 
 }

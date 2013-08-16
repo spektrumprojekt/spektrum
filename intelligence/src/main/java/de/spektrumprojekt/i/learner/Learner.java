@@ -51,6 +51,7 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
     private final static Logger LOGGER = LoggerFactory.getLogger(Ranker.class);
 
     /**
+     * TODO use a LearnerConfiguration
      * 
      * @param persistence
      *            the persistence
@@ -58,10 +59,14 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
      *            the strategy to integrate the user model
      */
     public Learner(Persistence persistence,
+            String userModelType,
             InformationExtractionCommand<MessageFeatureContext> ieChain,
             UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null!");
+        }
+        if (userModelType == null) {
+            throw new IllegalArgumentException("userModelType cannot be null!");
         }
         if (userModelEntryIntegrationStrategy == null) {
             throw new IllegalArgumentException("userModelEntryIntegrationStrategy cannot be null!");
@@ -73,7 +78,9 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
         this.learnerChain
                 .addCommand(new ProxyCommand<MessageFeatureContext, LearnerMessageContext>(ieChain));
         this.learnerChain.addCommand(new LoadRelatedObservationsCommand(this.persistence));
-        this.learnerChain.addCommand(new UserModelLearnerCommand(this.persistence,
+        this.learnerChain.addCommand(new UserModelLearnerCommand(
+                this.persistence,
+                userModelType,
                 userModelEntryIntegrationStrategy));
         this.learnerChain.addCommand(new StoreObservationCommand(this.persistence));
     }

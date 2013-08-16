@@ -84,7 +84,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
         for (ScoredTerm term : terms) {
 
             Collection<UserModel> userModels = getPersistence().getUsersWithUserModel(
-                    Arrays.asList(term.getTerm()));
+                    Arrays.asList(term.getTerm()), UserModel.DEFAULT_USER_MODEL_TYPE);
 
             for (UserModel userModelToAssert : userModelsToAssert) {
                 Assert.assertTrue(
@@ -133,7 +133,8 @@ public class RankerTest extends IntelligenceSpektrumTest {
         userForRanking.add("user3");
 
         for (String globalId : userForRanking) {
-            UserModel userModel = getPersistence().getOrCreateUserModelByUser(globalId);
+            UserModel userModel = getPersistence().getOrCreateUserModelByUser(globalId,
+                    UserModel.DEFAULT_USER_MODEL_TYPE);
             Assert.assertNotNull(userModel);
             userModels.add(userModel);
         }
@@ -154,6 +155,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
 
         Learner learner = new Learner(
                 getPersistence(),
+                rankerConfiguration.getUserModelType(),
                 ranker.getInformationExtractionChain(),
                 new UserModelEntryIntegrationPlainStrategy());
 
@@ -245,9 +247,12 @@ public class RankerTest extends IntelligenceSpektrumTest {
         User user2 = getPersistence().getOrCreateUser("user2");
         User user3 = getPersistence().getOrCreateUser("user3");
 
-        UserModel userModel1 = getPersistence().getOrCreateUserModelByUser(user1.getGlobalId());
-        UserModel userModel2 = getPersistence().getOrCreateUserModelByUser(user2.getGlobalId());
-        UserModel userModel3 = getPersistence().getOrCreateUserModelByUser(user3.getGlobalId());
+        UserModel userModel1 = getPersistence().getOrCreateUserModelByUser(user1.getGlobalId(),
+                UserModel.DEFAULT_USER_MODEL_TYPE);
+        UserModel userModel2 = getPersistence().getOrCreateUserModelByUser(user2.getGlobalId(),
+                UserModel.DEFAULT_USER_MODEL_TYPE);
+        UserModel userModel3 = getPersistence().getOrCreateUserModelByUser(user3.getGlobalId(),
+                UserModel.DEFAULT_USER_MODEL_TYPE);
 
         Ranker ranker = setupRanker(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION);
 

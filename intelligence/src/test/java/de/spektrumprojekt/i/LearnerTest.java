@@ -95,7 +95,8 @@ public class LearnerTest extends IntelligenceSpektrumTest {
             Collection<Term> terms, float value) {
         // get user model entries for scored terms above
 
-        UserModel userModel = getPersistence().getOrCreateUserModelByUser(userGlobalId);
+        UserModel userModel = getPersistence().getOrCreateUserModelByUser(userGlobalId,
+                UserModel.DEFAULT_USER_MODEL_TYPE);
         Map<Term, UserModelEntry> entries = getPersistence().getUserModelEntriesForTerms(userModel,
                 terms);
 
@@ -151,7 +152,10 @@ public class LearnerTest extends IntelligenceSpektrumTest {
         Collection<Term> terms = getTermsOfMessage(message);
         Assert.assertTrue("must have some terms.", terms.size() > 0);
 
-        Learner learner = new Learner(getPersistence(), ieCommand,
+        Learner learner = new Learner(
+                getPersistence(),
+                UserModel.DEFAULT_USER_MODEL_TYPE,
+                ieCommand,
                 userModelEntryIntegrationStrategy);
 
         // learning an extreme=1 interest
