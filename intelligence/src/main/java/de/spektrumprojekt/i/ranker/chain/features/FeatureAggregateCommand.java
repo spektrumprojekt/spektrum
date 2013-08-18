@@ -70,9 +70,16 @@ public class FeatureAggregateCommand implements Command<UserSpecificMessageFeatu
         int numTerms = 0;
         for (InformationExtractionContext iec : messageFeatureContext
                 .getInformationExtractionContexts()) {
-            msgLength += iec.getMessagePart().getContent().length();
-            cleanedTextLength += iec.getCleanText().length();
-            numTerms += iec.getMessagePart().getScoredTerms().size();
+
+            if (iec.getCleanText() != null) {
+                cleanedTextLength += iec.getCleanText().length();
+            }
+            if (iec.getMessagePart().getScoredTerms() != null) {
+                numTerms += iec.getMessagePart().getScoredTerms().size();
+            }
+            if (iec.getMessagePart().getContent() != null) {
+                msgLength += iec.getMessagePart().getContent().length();
+            }
         }
         UserSimilarity simTo = persistence.getUserSimilarity(context.getMessage()
                 .getAuthorGlobalId(), userGlobalId, context.getMessage().getMessageGroup()
