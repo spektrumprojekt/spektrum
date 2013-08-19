@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>de.spektrumprojekt</groupId>
 		<artifactId>spektrumprojekt-parent</artifactId>
-		<version>0.2.0-SNAPSHOT</version>
+		<version>0.3-SNAPSHOT</version>
 	</parent>
 	<artifactId>spektrumprojekt-commons</artifactId>
 	<packaging>jar</packaging>
