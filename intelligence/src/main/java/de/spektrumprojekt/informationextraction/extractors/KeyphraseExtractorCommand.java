@@ -33,7 +33,7 @@ import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
-import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
+import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
 
@@ -182,19 +182,20 @@ public class KeyphraseExtractorCommand implements Command<InformationExtractionC
 
     @Override
     public void process(InformationExtractionContext context) {
-        String subscriptionId = context.getMessage().getSubscriptionGlobalId();
-        SubscriptionStatus subscriptionStatus = null;
-        if (subscriptionId != null) {
-            subscriptionStatus = context.getPersistence()
-                    .getAggregationSubscription(subscriptionId);
+        String sourceGlobalId = context.getMessage().getSourceGlobalId();
+
+        SourceStatus sourceStatus = null;
+        if (sourceGlobalId != null) {
+            sourceStatus = context.getPersistence()
+                    .getSourceStatusBySourceGlobalId(sourceGlobalId);
         }
-        if (subscriptionStatus == null || subscriptionStatus.getSubscription() == null) {
+        if (sourceStatus == null || sourceStatus.getSource() == null) {
             LOGGER.warn("Cannot determine subscription for message: "
-                    + context.getMessage().getGlobalId() + " subscriptionId=" + subscriptionId
+                    + context.getMessage().getGlobalId() + " subscriptionId=" + sourceGlobalId
                     + "message=" + context.getMessage());
             return;
         }
-        Property enabledProperty = subscriptionStatus.getSubscription().getAccessParameter(
+        Property enabledProperty = sourceStatus.getSource().getAccessParameter(
                 ENABLE_PROPERTY_KEY);
         if (enabledProperty == null || !Boolean.valueOf(enabledProperty.getPropertyValue())) {
             return;

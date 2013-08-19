@@ -27,8 +27,8 @@ import de.spektrumprojekt.aggregator.chain.AggregatorChain;
 import de.spektrumprojekt.aggregator.chain.AggregatorMessageContext;
 import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
 import de.spektrumprojekt.datamodel.message.Message;
-import de.spektrumprojekt.datamodel.subscription.Subscription;
-import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
+import de.spektrumprojekt.datamodel.source.Source;
+import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 
 /**
@@ -40,9 +40,9 @@ import de.spektrumprojekt.datamodel.subscription.status.StatusType;
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * @author Philipp Katz
  */
-public abstract class BaseAdapter implements IAdapter {
+public abstract class BaseAdapter implements Adapter {
 
-    private IAdapterListener listener;
+    private AdapterListener listener;
 
     private final AggregatorChain aggregatorChain;
 
@@ -101,9 +101,9 @@ public abstract class BaseAdapter implements IAdapter {
     }
 
     @Override
-    public void addSubscriptions(Collection<SubscriptionStatus> subscriptions) {
-        for (SubscriptionStatus subscription : subscriptions) {
-            addSubscription(subscription);
+    public void addSources(Collection<SourceStatus> subscriptions) {
+        for (SourceStatus subscription : subscriptions) {
+            addSource(subscription);
         }
     }
 
@@ -112,21 +112,19 @@ public abstract class BaseAdapter implements IAdapter {
     }
 
     @Override
-    public final void setListener(IAdapterListener listener) {
+    public final void setListener(AdapterListener listener) {
         Validate.notNull(listener, "listener must not be null");
         this.listener = listener;
     }
 
-    protected final void triggerListener(Subscription subscription, StatusType statusType) {
-        if (listener != null) {
-            listener.processed(subscription, statusType);
-        }
+    protected final void triggerListener(Source source, StatusType statusType) {
+        triggerListener(source, statusType, null);
     }
 
-    protected final void triggerListener(Subscription subscription, StatusType statusType,
+    protected final void triggerListener(Source source, StatusType statusType,
             Exception exception) {
         if (listener != null) {
-            listener.processed(subscription, statusType, exception);
+            listener.processed(source, statusType, exception);
         }
     }
 

@@ -24,6 +24,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
@@ -34,7 +35,9 @@ import de.spektrumprojekt.datamodel.message.Term.TermCategory;
 import de.spektrumprojekt.datamodel.message.TermFrequency;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
-import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
+import de.spektrumprojekt.datamodel.source.Source;
+import de.spektrumprojekt.datamodel.source.SourceStatus;
+import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
@@ -73,17 +76,26 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
-    public SubscriptionStatus getAggregationSubscription(String subscriptionId) {
-        return null;
+    public void deleteSource(String sourceGlobalId) {
     }
 
     @Override
-    public List<SubscriptionStatus> getAggregationSubscriptions() {
+    public void deleteSubscription(String subscriptionGlobalId) {
+
+    }
+
+    @Override
+    public Source findSource(String connectorType, Collection<Property> accessParameters) {
         return null;
     }
 
     @Override
     public Collection<MessageGroup> getAllMessageGroups() {
+        return null;
+    }
+
+    @Override
+    public List<Subscription> getAllSubscriptionsBySourceGlobalId(String sourceGlobalId) {
         return null;
     }
 
@@ -139,6 +151,12 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
+    public int getNumberOfSubscriptionsBySourceGlobalId(String globalId) {
+
+        return 0;
+    }
+
+    @Override
     public Collection<Observation> getObservations(String userGlobalId, String messageGlobalId,
             ObservationType observationType) {
         return null;
@@ -156,6 +174,27 @@ public class PersistenceMock implements Persistence {
 
     @Override
     public UserModel getOrCreateUserModelByUser(String userGlobalId) {
+        return null;
+    }
+
+    @Override
+    public Source getSourceByGlobalId(String sourceGlobalId) {
+        return null;
+    }
+
+    @Override
+    public SourceStatus getSourceStatusBySourceGlobalId(String subscriptionId) {
+        return null;
+    }
+
+    @Override
+    public List<SourceStatus> getSourceStatusList() {
+        return null;
+    }
+
+    @Override
+    public Subscription getSubscriptionByGlobalId(String subscriptionGlobalId) {
+
         return null;
     }
 
@@ -206,12 +245,17 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
-    public SubscriptionStatus saveAggregationSubscription(SubscriptionStatus aggregationSubscription) {
+    public HashWithDate saveHashWithDate(HashWithDate hashWithDate) {
         return null;
     }
 
     @Override
-    public HashWithDate saveHashWithDate(HashWithDate hashWithDate) {
+    public Source saveSource(Source source) {
+        return null;
+    }
+
+    @Override
+    public SourceStatus saveSourceStatus(SourceStatus aggregationSubscription) {
         return null;
     }
 
@@ -248,17 +292,32 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
+    public Subscription storeSubscription(Subscription subscription) {
+        return null;
+    }
+
+    @Override
     public void storeUserSimilarity(UserSimilarity stat) {
 
     }
 
     @Override
-    public void updateAggregationSubscription(SubscriptionStatus aggregationStatus) {
+    public void updateMessageRank(MessageRank rankToUpdate) {
+
     }
 
     @Override
-    public void updateMessageRank(MessageRank rankToUpdate) {
+    public Source updateSource(Source source) {
+        return null;
+    }
 
+    @Override
+    public void updateSourceStatus(SourceStatus aggregationStatus) {
+    }
+
+    @Override
+    public Subscription updateSubscription(Subscription subscription) {
+        return null;
     }
 
     @Override
@@ -271,8 +330,8 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
-    public void visitAllMessageRanks(MessageRankVisitor visitor, Date startDate, Date endDate) {
-
+    public void visitAllMessageRanks(MessageRankVisitor visitor, Date startDate, Date endDate)
+            throws Exception {
     }
 
 }

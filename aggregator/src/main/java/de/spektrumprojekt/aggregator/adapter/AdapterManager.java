@@ -30,6 +30,7 @@ import de.spektrumprojekt.aggregator.adapter.rss.FeedAdapter;
 import de.spektrumprojekt.aggregator.adapter.twitter.TwitterAdapter;
 import de.spektrumprojekt.aggregator.chain.AggregatorChain;
 import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
+import de.spektrumprojekt.datamodel.source.Source;
 
 /**
  * <p>
@@ -43,10 +44,10 @@ import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
 public final class AdapterManager {
 
     /** Stores all available adapters, indexed by their source types. */
-    private final Map<String, IAdapter> adapters;
+    private final Map<String, Adapter> adapters;
 
     /** The listener which can be hooked into the adapter instances. */
-    private final IAdapterListener adapterListener;
+    private final AdapterListener adapterListener;
 
     /**
      * <p>
@@ -59,13 +60,13 @@ public final class AdapterManager {
      */
     public AdapterManager(AggregatorChain aggregatorChain,
             AggregatorConfiguration aggregatorConfiguration,
-            IAdapterListener adapterListener) {
+            AdapterListener adapterListener) {
 
         Validate.notNull(aggregatorChain, "aggregatorChain must not be null");
         Validate.notNull(aggregatorConfiguration, "aggregatorConfiguration must not be null");
 
         this.adapterListener = adapterListener;
-        this.adapters = new HashMap<String, IAdapter>();
+        this.adapters = new HashMap<String, Adapter>();
         addAdapter(new FeedAdapter(aggregatorChain, aggregatorConfiguration));
 
         if (aggregatorConfiguration.getTwitterConsumerKey() != null
@@ -83,7 +84,7 @@ public final class AdapterManager {
      * @param adapter
      *            The adapter to add, not <code>null</code>.
      */
-    public void addAdapter(IAdapter adapter) {
+    public void addAdapter(Adapter adapter) {
         Validate.notNull(adapter, "adapter must not be null");
         adapters.put(adapter.getSourceType(), adapter);
         if (adapterListener != null) {
@@ -91,21 +92,25 @@ public final class AdapterManager {
         }
     }
 
+    public Adapter getAdapter(Source source) {
+        return this.getAdapter(source.getConnectorType());
+    }
+
     /**
      * <p>
      * Retrieves the {@link IAdapter} for the specified source type.
      * </p>
      * 
-     * @param sourceType
+     * @param connectorType
      *            The source type for which to retrieve the adapter.
      * @return The adapter implementation for the specified source type, or <code>null</code> if no
      *         such adapter is available.
      */
-    public IAdapter getAdapter(String sourceType) {
-        return adapters.get(sourceType);
+    public Adapter getAdapter(String connectorType) {
+        return adapters.get(connectorType);
     }
 
-    public Collection<IAdapter> getAllAdapters() {
+    public Collection<Adapter> getAllAdapters() {
         return adapters.values();
     }
 
@@ -113,7 +118,7 @@ public final class AdapterManager {
      * calls the adapters stop() methods
      */
     public void stop() {
-        for (IAdapter adapter : adapters.values()) {
+        for (Adapter adapter : adapters.values()) {
             adapter.stop();
         }
     }

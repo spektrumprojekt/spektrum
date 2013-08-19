@@ -31,7 +31,7 @@ import de.spektrumprojekt.datamodel.common.MimeType;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.datamodel.message.MessageType;
-import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
+import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 
 /**
@@ -55,7 +55,7 @@ public final class PingAdapter extends BasePollingAdapter {
     }
 
     @Override
-    public List<Message> poll(SubscriptionStatus subscription) throws AdapterException {
+    public List<Message> poll(SourceStatus subscription) throws AdapterException {
         Message message = new Message(MessageType.CONTENT, StatusType.OK,
                 subscription.getGlobalId(), new Date());
         MessagePart part = new MessagePart(MimeType.TEXT_PLAIN, getSourceType());

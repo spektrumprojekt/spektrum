@@ -39,6 +39,7 @@ import de.spektrumprojekt.communication.Communicator;
 import de.spektrumprojekt.communication.vm.VirtualMachineCommunicator;
 import de.spektrumprojekt.configuration.properties.SimpleProperties;
 import de.spektrumprojekt.datamodel.common.Property;
+import de.spektrumprojekt.datamodel.source.Source;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.persistence.jpa.JPAConfiguration;
 import de.spektrumprojekt.persistence.jpa.JPAPersistence;
@@ -51,6 +52,8 @@ public class SubscriptionManagerTest {
     private static final String URL_1 = "http://www.heise.de/newsticker/heise-atom.xml";
 
     private static final String URL_2 = "http://www.engadget.com/rss.xml";
+
+    private static final String URL_3 = "http://www.spektrumprojekt.de/thegit";
 
     private JPAPersistence persistence;
 
@@ -79,8 +82,10 @@ public class SubscriptionManagerTest {
         if (subscriptionGlobalId == null) {
             subscriptionGlobalId = UUID.randomUUID().toString();
         }
-        Subscription sub = new Subscription(subscriptionGlobalId, FeedAdapter.SOURCE_TYPE);
-        sub.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_URI, feedURI));
+        Source source = new Source(FeedAdapter.SOURCE_TYPE);
+        Subscription sub = new Subscription(subscriptionGlobalId, source);
+        source.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_URI, feedURI));
+
         return sub;
     }
 
@@ -113,16 +118,54 @@ public class SubscriptionManagerTest {
     public void testSubscribe() {
         Subscription subscription = getRSSSubscription(URL_1, null);
         manager.subscribe(subscription);
-        Assert.assertNotNull(persistence.getAggregationSubscription(subscription.getGlobalId()));
+
+        Assert.assertNotNull(persistence.getSubscriptionByGlobalId(subscription.getGlobalId()));
+    }
+
+    @Test
+    public void testSubscribeWithSameSource() {
+        Subscription subscription = getRSSSubscription(URL_3, null);
+
+        manager.subscribe(subscription);
+        Subscription persistedSubscription = this.persistence
+                .getSubscriptionByGlobalId(subscription.getGlobalId());
+        Assert.assertNotNull(persistedSubscription);
+        Assert.assertNotNull(persistedSubscription.getGlobalId());
+
+        Subscription subscription2 = getRSSSubscription(URL_3, null);
+        Assert.assertFalse("Global Ids should be different.", subscription.getGlobalId()
+                .equals(subscription2
+                        .getGlobalId()));
+
+        manager.subscribe(subscription2);
+        Subscription persistedSubscription2 = this.persistence
+                .getSubscriptionByGlobalId(subscription2.getGlobalId());
+        Assert.assertNotNull(persistedSubscription2);
+        Assert.assertNotNull(persistedSubscription2.getGlobalId());
+
+        Assert.assertEquals(persistedSubscription.getSource().getGlobalId(), persistedSubscription2
+                .getSource().getGlobalId());
+        Assert.assertEquals(persistedSubscription.getSource().getId(), persistedSubscription2
+                .getSource().getId());
+        Assert.assertFalse("Global Ids should be different.", persistedSubscription.getGlobalId()
+                .equals(persistedSubscription2
+                        .getGlobalId()));
+        Assert.assertFalse("Database Ids should be different.", persistedSubscription.getId()
+                .equals(persistedSubscription2
+                        .getId()));
+
     }
 
     @Test
     public void testUnsubscribe() {
         Subscription subscription = getRSSSubscription(URL_1, null);
         manager.subscribe(subscription);
+        Assert.assertNotNull(persistence.getSubscriptionByGlobalId(subscription.getGlobalId()));
+
         int numberOfSubscriptions = getNumberOfSubscriptions();
         manager.unsubscribe(subscription.getGlobalId());
-        Assert.assertNull(persistence.getAggregationSubscription(subscription.getGlobalId()));
+
+        Assert.assertNull(persistence.getSubscriptionByGlobalId(subscription.getGlobalId()));
         Assert.assertEquals(numberOfSubscriptions - 1, getNumberOfSubscriptions());
     }
 
@@ -130,16 +173,22 @@ public class SubscriptionManagerTest {
     public void testUpdate() {
         Subscription subscription = getRSSSubscription(URL_1, null);
         manager.subscribe(subscription);
+
         Subscription updatedSubscription = getRSSSubscription(
-                URL_2, subscription.getGlobalId());
+                URL_1, subscription.getGlobalId());
+
+        updatedSubscription.addSubscriptionParameter(new Property("subKey", "subValue"));
+
         Assert.assertTrue(manager.updateOrCreate(updatedSubscription));
-        Assert.assertFalse(manager.updateOrCreate(updatedSubscription));
-        Property urlProp = persistence.getAggregationSubscription(subscription.getGlobalId())
-                .getSubscription().getAccessParameter(FeedAdapter.ACCESS_PARAMETER_URI);
+        Assert.assertFalse("No update should have been made.",
+                manager.updateOrCreate(updatedSubscription));
+
+        Property urlProp = persistence.getSubscriptionByGlobalId(subscription.getGlobalId())
+                .getSubscriptionParameter("subKey");
 
         Assert.assertNotNull(urlProp);
         Assert.assertNotNull(urlProp.getPropertyValue());
-        Assert.assertEquals(URL_2, urlProp.getPropertyValue());
+        Assert.assertEquals("subValue", urlProp.getPropertyValue());
     }
 
 }

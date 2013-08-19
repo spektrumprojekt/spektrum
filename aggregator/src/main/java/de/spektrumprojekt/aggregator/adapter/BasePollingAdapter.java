@@ -28,9 +28,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,8 +36,8 @@ import org.slf4j.LoggerFactory;
 import de.spektrumprojekt.aggregator.chain.AggregatorChain;
 import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
 import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
-import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 
 /**
@@ -54,52 +52,20 @@ import de.spektrumprojekt.datamodel.subscription.status.StatusType;
  */
 public abstract class BasePollingAdapter extends BaseAdapter {
 
-    /**
-     * This Factory creates the Threads which poll. The Name is generated from the Adapter and a
-     * running number.
-     */
-    static class PollThreadFactory<T extends BasePollingAdapter> implements
-            ThreadFactory {
-        private final ThreadGroup group;
-        private final AtomicInteger threadNumber = new AtomicInteger(1);
-        private final String namePrefix;
-
-        PollThreadFactory(T executingClass) {
-            SecurityManager s = System.getSecurityManager();
-            group = s != null ? s.getThreadGroup() : Thread.currentThread()
-                    .getThreadGroup();
-            namePrefix = executingClass.getClass().getSimpleName()
-                    + " - Thread - ";
-        }
-
-        @Override
-        public Thread newThread(Runnable r) {
-            Thread t = new Thread(group, r, namePrefix
-                    + threadNumber.getAndIncrement(), 0);
-            if (t.isDaemon()) {
-                t.setDaemon(false);
-            }
-            if (t.getPriority() != Thread.NORM_PRIORITY) {
-                t.setPriority(Thread.NORM_PRIORITY);
-            }
-            return t;
-        }
-    }
-
     /** The logger for this class. */
     private static final Logger LOGGER = LoggerFactory
             .getLogger(BasePollingAdapter.class);
 
-    /** The time interval which is used for polling the subscriptions. */
+    /** The time interval which is used for polling the sources. */
     private final int pollingInterval;
 
     /** The thread pool responsible for executing the polling tasks. */
     private final ScheduledThreadPoolExecutor executor;
 
     /**
-     * Keep mapping from {@link Subscription#getSubscriptionID()}s to the scheduled tasks.
+     * Keep mapping from {@link Source#getGlobalId()}s to the scheduled tasks.
      */
-    private final Map<String, Future<?>> scheduledSubscriptions;
+    private final Map<String, Future<?>> scheduledSources;
 
     /**
      * <p>
@@ -121,37 +87,42 @@ public abstract class BasePollingAdapter extends BaseAdapter {
         this.pollingInterval = pollingInterval;
         executor = new ScheduledThreadPoolExecutor(threadPoolSize,
                 new PollThreadFactory<BasePollingAdapter>(this));
-        scheduledSubscriptions = Collections
+        scheduledSources = Collections
                 .synchronizedMap(new HashMap<String, Future<?>>());
     }
 
     @Override
-    public void addSubscription(final SubscriptionStatus subscriptionStatus) {
-        LOGGER.debug("adding subscription " + subscriptionStatus);
+    public void addSource(final SourceStatus sourceStatus) {
+        LOGGER.debug("adding source status " + sourceStatus);
         Runnable task = new Runnable() {
             @Override
             public void run() {
                 try {
-                    List<Message> messages = poll(subscriptionStatus);
+                    List<Message> messages = poll(sourceStatus);
                     addMessages(messages);
-                    triggerListener(subscriptionStatus.getSubscription(),
+                    triggerListener(sourceStatus.getSource(),
                             StatusType.OK);
                 } catch (AdapterException e) {
-                    LOGGER.warn("encountered AdapterException {} subscription={}",
-                            e.toString(), subscriptionStatus);
+                    LOGGER.warn("encountered AdapterException {} sourceStatus={}",
+                            e.toString(), sourceStatus);
                     LOGGER.debug(e.getMessage(), e);
                     // FIXME send error message here?
-                    triggerListener(subscriptionStatus.getSubscription(),
+                    triggerListener(sourceStatus.getSource(),
                             e.getStatusType(), e);
                 } catch (Throwable t) {
-                    LOGGER.error("encountered exception " + t + " for " + subscriptionStatus, t);
+                    LOGGER.error("encountered exception " + t + " for " + sourceStatus, t);
                 }
             }
         };
         ScheduledFuture<?> scheduledTask = executor.scheduleAtFixedRate(task,
                 0, pollingInterval, TimeUnit.SECONDS);
-        scheduledSubscriptions.put(subscriptionStatus.getSubscription()
+        scheduledSources.put(sourceStatus.getSource()
                 .getGlobalId(), scheduledTask);
+    }
+
+    @Override
+    public Collection<String> getSourceGlobalIds() {
+        return scheduledSources.keySet();
     }
 
     public String getStats() {
@@ -166,34 +137,29 @@ public abstract class BasePollingAdapter extends BaseAdapter {
         return builder.toString();
     }
 
-    @Override
-    public Collection<String> getSubscriptionGlobalIds() {
-        return scheduledSubscriptions.keySet();
-    }
-
     /**
      * <p>
      * Do the poll. See {@link #BasePollingAdapter(BlockingQueue, int, int)} on how to setup the
      * polling interval and the thread pool size.
      * </p>
      * 
-     * @param subscription
+     * @param sourceStatus
      *            The subscription to poll.
      * @return The (new) messages which have been acquired by this adapter.
      * @throws AdapterException
      *             In case polling fails.
      */
-    public abstract List<Message> poll(SubscriptionStatus subscription)
+    public abstract List<Message> poll(SourceStatus sourceStatus)
             throws AdapterException;
 
     @Override
-    public void removeSubscription(String subscriptionId) {
-        Future<?> task = scheduledSubscriptions.remove(subscriptionId);
+    public void removeSource(String sourceStatusId) {
+        Future<?> task = scheduledSources.remove(sourceStatusId);
         if (task != null) {
             task.cancel(false);
-            LOGGER.debug("removed subscription {}", subscriptionId);
+            LOGGER.debug("removed source {}", sourceStatusId);
         } else {
-            LOGGER.error("no subscription with ID {}", subscriptionId);
+            LOGGER.error("no source with ID {}", sourceStatusId);
         }
     }
 

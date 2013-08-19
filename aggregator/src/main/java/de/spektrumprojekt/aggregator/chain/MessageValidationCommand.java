@@ -21,8 +21,8 @@ public class MessageValidationCommand implements
     public void process(AggregatorMessageContext context) throws CommandException {
         Message message = context.getMessage();
 
-        if (message.getSubscriptionGlobalId() == null
-                || message.getSubscriptionGlobalId().isEmpty()) {
+        if (message.getSourceGlobalId() == null
+                || message.getSourceGlobalId().isEmpty()) {
             LOGGER.warn(
                     "Message {} has no subscription ID specified, this means it cannot be relayed.",
                     message);
