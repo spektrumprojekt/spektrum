@@ -9,17 +9,27 @@ public class AggregatorMessageContext {
 
     private final MessageFeatureContext messageFeatureContext;
 
+    private final String[] subscriptionGlobalIds;
+
     private boolean duplicate;
 
     public AggregatorMessageContext(Persistence persistence, Message message) {
+        this(persistence, message, (String[]) null);
+    }
+
+    public AggregatorMessageContext(Persistence persistence, Message message,
+            String... subscriptionGlobalIds) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
         }
+
+        this.subscriptionGlobalIds = subscriptionGlobalIds;
 
         // TODO what to with the mr ?
         MessageRelation messageRelation = null;
         this.messageFeatureContext = new MessageFeatureContext(persistence,
                 message, messageRelation);
+
     }
 
     /**
@@ -36,6 +46,14 @@ public class AggregatorMessageContext {
      */
     public MessageFeatureContext getMessageFeatureContext() {
         return messageFeatureContext;
+    }
+
+    /**
+     * 
+     * @return the subscriptions ids to limit. null or empty if all available should be used.
+     */
+    public String[] getSubscriptionGlobalIds() {
+        return subscriptionGlobalIds;
     }
 
     public boolean isDuplicate() {

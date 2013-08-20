@@ -47,14 +47,15 @@ import de.spektrumprojekt.datamodel.subscription.filter.FilterExpression;
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = "globalId"))
 public class Subscription extends Identifiable {
 
-    @ManyToOne(cascade = { CascadeType.PERSIST }, fetch = FetchType.EAGER, optional = false)
-    private Source source;
-
     /**
      * 
      */
     private static final long serialVersionUID = 1L;
 
+    @ManyToOne(cascade = { CascadeType.PERSIST }, fetch = FetchType.EAGER, optional = false)
+    private Source source;
+
+    private Long lastProcessedMessagedId;
     // private String serializedFilterExpression;
 
     /**
@@ -114,14 +115,13 @@ public class Subscription extends Identifiable {
         return filterExpression;
     }
 
+    public Long getLastProcessedMessagedId() {
+        return lastProcessedMessagedId;
+    }
+
     public Source getSource() {
         return source;
     }
-
-    // private FilterExpression deserialze(String serializedFilterExpression) {
-    // // TODO serialize the filter expression into JSON or XML or something else
-    // throw new UnsupportedOperationException("Not yet implemented.");
-    // }
 
     public Property getSubscriptionParameter(String propertyKey) {
         for (Property parameter : subscriptionParameters) {
@@ -132,12 +132,21 @@ public class Subscription extends Identifiable {
         return null;
     }
 
+    // private FilterExpression deserialze(String serializedFilterExpression) {
+    // // TODO serialize the filter expression into JSON or XML or something else
+    // throw new UnsupportedOperationException("Not yet implemented.");
+    // }
+
     public Collection<Property> getSubscriptionParameters() {
         return subscriptionParameters;
     }
 
     public void setFilterExpression(FilterExpression filterExpression) {
         this.filterExpression = filterExpression;
+    }
+
+    public void setLastProcessedMessagedId(Long lastProcessedMessagedId) {
+        this.lastProcessedMessagedId = lastProcessedMessagedId;
     }
 
     // public String getSerializedFilterExpression() {
@@ -167,8 +176,8 @@ public class Subscription extends Identifiable {
         StringBuilder builder = new StringBuilder();
         builder.append("Subscription [source=");
         builder.append(source);
-        builder.append(", filterExpression=");
-        builder.append(filterExpression);
+        builder.append(", lastProcessedMessagedId=");
+        builder.append(lastProcessedMessagedId);
         builder.append(", subscriptionParameters=");
         builder.append(subscriptionParameters);
         builder.append("]");

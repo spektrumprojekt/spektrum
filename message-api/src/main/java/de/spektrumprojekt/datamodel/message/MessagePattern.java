@@ -1,6 +1,7 @@
 package de.spektrumprojekt.datamodel.message;
 
 import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
@@ -23,7 +24,12 @@ public class MessagePattern extends Identifiable {
 
     private String pattern;
 
+    @ManyToOne(cascade = { }, optional = false)
     private Message message;
+
+    protected MessagePattern() {
+        // ORM constructor.
+    }
 
     /**
      * <p>
@@ -43,16 +49,12 @@ public class MessagePattern extends Identifiable {
         this.pattern = pattern;
     }
 
-    protected MessagePattern() {
-        // ORM constructor.
+    public Message getMessage() {
+        return message;
     }
 
     public String getPattern() {
         return pattern;
-    }
-
-    public Message getMessage() {
-        return message;
     }
 
     @Override

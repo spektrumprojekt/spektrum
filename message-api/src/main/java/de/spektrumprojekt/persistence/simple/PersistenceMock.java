@@ -27,6 +27,7 @@ import java.util.Map;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate;
 import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
@@ -135,18 +136,7 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
-    public Collection<Message> getMessagesForPattern(String pattern,
-            Date messagePublicationFilterDate) {
-        return null;
-    }
-
-    @Override
-    public Collection<Message> getMessagesSince(Date fromDate) {
-        return null;
-    }
-
-    @Override
-    public List<Message> getMessagesSince(String topicId, Date fromDate) {
+    public List<Message> getMessages(MessageFilter messageFilter) {
         return null;
     }
 

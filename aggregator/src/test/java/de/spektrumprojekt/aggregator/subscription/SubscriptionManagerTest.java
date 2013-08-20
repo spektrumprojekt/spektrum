@@ -19,7 +19,9 @@
 
 package de.spektrumprojekt.aggregator.subscription;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.UUID;
@@ -36,16 +38,64 @@ import de.spektrumprojekt.aggregator.chain.AggregatorChain;
 import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
 import de.spektrumprojekt.communication.CommunicationMessage;
 import de.spektrumprojekt.communication.Communicator;
+import de.spektrumprojekt.communication.MessageHandler;
+import de.spektrumprojekt.communication.transfer.MessageCommunicationMessage;
 import de.spektrumprojekt.communication.vm.VirtualMachineCommunicator;
 import de.spektrumprojekt.configuration.properties.SimpleProperties;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.source.Source;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionMessageFilter;
 import de.spektrumprojekt.persistence.jpa.JPAConfiguration;
 import de.spektrumprojekt.persistence.jpa.JPAPersistence;
 import de.spektrumprojekt.persistence.jpa.impl.SubscriptionPersistence;
 
 public class SubscriptionManagerTest {
+
+    /**
+     * Handler to recive the {@link TestMessage}
+     * 
+     * @author Communardo Software GmbH - <a
+     *         href="http://www.communardo.de/">http://www.communardo.de/</a>
+     * 
+     */
+    public class MessageHandlerTest implements MessageHandler<MessageCommunicationMessage> {
+
+        private final List<MessageCommunicationMessage> messages = new ArrayList<MessageCommunicationMessage>();
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void deliverMessage(MessageCommunicationMessage message) throws Exception {
+            messages.add(message);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public Class<MessageCommunicationMessage> getMessageClass() {
+            return MessageCommunicationMessage.class;
+        }
+
+        /**
+         * getter for received messages
+         * 
+         * @return messages
+         */
+        public List<MessageCommunicationMessage> getMessages() {
+            return messages;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public boolean supports(CommunicationMessage message) {
+            return message instanceof MessageCommunicationMessage;
+        }
+    }
 
     private static final String PERSISTENCE_UNIT_NAME = "de.spektrumprojekt.datamodel.test";
 
@@ -55,17 +105,23 @@ public class SubscriptionManagerTest {
 
     private static final String URL_3 = "http://www.spektrumprojekt.de/thegit";
 
+    private static final String URL_4 = "http://www.spiegel.de/schlagzeilen/tops/index.rss";
+
     private JPAPersistence persistence;
 
     private SubscriptionPersistence subscriptionPersistence;
 
     private SubscriptionManager manager;
-
     private Aggregator aggregator;
     private AggregatorConfiguration aggregatorConfiguration;
+
     private AggregatorChain aggregatorChain;
 
     private Communicator communicator;
+
+    private MessageHandlerTest messageHandlerTest;
+
+    private Queue<CommunicationMessage> queue;
 
     private int getNumberOfSubscriptions() {
         return subscriptionPersistence.getSubscriptions().size();
@@ -92,8 +148,12 @@ public class SubscriptionManagerTest {
     @Before
     public void setup() throws Exception {
 
-        Queue<CommunicationMessage> queue = new ConcurrentLinkedQueue<CommunicationMessage>();
+        messageHandlerTest = new MessageHandlerTest();
+
+        queue = new ConcurrentLinkedQueue<CommunicationMessage>();
         communicator = new VirtualMachineCommunicator(queue, queue);
+
+        communicator.registerMessageHandler(messageHandlerTest);
 
         Map<String, String> properties = new HashMap<String, String>();
         properties.put("persistenceUnit", PERSISTENCE_UNIT_NAME);
@@ -112,6 +172,8 @@ public class SubscriptionManagerTest {
 
         manager = new SubscriptionManager(communicator,
                 persistence, aggregatorChain, aggregatorConfiguration);
+
+        communicator.open();
     }
 
     @Test
@@ -120,6 +182,42 @@ public class SubscriptionManagerTest {
         manager.subscribe(subscription);
 
         Assert.assertNotNull(persistence.getSubscriptionByGlobalId(subscription.getGlobalId()));
+    }
+
+    @Test
+    public void testSubscribeWithFilter() throws InterruptedException {
+
+        int initalCount = 10;
+        SubscriptionMessageFilter subscriptionMessageFilter = new SubscriptionMessageFilter(
+                initalCount,
+                null);
+
+        this.messageHandlerTest.getMessages().clear();
+        Subscription subscription1 = getRSSSubscription(URL_4, null);
+        manager.subscribe(subscription1);
+        Assert.assertNotNull(persistence.getSubscriptionByGlobalId(subscription1.getGlobalId()));
+
+        // wait for the subscriptions to run.
+        Thread.sleep(1000);
+        waitForQueueToEmpty();
+
+        // wait for all messages to be delivered
+        int size = this.messageHandlerTest.getMessages().size();
+        Assert.assertTrue(size >= 5);
+
+        this.messageHandlerTest.getMessages().clear();
+        Subscription subscription2 = getRSSSubscription(URL_4, null);
+        manager.subscribe(subscription2, subscriptionMessageFilter);
+        Assert.assertNotNull(persistence.getSubscriptionByGlobalId(subscription2.getGlobalId()));
+
+        Thread.sleep(1000);
+        waitForQueueToEmpty();
+
+        Assert.assertEquals(Math.min(size, initalCount), this.messageHandlerTest.getMessages()
+                .size());
+
+        // wait for all messages to be delivered
+        // check the subscription somehow
     }
 
     @Test
@@ -189,6 +287,16 @@ public class SubscriptionManagerTest {
         Assert.assertNotNull(urlProp);
         Assert.assertNotNull(urlProp.getPropertyValue());
         Assert.assertEquals("subValue", urlProp.getPropertyValue());
+    }
+
+    private void waitForQueueToEmpty() throws InterruptedException {
+        int limit = 10;
+        while (queue.size() > 0 && limit > 0) {
+            Thread.sleep(500);
+            limit--;
+        }
+        Assert.assertEquals("Waited some seconds but here are still messages in the queue!", 0,
+                queue.size());
     }
 
 }

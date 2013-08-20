@@ -40,6 +40,7 @@ import de.spektrumprojekt.configuration.properties.SimpleProperties;
 import de.spektrumprojekt.datamodel.common.MimeType;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.datamodel.message.MessageRank;
@@ -90,48 +91,6 @@ public class MessagePersistenceTest {
         MessagePart messagePart = new MessagePart(MimeType.TEXT_PLAIN, text);
         message.addMessagePart(messagePart);
         return message;
-    }
-
-    @Test
-    public void MessagePatterns() throws Exception {
-
-        Date date = new Date(new Date().getTime() - 4 * DateUtils.MILLIS_PER_HOUR);
-
-        String pattern1 = "TICKET-1";
-        String pattern2 = "TICKET-2";
-        String pattern3 = "TICKET-3";
-
-        Message message1 = createTestMessage("TICKET-1 opened");
-        Message message2 = createTestMessage("TICKET-2 modified");
-        Thread.sleep(1000);
-        Message message3 = createTestMessage("TICKET-1 closed");
-
-        message1 = persistence.storeMessage(message1);
-        message2 = persistence.storeMessage(message2);
-        message3 = persistence.storeMessage(message3);
-
-        persistence.storeMessagePattern(pattern1, message1);
-        persistence.storeMessagePattern(pattern2, message2);
-        persistence.storeMessagePattern(pattern1, message3);
-        persistence.storeMessagePattern(pattern2, message1);
-
-        Collection<Message> p1msgs = persistence.getMessagesForPattern(pattern1, date);
-        assertEquals(2, p1msgs.size());
-
-        Collection<Message> p2msgs = persistence.getMessagesForPattern(pattern2, date);
-        assertEquals(2, p2msgs.size());
-
-        Collection<Message> p3msgs = persistence.getMessagesForPattern(pattern3, date);
-        assertEquals(0, p3msgs.size());
-
-        p1msgs = persistence.getMessagesForPattern(pattern1, date);
-        assertEquals(2, p1msgs.size());
-
-        p2msgs = persistence.getMessagesForPattern(pattern2, date);
-        assertEquals(2, p2msgs.size());
-
-        p3msgs = persistence.getMessagesForPattern(pattern3, date);
-        assertEquals(0, p3msgs.size());
     }
 
     @Before
@@ -198,19 +157,32 @@ public class MessagePersistenceTest {
             currentDate += i * intervall;
         }
 
-        Collection<Message> returnedMessages = this.persistence.getMessagesSince(
-                group.getGlobalId(), new Date(startDate));
+        MessageFilter messageFilter = new MessageFilter();
+        messageFilter.setMessageGroupGlobalId(group.getGlobalId());
+        messageFilter.setMinPublicationDate(new Date(startDate));
+
+        // some iteration ?
+        Collection<Message> returnedMessages = persistence.getMessages(messageFilter);
 
         Assert.assertEquals(messages.size(),
                 CollectionUtils.intersection(returnedMessages, messages).size());
 
-        returnedMessages = this.persistence.getMessagesSince(null, new Date(startDate));
+        messageFilter = new MessageFilter();
+        messageFilter.setMessageGroupGlobalId(null);
+        messageFilter.setMinPublicationDate(new Date(startDate));
+
+        returnedMessages = persistence.getMessages(messageFilter);
 
         Assert.assertEquals(messages.size(),
                 CollectionUtils.intersection(returnedMessages, messages).size());
 
         Date since = new Date(startDate + intervall * size / 2);
-        returnedMessages = this.persistence.getMessagesSince(group.getGlobalId(), since);
+
+        messageFilter = new MessageFilter();
+        messageFilter.setMessageGroupGlobalId(group.getGlobalId());
+        messageFilter.setMinPublicationDate(since);
+
+        returnedMessages = persistence.getMessages(messageFilter);
 
         for (Message returnedMessage : returnedMessages) {
             Assert.assertTrue("Date of message " + returnedMessage.getPublicationDate()
@@ -239,6 +211,58 @@ public class MessagePersistenceTest {
         Assert.assertTrue(terms.add(term1));
         Assert.assertTrue(terms.add(term2));
         Assert.assertTrue(terms.add(term3));
+    }
+
+    @Test
+    public void testMessagePatterns() throws Exception {
+
+        Date date = new Date(new Date().getTime() - 4 * DateUtils.MILLIS_PER_HOUR);
+
+        String pattern1 = "TICKET-1";
+        String pattern2 = "TICKET-2";
+        String pattern3 = "TICKET-3";
+
+        Message message1 = createTestMessage("TICKET-1 opened");
+        Message message2 = createTestMessage("TICKET-2 modified");
+        Thread.sleep(1000);
+        Message message3 = createTestMessage("TICKET-1 closed");
+
+        message1 = persistence.storeMessage(message1);
+        message2 = persistence.storeMessage(message2);
+        message3 = persistence.storeMessage(message3);
+
+        persistence.storeMessagePattern(pattern1, message1);
+        persistence.storeMessagePattern(pattern2, message2);
+        persistence.storeMessagePattern(pattern1, message3);
+        persistence.storeMessagePattern(pattern2, message1);
+
+        MessageFilter messageFilter = new MessageFilter();
+        messageFilter.setMinPublicationDate(date);
+
+        messageFilter.setPattern(pattern1);
+        Collection<Message> p1msgs = persistence.getMessages(messageFilter);
+        assertEquals(2, p1msgs.size());
+
+        messageFilter.setPattern(pattern2);
+        Collection<Message> p2msgs = persistence.getMessages(messageFilter);
+        assertEquals(2, p2msgs.size());
+
+        messageFilter.setPattern(pattern3);
+        Collection<Message> p3msgs = persistence.getMessages(messageFilter);
+        ;
+        assertEquals(0, p3msgs.size());
+
+        messageFilter.setPattern(pattern1);
+        p1msgs = persistence.getMessages(messageFilter);
+        assertEquals(2, p1msgs.size());
+
+        messageFilter.setPattern(pattern2);
+        p2msgs = persistence.getMessages(messageFilter);
+        assertEquals(2, p2msgs.size());
+
+        messageFilter.setPattern(pattern3);
+        p3msgs = persistence.getMessages(messageFilter);
+        assertEquals(0, p3msgs.size());
     }
 
     @Test

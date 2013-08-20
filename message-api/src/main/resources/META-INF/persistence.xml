@@ -8,19 +8,40 @@
 		<provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
 
 		<class>de.spektrumprojekt.datamodel.common.Property</class>
-		
+
+		<class>de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate</class>
+
 		<class>de.spektrumprojekt.datamodel.identifiable.Identifiable</class>
-		
-		<class>de.spektrumprojekt.datamodel.message.Message</class>
-		<class>de.spektrumprojekt.datamodel.message.MessagePart</class>
-		<class>de.spektrumprojekt.datamodel.message.ScoredTerm</class>
-		<class>de.spektrumprojekt.datamodel.message.Term</class>
-		<class>de.spektrumprojekt.datamodel.message.MessageGroup</class>
-		<class>de.spektrumprojekt.datamodel.message.ScoredTerm</class>
-		
+
 		<class>de.spektrumprojekt.datamodel.source.Source</class>
 		<class>de.spektrumprojekt.datamodel.source.SourceStatus</class>
+		
 		<class>de.spektrumprojekt.datamodel.subscription.Subscription</class>
+		<class>de.spektrumprojekt.datamodel.subscription.filter.FilterSpecification</class>
+		<class>de.spektrumprojekt.datamodel.subscription.filter.FilterExpression</class>
+		<class>de.spektrumprojekt.datamodel.subscription.filter.FilterExpressionConnector</class>
+
+		<class>de.spektrumprojekt.datamodel.message.Keyphrase</class>
+		<class>de.spektrumprojekt.datamodel.message.KeyphraseMetaInformation</class>
+		<class>de.spektrumprojekt.datamodel.message.Message</class>
+		<class>de.spektrumprojekt.datamodel.message.MessageGroup</class>
+		<class>de.spektrumprojekt.datamodel.message.MessagePart</class>
+		<class>de.spektrumprojekt.datamodel.message.MessagePattern</class>
+		<class>de.spektrumprojekt.datamodel.message.MessageRank</class>
+		<class>de.spektrumprojekt.datamodel.message.MessageRelation</class>
+		<class>de.spektrumprojekt.datamodel.message.MetaInformation</class>
+		<class>de.spektrumprojekt.datamodel.message.ScoredTerm</class>
+		<class>de.spektrumprojekt.datamodel.message.Term</class>
+		<class>de.spektrumprojekt.datamodel.message.TermFrequency</class>
+		<class>de.spektrumprojekt.datamodel.message.TermMetaInformation</class>
+		
+		<class>de.spektrumprojekt.datamodel.observation.Observation</class>
+
+		<class>de.spektrumprojekt.datamodel.user.User</class>
+		<class>de.spektrumprojekt.datamodel.user.UserModel</class>
+		<class>de.spektrumprojekt.datamodel.user.UserModelEntry</class>
+		<class>de.spektrumprojekt.datamodel.user.UserModelEntryTimeBin</class>
+		<class>de.spektrumprojekt.datamodel.user.UserSimilarity</class>
 		
 		<exclude-unlisted-classes>false</exclude-unlisted-classes>
 		<properties>

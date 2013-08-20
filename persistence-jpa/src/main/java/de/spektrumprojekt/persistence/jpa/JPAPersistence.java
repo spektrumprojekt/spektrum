@@ -28,6 +28,7 @@ import de.spektrumprojekt.configuration.Configuration;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate;
 import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
@@ -185,19 +186,8 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public Collection<Message> getMessagesForPattern(String pattern,
-            Date messagePublicationFilterDate) {
-        return messagePersistence.getMessagesForPattern(pattern, messagePublicationFilterDate);
-    }
-
-    @Override
-    public Collection<Message> getMessagesSince(Date fromDate) {
-        return this.messagePersistence.getMessagesSince(fromDate);
-    }
-
-    @Override
-    public List<Message> getMessagesSince(String topicId, Date fromDate) {
-        return this.messagePersistence.getMessagesSince(topicId, fromDate);
+    public List<Message> getMessages(MessageFilter messageFilter) {
+        return this.messagePersistence.getMessages(messageFilter);
     }
 
     @Override

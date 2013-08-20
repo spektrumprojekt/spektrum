@@ -20,6 +20,7 @@
 package de.spektrumprojekt.aggregator.subscription;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -31,17 +32,21 @@ import de.spektrumprojekt.aggregator.adapter.Adapter;
 import de.spektrumprojekt.aggregator.adapter.AdapterListener;
 import de.spektrumprojekt.aggregator.adapter.AdapterManager;
 import de.spektrumprojekt.aggregator.chain.AggregatorChain;
+import de.spektrumprojekt.aggregator.chain.AggregatorMessageContext;
 import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
 import de.spektrumprojekt.communication.Communicator;
 import de.spektrumprojekt.communication.transfer.MessageCommunicationMessage;
 import de.spektrumprojekt.datamodel.common.MimeType;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.message.MessageFilter;
+import de.spektrumprojekt.datamodel.message.MessageFilter.OrderDirection;
 import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.datamodel.message.MessageType;
 import de.spektrumprojekt.datamodel.source.Source;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionMessageFilter;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 import de.spektrumprojekt.persistence.Persistence;
 
@@ -72,6 +77,8 @@ public class SubscriptionManager implements
 
     private final AggregatorConfiguration aggregatorConfiguration;
 
+    private final AggregatorChain aggregatorChain;
+
     /**
      * <p>
      * Initialize a new {@link SubscriptionManager} with the specified queue delivering new
@@ -82,7 +89,8 @@ public class SubscriptionManager implements
      * @param messageQueue
      *            The message queue where outgoing messages will be put.
      */
-    public SubscriptionManager(Communicator communicator,
+    public SubscriptionManager(
+            Communicator communicator,
             Persistence persistence,
             AggregatorChain aggregatorChain,
             AggregatorConfiguration aggregatorConfiguration) {
@@ -98,6 +106,7 @@ public class SubscriptionManager implements
         this.aggregatorConfiguration = aggregatorConfiguration;
         this.adapterManager = new AdapterManager(aggregatorChain,
                 aggregatorConfiguration, this);
+        this.aggregatorChain = aggregatorChain;
 
         addPersistentSubscriptions();
 
@@ -148,9 +157,8 @@ public class SubscriptionManager implements
         }
     }
 
-    private Subscription createSubscriptionAndStart(Subscription subscription)
+    private SourceStatus createAndStartSource(Source source)
             throws AdapterNotFoundException {
-        Source source = subscription.getSource();
         Adapter adapter = adapterManager.getAdapter(source.getConnectorType());
         if (adapter == null) {
             LOGGER.warn(
@@ -160,14 +168,12 @@ public class SubscriptionManager implements
                     + source.getConnectorType(), source);
         }
 
-        subscription = this.persistence.storeSubscription(subscription);
-
-        SourceStatus sourceStatus = new SourceStatus(subscription.getSource());
+        SourceStatus sourceStatus = new SourceStatus(source);
         sourceStatus = persistence.saveSourceStatus(sourceStatus);
 
         adapter.addSource(sourceStatus);
 
-        return subscription;
+        return sourceStatus;
     }
 
     /**
@@ -317,12 +323,21 @@ public class SubscriptionManager implements
 
     @Override
     public void subscribe(Subscription subscription) {
+        this.subscribe(subscription, null);
+    }
+
+    @Override
+    public void subscribe(Subscription subscription,
+            SubscriptionMessageFilter subscriptionMessageFilter) {
         LOGGER.debug("handle subscription " + subscription);
         if (subscription == null) {
             throw new IllegalArgumentException("subscription cannot be null");
         }
         if (subscription.getSource() == null) {
             throw new IllegalArgumentException("subscription.source cannot be null");
+        }
+        if (subscriptionMessageFilter == null) {
+            subscriptionMessageFilter = SubscriptionMessageFilter.NONE;
         }
         Source source = subscription.getSource();
         String sourceType = source.getConnectorType();
@@ -342,23 +357,25 @@ public class SubscriptionManager implements
         Source existingSource = this.persistence.findSource(source
                 .getConnectorType(), source.getAccessParameters());
 
+        SourceStatus sourceStatus;
         if (existingSource != null) {
             // the source already exists, so use it
             subscription.setSource(existingSource);
             this.persistence.storeSubscription(subscription);
 
-            SourceStatus sourceStatus = this.persistence
+            sourceStatus = this.persistence
                     .getSourceStatusBySourceGlobalId(existingSource.getGlobalId());
             if (sourceStatus.isBlocked()) {
                 this.unblockSource(sourceStatus);
             }
 
         } else {
+            subscription = this.persistence.storeSubscription(subscription);
 
             // everything is new so create subscription with source and a new source status
             try {
                 // create subscription and source and start working it
-                this.createSubscriptionAndStart(subscription);
+                sourceStatus = this.createAndStartSource(subscription.getSource());
             } catch (AdapterNotFoundException e) {
 
                 Message errorMessage = new Message(MessageType.ERROR,
@@ -378,6 +395,33 @@ public class SubscriptionManager implements
 
         }
 
+        if (existingSource != null && subscriptionMessageFilter != null
+                && !SubscriptionMessageFilter.NONE.equals(subscriptionMessageFilter)) {
+            MessageFilter messageFilter = new MessageFilter();
+            messageFilter.setSourceGlobalId(existingSource.getGlobalId());
+            messageFilter.setMessageIdOrderDirection(OrderDirection.ASC);
+
+            List<Message> messages = Collections.emptyList();
+
+            if (subscriptionMessageFilter.getStartDate() != null) {
+                messageFilter.setMinPublicationDate(subscriptionMessageFilter.getStartDate());
+                messages = this.persistence.getMessages(messageFilter);
+            }
+            if (messages.size() < subscriptionMessageFilter.getLastXMessages()) {
+                messageFilter.setMinPublicationDate(null);
+                messageFilter.setLastMessagesCount(subscriptionMessageFilter.getLastXMessages());
+                messages = this.persistence.getMessages(messageFilter);
+            }
+
+            for (Message message : messages) {
+
+                AggregatorMessageContext aggregatorMessageContext = new AggregatorMessageContext(
+                        this.aggregatorChain.getPersistence(), message, subscription.getGlobalId());
+                this.aggregatorChain.getAddMessageToSubscriptionChain().process(
+                        aggregatorMessageContext);
+
+            }
+        }
     }
 
     /**
@@ -501,4 +545,5 @@ public class SubscriptionManager implements
 
         return true;
     }
+
 }

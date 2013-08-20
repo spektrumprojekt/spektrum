@@ -27,6 +27,7 @@ import java.util.Map;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate;
 import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
@@ -103,18 +104,7 @@ public interface Persistence {
 
     MessageRelation getMessageRelation(Message message);
 
-    /**
-     * 
-     * @param pattern
-     * @param messagePublicationFilterDate
-     *            publication date of the messages to consider
-     * @return the messages that match the pattern
-     */
-    Collection<Message> getMessagesForPattern(String pattern, Date messagePublicationFilterDate);
-
-    Collection<Message> getMessagesSince(Date fromDate);
-
-    Collection<Message> getMessagesSince(String messageGroupGlobalId, Date fromDate);
+    List<Message> getMessages(MessageFilter messageFilter);
 
     int getNumberOfSubscriptionsBySourceGlobalId(String globalId);
 

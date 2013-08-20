@@ -92,7 +92,7 @@ public class Aggregator {
         this.aggregatorConfiguration = aggregatorConfiguration;
         this.informationExtractionCommand = informationExtractionCommand;
 
-        this.setupChain();
+        this.setupChains();
     }
 
     public Aggregator(Communicator communicator, Persistence persistence,
@@ -130,23 +130,30 @@ public class Aggregator {
         return aggregatorChain;
     }
 
-    private void setupChain() {
+    private void setupChains() {
 
         aggregatorChain = new AggregatorChain(this.persistence);
 
-        aggregatorChain.addCommand(new PublicationDateFilterCommand(this.aggregatorConfiguration
-                .getMinimumPublicationDate()));
-        aggregatorChain.addCommand(new DuplicationDetectionCommand(new HashDuplicationDetection(
-                aggregatorConfiguration, persistence)));
+        aggregatorChain.getNewMessageChain().addCommand(
+                new PublicationDateFilterCommand(this.aggregatorConfiguration
+                        .getMinimumPublicationDate()));
+        aggregatorChain.getNewMessageChain().addCommand(
+                new DuplicationDetectionCommand(new HashDuplicationDetection(
+                        aggregatorConfiguration, persistence)));
 
         if (this.informationExtractionCommand != null) {
-            aggregatorChain.addCommand(new AggregatorProxyMessageFeatureCommand(
-                    informationExtractionCommand));
+            aggregatorChain.getNewMessageChain().addCommand(
+                    new AggregatorProxyMessageFeatureCommand(
+                            informationExtractionCommand));
         }
-        aggregatorChain.addCommand(new AggregatorProxyMessageFeatureCommand(
+        aggregatorChain.getNewMessageChain().addCommand(new AggregatorProxyMessageFeatureCommand(
                 new StoreMessageCommand(persistence)));
 
-        aggregatorChain.addCommand(new SendAggregatorMessageCommand(this.communicator));
+        SendAggregatorMessageCommand sendAggregatorMessageCommand = new SendAggregatorMessageCommand(
+                this.communicator);
+        aggregatorChain.getNewMessageChain().addCommand(sendAggregatorMessageCommand);
+
+        aggregatorChain.getAddMessageToSubscriptionChain().addCommand(sendAggregatorMessageCommand);
     }
 
     /**

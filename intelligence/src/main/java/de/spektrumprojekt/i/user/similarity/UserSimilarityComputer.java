@@ -32,6 +32,7 @@ import de.spektrumprojekt.commons.computer.Computer;
 import de.spektrumprojekt.commons.time.TimeProviderHolder;
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
 import de.spektrumprojekt.helper.MessageHelper;
@@ -120,9 +121,13 @@ public class UserSimilarityComputer implements ConfigurationDescriptable, Comput
         long now = TimeProviderHolder.DEFAULT.getCurrentTime();
         Date goingBack = new Date(now - intervall);
         for (MessageGroup messageGroup : messageGroups) {
+
+            MessageFilter messageFilter = new MessageFilter();
+            messageFilter.setMessageGroupGlobalId(messageGroup.getGlobalId());
+            messageFilter.setMinPublicationDate(goingBack);
+
             // some iteration ?
-            Collection<Message> messages = persistence.getMessagesSince(messageGroup.getGlobalId(),
-                    goingBack);
+            Collection<Message> messages = persistence.getMessages(messageFilter);
 
             for (Message message : messages) {
                 updateUserSimilarities(similarities, message);

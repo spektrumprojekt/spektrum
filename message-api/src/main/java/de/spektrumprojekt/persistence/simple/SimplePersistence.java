@@ -34,8 +34,10 @@ import java.util.Set;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate;
 import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessagePart;
+import de.spektrumprojekt.datamodel.message.MessagePublicationDateComperator;
 import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
@@ -283,37 +285,32 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
-    public Collection<Message> getMessagesForPattern(String pattern,
-            Date messagePublicationFilterDate) {
-        List<Message> messages = patternMessages.get(pattern);
-        if (messages == null) {
-            return Collections.emptyList();
-        }
-        List<Message> result = new ArrayList<Message>();
-        for (Message message : messages) {
-            if (message.getPublicationDate().after(messagePublicationFilterDate)) {
-                result.add(message);
-            }
-        }
-        return result;
-    }
+    public List<Message> getMessages(MessageFilter messageFilter) {
+        List<Message> filteredMessages = new ArrayList<Message>();
+        List<Message> baseMessages = new ArrayList<Message>();
 
-    @Override
-    public Collection<Message> getMessagesSince(Date fromDate) {
-        return getMessagesSince(null, fromDate);
-    }
+        if (messageFilter.getPattern() != null) {
+            baseMessages.addAll(patternMessages.get(messageFilter.getPattern()));
+        } else {
+            baseMessages.addAll(this.messages.values());
+        }
+        Collections.sort(baseMessages, new MessagePublicationDateComperator());
 
-    @Override
-    public Collection<Message> getMessagesSince(String messageGroupGlobalId, Date fromDate) {
-        Collection<Message> filteredMessages = new HashSet<Message>();
-        for (Message message : this.messages.values()) {
-            if (messageGroupGlobalId != null
-                    && !messageGroupGlobalId.equals(message.getMessageGroup().getGlobalId())) {
+        for (Message message : baseMessages) {
+            if (messageFilter.getMessageGroupGlobalId() != null
+                    && !messageFilter.getMessageGroupGlobalId().equals(
+                            message.getMessageGroup().getGlobalId())) {
                 continue;
             }
 
-            if (message.getPublicationDate().after(fromDate)) {
+            if (messageFilter.getMinPublicationDate() == null
+                    || message.getPublicationDate().after(messageFilter.getMinPublicationDate())) {
                 filteredMessages.add(message);
+            }
+
+            if (messageFilter.getLastMessagesCount() > 0
+                    && messageFilter.getLastMessagesCount() <= filteredMessages.size()) {
+                break;
             }
         }
         return filteredMessages;
@@ -695,4 +692,5 @@ public class SimplePersistence implements Persistence {
             visitor.visit(messageRank, message);
         }
     }
+
 }

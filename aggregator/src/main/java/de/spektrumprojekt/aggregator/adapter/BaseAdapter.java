@@ -83,7 +83,7 @@ public abstract class BaseAdapter implements Adapter {
     protected final void addMessage(Message message) {
         AggregatorMessageContext aggregatorMessageContext = new AggregatorMessageContext(
                 this.aggregatorChain.getPersistence(), message);
-        this.aggregatorChain.process(aggregatorMessageContext);
+        this.aggregatorChain.getNewMessageChain().process(aggregatorMessageContext);
     }
 
     /**

@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
@@ -221,7 +222,10 @@ public class TermFrequencyComputer implements ConfigurationDescriptable {
         this.persistence.resetTermCount();
         this.getTermFrequency().getMessageGroupMessageCounts().clear();
 
-        Collection<Message> messages = this.persistence.getMessagesSince(fromDate);
+        MessageFilter messageFilter = new MessageFilter();
+        messageFilter.setMinPublicationDate(fromDate);
+
+        Collection<Message> messages = this.persistence.getMessages(messageFilter);
         Collection<Term> termsChanged = new HashSet<Term>();
 
         LOGGER.info("TermFrequencyComputed loaded messages ...");

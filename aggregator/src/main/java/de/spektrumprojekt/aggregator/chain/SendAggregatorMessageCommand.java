@@ -25,7 +25,8 @@ public class SendAggregatorMessageCommand implements
     public void process(AggregatorMessageContext context) {
         Message message = context.getMessage();
 
-        MessageCommunicationMessage mcm = new MessageCommunicationMessage(message);
+        MessageCommunicationMessage mcm = new MessageCommunicationMessage(message,
+                context.getSubscriptionGlobalIds());
 
         this.communicator.sendMessage(mcm);
 
