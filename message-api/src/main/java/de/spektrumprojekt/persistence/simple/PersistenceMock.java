@@ -94,6 +94,12 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
+    public Map<UserModel, Collection<UserModelEntry>> getAllUserModelEntries(String userModelType) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
     public Collection<User> getAllUsers() {
         return null;
     }

@@ -253,6 +253,15 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
+    public Map<UserModel, Collection<UserModelEntry>> getAllUserModelEntries(String userModelType) {
+        Map<UserModel, Collection<UserModelEntry>> result = new HashMap<UserModel, Collection<UserModelEntry>>();
+        for (UserModelHolder holder : userModelByTypeHolders.get(userModelType).values()) {
+            result.put(holder.getUserModel(), holder.getUserModelEntries().values());
+        }
+        return result;
+    }
+
+    @Override
     public Collection<User> getAllUsers() {
         return this.users.values();
     }
@@ -408,6 +417,7 @@ public class SimplePersistence implements Persistence {
      * 
      * @return a map of user model type => description of the counts
      */
+    @Override
     public Map<String, String> getUserModelEntriesCountDescription() {
         Map<String, String> countDescription = new HashMap<String, String>();
         for (Entry<String, Map<User, UserModelHolder>> userModelHolders : this.userModelByTypeHolders

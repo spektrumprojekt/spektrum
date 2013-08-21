@@ -120,6 +120,12 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
+    public Map<UserModel, Collection<UserModelEntry>> getAllUserModelEntries(String userModelType) {
+        // TODO Auto-generated method stub
+        throw new RuntimeException("Not implemented yet.");
+    }
+
+    @Override
     public Collection<User> getAllUsers() {
         return this.userPersistence.getAllUsers();
     }
