@@ -21,6 +21,7 @@ package de.spektrumprojekt.i;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -151,12 +152,9 @@ public class LearnerTest extends IntelligenceSpektrumTest {
 
         Collection<Term> terms = getTermsOfMessage(message);
         Assert.assertTrue("must have some terms.", terms.size() > 0);
-
-        Learner learner = new Learner(
-                getPersistence(),
-                UserModel.DEFAULT_USER_MODEL_TYPE,
-                ieCommand,
-                userModelEntryIntegrationStrategy);
+        Map<String, UserModelEntryIntegrationStrategy> userModelTypes = new HashMap<String, UserModelEntryIntegrationStrategy>();
+        userModelTypes.put(UserModel.DEFAULT_USER_MODEL_TYPE, userModelEntryIntegrationStrategy);
+        Learner learner = new Learner(getPersistence(), userModelTypes, ieCommand);
 
         // learning an extreme=1 interest
         Observation observation = new Observation(user1ToLearnForGlobalId, message.getGlobalId(),

@@ -19,6 +19,8 @@
 
 package de.spektrumprojekt.i.learner;
 
+import java.util.Map;
+
 import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +46,7 @@ import de.spektrumprojekt.persistence.Persistence;
  */
 public class Learner implements MessageHandler<LearningMessage>, ConfigurationDescriptable {
 
-    private CommandChain<LearnerMessageContext> learnerChain;
+    private final CommandChain<LearnerMessageContext> learnerChain;
 
     private final Persistence persistence;
 
@@ -59,18 +61,17 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
      *            the strategy to integrate the user model
      */
     public Learner(Persistence persistence,
-            String userModelType,
-            InformationExtractionCommand<MessageFeatureContext> ieChain,
-            UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy) {
+            Map<String, UserModelEntryIntegrationStrategy> userModelTypes,
+            InformationExtractionCommand<MessageFeatureContext> ieChain) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null!");
         }
-        if (userModelType == null) {
+        if (userModelTypes == null) {
             throw new IllegalArgumentException("userModelType cannot be null!");
         }
-        if (userModelEntryIntegrationStrategy == null) {
-            throw new IllegalArgumentException("userModelEntryIntegrationStrategy cannot be null!");
-        }
+        // if (userModelEntryIntegrationStrategy == null) {
+        // throw new IllegalArgumentException("userModelEntryIntegrationStrategy cannot be null!");
+        // }
         this.persistence = persistence;
 
         this.learnerChain = new CommandChain<LearnerMessageContext>();
@@ -78,10 +79,10 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
         this.learnerChain
                 .addCommand(new ProxyCommand<MessageFeatureContext, LearnerMessageContext>(ieChain));
         this.learnerChain.addCommand(new LoadRelatedObservationsCommand(this.persistence));
-        this.learnerChain.addCommand(new UserModelLearnerCommand(
-                this.persistence,
-                userModelType,
-                userModelEntryIntegrationStrategy));
+        for (String userModelType : userModelTypes.keySet()) {
+            this.learnerChain.addCommand(new UserModelLearnerCommand(this.persistence,
+                    userModelType, userModelTypes.get(userModelType)));
+        }
         this.learnerChain.addCommand(new StoreObservationCommand(this.persistence));
     }
 

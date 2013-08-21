@@ -20,6 +20,8 @@
 package de.spektrumprojekt.i.ranker.chain.features;
 
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import de.spektrumprojekt.commons.chain.Command;
@@ -38,11 +40,10 @@ import de.spektrumprojekt.persistence.Persistence;
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 
  */
-public class ContentMatchFeatureCommand implements
-        Command<UserSpecificMessageFeatureContext> {
+public class ContentMatchFeatureCommand implements Command<UserSpecificMessageFeatureContext> {
 
     private final Persistence persistence;
-    private final String userModelType;
+    private final String[] userModelTypes;
     private final TermVectorSimilarityComputer termVectorSimilarityComputer;
     private final float interestTermTreshold;
 
@@ -51,22 +52,19 @@ public class ContentMatchFeatureCommand implements
      * @param persistence
      *            the persistence
      */
-    public ContentMatchFeatureCommand(
-            Persistence persistence,
-            String userModelType,
-            TermVectorSimilarityComputer termVectorSimilarityComputer,
-            float interestTermTreshold) {
+    public ContentMatchFeatureCommand(Persistence persistence, String[] userModelTypes,
+            TermVectorSimilarityComputer termVectorSimilarityComputer, float interestTermTreshold) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
         }
         if (termVectorSimilarityComputer == null) {
             throw new IllegalArgumentException("termVectorSimilarityComputer cannot be null.");
         }
-        if (userModelType == null) {
+        if (userModelTypes == null) {
             throw new IllegalArgumentException("userModelType cannot be null.");
         }
         this.persistence = persistence;
-        this.userModelType = userModelType;
+        this.userModelTypes = userModelTypes;
         this.interestTermTreshold = interestTermTreshold;
         this.termVectorSimilarityComputer = termVectorSimilarityComputer;
     }
@@ -76,8 +74,7 @@ public class ContentMatchFeatureCommand implements
      */
     @Override
     public String getConfigurationDescription() {
-        return this.getClass().getSimpleName()
-                + "userModelType=" + userModelType
+        return this.getClass().getSimpleName() + "userModelType=" + userModelTypes
                 + " termVectorSimilarityComputer="
                 + termVectorSimilarityComputer.getConfigurationDescription()
                 + " interestTermTreshold=" + interestTermTreshold;
@@ -96,18 +93,21 @@ public class ContentMatchFeatureCommand implements
      */
     @Override
     public void process(UserSpecificMessageFeatureContext context) {
+        List<UserModel> userModels = new LinkedList<UserModel>();
+        for (String userModelType : userModelTypes) {
+            userModels.add(persistence.getOrCreateUserModelByUser(context.getUserGlobalId(),
+                    userModelType));
+        }
 
-        UserModel userModel = persistence.getOrCreateUserModelByUser(context.getUserGlobalId(),
-                userModelType);
-
+        // TODO only for test, change to multiple similarity test
+        UserModel userModel = userModels.get(0);
         Collection<Term> messageTerms = MessageHelper.getAllTerms(context.getMessage());
         Map<Term, UserModelEntry> entries = persistence.getUserModelEntriesForTerms(userModel,
                 messageTerms);
 
         context.setMatchingUserModelEntries(entries);
         String messageGroupId = context.getMessage().getMessageGroup() == null ? null : context
-                .getMessage()
-                .getMessageGroup().getGlobalId();
+                .getMessage().getMessageGroup().getGlobalId();
         if (entries != null && entries.size() > 0) {
             MessageFeature feature = new MessageFeature(getFeatureId());
 
@@ -122,5 +122,4 @@ public class ContentMatchFeatureCommand implements
         }
 
     }
-
 }
