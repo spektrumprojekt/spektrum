@@ -15,6 +15,7 @@ import de.spektrumprojekt.i.learner.UserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.i.learner.adaptation.UserModelAdapterConfiguration;
 import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
 import de.spektrumprojekt.i.term.TermWeightStrategy;
+import de.spektrumprojekt.i.timebased.EnergyCalculationConfiguration;
 
 public class RankerConfiguration implements ConfigurationDescriptable, Cloneable {
 
@@ -50,6 +51,8 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
     private final InformationExtractionCommand<MessageFeatureContext> informationExtractionCommand;
 
     private final UserModelAdapterConfiguration userModelAdapterConfiguration = new UserModelAdapterConfiguration();
+
+    private EnergyCalculationConfiguration energyCalculationConfiguration;
 
     public RankerConfiguration(TermWeightStrategy strategy, TermVectorSimilarityStrategy aggregation) {
         this(strategy, aggregation, null, null, (RankerConfigurationFlag[]) null);
@@ -139,6 +142,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         return this.getClass().getSimpleName() + " " + this.toString();
     }
 
+    public EnergyCalculationConfiguration getEnergyCalculationConfiguration() {
+        return this.energyCalculationConfiguration;
+    }
+
     public Collection<RankerConfigurationFlag> getFlags() {
         return Collections.unmodifiableSet(flags);
     }
@@ -215,6 +222,11 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
     public UserModelEntryIntegrationStrategy put(String userModelType,
             UserModelEntryIntegrationStrategy integrationStrategy) {
         return userModelTypes.put(userModelType, integrationStrategy);
+    }
+
+    public void setEnergyCalculationConfiguration(
+            EnergyCalculationConfiguration energyCalculationConfiguration) {
+        this.energyCalculationConfiguration = energyCalculationConfiguration;
     }
 
     public void setFlags(RankerConfigurationFlag... flags) {
