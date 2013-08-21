@@ -55,6 +55,14 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
     private final boolean calculateLater;
 
     public TimeBinnedUserModelEntryIntegrationStrategy(long startTime, long binSizeInMs,
+            long binPrecisionInMs) {
+        this.startTime = startTime;
+        this.binSizeInMs = binSizeInMs;
+        this.binPrecisionInMs = binPrecisionInMs;
+        this.calculateLater = false;
+    }
+
+    public TimeBinnedUserModelEntryIntegrationStrategy(long startTime, long binSizeInMs,
             long binPrecisionInMs, boolean calculateLater) {
         this.startTime = startTime;
         this.binSizeInMs = binSizeInMs;

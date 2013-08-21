@@ -1,7 +1,9 @@
 package de.spektrumprojekt.i.timebased;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
@@ -20,7 +22,13 @@ public class NutritionAndEnergyUserModelUpdater {
 
     public NutritionAndEnergyUserModelUpdater(RankerConfiguration configuration) {
         super();
-        this.userModelTypes = configuration.getUserModelTypes();
+        this.userModelTypes = new HashMap<String, UserModelEntryIntegrationStrategy>();
+        for (Entry<String, UserModelEntryIntegrationStrategy> entry : configuration
+                .getUserModelTypes().entrySet()) {
+            if (needsToBeCalculated(entry.getValue())) {
+                userModelTypes.put(entry.getKey(), entry.getValue());
+            }
+        }
         this.energyCalculationConfiguration = configuration.getEnergyCalculationConfiguration();
     }
 
@@ -31,33 +39,31 @@ public class NutritionAndEnergyUserModelUpdater {
 
     public void updateUserModels() {
         for (String userModelType : userModelTypes.keySet()) {
-            if (needsToBeCalculated(userModelTypes.get(userModelType))) {
-                Map<UserModel, Collection<UserModelEntry>> userModelsAndEntries = persistence
-                        .getAllUserModelEntries(userModelType);
-                for (UserModel userModel : userModelsAndEntries.keySet()) {
-                    Collection<UserModelEntry> entries = userModelsAndEntries.get(userModel);
-                    for (UserModelEntry entry : entries) {
-                        float weight = 0;
-                        float[] nutrition = energyCalculationConfiguration.getStrategy()
-                                .getNutrition(entry);
-                        int length = nutrition.length - 1;
-                        float currentNutrition = nutrition[length];
-                        float energy = 0;
-                        for (int histNutrIndex = length
-                                - energyCalculationConfiguration.getHistoryLength(); histNutrIndex < length; histNutrIndex++) {
-                            float historicalNutrition = nutrition[histNutrIndex];
-                            energy += (Math.pow(currentNutrition, 2) - Math.pow(
-                                    historicalNutrition, 2)) / (length - histNutrIndex);
-                        }
-                        weight = (float) (energyCalculationConfiguration.getG() / (1 + energyCalculationConfiguration
-                                .getD()
-                                * Math.pow(Math.E, -energyCalculationConfiguration.getK()
-                                        * energyCalculationConfiguration.getG() * currentNutrition
-                                        * energy)));
-                        entry.getScoredTerm().setWeight(weight);
+            Map<UserModel, Collection<UserModelEntry>> userModelsAndEntries = persistence
+                    .getAllUserModelEntries(userModelType);
+            for (UserModel userModel : userModelsAndEntries.keySet()) {
+                Collection<UserModelEntry> entries = userModelsAndEntries.get(userModel);
+                for (UserModelEntry entry : entries) {
+                    float weight = 0;
+                    float[] nutrition = energyCalculationConfiguration.getStrategy().getNutrition(
+                            entry);
+                    int length = nutrition.length - 1;
+                    float currentNutrition = nutrition[length];
+                    float energy = 0;
+                    for (int histNutrIndex = length
+                            - energyCalculationConfiguration.getHistoryLength(); histNutrIndex < length; histNutrIndex++) {
+                        float historicalNutrition = nutrition[histNutrIndex];
+                        energy += (Math.pow(currentNutrition, 2) - Math.pow(historicalNutrition, 2))
+                                / (length - histNutrIndex);
                     }
-                    persistence.storeOrUpdateUserModelEntries(userModel, entries);
+                    weight = (float) (energyCalculationConfiguration.getG() / (1 + energyCalculationConfiguration
+                            .getD()
+                            * Math.pow(Math.E, -energyCalculationConfiguration.getK()
+                                    * energyCalculationConfiguration.getG() * currentNutrition
+                                    * energy)));
+                    entry.getScoredTerm().setWeight(weight);
                 }
+                persistence.storeOrUpdateUserModelEntries(userModel, entries);
             }
         }
     }
