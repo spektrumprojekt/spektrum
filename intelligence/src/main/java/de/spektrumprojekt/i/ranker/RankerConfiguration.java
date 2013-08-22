@@ -18,13 +18,16 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     private Set<RankerConfigurationFlag> flags = new HashSet<RankerConfigurationFlag>();
 
-    // the minimum user similarity that must be fullfilled to be eglible to take the score of
+    // for adaption the message rank (not the user model): the minimum user similarity that must be
+    // fullfilled to be eglible to take the score of
     private float minUserSimilarity = 0.5f;
 
-    // the minimum score the cmf feature of a similar user must have such that it will be used.
+    // for adaption the message rank (not the user model): the minimum score the cmf feature of a
+    // similar user must have such that it will be used.
     private float minContentMessageScore = 0.5f;
 
-    // the message rank threshold determines for which users the adaption will take place.
+    // for adaption the message rank (not the user model): the message rank threshold determines for
+    // which users the adaption will take place.
     private float messageRankThreshold = 0.5f;
 
     private float nonParticipationFactor = 1f;
