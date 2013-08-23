@@ -55,7 +55,7 @@ public class Subscription extends Identifiable {
     @ManyToOne(cascade = { CascadeType.PERSIST }, fetch = FetchType.EAGER, optional = false)
     private Source source;
 
-    private Long lastProcessedMessagedId;
+    private transient Long lastProcessedMessagedId;
     // private String serializedFilterExpression;
 
     /**
