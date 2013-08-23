@@ -129,8 +129,8 @@ public class ContentMatchFeatureCommand implements Command<UserSpecificMessageFe
                     values.put(userModel.getUserModelType(), this.termVectorSimilarityComputer
                             .getSimilarity(messageGroupId, entries, messageTerms));
                 }
-                rankerConfiguration.getShortTermMemoryConfiguration().getMergeValuesStrategy()
-                        .merge(values);
+                value = rankerConfiguration.getShortTermMemoryConfiguration()
+                        .getMergeValuesStrategy().merge(values);
             }
         }
         if (value != null) {
