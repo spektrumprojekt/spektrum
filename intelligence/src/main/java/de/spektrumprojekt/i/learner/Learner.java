@@ -37,6 +37,7 @@ import de.spektrumprojekt.i.learner.chain.StoreObservationCommand;
 import de.spektrumprojekt.i.learner.chain.UserModelLearnerCommand;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.Ranker;
+import de.spektrumprojekt.i.timebased.TermCounterCommand;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**
@@ -84,6 +85,7 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
                     userModelType, userModelTypes.get(userModelType)));
         }
         this.learnerChain.addCommand(new StoreObservationCommand(this.persistence));
+        this.learnerChain.addCommand(new TermCounterCommand(this.persistence));
     }
 
     /**

@@ -188,9 +188,9 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         DiscussionParticipationFeatureCommand discussionParticipationFeatureCommand = new DiscussionParticipationFeatureCommand();
         DiscussionMentionFeatureCommand discussionMentionFeatureCommand = new DiscussionMentionFeatureCommand();
 
-        termMatchFeatureCommand = new ContentMatchFeatureCommand(persistence, rankerConfiguration
-                .getUserModelTypes().keySet().toArray(new String[] {}),
-                termVectorSimilarityComputer, rankerConfiguration.getInterestTermTreshold());
+        termMatchFeatureCommand = new ContentMatchFeatureCommand(persistence,
+                termVectorSimilarityComputer, rankerConfiguration.getInterestTermTreshold(),
+                rankerConfiguration);
         determineInteractionLevelCommand = new DetermineInteractionLevelCommand();
         computeMessageRankCommand = new ComputeMessageRankCommand(
                 this.rankerConfiguration

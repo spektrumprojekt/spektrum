@@ -255,8 +255,11 @@ public class SimplePersistence implements Persistence {
     @Override
     public Map<UserModel, Collection<UserModelEntry>> getAllUserModelEntries(String userModelType) {
         Map<UserModel, Collection<UserModelEntry>> result = new HashMap<UserModel, Collection<UserModelEntry>>();
-        for (UserModelHolder holder : userModelByTypeHolders.get(userModelType).values()) {
-            result.put(holder.getUserModel(), holder.getUserModelEntries().values());
+        Map<User, UserModelHolder> map = userModelByTypeHolders.get(userModelType);
+        if (map != null) {
+            for (UserModelHolder holder : map.values()) {
+                result.put(holder.getUserModel(), holder.getUserModelEntries().values());
+            }
         }
         return result;
     }

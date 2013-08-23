@@ -16,6 +16,7 @@ import de.spektrumprojekt.i.learner.adaptation.UserModelAdapterConfiguration;
 import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
 import de.spektrumprojekt.i.term.TermWeightStrategy;
 import de.spektrumprojekt.i.timebased.EnergyCalculationConfiguration;
+import de.spektrumprojekt.i.timebased.ShortTermMemoryConfiguration;
 
 public class RankerConfiguration implements ConfigurationDescriptable, Cloneable {
 
@@ -53,6 +54,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
     private final UserModelAdapterConfiguration userModelAdapterConfiguration = new UserModelAdapterConfiguration();
 
     private EnergyCalculationConfiguration energyCalculationConfiguration;
+
+    private boolean mixMemoriesForRating = false;
+
+    private ShortTermMemoryConfiguration shortTermMemoryConfiguration;
 
     public RankerConfiguration(TermWeightStrategy strategy, TermVectorSimilarityStrategy aggregation) {
         this(strategy, aggregation, null, null, (RankerConfigurationFlag[]) null);
@@ -215,6 +220,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         return immutable;
     }
 
+    public boolean isMixMemoriesForRating() {
+        return mixMemoriesForRating;
+    }
+
     public boolean isTreatMissingUserModelEntriesAsZero() {
         return treatMissingUserModelEntriesAsZero;
     }
@@ -263,6 +272,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
     public void setMinUserSimilarity(float minUserSimilarity) {
         assert01(minUserSimilarity, "minUserSimilarity");
         this.minUserSimilarity = minUserSimilarity;
+    }
+
+    public void setMixMemoriesForRating(boolean mixMemoriesForRating) {
+        this.mixMemoriesForRating = mixMemoriesForRating;
     }
 
     public void setNonParticipationFactor(float nonParticipationFactor) {
@@ -320,6 +333,14 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
                 + informationExtractionConfiguration + ", informationExtractionCommand="
                 + informationExtractionCommand + ", userModelAdapterConfiguration="
                 + userModelAdapterConfiguration + "]";
+    }
+
+    public ShortTermMemoryConfiguration getShortTermMemoryConfiguration() {
+        return shortTermMemoryConfiguration;
+    }
+
+    public void setShortTermMemoryConfiguration(ShortTermMemoryConfiguration shortTermMemoryConfiguration) {
+        this.shortTermMemoryConfiguration = shortTermMemoryConfiguration;
     }
 
 }

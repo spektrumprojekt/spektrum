@@ -4,25 +4,25 @@ import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 
 public class EnergyCalculationConfiguration implements ConfigurationDescriptable {
 
-    private final int k;
+    private final float k;
     private final double d;
-    private final int G;
     private final NutritionCalculationStrategy strategy;
     private final int historyLength;
+    private long precision;
 
-    public EnergyCalculationConfiguration(int k, double d, int g, int historyLength,
+    public EnergyCalculationConfiguration(float k, double d, int historyLength, long precision,
             NutritionCalculationStrategy strategy) {
         super();
         this.k = k;
         this.d = d;
-        G = g;
         this.historyLength = historyLength;
         this.strategy = strategy;
+        this.precision = precision;
     }
 
     @Override
     public String getConfigurationDescription() {
-        return "EnergyCalculationConfiguration [k=" + k + ", d=" + d + ", G=" + G + ", strategy="
+        return "EnergyCalculationConfiguration [k=" + k + ", d=" + d + ", strategy="
                 + strategy.getClass().getName() + "]";
     }
 
@@ -31,19 +31,27 @@ public class EnergyCalculationConfiguration implements ConfigurationDescriptable
     }
 
     public int getG() {
-        return G;
+        return 1;
     }
 
     public int getHistoryLength() {
         return historyLength;
     }
 
-    public int getK() {
+    public double getK() {
         return k;
+    }
+
+    public long getPrecision() {
+        return precision;
     }
 
     public NutritionCalculationStrategy getStrategy() {
         return strategy;
+    }
+
+    public void setPrecision(long precision) {
+        this.precision = precision;
     }
 
 }

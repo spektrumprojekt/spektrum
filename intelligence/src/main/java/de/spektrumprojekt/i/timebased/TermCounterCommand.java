@@ -5,15 +5,19 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.time.DateUtils;
+
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.commons.chain.CommandException;
+import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
+import de.spektrumprojekt.datamodel.observation.Interest;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.helper.MessageHelper;
-import de.spektrumprojekt.i.informationextraction.InformationExtractionConfiguration;
 import de.spektrumprojekt.i.learner.LearnerMessageContext;
+import de.spektrumprojekt.i.learner.time.TimeBinnedUserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.persistence.Persistence;
 
 public class TermCounterCommand implements Command<LearnerMessageContext> {
@@ -24,13 +28,17 @@ public class TermCounterCommand implements Command<LearnerMessageContext> {
 
     Persistence persistence;
 
-    InformationExtractionConfiguration informationExtractionConfiguration;
+    TimeBinnedUserModelEntryIntegrationStrategy modelEntryIntegrationStrategy;
 
-    public TermCounterCommand(Persistence persistence,
-            InformationExtractionConfiguration informationExtractionConfiguration) {
+    // InformationExtractionConfiguration informationExtractionConfiguration;
+
+    public TermCounterCommand(Persistence persistence) {
+        // ,
+        // }
+        // InformationExtractionConfiguration informationExtractionConfiguration) {
         super();
         this.persistence = persistence;
-        this.informationExtractionConfiguration = informationExtractionConfiguration;
+        // this.informationExtractionConfiguration = informationExtractionConfiguration;
     }
 
     @Override
@@ -40,6 +48,10 @@ public class TermCounterCommand implements Command<LearnerMessageContext> {
 
     @Override
     public void process(LearnerMessageContext context) throws CommandException {
+        if (modelEntryIntegrationStrategy == null) {
+            modelEntryIntegrationStrategy = new TimeBinnedUserModelEntryIntegrationStrategy(0,
+                    DateUtils.MILLIS_PER_DAY * 31 * 10, DateUtils.MILLIS_PER_DAY * 7);
+        }
         Collection<Term> terms = MessageHelper.getAllTerms(context.getMessage());
         UserModel userModel = persistence.getOrCreateUserModelByUser(USER.getGlobalId(),
                 TERM_COUNT_USER_MODEL_NAME);
@@ -48,7 +60,11 @@ public class TermCounterCommand implements Command<LearnerMessageContext> {
         List<UserModelEntry> changedEntries = new LinkedList<UserModelEntry>();
         for (Term term : terms) {
             UserModelEntry entry = userModelEntries.get(term);
-            entry.setScoreCount(entry.getScoreCount() + 1);
+            if (entry == null) {
+                entry = new UserModelEntry(userModel, new ScoredTerm(term, 1));
+            }
+            modelEntryIntegrationStrategy.integrate(entry, Interest.NORMAL,
+                    new ScoredTerm(term, 1), context.getMessage().getPublicationDate());
             changedEntries.add(entry);
         }
         persistence.storeOrUpdateUserModelEntries(userModel, changedEntries);

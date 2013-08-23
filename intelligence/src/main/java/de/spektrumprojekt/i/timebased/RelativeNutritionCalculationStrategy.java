@@ -13,10 +13,13 @@ import de.spektrumprojekt.persistence.Persistence;
 
 public class RelativeNutritionCalculationStrategy implements NutritionCalculationStrategy {
 
-    Persistence persistence;
+    private Persistence persistence;
 
     @Override
     public float[] getNutrition(UserModelEntry entry) {
+        if (persistence == null) {
+            throw new RuntimeException("Initialize persistence before using this strategy!");
+        }
         Term term = entry.getScoredTerm().getTerm();
         List<Term> terms = new LinkedList<Term>();
         terms.add(term);
@@ -32,8 +35,17 @@ public class RelativeNutritionCalculationStrategy implements NutritionCalculatio
         for (UserModelEntryTimeBin userbin : userTimeBinEntries) {
             UserModelEntryTimeBin globalBin = globalUserModelEntry
                     .getUserModelEntryTimeBinByStartTime(userbin.getTimeBinStart());
-            result[i] = userbin.getScoreSum() * globalBin.getScoreCount() / userbin.getScoreCount();
+            result[i] = userbin.getScoreSum() / globalBin.getScoreCount() * userbin.getScoreCount();
+            i++;
         }
         return result;
+    }
+
+    public Persistence getPersistence() {
+        return persistence;
+    }
+
+    public void setPersistence(Persistence persistence) {
+        this.persistence = persistence;
     }
 }
