@@ -48,6 +48,7 @@ import de.spektrumprojekt.i.learner.UserModelEntryIntegrationPlainStrategy;
 import de.spektrumprojekt.i.learner.UserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.RankerConfiguration;
+import de.spektrumprojekt.i.ranker.UserModelConfiguration;
 import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
 import de.spektrumprojekt.i.term.TermWeightStrategy;
 
@@ -146,9 +147,11 @@ public class LearnerTest extends IntelligenceSpektrumTest {
 
         InformationExtractionConfiguration informationExtractionConfiguration = new InformationExtractionConfiguration();
 
-        RankerConfiguration rankerConfiguration = new RankerConfiguration(TermWeightStrategy.TRIVIAL, TermVectorSimilarityStrategy.COSINUS);
-        rankerConfiguration.put(UserModel.DEFAULT_USER_MODEL_TYPE,new  UserModelEntryIntegrationPlainStrategy());
-        
+        RankerConfiguration rankerConfiguration = new RankerConfiguration(
+                TermWeightStrategy.TRIVIAL, TermVectorSimilarityStrategy.COSINUS);
+        rankerConfiguration.put(UserModel.DEFAULT_USER_MODEL_TYPE,
+                UserModelConfiguration.getPlainModelConfiguration());
+
         // extract the terms
         InformationExtractionCommand<MessageFeatureContext> ieCommand = InformationExtractionCommand
                 .createDefaultGermanEnglish(getPersistence(), informationExtractionConfiguration);

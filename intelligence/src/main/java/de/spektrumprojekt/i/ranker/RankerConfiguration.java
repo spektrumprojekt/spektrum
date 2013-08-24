@@ -11,7 +11,6 @@ import java.util.Set;
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionConfiguration;
-import de.spektrumprojekt.i.learner.UserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.i.learner.adaptation.UserModelAdapterConfiguration;
 import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
 import de.spektrumprojekt.i.term.TermWeightStrategy;
@@ -44,7 +43,7 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     private String termUniquenessLogfile;
 
-    private Map<String, UserModelEntryIntegrationStrategy> userModelTypes = new HashMap<String, UserModelEntryIntegrationStrategy>();// UserModel.DEFAULT_USER_MODEL_TYPE;
+    private Map<String, UserModelConfiguration> userModelTypes = new HashMap<String, UserModelConfiguration>();// UserModel.DEFAULT_USER_MODEL_TYPE;
 
     private final InformationExtractionConfiguration informationExtractionConfiguration;
 
@@ -200,7 +199,7 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         return userModelAdapterConfiguration;
     }
 
-    public Map<String, UserModelEntryIntegrationStrategy> getUserModelTypes() {
+    public Map<String, UserModelConfiguration> getUserModelTypes() {
         return userModelTypes;
     }
 
@@ -225,9 +224,9 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         return treatMissingUserModelEntriesAsZero;
     }
 
-    public UserModelEntryIntegrationStrategy put(String userModelType,
-            UserModelEntryIntegrationStrategy integrationStrategy) {
-        return userModelTypes.put(userModelType, integrationStrategy);
+    public UserModelConfiguration put(String userModelType,
+            UserModelConfiguration modelConfiguration) {
+        return userModelTypes.put(userModelType, modelConfiguration);
     }
 
     public void setFlags(RankerConfigurationFlag... flags) {
@@ -306,7 +305,7 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         this.treatMissingUserModelEntriesAsZero = treatMissingUserModelEntriesAsZero;
     }
 
-    public void setUserModelType(Map<String, UserModelEntryIntegrationStrategy> userModelTypes) {
+    public void setUserModelType(Map<String, UserModelConfiguration> userModelTypes) {
         if (userModelTypes == null) {
             throw new IllegalArgumentException("userModelType cannot be null.");
         }

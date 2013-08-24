@@ -11,9 +11,8 @@ import org.slf4j.LoggerFactory;
 
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
-import de.spektrumprojekt.i.learner.UserModelEntryIntegrationStrategy;
-import de.spektrumprojekt.i.learner.time.TimeBinnedUserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.i.ranker.RankerConfiguration;
+import de.spektrumprojekt.i.ranker.UserModelConfiguration;
 import de.spektrumprojekt.i.timebased.config.ShortTermMemoryConfiguration;
 import de.spektrumprojekt.persistence.Persistence;
 
@@ -26,7 +25,7 @@ public class NutritionAndEnergyUserModelUpdater {
 
     private final Persistence persistence;
 
-    private final Map<String, UserModelEntryIntegrationStrategy> userModelTypes;
+    private final Map<String, UserModelConfiguration> userModelTypes;
 
     private Date lastModelCalculationDate;
 
@@ -47,9 +46,9 @@ public class NutritionAndEnergyUserModelUpdater {
         super();
         this.rankerConfiguration = configuration;
         this.persistence = persistence;
-        this.userModelTypes = new HashMap<String, UserModelEntryIntegrationStrategy>();
-        for (Entry<String, UserModelEntryIntegrationStrategy> entry : configuration
-                .getUserModelTypes().entrySet()) {
+        this.userModelTypes = new HashMap<String, UserModelConfiguration>();
+        for (Entry<String, UserModelConfiguration> entry : configuration.getUserModelTypes()
+                .entrySet()) {
             if (needsToBeCalculated(entry.getValue())) {
                 userModelTypes.put(entry.getKey(), entry.getValue());
             }
@@ -91,8 +90,9 @@ public class NutritionAndEnergyUserModelUpdater {
         }
     }
 
-    private boolean needsToBeCalculated(UserModelEntryIntegrationStrategy entryIntegrationStrategy) {
-        return (entryIntegrationStrategy instanceof TimeBinnedUserModelEntryIntegrationStrategy) ? ((TimeBinnedUserModelEntryIntegrationStrategy) entryIntegrationStrategy)
+    private boolean needsToBeCalculated(UserModelConfiguration entryIntegrationStrategy) {
+        return (entryIntegrationStrategy.getUserModelEntryIntegrationStrategy()
+                .equals(UserModelConfiguration.UserModelEntryIntegrationStrategy.TIMEBINNED)) ? entryIntegrationStrategy
                 .isCalculateLater() : false;
     }
 
