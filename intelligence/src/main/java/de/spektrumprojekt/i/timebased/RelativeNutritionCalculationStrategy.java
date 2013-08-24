@@ -5,6 +5,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
@@ -13,12 +16,14 @@ import de.spektrumprojekt.persistence.Persistence;
 
 public class RelativeNutritionCalculationStrategy implements NutritionCalculationStrategy {
 
-    private Persistence persistence;
 
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RelativeNutritionCalculationStrategy.class);
+    
     @Override
-    public float[] getNutrition(UserModelEntry entry) {
+    public float[] getNutrition(UserModelEntry entry, Persistence persistence) {
         if (persistence == null) {
-            throw new RuntimeException("Initialize persistence before using this strategy!");
+            throw new RuntimeException("Persistence must not be null!");
         }
         Term term = entry.getScoredTerm().getTerm();
         List<Term> terms = new LinkedList<Term>();
@@ -35,17 +40,13 @@ public class RelativeNutritionCalculationStrategy implements NutritionCalculatio
         for (UserModelEntryTimeBin userbin : userTimeBinEntries) {
             UserModelEntryTimeBin globalBin = globalUserModelEntry
                     .getUserModelEntryTimeBinByStartTime(userbin.getTimeBinStart());
-            result[i] = userbin.getScoreSum() / globalBin.getScoreCount() * userbin.getScoreCount();
+            if (globalBin == null){
+            	LOGGER.warn("globalBin was null!");
+            	result[i] = 0;
+            } else{
+            result[i] = userbin.getScoreSum() / globalBin.getScoreCount() * userbin.getScoreCount();}
             i++;
         }
         return result;
-    }
-
-    public Persistence getPersistence() {
-        return persistence;
-    }
-
-    public void setPersistence(Persistence persistence) {
-        this.persistence = persistence;
     }
 }

@@ -18,56 +18,70 @@ import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.i.learner.LearnerMessageContext;
 import de.spektrumprojekt.i.learner.time.TimeBinnedUserModelEntryIntegrationStrategy;
+import de.spektrumprojekt.i.ranker.RankerConfiguration;
 import de.spektrumprojekt.persistence.Persistence;
 
 public class TermCounterCommand implements Command<LearnerMessageContext> {
 
-    public static final User USER = new User("TERM_COUNTING_USER");
+	public static final User USER = new User("TERM_COUNTING_USER");
 
-    public static final String TERM_COUNT_USER_MODEL_NAME = "TERM_COUNT_USER_MODEL";
+	public static final String TERM_COUNT_USER_MODEL_NAME = "TERM_COUNT_USER_MODEL";
 
-    Persistence persistence;
+	Persistence persistence;
+	RankerConfiguration configuration;
+	TimeBinnedUserModelEntryIntegrationStrategy modelEntryIntegrationStrategy;
 
-    TimeBinnedUserModelEntryIntegrationStrategy modelEntryIntegrationStrategy;
+	private boolean disabled;
 
-    // InformationExtractionConfiguration informationExtractionConfiguration;
+	public TermCounterCommand(RankerConfiguration configuration,
+			Persistence persistence) {
+		// ,
+		// }
+		// InformationExtractionConfiguration
+		// informationExtractionConfiguration) {
+		super();
+		this.persistence = persistence;
+		this.configuration = configuration;
+		if (configuration.getEnergyCalculationConfiguration() == null) {
+			disabled = true;
+		} else {
+			modelEntryIntegrationStrategy = new TimeBinnedUserModelEntryIntegrationStrategy(
+					0, DateUtils.MILLIS_PER_DAY * 31 * 10, configuration
+							.getEnergyCalculationConfiguration().getPrecision());
+		}
 
-    public TermCounterCommand(Persistence persistence) {
-        // ,
-        // }
-        // InformationExtractionConfiguration informationExtractionConfiguration) {
-        super();
-        this.persistence = persistence;
-        // this.informationExtractionConfiguration = informationExtractionConfiguration;
-    }
+		// this.informationExtractionConfiguration =
+		// informationExtractionConfiguration;
+	}
 
-    @Override
-    public String getConfigurationDescription() {
-        return "TermCounterCommand";
-    }
+	@Override
+	public String getConfigurationDescription() {
+		return "TermCounterCommand";
+	}
 
-    @Override
-    public void process(LearnerMessageContext context) throws CommandException {
-        if (modelEntryIntegrationStrategy == null) {
-            modelEntryIntegrationStrategy = new TimeBinnedUserModelEntryIntegrationStrategy(0,
-                    DateUtils.MILLIS_PER_DAY * 31 * 10, DateUtils.MILLIS_PER_DAY * 7);
-        }
-        Collection<Term> terms = MessageHelper.getAllTerms(context.getMessage());
-        UserModel userModel = persistence.getOrCreateUserModelByUser(USER.getGlobalId(),
-                TERM_COUNT_USER_MODEL_NAME);
-        Map<Term, UserModelEntry> userModelEntries = persistence.getUserModelEntriesForTerms(
-                userModel, terms);
-        List<UserModelEntry> changedEntries = new LinkedList<UserModelEntry>();
-        for (Term term : terms) {
-            UserModelEntry entry = userModelEntries.get(term);
-            if (entry == null) {
-                entry = new UserModelEntry(userModel, new ScoredTerm(term, 1));
-            }
-            modelEntryIntegrationStrategy.integrate(entry, Interest.NORMAL,
-                    new ScoredTerm(term, 1), context.getMessage().getPublicationDate());
-            changedEntries.add(entry);
-        }
-        persistence.storeOrUpdateUserModelEntries(userModel, changedEntries);
-
-    }
+	@Override
+	public void process(LearnerMessageContext context) throws CommandException {
+		if (!disabled) {
+			Collection<Term> terms = MessageHelper.getAllTerms(context
+					.getMessage());
+			UserModel userModel = persistence.getOrCreateUserModelByUser(
+					USER.getGlobalId(), TERM_COUNT_USER_MODEL_NAME);
+			Map<Term, UserModelEntry> userModelEntries = persistence
+					.getUserModelEntriesForTerms(userModel, terms);
+			List<UserModelEntry> changedEntries = new LinkedList<UserModelEntry>();
+			for (Term term : terms) {
+				UserModelEntry entry = userModelEntries.get(term);
+				if (entry == null) {
+					entry = new UserModelEntry(userModel, new ScoredTerm(term,
+							1));
+				}
+				modelEntryIntegrationStrategy.integrate(entry, Interest.NORMAL,
+						new ScoredTerm(term, 1), context.getMessage()
+								.getPublicationDate());
+				changedEntries.add(entry);
+			}
+			persistence
+					.storeOrUpdateUserModelEntries(userModel, changedEntries);
+		}
+	}
 }

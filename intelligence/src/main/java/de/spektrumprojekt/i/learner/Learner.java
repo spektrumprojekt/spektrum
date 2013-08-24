@@ -37,6 +37,7 @@ import de.spektrumprojekt.i.learner.chain.StoreObservationCommand;
 import de.spektrumprojekt.i.learner.chain.UserModelLearnerCommand;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.Ranker;
+import de.spektrumprojekt.i.ranker.RankerConfiguration;
 import de.spektrumprojekt.i.timebased.TermCounterCommand;
 import de.spektrumprojekt.persistence.Persistence;
 
@@ -62,13 +63,13 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
      *            the strategy to integrate the user model
      */
     public Learner(Persistence persistence,
-            Map<String, UserModelEntryIntegrationStrategy> userModelTypes,
+             RankerConfiguration configuration,
             InformationExtractionCommand<MessageFeatureContext> ieChain) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null!");
         }
-        if (userModelTypes == null) {
-            throw new IllegalArgumentException("userModelType cannot be null!");
+        if (configuration == null) {
+            throw new IllegalArgumentException("configuration cannot be null!");
         }
         // if (userModelEntryIntegrationStrategy == null) {
         // throw new IllegalArgumentException("userModelEntryIntegrationStrategy cannot be null!");
@@ -80,12 +81,12 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
         this.learnerChain
                 .addCommand(new ProxyCommand<MessageFeatureContext, LearnerMessageContext>(ieChain));
         this.learnerChain.addCommand(new LoadRelatedObservationsCommand(this.persistence));
-        for (String userModelType : userModelTypes.keySet()) {
+        for (String userModelType : configuration.getUserModelTypes().keySet()) {
             this.learnerChain.addCommand(new UserModelLearnerCommand(this.persistence,
-                    userModelType, userModelTypes.get(userModelType)));
+                    userModelType, configuration.getUserModelTypes().get(userModelType)));
         }
         this.learnerChain.addCommand(new StoreObservationCommand(this.persistence));
-        this.learnerChain.addCommand(new TermCounterCommand(this.persistence));
+        this.learnerChain.addCommand(new TermCounterCommand(configuration, this.persistence));
     }
 
     /**

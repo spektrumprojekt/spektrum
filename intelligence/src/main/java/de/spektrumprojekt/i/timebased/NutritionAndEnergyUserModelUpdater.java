@@ -47,9 +47,7 @@ public class NutritionAndEnergyUserModelUpdater {
         }
         this.energyCalculationConfiguration = configuration.getEnergyCalculationConfiguration();
         NutritionCalculationStrategy strategy = energyCalculationConfiguration.getStrategy();
-        if (strategy instanceof RelativeNutritionCalculationStrategy) {
-            ((RelativeNutritionCalculationStrategy) strategy).setPersistence(persistence);
-        }
+        
     }
 
     public boolean itsTimeToCalculateModels(Date date) {
@@ -90,7 +88,7 @@ public class NutritionAndEnergyUserModelUpdater {
                 for (UserModelEntry entry : entries) {
                     float weight = 0;
                     float[] nutrition = energyCalculationConfiguration.getStrategy().getNutrition(
-                            entry);
+                            entry, persistence);
                     int length = nutrition.length - 1;
                     float currentNutrition = nutrition[length];
                     float energy = 0;

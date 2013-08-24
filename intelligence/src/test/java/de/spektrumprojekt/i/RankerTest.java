@@ -148,7 +148,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
                 new SimpleMessageGroupMemberRunner<MessageFeatureContext>(userForRanking),
                 rankerConfiguration);
 
-        Learner learner = new Learner(getPersistence(), rankerConfiguration.getUserModelTypes(),
+        Learner learner = new Learner(getPersistence(), rankerConfiguration,
                 ranker.getInformationExtractionChain());
 
         communicator.registerMessageHandler(ranker);

@@ -4,11 +4,12 @@ import java.util.Collection;
 
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserModelEntryTimeBin;
+import de.spektrumprojekt.persistence.Persistence;
 
 public class AbsoluteNutritionCalculationStrategy implements NutritionCalculationStrategy {
 
     @Override
-    public float[] getNutrition(UserModelEntry entry) {
+    public float[] getNutrition(UserModelEntry entry, Persistence persistence) {
         Collection<UserModelEntryTimeBin> timeBinEntries = entry.getTimeBinEntries();
         float[] result = new float[timeBinEntries.size()];
         int i = 0;
