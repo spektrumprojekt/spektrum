@@ -34,6 +34,9 @@ import de.spektrumprojekt.i.datamodel.MessageFeature;
 import de.spektrumprojekt.i.ranker.RankerConfiguration;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
+import de.spektrumprojekt.i.timebased.MaxMergeValuesStrategy;
+import de.spektrumprojekt.i.timebased.MergeValuesStrategy;
+import de.spektrumprojekt.i.timebased.WeightedMergeValuesStrategy;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**
@@ -48,6 +51,7 @@ public class ContentMatchFeatureCommand implements Command<UserSpecificMessageFe
     private final TermVectorSimilarityComputer termVectorSimilarityComputer;
     private final float interestTermTreshold;
     private final RankerConfiguration rankerConfiguration;
+    private final MergeValuesStrategy valuesStrategy;
 
     /**
      * 
@@ -70,6 +74,15 @@ public class ContentMatchFeatureCommand implements Command<UserSpecificMessageFe
         this.interestTermTreshold = interestTermTreshold;
         this.termVectorSimilarityComputer = termVectorSimilarityComputer;
         this.rankerConfiguration = rankerConfiguration;
+        switch (rankerConfiguration.getShortTermMemoryConfiguration().getMergeValuesStrategy()) {
+        case MAX:
+            valuesStrategy = new MaxMergeValuesStrategy();
+            break;
+        default:
+            valuesStrategy = new WeightedMergeValuesStrategy(
+                    rankerConfiguration.getShortTermMemoryConfiguration());
+            break;
+        }
     }
 
     /**
@@ -119,8 +132,7 @@ public class ContentMatchFeatureCommand implements Command<UserSpecificMessageFe
                         persistence.getUserModelEntriesForTerms(userModel, messageTerms));
             }
             value = this.termVectorSimilarityComputer.getSimilarity(messageGroupId, allEntries,
-                    rankerConfiguration.getShortTermMemoryConfiguration().getMergeValuesStrategy(),
-                    messageTerms);
+                    valuesStrategy, messageTerms);
         } else {
             Map<String, Float> values = new HashMap<String, Float>();
             for (UserModel userModel : userModels) {
@@ -129,8 +141,7 @@ public class ContentMatchFeatureCommand implements Command<UserSpecificMessageFe
                     values.put(userModel.getUserModelType(), this.termVectorSimilarityComputer
                             .getSimilarity(messageGroupId, entries, messageTerms));
                 }
-                value = rankerConfiguration.getShortTermMemoryConfiguration()
-                        .getMergeValuesStrategy().merge(values);
+                value = valuesStrategy.merge(values);
             }
         }
         if (value != null) {

@@ -15,8 +15,7 @@ import de.spektrumprojekt.i.learner.UserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.i.learner.adaptation.UserModelAdapterConfiguration;
 import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
 import de.spektrumprojekt.i.term.TermWeightStrategy;
-import de.spektrumprojekt.i.timebased.EnergyCalculationConfiguration;
-import de.spektrumprojekt.i.timebased.ShortTermMemoryConfiguration;
+import de.spektrumprojekt.i.timebased.config.ShortTermMemoryConfiguration;
 
 public class RankerConfiguration implements ConfigurationDescriptable, Cloneable {
 
@@ -52,8 +51,6 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
     private final InformationExtractionCommand<MessageFeatureContext> informationExtractionCommand;
 
     private final UserModelAdapterConfiguration userModelAdapterConfiguration = new UserModelAdapterConfiguration();
-
-    private EnergyCalculationConfiguration energyCalculationConfiguration;
 
     private boolean mixMemoriesForRating = false;
 
@@ -147,10 +144,6 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         return this.getClass().getSimpleName() + " " + this.toString();
     }
 
-    public EnergyCalculationConfiguration getEnergyCalculationConfiguration() {
-        return this.energyCalculationConfiguration;
-    }
-
     public Collection<RankerConfigurationFlag> getFlags() {
         return Collections.unmodifiableSet(flags);
     }
@@ -185,6 +178,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     public float getNonParticipationFactor() {
         return nonParticipationFactor;
+    }
+
+    public ShortTermMemoryConfiguration getShortTermMemoryConfiguration() {
+        return shortTermMemoryConfiguration;
     }
 
     public String getTermUniquenessLogfile() {
@@ -233,11 +230,6 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         return userModelTypes.put(userModelType, integrationStrategy);
     }
 
-    public void setEnergyCalculationConfiguration(
-            EnergyCalculationConfiguration energyCalculationConfiguration) {
-        this.energyCalculationConfiguration = energyCalculationConfiguration;
-    }
-
     public void setFlags(RankerConfigurationFlag... flags) {
         assertCanSet();
         this.flags.clear();
@@ -280,6 +272,11 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     public void setNonParticipationFactor(float nonParticipationFactor) {
         this.nonParticipationFactor = nonParticipationFactor;
+    }
+
+    public void setShortTermMemoryConfiguration(
+            ShortTermMemoryConfiguration shortTermMemoryConfiguration) {
+        this.shortTermMemoryConfiguration = shortTermMemoryConfiguration;
     }
 
     public void setTermUniquenessLogfile(String termUniquenessLogfile) {
@@ -333,14 +330,6 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
                 + informationExtractionConfiguration + ", informationExtractionCommand="
                 + informationExtractionCommand + ", userModelAdapterConfiguration="
                 + userModelAdapterConfiguration + "]";
-    }
-
-    public ShortTermMemoryConfiguration getShortTermMemoryConfiguration() {
-        return shortTermMemoryConfiguration;
-    }
-
-    public void setShortTermMemoryConfiguration(ShortTermMemoryConfiguration shortTermMemoryConfiguration) {
-        this.shortTermMemoryConfiguration = shortTermMemoryConfiguration;
     }
 
 }

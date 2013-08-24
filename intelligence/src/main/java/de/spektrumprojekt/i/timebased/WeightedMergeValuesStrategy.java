@@ -1,24 +1,18 @@
 package de.spektrumprojekt.i.timebased;
 
-import java.util.HashMap;
 import java.util.Map;
+
+import de.spektrumprojekt.i.timebased.config.ShortTermMemoryConfiguration;
 
 public class WeightedMergeValuesStrategy implements MergeValuesStrategy {
 
-    private boolean balanceMisingUserModelWeights;
+    private final Map<String, Float> raitingWeights;
+    private final boolean balanceMisingUserModelWeights;
 
-    private final Map<String, Float> raitingWeights = new HashMap<String, Float>();
-
-    public Float getRaitingWeight(Object key) {
-        return raitingWeights.get(key);
-    }
-
-    public Map<String, Float> getRaitingWeights() {
-        return raitingWeights;
-    }
-
-    public boolean isBalanceMisingUserModelWeights() {
-        return balanceMisingUserModelWeights;
+    public WeightedMergeValuesStrategy(ShortTermMemoryConfiguration configuration) {
+        super();
+        this.balanceMisingUserModelWeights = configuration.isBalanceMisingUserModelWeights();
+        this.raitingWeights = configuration.getRaitingWeights();
     }
 
     @Override
@@ -34,16 +28,9 @@ public class WeightedMergeValuesStrategy implements MergeValuesStrategy {
         }
         float result = 0;
         for (String key : values.keySet()) {
-            result += getRaitingWeight(key) * values.get(key);
+            result += raitingWeights.get(key) * values.get(key);
         }
         return result * missingModelFactor;
     }
 
-    public Float putRatingWeight(String key, Float value) {
-        return raitingWeights.put(key, value);
-    }
-
-    public void setBalanceMisingUserModelWeights(boolean balanceMisingUserModelWeights) {
-        this.balanceMisingUserModelWeights = balanceMisingUserModelWeights;
-    }
 }
