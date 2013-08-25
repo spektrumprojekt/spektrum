@@ -38,6 +38,8 @@ public class UserModel extends Identifiable {
 
     public static final String DEFAULT_USER_MODEL_TYPE = "DEFAULT_USER_MODEL";
 
+    public static final String SHORT_TERM_USER_MODEL_TYPE = "SHORT_TERM_USER_MODEL";
+
     /**
      * 
      */

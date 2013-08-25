@@ -21,6 +21,7 @@ package de.spektrumprojekt.i;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -46,6 +47,10 @@ import de.spektrumprojekt.i.learner.LearningMessage;
 import de.spektrumprojekt.i.learner.UserModelEntryIntegrationPlainStrategy;
 import de.spektrumprojekt.i.learner.UserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
+import de.spektrumprojekt.i.ranker.RankerConfiguration;
+import de.spektrumprojekt.i.ranker.UserModelConfiguration;
+import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
+import de.spektrumprojekt.i.term.TermWeightStrategy;
 
 /**
  * Test for the {@link Learner}
@@ -142,6 +147,11 @@ public class LearnerTest extends IntelligenceSpektrumTest {
 
         InformationExtractionConfiguration informationExtractionConfiguration = new InformationExtractionConfiguration();
 
+        RankerConfiguration rankerConfiguration = new RankerConfiguration(
+                TermWeightStrategy.TRIVIAL, TermVectorSimilarityStrategy.COSINUS);
+        rankerConfiguration.put(UserModel.DEFAULT_USER_MODEL_TYPE,
+                UserModelConfiguration.getPlainModelConfiguration());
+
         // extract the terms
         InformationExtractionCommand<MessageFeatureContext> ieCommand = InformationExtractionCommand
                 .createDefaultGermanEnglish(getPersistence(), informationExtractionConfiguration);
@@ -151,12 +161,9 @@ public class LearnerTest extends IntelligenceSpektrumTest {
 
         Collection<Term> terms = getTermsOfMessage(message);
         Assert.assertTrue("must have some terms.", terms.size() > 0);
-
-        Learner learner = new Learner(
-                getPersistence(),
-                UserModel.DEFAULT_USER_MODEL_TYPE,
-                ieCommand,
-                userModelEntryIntegrationStrategy);
+        Map<String, UserModelEntryIntegrationStrategy> userModelTypes = new HashMap<String, UserModelEntryIntegrationStrategy>();
+        userModelTypes.put(UserModel.DEFAULT_USER_MODEL_TYPE, userModelEntryIntegrationStrategy);
+        Learner learner = new Learner(getPersistence(), rankerConfiguration, ieCommand);
 
         // learning an extreme=1 interest
         Observation observation = new Observation(user1ToLearnForGlobalId, message.getGlobalId(),

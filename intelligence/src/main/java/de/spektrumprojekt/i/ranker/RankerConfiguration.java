@@ -3,16 +3,18 @@ package de.spektrumprojekt.i.ranker;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
-import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionConfiguration;
 import de.spektrumprojekt.i.learner.adaptation.UserModelAdapterConfiguration;
 import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
 import de.spektrumprojekt.i.term.TermWeightStrategy;
+import de.spektrumprojekt.i.timebased.config.ShortTermMemoryConfiguration;
 
 public class RankerConfiguration implements ConfigurationDescriptable, Cloneable {
 
@@ -44,21 +46,23 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     private String termUniquenessLogfile;
 
-    private String userModelType = UserModel.DEFAULT_USER_MODEL_TYPE;
+    private Map<String, UserModelConfiguration> userModelTypes = new HashMap<String, UserModelConfiguration>();// UserModel.DEFAULT_USER_MODEL_TYPE;
 
     private final InformationExtractionConfiguration informationExtractionConfiguration;
 
     private final InformationExtractionCommand<MessageFeatureContext> informationExtractionCommand;
 
-    private final UserModelAdapterConfiguration userModelAdapterConfiguration =
-            new UserModelAdapterConfiguration();
+    private final UserModelAdapterConfiguration userModelAdapterConfiguration = new UserModelAdapterConfiguration();
+
+    private boolean mixMemoriesForRating = false;
+
+    private ShortTermMemoryConfiguration shortTermMemoryConfiguration;
 
     public RankerConfiguration(TermWeightStrategy strategy, TermVectorSimilarityStrategy aggregation) {
         this(strategy, aggregation, null, null, (RankerConfigurationFlag[]) null);
     }
 
-    private RankerConfiguration(
-            TermWeightStrategy termWeightStrategy,
+    private RankerConfiguration(TermWeightStrategy termWeightStrategy,
             TermVectorSimilarityStrategy termWeightAggregation,
             InformationExtractionCommand<MessageFeatureContext> informationExtractionCommand,
             InformationExtractionConfiguration informationExtractionConfiguration,
@@ -85,8 +89,7 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
             TermVectorSimilarityStrategy termWeightAggregation,
             InformationExtractionCommand<MessageFeatureContext> informationExtractionCommand,
             RankerConfigurationFlag... flags) {
-        this(termWeightStrategy, termWeightAggregation,
-                informationExtractionCommand,
+        this(termWeightStrategy, termWeightAggregation, informationExtractionCommand,
                 informationExtractionCommand.getInformationExtractionConfiguration(), flags);
     }
 
@@ -179,6 +182,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         return nonParticipationFactor;
     }
 
+    public ShortTermMemoryConfiguration getShortTermMemoryConfiguration() {
+        return shortTermMemoryConfiguration;
+    }
+
     public String getTermUniquenessLogfile() {
         return termUniquenessLogfile;
     }
@@ -195,8 +202,8 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         return userModelAdapterConfiguration;
     }
 
-    public String getUserModelType() {
-        return userModelType;
+    public Map<String, UserModelConfiguration> getUserModelTypes() {
+        return userModelTypes;
     }
 
     public boolean hasFlag(RankerConfigurationFlag flag) {
@@ -212,8 +219,17 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         return immutable;
     }
 
+    public boolean isMixMemoriesForRating() {
+        return mixMemoriesForRating;
+    }
+
     public boolean isTreatMissingUserModelEntriesAsZero() {
         return treatMissingUserModelEntriesAsZero;
+    }
+
+    public UserModelConfiguration put(String userModelType,
+            UserModelConfiguration modelConfiguration) {
+        return userModelTypes.put(userModelType, modelConfiguration);
     }
 
     public void setFlags(RankerConfigurationFlag... flags) {
@@ -252,8 +268,17 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         this.minUserSimilarity = minUserSimilarity;
     }
 
+    public void setMixMemoriesForRating(boolean mixMemoriesForRating) {
+        this.mixMemoriesForRating = mixMemoriesForRating;
+    }
+
     public void setNonParticipationFactor(float nonParticipationFactor) {
         this.nonParticipationFactor = nonParticipationFactor;
+    }
+
+    public void setShortTermMemoryConfiguration(
+            ShortTermMemoryConfiguration shortTermMemoryConfiguration) {
+        this.shortTermMemoryConfiguration = shortTermMemoryConfiguration;
     }
 
     public void setTermUniquenessLogfile(String termUniquenessLogfile) {
@@ -283,12 +308,12 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         this.treatMissingUserModelEntriesAsZero = treatMissingUserModelEntriesAsZero;
     }
 
-    public void setUserModelType(String userModelType) {
-        if (userModelType == null) {
+    public void setUserModelType(Map<String, UserModelConfiguration> userModelTypes) {
+        if (userModelTypes == null) {
             throw new IllegalArgumentException("userModelType cannot be null.");
         }
         assertCanSet();
-        this.userModelType = userModelType;
+        this.userModelTypes = userModelTypes;
     }
 
     @Override
@@ -302,8 +327,8 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
                 + termVectorSimilarityStrategy + ", immutable=" + immutable
                 + ", interestTermTreshold=" + interestTermTreshold
                 + ", treatMissingUserModelEntriesAsZero=" + treatMissingUserModelEntriesAsZero
-                + ", termUniquenessLogfile=" + termUniquenessLogfile + ", userModelType="
-                + userModelType + ", informationExtractionConfiguration="
+                + ", termUniquenessLogfile=" + termUniquenessLogfile + ", userModelTypes="
+                + userModelTypes + ", informationExtractionConfiguration="
                 + informationExtractionConfiguration + ", informationExtractionCommand="
                 + informationExtractionCommand + ", userModelAdapterConfiguration="
                 + userModelAdapterConfiguration + "]";

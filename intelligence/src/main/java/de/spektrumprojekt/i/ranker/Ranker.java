@@ -169,18 +169,15 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         userFeatureCommand = new UserFeatureCommand(memberRunner);
         reRankUserFeatureCommand = new UserFeatureCommand(memberRunner);
 
-        this.informationExtractionChain = InformationExtractionCommand
-                .createDefaultGermanEnglish(persistence,
-                        this.rankerConfiguration.getInformationExtractionConfiguration());
+        this.informationExtractionChain = InformationExtractionCommand.createDefaultGermanEnglish(
+                persistence, this.rankerConfiguration.getInformationExtractionConfiguration());
 
         UserSimilaritySimType userSimilaritySimType = this.rankerConfiguration
-                .getUserModelAdapterConfiguration()
-                .getUserSimilaritySimType();
+                .getUserModelAdapterConfiguration().getUserSimilaritySimType();
         if (userSimilaritySimType == null) {
             userSimilaritySimType = UserSimilaritySimType.VOODOO;
         }
-        userSimilarityComputer = new UserSimilarityComputer(this.persistence,
-                userSimilaritySimType);
+        userSimilarityComputer = new UserSimilarityComputer(this.persistence, userSimilaritySimType);
 
         storeMessageCommand = new StoreMessageCommand(persistence);
         userSimilarityIntegrationCommand = new UserSimilarityIntegrationCommand(
@@ -191,11 +188,9 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         DiscussionParticipationFeatureCommand discussionParticipationFeatureCommand = new DiscussionParticipationFeatureCommand();
         DiscussionMentionFeatureCommand discussionMentionFeatureCommand = new DiscussionMentionFeatureCommand();
 
-        termMatchFeatureCommand = new ContentMatchFeatureCommand(
-                persistence,
-                rankerConfiguration.getUserModelType(),
-                termVectorSimilarityComputer,
-                rankerConfiguration.getInterestTermTreshold());
+        termMatchFeatureCommand = new ContentMatchFeatureCommand(persistence,
+                termVectorSimilarityComputer, rankerConfiguration.getInterestTermTreshold(),
+                rankerConfiguration);
         determineInteractionLevelCommand = new DetermineInteractionLevelCommand();
         computeMessageRankCommand = new ComputeMessageRankCommand(
                 this.rankerConfiguration
@@ -203,15 +198,11 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
                         || this.rankerConfiguration
                                 .hasFlag(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE),
                 this.rankerConfiguration.getNonParticipationFactor());
-        invokeLearnerCommand = new InvokeLearnerCommand(
-                this.persistence,
-                this.communicator,
+        invokeLearnerCommand = new InvokeLearnerCommand(this.persistence, this.communicator,
                 this.rankerConfiguration);
         triggerUserModelAdaptationCommand = new TriggerUserModelAdaptationCommand(
-                this.communicator,
-                this.rankerConfiguration.getUserModelAdapterConfiguration()
-                        .getConfidenceThreshold(),
-                this.rankerConfiguration
+                this.communicator, this.rankerConfiguration.getUserModelAdapterConfiguration()
+                        .getConfidenceThreshold(), this.rankerConfiguration
                         .getUserModelAdapterConfiguration().getRankThreshold());
 
         // TODO where to take the configuration values from ?
@@ -261,16 +252,14 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
 
             userFeatureCommand.getUserSpecificCommandChain().addCommand(
                     discussionParticipationFeatureCommand);
-            userFeatureCommand.addCommand(
-                    discussionMentionFeatureCommand);
+            userFeatureCommand.addCommand(discussionMentionFeatureCommand);
         }
 
         if (!this.rankerConfiguration
                 .hasFlag(RankerConfigurationFlag.DO_NOT_USE_CONTENT_MATCHER_FEATURE)) {
             userFeatureCommand.addCommand(termMatchFeatureCommand);
         }
-        featureAggregateCommand = new FeatureAggregateCommand(
-                this.persistence);
+        featureAggregateCommand = new FeatureAggregateCommand(this.persistence);
 
         userFeatureCommand.addCommand(determineInteractionLevelCommand);
         userFeatureCommand.addCommand(featureAggregateCommand);

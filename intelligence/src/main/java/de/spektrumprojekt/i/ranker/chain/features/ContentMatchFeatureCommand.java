@@ -20,6 +20,9 @@
 package de.spektrumprojekt.i.ranker.chain.features;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import de.spektrumprojekt.commons.chain.Command;
@@ -28,8 +31,12 @@ import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.i.datamodel.MessageFeature;
+import de.spektrumprojekt.i.ranker.RankerConfiguration;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
+import de.spektrumprojekt.i.timebased.MaxMergeValuesStrategy;
+import de.spektrumprojekt.i.timebased.MergeValuesStrategy;
+import de.spektrumprojekt.i.timebased.WeightedMergeValuesStrategy;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**
@@ -38,37 +45,44 @@ import de.spektrumprojekt.persistence.Persistence;
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 
  */
-public class ContentMatchFeatureCommand implements
-        Command<UserSpecificMessageFeatureContext> {
+public class ContentMatchFeatureCommand implements Command<UserSpecificMessageFeatureContext> {
 
     private final Persistence persistence;
-    private final String userModelType;
     private final TermVectorSimilarityComputer termVectorSimilarityComputer;
     private final float interestTermTreshold;
+    private final RankerConfiguration rankerConfiguration;
+    private final MergeValuesStrategy valuesStrategy;
 
     /**
      * 
      * @param persistence
      *            the persistence
      */
-    public ContentMatchFeatureCommand(
-            Persistence persistence,
-            String userModelType,
-            TermVectorSimilarityComputer termVectorSimilarityComputer,
-            float interestTermTreshold) {
+    public ContentMatchFeatureCommand(Persistence persistence,
+            TermVectorSimilarityComputer termVectorSimilarityComputer, float interestTermTreshold,
+            RankerConfiguration rankerConfiguration) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
         }
         if (termVectorSimilarityComputer == null) {
             throw new IllegalArgumentException("termVectorSimilarityComputer cannot be null.");
         }
-        if (userModelType == null) {
+        if (rankerConfiguration == null) {
             throw new IllegalArgumentException("userModelType cannot be null.");
         }
         this.persistence = persistence;
-        this.userModelType = userModelType;
         this.interestTermTreshold = interestTermTreshold;
         this.termVectorSimilarityComputer = termVectorSimilarityComputer;
+        this.rankerConfiguration = rankerConfiguration;
+        switch (rankerConfiguration.getShortTermMemoryConfiguration().getMergeValuesStrategy()) {
+        case MAX:
+            valuesStrategy = new MaxMergeValuesStrategy();
+            break;
+        default:
+            valuesStrategy = new WeightedMergeValuesStrategy(
+                    rankerConfiguration.getShortTermMemoryConfiguration());
+            break;
+        }
     }
 
     /**
@@ -76,8 +90,8 @@ public class ContentMatchFeatureCommand implements
      */
     @Override
     public String getConfigurationDescription() {
-        return this.getClass().getSimpleName()
-                + "userModelType=" + userModelType
+        return this.getClass().getSimpleName() + "userModelType="
+                + rankerConfiguration.getUserModelTypes().keySet()
                 + " termVectorSimilarityComputer="
                 + termVectorSimilarityComputer.getConfigurationDescription()
                 + " interestTermTreshold=" + interestTermTreshold;
@@ -91,28 +105,48 @@ public class ContentMatchFeatureCommand implements
         return Feature.CONTENT_MATCH_FEATURE;
     }
 
+    private boolean notNullOrEmpty(Map entries) {
+        return entries != null && entries.size() > 0;
+    }
+
     /**
      * {@inheritDoc}
      */
     @Override
     public void process(UserSpecificMessageFeatureContext context) {
-
-        UserModel userModel = persistence.getOrCreateUserModelByUser(context.getUserGlobalId(),
-                userModelType);
+        List<UserModel> userModels = new LinkedList<UserModel>();
+        for (String userModelType : rankerConfiguration.getUserModelTypes().keySet()) {
+            userModels.add(persistence.getOrCreateUserModelByUser(context.getUserGlobalId(),
+                    userModelType));
+        }
+        String messageGroupId = context.getMessage().getMessageGroup() == null ? null : context
+                .getMessage().getMessageGroup().getGlobalId();
 
         Collection<Term> messageTerms = MessageHelper.getAllTerms(context.getMessage());
-        Map<Term, UserModelEntry> entries = persistence.getUserModelEntriesForTerms(userModel,
-                messageTerms);
-
-        context.setMatchingUserModelEntries(entries);
-        String messageGroupId = context.getMessage().getMessageGroup() == null ? null : context
-                .getMessage()
-                .getMessageGroup().getGlobalId();
-        if (entries != null && entries.size() > 0) {
+        Float value = null;
+        Map<Term, UserModelEntry> entries;
+        if (rankerConfiguration.isMixMemoriesForRating()) {
+            Map<String, Map<Term, UserModelEntry>> allEntries = new HashMap<String, Map<Term, UserModelEntry>>();
+            for (UserModel userModel : userModels) {
+                allEntries.put(userModel.getUserModelType(),
+                        persistence.getUserModelEntriesForTerms(userModel, messageTerms));
+            }
+            value = this.termVectorSimilarityComputer.getSimilarity(messageGroupId, allEntries,
+                    valuesStrategy, messageTerms);
+        } else {
+            Map<String, Float> values = new HashMap<String, Float>();
+            for (UserModel userModel : userModels) {
+                entries = persistence.getUserModelEntriesForTerms(userModel, messageTerms);
+                if (notNullOrEmpty(entries)) {
+                    values.put(userModel.getUserModelType(), this.termVectorSimilarityComputer
+                            .getSimilarity(messageGroupId, entries, messageTerms));
+                }
+                value = valuesStrategy.merge(values);
+            }
+        }
+        if (value != null) {
             MessageFeature feature = new MessageFeature(getFeatureId());
 
-            float value = this.termVectorSimilarityComputer.getSimilarity(messageGroupId, entries,
-                    messageTerms);
             feature.setValue(value);
 
             feature.setValue(Math.min(1, feature.getValue()));
@@ -122,5 +156,4 @@ public class ContentMatchFeatureCommand implements
         }
 
     }
-
 }

@@ -66,6 +66,14 @@ public interface Persistence {
 
     Collection<Term> getAllTerms();
 
+    /**
+     * returns all userModelEntries of this type of usermodel
+     * 
+     * @param userModel
+     * @return
+     */
+    Map<UserModel, Collection<UserModelEntry>> getAllUserModelEntries(String userModelType);
+
     Collection<User> getAllUsers();
 
     List<HashWithDate> getHashsByGlobalSubscriptionId(String subscriptionGlobalId);
