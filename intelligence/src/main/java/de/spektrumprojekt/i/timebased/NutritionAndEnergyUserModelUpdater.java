@@ -56,7 +56,6 @@ public class NutritionAndEnergyUserModelUpdater {
             }
         }
         this.shortTermMemoryConfiguration = configuration.getShortTermMemoryConfiguration();
-        // NutritionCalculationStrategy strategy = energyCalculationConfiguration.getStrategy();
         d = shortTermMemoryConfiguration.getEnergyCalculationConfiguration().getD();
         k = shortTermMemoryConfiguration.getEnergyCalculationConfiguration().getK();
         G = shortTermMemoryConfiguration.getEnergyCalculationConfiguration().getG();
@@ -117,7 +116,7 @@ public class NutritionAndEnergyUserModelUpdater {
                     float energy = 0;
                     for (int histNutrIndex = length
                             - shortTermMemoryConfiguration.getEnergyCalculationConfiguration()
-                                    .getHistoryLength(); histNutrIndex < length; histNutrIndex++) {
+                                    .getEnergyHistoryLength(); histNutrIndex < length; histNutrIndex++) {
                         float historicalNutrition;
                         if (histNutrIndex < 0) {
                             historicalNutrition = 0;
@@ -139,7 +138,7 @@ public class NutritionAndEnergyUserModelUpdater {
 
     private float[] weightedAverage(float[] nutrition, int nutritionHistoryLength2) {
         if (nutritionHistoryLength > 0) {
-            for (int currentBin = nutrition.length; currentBin >= 0; currentBin--) {
+            for (int currentBin = nutrition.length - 1; currentBin >= 0; currentBin--) {
                 int binsToUse = Math.min(currentBin, nutritionHistoryLength);
                 float binStartScalingFactor = currentBin == 0 ? 0.75f : 0.5f;
                 nutrition[currentBin] = nutrition[currentBin] * binStartScalingFactor;

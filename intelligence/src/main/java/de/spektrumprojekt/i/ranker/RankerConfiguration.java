@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
@@ -315,6 +316,19 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     @Override
     public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        boolean first = true;
+        for (Entry<String, UserModelConfiguration> entry : userModelTypes.entrySet()) {
+            if (first) {
+                first = false;
+            } else {
+                sb.append(", ");
+            }
+            sb.append(entry.getKey());
+            sb.append(":");
+            sb.append(entry.getValue().getConfigurationDescription());
+        }
         return "RankerConfiguration [flags=" + flags + ", minUserSimilarity=" + minUserSimilarity
                 + ", minContentMessageScore=" + minContentMessageScore + ", messageRankThreshold="
                 + messageRankThreshold + ", nonParticipationFactor=" + nonParticipationFactor
@@ -325,10 +339,11 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
                 + ", interestTermTreshold=" + interestTermTreshold
                 + ", treatMissingUserModelEntriesAsZero=" + treatMissingUserModelEntriesAsZero
                 + ", termUniquenessLogfile=" + termUniquenessLogfile + ", userModelTypes="
-                + userModelTypes + ", informationExtractionConfiguration="
+                + sb.toString() + ", informationExtractionConfiguration="
                 + informationExtractionConfiguration + ", informationExtractionCommand="
                 + informationExtractionCommand + ", userModelAdapterConfiguration="
-                + userModelAdapterConfiguration + "]";
+                + userModelAdapterConfiguration + ", mixMemoriesForRating=" + mixMemoriesForRating
+                + "]";
     }
 
 }
