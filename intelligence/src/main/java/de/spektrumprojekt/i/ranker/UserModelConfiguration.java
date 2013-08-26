@@ -69,8 +69,9 @@ public class UserModelConfiguration implements ConfigurationDescriptable, Clonea
 
     @Override
     public String getConfigurationDescription() {
-        // TODO Auto-generated method stub
-        return null;
+        return "UserModelConfiguration [userModelEntryIntegrationStrategy="
+                + userModelEntryIntegrationStrategy + ", startTime=" + startTime + ", precision="
+                + precision + ", binSize=" + binSize + ", calculateLater=" + calculateLater + "]";
     }
 
     public long getPrecision() {
