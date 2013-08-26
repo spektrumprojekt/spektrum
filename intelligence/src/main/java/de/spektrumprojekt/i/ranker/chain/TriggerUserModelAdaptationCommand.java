@@ -21,13 +21,17 @@ package de.spektrumprojekt.i.ranker.chain;
 
 import java.util.ArrayList;
 import java.util.Collection;
-
-import org.apache.commons.collections.CollectionUtils;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.communication.Communicator;
 import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.Term;
+import de.spektrumprojekt.datamodel.user.UserModel;
+import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.i.learner.adaptation.DirectedUserModelAdaptationMessage;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
@@ -44,18 +48,24 @@ public class TriggerUserModelAdaptationCommand implements
     private final float rankThreshold; // => interest term?
     private final float confidenceThreshold;
 
+    private final String userModelType;
     private final Communicator communicator;
 
     public TriggerUserModelAdaptationCommand(Communicator communicator) {
-        this(communicator, 0.75f, 0.75f);
+        this(communicator, UserModel.DEFAULT_USER_MODEL_TYPE, 0.75f, 0.75f);
     }
 
-    public TriggerUserModelAdaptationCommand(Communicator communicator, float confidenceThreshold,
+    public TriggerUserModelAdaptationCommand(Communicator communicator, String userModelType,
+            float confidenceThreshold,
             float rankThreshold) {
         if (communicator == null) {
             throw new IllegalArgumentException("communicator cannot be null!");
         }
+        if (userModelType == null) {
+            throw new IllegalArgumentException("userModelType cannot be null!");
+        }
         this.communicator = communicator;
+        this.userModelType = userModelType;
         this.confidenceThreshold = confidenceThreshold;
         this.rankThreshold = rankThreshold;
 
@@ -66,7 +76,9 @@ public class TriggerUserModelAdaptationCommand implements
      */
     @Override
     public String getConfigurationDescription() {
-        return this.getClass().getSimpleName() + " rankThreshold=" + rankThreshold
+        return this.getClass().getSimpleName()
+                + " userModelType=" + userModelType
+                + " rankThreshold=" + rankThreshold
                 + " confidenceThreshold=" + confidenceThreshold;
     }
 
@@ -82,21 +94,56 @@ public class TriggerUserModelAdaptationCommand implements
 
             String messageGroupGlobalId = context.getMessage().getMessageGroup().getGlobalId();
 
-            if (context.getMatchingUserModelEntries() != null && messageGroupGlobalId != null) {
+            if (messageGroupGlobalId != null
+                    && context.getMatchingUserModelEntries() != null
+                    && context.getMatchingUserModelEntries().get(this.userModelType) != null) {
 
-                Collection<Term> allTerms = MessageHelper.getAllTerms(context.getMessage());
-                int messageTerms = allTerms.size();
-                int matchingUserModelTerms = context.getMatchingUserModelEntries().size();
+                Collection<Term> allMessageTerms = MessageHelper.getAllTerms(context.getMessage());
+                Collection<Term> matchingTermsOfUserModelNoIncludedInOthers = new HashSet<Term>();
 
-                float confidence = messageTerms == 1 ? 0 : (float) matchingUserModelTerms
+                Collection<String> allTermsOfAllUserModels = new HashSet<String>();
+                Collection<String> termsOfOtherUserModels = new HashSet<String>();
+                for (Entry<String, Map<Term, UserModelEntry>> matchingTermsEntry : context
+                        .getMatchingUserModelEntries().entrySet()) {
+                    if (!this.userModelType.equals(matchingTermsEntry.getKey())) {
+                        for (Term term : matchingTermsEntry.getValue().keySet()) {
+                            termsOfOtherUserModels.add(term.getValue());
+                        }
+                    }
+                }
+                allTermsOfAllUserModels.addAll(termsOfOtherUserModels);
+                for (Term term : context
+                        .getMatchingUserModelEntries().get(this.userModelType).keySet()) {
+                    if (!termsOfOtherUserModels.contains(term.getValue())) {
+                        matchingTermsOfUserModelNoIncludedInOthers.add(term);
+                        allTermsOfAllUserModels.add(term.getValue());
+                    }
+                }
+
+                int messageTerms = allMessageTerms.size();
+                int allMatchingUserModelTerms = allTermsOfAllUserModels.size();
+
+                float confidence = messageTerms == 1 ? 0 : (float) allMatchingUserModelTerms
                         / messageTerms;
 
                 if (confidence < confidenceThreshold) {
 
-                    ArrayList<Term> termsToAdapt = new ArrayList<Term>(CollectionUtils.subtract(
-                            allTerms, context.getMatchingUserModelEntries().keySet()));
+                    List<Term> termsToAdapt = new ArrayList<Term>();
+                    for (Term termToAdaptCandidate : allMessageTerms) {
+                        boolean match = false;
+                        match: for (Term termToMatchCheck : matchingTermsOfUserModelNoIncludedInOthers) {
+                            if (termToAdaptCandidate.getValue().equals(termToMatchCheck.getValue())) {
+                                match = true;
+                                break match;
+                            }
+                        }
+                        if (!match) {
+                            termsToAdapt.add(termToAdaptCandidate);
+                        }
+                    }
 
-                    Term[] termsToAdaptArray = termsToAdapt.toArray(new Term[termsToAdapt.size()]);
+                    Term[] termsToAdaptArray = termsToAdapt.toArray(new Term[termsToAdapt
+                            .size()]);
 
                     if (termsToAdaptArray.length > 0) {
                         DirectedUserModelAdaptationMessage adaptationMessage = new DirectedUserModelAdaptationMessage(
@@ -108,8 +155,8 @@ public class TriggerUserModelAdaptationCommand implements
                         communicator.sendMessage(adaptationMessage);
                     }
                 }
-
             }
+
         }
 
     }

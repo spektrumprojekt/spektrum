@@ -70,16 +70,18 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
         if (configuration == null) {
             throw new IllegalArgumentException("configuration cannot be null!");
         }
-        // if (userModelEntryIntegrationStrategy == null) {
-        // throw new IllegalArgumentException("userModelEntryIntegrationStrategy cannot be null!");
-        // }
+        if (configuration.getUserModelTypes() == null
+                || configuration.getUserModelTypes().size() == 0) {
+            throw new IllegalArgumentException(
+                    "configuration.getUserModelTypes() cannot be null or empty !");
+        }
         this.persistence = persistence;
 
         this.learnerChain = new CommandChain<LearnerMessageContext>();
-
         this.learnerChain
                 .addCommand(new ProxyCommand<MessageFeatureContext, LearnerMessageContext>(ieChain));
         this.learnerChain.addCommand(new LoadRelatedObservationsCommand(this.persistence));
+
         for (String userModelType : configuration.getUserModelTypes().keySet()) {
             UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy;
             UserModelConfiguration userModelConfiguration = configuration.getUserModelTypes().get(
@@ -98,7 +100,12 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
                     userModelType, userModelEntryIntegrationStrategy));
         }
         this.learnerChain.addCommand(new StoreObservationCommand(this.persistence));
-        this.learnerChain.addCommand(new TermCounterCommand(configuration, this.persistence));
+
+        if (configuration.getShortTermMemoryConfiguration() != null
+                && configuration.getShortTermMemoryConfiguration()
+                        .getEnergyCalculationConfiguration() != null) {
+            this.learnerChain.addCommand(new TermCounterCommand(configuration, this.persistence));
+        }
     }
 
     /**
