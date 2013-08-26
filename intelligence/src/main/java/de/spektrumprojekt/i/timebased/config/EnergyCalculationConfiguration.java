@@ -8,14 +8,16 @@ public class EnergyCalculationConfiguration implements ConfigurationDescriptable
     private final double d;
     private final NutritionCalculationStrategy strategy;
     private final int historyLength;
+    private final int nutritionHistLength;
 
     public EnergyCalculationConfiguration(float k, double d, int historyLength,
-            NutritionCalculationStrategy strategy) {
+            int nutritionHistLength, NutritionCalculationStrategy strategy) {
         super();
         this.k = k;
         this.d = d;
         this.historyLength = historyLength;
         this.strategy = strategy;
+        this.nutritionHistLength = nutritionHistLength;
     }
 
     @Override
@@ -42,6 +44,10 @@ public class EnergyCalculationConfiguration implements ConfigurationDescriptable
 
     public NutritionCalculationStrategy getStrategy() {
         return strategy;
+    }
+
+    public int getNutritionHistLength() {
+        return nutritionHistLength;
     }
 
 }

@@ -39,6 +39,8 @@ public class NutritionAndEnergyUserModelUpdater {
 
     private final double G;
 
+    private final int nutritionHistoryLength;
+
     NutritionCalculationStrategy strategy;
 
     public NutritionAndEnergyUserModelUpdater(Persistence persistence,
@@ -58,6 +60,8 @@ public class NutritionAndEnergyUserModelUpdater {
         d = shortTermMemoryConfiguration.getEnergyCalculationConfiguration().getD();
         k = shortTermMemoryConfiguration.getEnergyCalculationConfiguration().getK();
         G = shortTermMemoryConfiguration.getEnergyCalculationConfiguration().getG();
+        nutritionHistoryLength = shortTermMemoryConfiguration.getEnergyCalculationConfiguration()
+                .getNutritionHistLength();
         switch (shortTermMemoryConfiguration.getEnergyCalculationConfiguration().getStrategy()) {
         case RELATIVE:
             strategy = new RelativeNutritionCalculationStrategy();
@@ -107,6 +111,7 @@ public class NutritionAndEnergyUserModelUpdater {
                 for (UserModelEntry entry : entries) {
                     float weight = 0;
                     float[] nutrition = strategy.getNutrition(entry, persistence);
+                    nutrition = weightedAverage(nutrition, nutritionHistoryLength);
                     int length = nutrition.length - 1;
                     float currentNutrition = nutrition[length];
                     float energy = 0;
@@ -132,4 +137,18 @@ public class NutritionAndEnergyUserModelUpdater {
         LOGGER.debug("Finished updating UserModels");
     }
 
+    private float[] weightedAverage(float[] nutrition, int nutritionHistoryLength2) {
+        if (nutritionHistoryLength > 0) {
+            for (int currentBin = nutrition.length; currentBin >= 0; currentBin--) {
+                int binsToUse = Math.min(currentBin, nutritionHistoryLength);
+                float binStartScalingFactor = currentBin == 0 ? 0.75f : 0.5f;
+                nutrition[currentBin] = nutrition[currentBin] * binStartScalingFactor;
+                for (int i = 1; i <= binsToUse; i++) {
+                    nutrition[currentBin] += (float) Math.pow(2, -i - 1)
+                            * nutrition[currentBin - i];
+                }
+            }
+        }
+        return nutrition;
+    }
 }
