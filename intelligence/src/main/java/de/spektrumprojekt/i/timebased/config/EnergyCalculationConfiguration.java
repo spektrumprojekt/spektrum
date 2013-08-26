@@ -4,15 +4,18 @@ import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 
 public class EnergyCalculationConfiguration implements ConfigurationDescriptable {
 
-    private final float k;
-    private final double d;
-    private final NutritionCalculationStrategy strategy;
-    private final int energyHistoryLength;
-    private final int nutritionHistLength;
+    private float k;
+    private double d;
+    private NutritionCalculationStrategy strategy;
+    private int energyHistoryLength;
+    private int nutritionHistLength;
 
-    public EnergyCalculationConfiguration(float k, double d, int energyHistoryLength,
-            int nutritionHistLength, NutritionCalculationStrategy strategy) {
-        super();
+    public EnergyCalculationConfiguration(
+            float k,
+            double d,
+            int energyHistoryLength,
+            int nutritionHistLength,
+            NutritionCalculationStrategy strategy) {
         this.k = k;
         this.d = d;
         this.energyHistoryLength = energyHistoryLength;
@@ -49,6 +52,26 @@ public class EnergyCalculationConfiguration implements ConfigurationDescriptable
 
     public NutritionCalculationStrategy getStrategy() {
         return strategy;
+    }
+
+    public void setD(double d) {
+        this.d = d;
+    }
+
+    public void setEnergyHistoryLength(int energyHistoryLength) {
+        this.energyHistoryLength = energyHistoryLength;
+    }
+
+    public void setK(float k) {
+        this.k = k;
+    }
+
+    public void setNutritionHistLength(int nutritionHistLength) {
+        this.nutritionHistLength = nutritionHistLength;
+    }
+
+    public void setStrategy(NutritionCalculationStrategy strategy) {
+        this.strategy = strategy;
     }
 
     @Override
