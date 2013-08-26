@@ -48,7 +48,6 @@ import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
 import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.i.learner.Learner;
-import de.spektrumprojekt.i.learner.UserModelEntryIntegrationPlainStrategy;
 import de.spektrumprojekt.i.learner.adaptation.DirectedUserModelAdapter;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.Ranker;
@@ -84,7 +83,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
         for (ScoredTerm term : terms) {
 
             Collection<UserModel> userModels = getPersistence().getUsersWithUserModel(
-                    Arrays.asList(term.getTerm()));
+                    Arrays.asList(term.getTerm()), UserModel.DEFAULT_USER_MODEL_TYPE);
 
             for (UserModel userModelToAssert : userModelsToAssert) {
                 Assert.assertTrue(
@@ -110,9 +109,8 @@ public class RankerTest extends IntelligenceSpektrumTest {
         dump(similarities);
 
         // assert that there is a user2 -> user1 similarity
-        similarities = getPersistence().getUserSimilarities(
-                user2.getGlobalId(), Arrays.asList(user1.getGlobalId()),
-                messageGroup.getGlobalId(), 0);
+        similarities = getPersistence().getUserSimilarities(user2.getGlobalId(),
+                Arrays.asList(user1.getGlobalId()), messageGroup.getGlobalId(), 0);
         UserSimilarity user1sim = null;
         for (UserSimilarity sim : similarities) {
             if (sim.getUserGlobalIdTo().equals(user1.getGlobalId())) {
@@ -133,7 +131,8 @@ public class RankerTest extends IntelligenceSpektrumTest {
         userForRanking.add("user3");
 
         for (String globalId : userForRanking) {
-            UserModel userModel = getPersistence().getOrCreateUserModelByUser(globalId);
+            UserModel userModel = getPersistence().getOrCreateUserModelByUser(globalId,
+                    UserModel.DEFAULT_USER_MODEL_TYPE);
             Assert.assertNotNull(userModel);
             userModels.add(userModel);
         }
@@ -143,19 +142,14 @@ public class RankerTest extends IntelligenceSpektrumTest {
         communicator = new VirtualMachineCommunicator(rankerQueue, rankerQueue);
 
         RankerConfiguration rankerConfiguration = new RankerConfiguration(
-                TermWeightStrategy.TRIVIAL,
-                TermVectorSimilarityStrategy.AVG, flags);
+                TermWeightStrategy.TRIVIAL, TermVectorSimilarityStrategy.AVG, flags);
 
-        Ranker ranker = new Ranker(
-                getPersistence(),
-                communicator,
+        Ranker ranker = new Ranker(getPersistence(), communicator,
                 new SimpleMessageGroupMemberRunner<MessageFeatureContext>(userForRanking),
                 rankerConfiguration);
 
-        Learner learner = new Learner(
-                getPersistence(),
-                ranker.getInformationExtractionChain(),
-                new UserModelEntryIntegrationPlainStrategy());
+        Learner learner = new Learner(getPersistence(), rankerConfiguration,
+                ranker.getInformationExtractionChain());
 
         communicator.registerMessageHandler(ranker);
         communicator.registerMessageHandler(learner);
@@ -245,9 +239,12 @@ public class RankerTest extends IntelligenceSpektrumTest {
         User user2 = getPersistence().getOrCreateUser("user2");
         User user3 = getPersistence().getOrCreateUser("user3");
 
-        UserModel userModel1 = getPersistence().getOrCreateUserModelByUser(user1.getGlobalId());
-        UserModel userModel2 = getPersistence().getOrCreateUserModelByUser(user2.getGlobalId());
-        UserModel userModel3 = getPersistence().getOrCreateUserModelByUser(user3.getGlobalId());
+        UserModel userModel1 = getPersistence().getOrCreateUserModelByUser(user1.getGlobalId(),
+                UserModel.DEFAULT_USER_MODEL_TYPE);
+        UserModel userModel2 = getPersistence().getOrCreateUserModelByUser(user2.getGlobalId(),
+                UserModel.DEFAULT_USER_MODEL_TYPE);
+        UserModel userModel3 = getPersistence().getOrCreateUserModelByUser(user3.getGlobalId(),
+                UserModel.DEFAULT_USER_MODEL_TYPE);
 
         Ranker ranker = setupRanker(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION);
 
@@ -282,8 +279,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
 
         // here user1 writes a message, and that should learn the words "software", and
         // "engineering" from user 1 and adapt it to user 2
-        message = createPlainTextMessage(
-                "Is software engineering the master piece ?",
+        message = createPlainTextMessage("Is software engineering the master piece ?",
                 user1.getGlobalId(), messageGroup);
 
         // here again a rank should exist for user 2
@@ -306,8 +302,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
             Thread.sleep(500);
             // wait--;
             if (wait == 0) {
-                Assert.fail("Queue not empty after 5 seconds messagesLeft="
-                        + rankerQueue.size());
+                Assert.fail("Queue not empty after 5 seconds messagesLeft=" + rankerQueue.size());
             }
         }
     }

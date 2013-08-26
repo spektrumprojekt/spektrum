@@ -122,7 +122,8 @@ public class UserPersistence extends AbstractPersistenceLayer {
      *            the users id
      * @return the user model
      */
-    public UserModel getOrCreateUserModelByUser(final String userGlobalId) {
+    public UserModel getOrCreateUserModelByUser(final String userGlobalId,
+            final String userModelType) {
         Transaction<UserModel> transaction = new Transaction<UserModel>() {
 
             @Override
@@ -130,7 +131,14 @@ public class UserPersistence extends AbstractPersistenceLayer {
                 CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
                 CriteriaQuery<UserModel> query = criteriaBuilder.createQuery(UserModel.class);
                 Root<UserModel> entity = query.from(UserModel.class);
-                query.where(criteriaBuilder.equal(entity.get("user").get("globalId"), userGlobalId));
+
+                query.where(
+                        criteriaBuilder.and(
+                                criteriaBuilder.equal(entity.get("user").get("globalId"),
+                                        userGlobalId),
+                                criteriaBuilder.equal(entity.get("userModelType"), userModelType)
+                                )
+                        );
 
                 try {
                     return entityManager.createQuery(query).getSingleResult();
@@ -149,7 +157,7 @@ public class UserPersistence extends AbstractPersistenceLayer {
 
                 @Override
                 protected UserModel doTransaction(EntityManager entityManager) {
-                    UserModel userModel = new UserModel(user);
+                    UserModel userModel = new UserModel(user, userModelType);
                     entityManager.persist(userModel);
                     return userModel;
                 }
@@ -340,7 +348,8 @@ public class UserPersistence extends AbstractPersistenceLayer {
         return transaction.executeTransaction(getEntityManager());
     }
 
-    public Collection<UserModel> getUsersWithUserModel(final Collection<Term> terms) {
+    public Collection<UserModel> getUsersWithUserModel(final Collection<Term> terms,
+            final String userModelType) {
         if (terms == null || terms.isEmpty()) {
             throw new IllegalArgumentException("terms cannot be null or empty.");
         }
@@ -358,7 +367,10 @@ public class UserPersistence extends AbstractPersistenceLayer {
 
                 query.distinct(true);
                 query.select(userModel);
-                query.where(term.in(terms));
+                query.where(cb.and(
+                        cb.equal(userModel.get("userModelType"), userModelType),
+                        term.in(terms))
+                        );
 
                 try {
                     return entityManager.createQuery(query).getResultList();

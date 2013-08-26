@@ -79,6 +79,14 @@ public interface Persistence {
 
     Collection<Term> getAllTerms();
 
+    /**
+     * returns all userModelEntries of this type of usermodel
+     * 
+     * @param userModel
+     * @return
+     */
+    Map<UserModel, Collection<UserModelEntry>> getAllUserModelEntries(String userModelType);
+
     Collection<User> getAllUsers();
 
     List<HashWithDate> getHashsByGlobalSubscriptionId(String subscriptionGlobalId);
@@ -131,7 +139,7 @@ public interface Persistence {
      *            the users id
      * @return the user model
      */
-    UserModel getOrCreateUserModelByUser(String userGlobalId);
+    UserModel getOrCreateUserModelByUser(String userGlobalId, String userModelType);
 
     Source getSourceByGlobalId(String sourceGlobalId);
 
@@ -142,6 +150,8 @@ public interface Persistence {
     Subscription getSubscriptionByGlobalId(String subscriptionGlobalId);
 
     TermFrequency getTermFrequency();
+
+    Map<String, String> getUserModelEntriesCountDescription();
 
     /**
      * 
@@ -163,7 +173,7 @@ public interface Persistence {
     UserSimilarity getUserSimilarity(String userGlobalIdFrom, String userGlobalIdTo,
             String messageGroupGlobalId);
 
-    Collection<UserModel> getUsersWithUserModel(Collection<Term> terms);
+    Collection<UserModel> getUsersWithUserModel(Collection<Term> terms, String userModelType);
 
     void initialize();
 
@@ -247,5 +257,4 @@ public interface Persistence {
 
     void visitAllMessageRanks(MessageRankVisitor visitor, Date startDate, Date endDate)
             throws Exception;
-
 }
