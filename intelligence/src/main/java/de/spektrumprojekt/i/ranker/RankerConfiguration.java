@@ -343,7 +343,8 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
                 + informationExtractionConfiguration + ", informationExtractionCommand="
                 + informationExtractionCommand + ", userModelAdapterConfiguration="
                 + userModelAdapterConfiguration + ", mixMemoriesForRating=" + mixMemoriesForRating
-                + "]";
+                + ", shortTermMemoryConfiguration="
+                + shortTermMemoryConfiguration.getConfigurationDescription() + "]";
     }
 
 }
