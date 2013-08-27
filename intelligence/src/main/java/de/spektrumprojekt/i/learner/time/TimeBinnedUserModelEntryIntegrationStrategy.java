@@ -56,14 +56,16 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
 
     public TimeBinnedUserModelEntryIntegrationStrategy(long startTime, long binSizeInMs,
             long binPrecisionInMs) {
-        this.startTime = startTime;
-        this.binSizeInMs = binSizeInMs;
-        this.binPrecisionInMs = binPrecisionInMs;
-        this.calculateLater = false;
+        this(startTime, binSizeInMs, binPrecisionInMs, false);
+
     }
 
     public TimeBinnedUserModelEntryIntegrationStrategy(long startTime, long binSizeInMs,
             long binPrecisionInMs, boolean calculateLater) {
+        if (binPrecisionInMs <= 0) {
+            throw new IllegalArgumentException("binPrecisionInMs must be > 0 but is "
+                    + binPrecisionInMs);
+        }
         this.startTime = startTime;
         this.binSizeInMs = binSizeInMs;
         this.binPrecisionInMs = binPrecisionInMs;

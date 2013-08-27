@@ -46,7 +46,8 @@ public class ShortTermMemoryConfiguration implements ConfigurationDescriptable {
                 + ", precision=" + precision + ", balanceMisingUserModelWeights="
                 + balanceMisingUserModelWeights + ", raitingWeights=" + sb.toString()
                 + ", energyCalculationConfiguration="
-                + energyCalculationConfiguration.getConfigurationDescription() + "]";
+                + (energyCalculationConfiguration == null ? "null" :
+                        energyCalculationConfiguration.getConfigurationDescription()) + "]";
     }
 
     public EnergyCalculationConfiguration getEnergyCalculationConfiguration() {
