@@ -332,22 +332,43 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
             sb.append(":");
             sb.append(entry.getValue().getConfigurationDescription());
         }
-        return "RankerConfiguration [flags=" + flags + ", minUserSimilarity=" + minUserSimilarity
-                + ", minContentMessageScore=" + minContentMessageScore + ", messageRankThreshold="
-                + messageRankThreshold + ", nonParticipationFactor=" + nonParticipationFactor
+        return "RankerConfiguration [flags="
+                + flags
+                + ", minUserSimilarity="
+                + minUserSimilarity
+                + ", minContentMessageScore="
+                + minContentMessageScore
+                + ", messageRankThreshold="
+                + messageRankThreshold
+                + ", nonParticipationFactor="
+                + nonParticipationFactor
                 + ", minimumCleanTextLengthForInvokingLearner="
-                + minimumCleanTextLengthForInvokingLearner + ", termWeightStrategy="
-                + termWeightStrategy + ", termVectorSimilarityStrategy="
-                + termVectorSimilarityStrategy + ", immutable=" + immutable
-                + ", interestTermTreshold=" + interestTermTreshold
-                + ", treatMissingUserModelEntriesAsZero=" + treatMissingUserModelEntriesAsZero
-                + ", termUniquenessLogfile=" + termUniquenessLogfile + ", userModelTypes="
-                + sb.toString() + ", informationExtractionConfiguration="
-                + informationExtractionConfiguration + ", informationExtractionCommand="
-                + informationExtractionCommand + ", userModelAdapterConfiguration="
-                + userModelAdapterConfiguration + ", mixMemoriesForRating=" + mixMemoriesForRating
+                + minimumCleanTextLengthForInvokingLearner
+                + ", termWeightStrategy="
+                + termWeightStrategy
+                + ", termVectorSimilarityStrategy="
+                + termVectorSimilarityStrategy
+                + ", immutable="
+                + immutable
+                + ", interestTermTreshold="
+                + interestTermTreshold
+                + ", treatMissingUserModelEntriesAsZero="
+                + treatMissingUserModelEntriesAsZero
+                + ", termUniquenessLogfile="
+                + termUniquenessLogfile
+                + ", userModelTypes="
+                + sb.toString()
+                + ", informationExtractionConfiguration="
+                + informationExtractionConfiguration
+                + ", informationExtractionCommand="
+                + informationExtractionCommand
+                + ", userModelAdapterConfiguration="
+                + userModelAdapterConfiguration
+                + ", mixMemoriesForRating="
+                + mixMemoriesForRating
                 + ", shortTermMemoryConfiguration="
-                + shortTermMemoryConfiguration.getConfigurationDescription() + "]";
+                + (shortTermMemoryConfiguration == null ? "null" : shortTermMemoryConfiguration
+                        .getConfigurationDescription()) + "]";
     }
 
 }
