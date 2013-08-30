@@ -44,6 +44,8 @@ public class ShortTermUserModelUpdater {
 
     NutritionCalculationStrategy strategy;
 
+    private final int aggregatedCount;
+
     public ShortTermUserModelUpdater(Persistence persistence, RankerConfiguration configuration) {
         super();
         this.rankerConfiguration = configuration;
@@ -71,8 +73,31 @@ public class ShortTermUserModelUpdater {
             strategy = new AbsoluteNutritionCalculationStrategy();
             break;
         }
-        entryDecorator = new BinAggregatedUserModelEntryDecorator(shortTermMemoryConfiguration
-                .getEnergyCalculationConfiguration().getBinAggregationCount());
+        aggregatedCount = shortTermMemoryConfiguration.getEnergyCalculationConfiguration()
+                .getBinAggregationCount();
+        entryDecorator = new BinAggregatedUserModelEntryDecorator(aggregatedCount);
+    }
+
+    /**
+     * adds zeros for bins, in which this term did not occure
+     * 
+     * @param nutrition
+     * @param precision
+     * @param aggregatedCount
+     * @return
+     */
+    private float[] addMissingZeros(float[] nutrition, long precision, int aggregatedCount) {
+        int bincount = (int) ((lastModelCalculationDate.getTime() - firstBinStartTime.getTime()) / precision);
+        bincount = bincount / aggregatedCount;
+        float[] result = new float[bincount];
+        for (int i = 0; i < bincount; i++) {
+            if (i + nutrition.length < bincount) {
+                result[i] = 0;
+            } else {
+                result[i] = nutrition[i - bincount + nutrition.length];
+            }
+        }
+        return result;
     }
 
     public boolean itsTimeToCalculateModels(Date date) {
@@ -111,11 +136,16 @@ public class ShortTermUserModelUpdater {
             for (UserModel userModel : userModelsAndEntries.keySet()) {
                 LOGGER.debug("working on modeltype {}", userModel.getUserModelType());
                 Collection<UserModelEntry> entries = userModelsAndEntries.get(userModel);
-                for (UserModelEntry entry : entries) {
+                calculateEntry: for (UserModelEntry entry : entries) {
                     float weight = 0;
                     entryDecorator.setEntry(entry);
                     float[] nutrition = strategy.getNutrition(entryDecorator, persistence);
+                    nutrition = addMissingZeros(nutrition,
+                            shortTermMemoryConfiguration.getPrecision(), aggregatedCount);
                     int length = nutrition.length - 1;
+                    if (length < 0) {
+                        continue calculateEntry;
+                    }
                     float currentNutrition = nutrition[length];
                     float energy = 0;
                     for (int histNutrIndex = length

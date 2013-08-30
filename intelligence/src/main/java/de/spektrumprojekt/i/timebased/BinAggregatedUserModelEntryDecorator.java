@@ -42,7 +42,13 @@ public class BinAggregatedUserModelEntryDecorator extends UserModelEntry {
         Collections.sort(entries, new Comparator<UserModelEntryTimeBin>() {
             @Override
             public int compare(UserModelEntryTimeBin o1, UserModelEntryTimeBin o2) {
-                return (int) (o1.getTimeBinStart() - o2.getTimeBinStart());
+                if (o1.getTimeBinStart() - o2.getTimeBinStart() > 0) {
+                    return 1;
+                }
+                if (o1.getTimeBinStart() - o2.getTimeBinStart() == 0) {
+                    return 0;
+                }
+                return -1;
             }
         });
         // entries to aggregate to one bin
