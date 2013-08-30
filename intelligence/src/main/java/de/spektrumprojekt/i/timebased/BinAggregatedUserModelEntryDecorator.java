@@ -163,7 +163,7 @@ public class BinAggregatedUserModelEntryDecorator extends UserModelEntry {
                 for (int j = 0; j < binAggragationCount; j++) {
                     int index = j + i;
                     if (index < entries.size()) {
-                        entriesToAggregate.addFirst(entries.get(index));
+                        entriesToAggregate.addLast(entries.get(index));
                     }
                 }
                 return aggragateEntries(entriesToAggregate);
