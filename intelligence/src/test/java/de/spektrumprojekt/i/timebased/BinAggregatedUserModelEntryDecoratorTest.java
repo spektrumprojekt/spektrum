@@ -53,9 +53,6 @@ public class BinAggregatedUserModelEntryDecoratorTest {
                 Assert.assertEquals((float) binsToAggregate, timeBin.getScoreCount());
                 Assert.assertEquals((float) binsToAggregate, timeBin.getScoreSum());
             }
-            for (Long startTime : estimatadTimesNotStarting) {
-                Assert.assertNull(aggregatedEntry.getUserModelEntryTimeBinByStartTime(startTime));
-            }
             long lastStartTime = 0;
             for (UserModelEntryTimeBin timeBin : aggregatedEntry.getTimeBinEntries()) {
                 long currentStartTime = timeBin.getTimeBinStart();

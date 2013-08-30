@@ -139,14 +139,34 @@ public class BinAggregatedUserModelEntryDecorator extends UserModelEntry {
 
     @Override
     public UserModelEntryTimeBin getUserModelEntryTimeBinByStartTime(long timeBinStartTime) {
-        Collection<UserModelEntryTimeBin> timeBinEntries = aggregateTimeBins(
-                entry.getTimeBinEntries(), binAggragationCount);
-        if (timeBinEntries == null) {
-            return null;
-        }
-        for (UserModelEntryTimeBin timeBin : timeBinEntries) {
-            if (timeBin.getTimeBinStart() == timeBinStartTime) {
-                return timeBin;
+        LinkedList<UserModelEntryTimeBin> entries = new LinkedList<UserModelEntryTimeBin>();
+        entries.addAll(entry.getTimeBinEntries());
+        // order newest last
+        Collections.sort(entries, new Comparator<UserModelEntryTimeBin>() {
+            @Override
+            public int compare(UserModelEntryTimeBin o1, UserModelEntryTimeBin o2) {
+                if (o1.getTimeBinStart() - o2.getTimeBinStart() > 0) {
+                    return 1;
+                }
+                if (o1.getTimeBinStart() - o2.getTimeBinStart() == 0) {
+                    return 0;
+                }
+                return -1;
+            }
+        });
+        // entries to aggregate to one bin
+        LinkedList<UserModelEntryTimeBin> entriesToAggregate = new LinkedList<UserModelEntryTimeBin>();
+        int entriesCount = entries.size();
+        for (int i = 0; i < entriesCount; i++) {
+            // timeBinStart found
+            if ((entries.get(i).getTimeBinStart() == timeBinStartTime)) {
+                for (int j = 0; j < binAggragationCount; j++) {
+                    int index = j + i;
+                    if (index < entries.size()) {
+                        entriesToAggregate.addFirst(entries.get(index));
+                    }
+                }
+                return aggragateEntries(entriesToAggregate);
             }
         }
         return null;
