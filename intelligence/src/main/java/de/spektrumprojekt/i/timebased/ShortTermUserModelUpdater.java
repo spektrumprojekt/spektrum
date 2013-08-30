@@ -16,10 +16,9 @@ import de.spektrumprojekt.i.ranker.UserModelConfiguration;
 import de.spektrumprojekt.i.timebased.config.ShortTermMemoryConfiguration;
 import de.spektrumprojekt.persistence.Persistence;
 
-public class NutritionAndEnergyUserModelUpdater {
+public class ShortTermUserModelUpdater {
 
-    private static final Logger LOGGER = LoggerFactory
-            .getLogger(NutritionAndEnergyUserModelUpdater.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShortTermUserModelUpdater.class);
 
     private final ShortTermMemoryConfiguration shortTermMemoryConfiguration;
 
@@ -41,10 +40,11 @@ public class NutritionAndEnergyUserModelUpdater {
 
     private final int nutritionHistoryLength;
 
+    private final BinAggregatedUserModelEntryDecorator entryDecorator;
+
     NutritionCalculationStrategy strategy;
 
-    public NutritionAndEnergyUserModelUpdater(Persistence persistence,
-            RankerConfiguration configuration) {
+    public ShortTermUserModelUpdater(Persistence persistence, RankerConfiguration configuration) {
         super();
         this.rankerConfiguration = configuration;
         this.persistence = persistence;
@@ -63,12 +63,16 @@ public class NutritionAndEnergyUserModelUpdater {
                 .getNutritionHistLength();
         switch (shortTermMemoryConfiguration.getEnergyCalculationConfiguration().getStrategy()) {
         case RELATIVE:
-            strategy = new RelativeNutritionCalculationStrategy();
+            strategy = new RelativeNutritionCalculationStrategy(
+                    new BinAggregatedUserModelEntryDecorator(shortTermMemoryConfiguration
+                            .getEnergyCalculationConfiguration().getBinAggregationCount()));
             break;
         case ABSOLUTE:
             strategy = new AbsoluteNutritionCalculationStrategy();
             break;
         }
+        entryDecorator = new BinAggregatedUserModelEntryDecorator(shortTermMemoryConfiguration
+                .getEnergyCalculationConfiguration().getBinAggregationCount());
     }
 
     public boolean itsTimeToCalculateModels(Date date) {
@@ -109,7 +113,8 @@ public class NutritionAndEnergyUserModelUpdater {
                 Collection<UserModelEntry> entries = userModelsAndEntries.get(userModel);
                 for (UserModelEntry entry : entries) {
                     float weight = 0;
-                    float[] nutrition = strategy.getNutrition(entry, persistence);
+                    entryDecorator.setEntry(entry);
+                    float[] nutrition = strategy.getNutrition(entryDecorator, persistence);
                     int length = nutrition.length - 1;
                     float currentNutrition = nutrition[length];
                     float energy = 0;

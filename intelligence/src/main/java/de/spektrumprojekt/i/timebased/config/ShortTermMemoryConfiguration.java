@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
+import de.spektrumprojekt.datamodel.user.UserModel;
 
 public class ShortTermMemoryConfiguration implements ConfigurationDescriptable {
 
@@ -57,10 +58,22 @@ public class ShortTermMemoryConfiguration implements ConfigurationDescriptable {
         return mergeValuesStrategy;
     }
 
+    /**
+     * the length of one bin of the time binned model, also the period between recalculating the
+     * short term user model
+     * 
+     * @return period length in ms
+     */
     public long getPrecision() {
         return precision;
     }
 
+    /**
+     * the weight of a {@link UserModel} instance for rating messages
+     * 
+     * @param key
+     * @return
+     */
     public Float getRaitingWeight(Object key) {
         return raitingWeights.get(key);
     }
@@ -69,6 +82,11 @@ public class ShortTermMemoryConfiguration implements ConfigurationDescriptable {
         return raitingWeights;
     }
 
+    /**
+     * if a weight is missing the other weights are scaled to be 1 in sum.
+     * 
+     * @return
+     */
     public boolean isBalanceMisingUserModelWeights() {
         return balanceMisingUserModelWeights;
     }

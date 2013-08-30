@@ -9,15 +9,17 @@ public class EnergyCalculationConfiguration implements ConfigurationDescriptable
     private final NutritionCalculationStrategy strategy;
     private final int energyHistoryLength;
     private final int nutritionHistLength;
+    private final int binAggregationCount;
 
     public EnergyCalculationConfiguration(float k, double d, int energyHistoryLength,
-            int nutritionHistLength, NutritionCalculationStrategy strategy) {
+            int nutritionHistLength, NutritionCalculationStrategy strategy, int binAggregationCount) {
         super();
         this.k = k;
         this.d = d;
         this.energyHistoryLength = energyHistoryLength;
         this.strategy = strategy;
         this.nutritionHistLength = nutritionHistLength;
+        this.binAggregationCount = binAggregationCount;
     }
 
     @Override
@@ -54,6 +56,10 @@ public class EnergyCalculationConfiguration implements ConfigurationDescriptable
     @Override
     public String toString() {
         return getConfigurationDescription();
+    }
+
+    public int getBinAggregationCount() {
+        return binAggregationCount;
     }
 
 }
