@@ -31,6 +31,8 @@ public enum RankerConfigurationFlag {
     // will not infer observations from ratings
     NO_LEARNING_ONLY_RANKING("noLearn"),
 
+    NO_INFORMATION_EXTRACTION("noIE"),
+
     // only usefull for analyzing term uniqness
     NO_USER_SPECIFIC_COMMANDS("noUserSpec"),
 
