@@ -61,10 +61,12 @@ import de.spektrumprojekt.persistence.Statistics;
  */
 public class SimplePersistence implements Persistence {
 
-    private class ObservationKey {
+    public static class ObservationKey {
 
         private final String userGlobalId;
+
         private final String messageGlobalId;
+
         private final ObservationType observationType;
 
         public ObservationKey(String userGlobalId, String messageGlobalId,
@@ -86,9 +88,7 @@ public class SimplePersistence implements Persistence {
                 return false;
             }
             ObservationKey other = (ObservationKey) obj;
-            if (!getOuterType().equals(other.getOuterType())) {
-                return false;
-            }
+
             if (messageGlobalId == null) {
                 if (other.messageGlobalId != null) {
                     return false;
@@ -109,19 +109,32 @@ public class SimplePersistence implements Persistence {
             return true;
         }
 
-        private SimplePersistence getOuterType() {
-            return SimplePersistence.this;
+        public String getMessageGlobalId() {
+            return messageGlobalId;
+        }
+
+        public ObservationType getObservationType() {
+            return observationType;
+        }
+
+        public String getUserGlobalId() {
+            return userGlobalId;
         }
 
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = prime * result + getOuterType().hashCode();
             result = prime * result + (messageGlobalId == null ? 0 : messageGlobalId.hashCode());
             result = prime * result + (observationType == null ? 0 : observationType.hashCode());
             result = prime * result + (userGlobalId == null ? 0 : userGlobalId.hashCode());
             return result;
+        }
+
+        @Override
+        public String toString() {
+            return "ObservationKey [userGlobalId=" + userGlobalId + ", messageGlobalId="
+                    + messageGlobalId + ", observationType=" + observationType + "]";
         }
     }
 
@@ -324,6 +337,10 @@ public class SimplePersistence implements Persistence {
         return filteredMessages;
     }
 
+    public Map<ObservationKey, Collection<Observation>> getObservations() {
+        return observations;
+    }
+
     @Override
     public Collection<Observation> getObservations(String userGlobalId, String messageGlobalId,
             ObservationType observationType) {
@@ -398,6 +415,16 @@ public class SimplePersistence implements Persistence {
     public TermFrequency getTermFrequency() {
         termFrequency.init();
         return termFrequency;
+    }
+
+    public User getUserById(Long userId) {
+        for (User user : this.users.values()) {
+            if (userId.equals(user.getId())) {
+                return user;
+            }
+
+        }
+        return null;
     }
 
     public Map<String, Map<User, UserModelHolder>> getUserModelByTypeHolders() {

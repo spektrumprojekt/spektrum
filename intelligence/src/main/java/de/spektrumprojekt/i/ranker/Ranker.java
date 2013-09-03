@@ -219,7 +219,9 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         storeMessageRankCommand = new StoreMessageRankCommand(persistence);
 
         // add the commands to the chain
-        rankerChain.addCommand(this.informationExtractionChain);
+        if (!this.rankerConfiguration.hasFlag(RankerConfigurationFlag.NO_INFORMATION_EXTRACTION)) {
+            rankerChain.addCommand(this.informationExtractionChain);
+        }
 
         // store the message after the terms have been extracted
         rankerChain.addCommand(storeMessageCommand);

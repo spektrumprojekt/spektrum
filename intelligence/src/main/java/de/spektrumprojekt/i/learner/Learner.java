@@ -37,6 +37,7 @@ import de.spektrumprojekt.i.learner.time.TimeBinnedUserModelEntryIntegrationStra
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.Ranker;
 import de.spektrumprojekt.i.ranker.RankerConfiguration;
+import de.spektrumprojekt.i.ranker.RankerConfigurationFlag;
 import de.spektrumprojekt.i.ranker.UserModelConfiguration;
 import de.spektrumprojekt.i.timebased.TermCounterCommand;
 import de.spektrumprojekt.persistence.Persistence;
@@ -78,8 +79,11 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
         this.persistence = persistence;
 
         this.learnerChain = new CommandChain<LearnerMessageContext>();
-        this.learnerChain
-                .addCommand(new ProxyCommand<MessageFeatureContext, LearnerMessageContext>(ieChain));
+        if (!configuration.hasFlag(RankerConfigurationFlag.NO_INFORMATION_EXTRACTION)) {
+            this.learnerChain
+                    .addCommand(new ProxyCommand<MessageFeatureContext, LearnerMessageContext>(
+                            ieChain));
+        }
         this.learnerChain.addCommand(new LoadRelatedObservationsCommand(this.persistence));
 
         for (String userModelType : configuration.getUserModelTypes().keySet()) {
