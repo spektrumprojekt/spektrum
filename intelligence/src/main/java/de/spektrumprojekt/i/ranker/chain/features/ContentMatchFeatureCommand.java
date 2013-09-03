@@ -141,12 +141,14 @@ public class ContentMatchFeatureCommand implements Command<UserSpecificMessageFe
                 allEntries.put(userModel.getUserModelType(),
                         persistence.getUserModelEntriesForTerms(userModel, messageTerms));
             }
+            // computes the score by first merging different values per term and then aggregate the
+            // scores
             value = this.termVectorSimilarityComputer.getSimilarity(messageGroupId, allEntries,
                     valuesStrategy, messageTerms);
 
-            context.setMatchingUserModelEntries(allEntries);
         } else {
 
+            // map from user model type to the content match score
             Map<String, Float> values = new HashMap<String, Float>();
             for (UserModel userModel : userModels) {
                 Map<Term, UserModelEntry> entries = persistence.getUserModelEntriesForTerms(
@@ -156,8 +158,9 @@ public class ContentMatchFeatureCommand implements Command<UserSpecificMessageFe
                             .getSimilarity(messageGroupId, entries, messageTerms));
                 }
                 allEntries.put(userModel.getUserModelType(), entries);
-                value = valuesStrategy.merge(values);
             }
+            // merge the scores of the different user models into one value
+            value = valuesStrategy.merge(values);
         }
         context.setMatchingUserModelEntries(allEntries);
 
