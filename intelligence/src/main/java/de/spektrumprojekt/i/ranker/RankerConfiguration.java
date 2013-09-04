@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
@@ -318,20 +319,56 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     @Override
     public String toString() {
-        return "RankerConfiguration [flags=" + flags + ", minUserSimilarity=" + minUserSimilarity
-                + ", minContentMessageScore=" + minContentMessageScore + ", messageRankThreshold="
-                + messageRankThreshold + ", nonParticipationFactor=" + nonParticipationFactor
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        boolean first = true;
+        for (Entry<String, UserModelConfiguration> entry : userModelTypes.entrySet()) {
+            if (first) {
+                first = false;
+            } else {
+                sb.append(", ");
+            }
+            sb.append(entry.getKey());
+            sb.append(":");
+            sb.append(entry.getValue().getConfigurationDescription());
+        }
+        return "RankerConfiguration [flags="
+                + flags
+                + ", minUserSimilarity="
+                + minUserSimilarity
+                + ", minContentMessageScore="
+                + minContentMessageScore
+                + ", messageRankThreshold="
+                + messageRankThreshold
+                + ", nonParticipationFactor="
+                + nonParticipationFactor
                 + ", minimumCleanTextLengthForInvokingLearner="
-                + minimumCleanTextLengthForInvokingLearner + ", termWeightStrategy="
-                + termWeightStrategy + ", termVectorSimilarityStrategy="
-                + termVectorSimilarityStrategy + ", immutable=" + immutable
-                + ", interestTermTreshold=" + interestTermTreshold
-                + ", treatMissingUserModelEntriesAsZero=" + treatMissingUserModelEntriesAsZero
-                + ", termUniquenessLogfile=" + termUniquenessLogfile + ", userModelTypes="
-                + userModelTypes + ", informationExtractionConfiguration="
-                + informationExtractionConfiguration + ", informationExtractionCommand="
-                + informationExtractionCommand + ", userModelAdapterConfiguration="
-                + userModelAdapterConfiguration + "]";
+                + minimumCleanTextLengthForInvokingLearner
+                + ", termWeightStrategy="
+                + termWeightStrategy
+                + ", termVectorSimilarityStrategy="
+                + termVectorSimilarityStrategy
+                + ", immutable="
+                + immutable
+                + ", interestTermTreshold="
+                + interestTermTreshold
+                + ", treatMissingUserModelEntriesAsZero="
+                + treatMissingUserModelEntriesAsZero
+                + ", termUniquenessLogfile="
+                + termUniquenessLogfile
+                + ", userModelTypes="
+                + sb.toString()
+                + ", informationExtractionConfiguration="
+                + informationExtractionConfiguration
+                + ", informationExtractionCommand="
+                + informationExtractionCommand
+                + ", userModelAdapterConfiguration="
+                + userModelAdapterConfiguration
+                + ", mixMemoriesForRating="
+                + mixMemoriesForRating
+                + ", shortTermMemoryConfiguration="
+                + (shortTermMemoryConfiguration == null ? "null" : shortTermMemoryConfiguration
+                        .getConfigurationDescription()) + "]";
     }
 
 }

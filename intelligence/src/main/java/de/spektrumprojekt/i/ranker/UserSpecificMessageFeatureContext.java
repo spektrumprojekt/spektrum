@@ -52,7 +52,8 @@ public class UserSpecificMessageFeatureContext extends FeatureContext {
 
     private final String userGlobalId;
 
-    private Map<Term, UserModelEntry> matchingUserModelEntries;
+    // first key is the user model type
+    private Map<String, Map<Term, UserModelEntry>> matchingUserModelEntries;
 
     /**
      * 
@@ -96,10 +97,10 @@ public class UserSpecificMessageFeatureContext extends FeatureContext {
 
     /**
      * 
-     * @return a map of user model entries. all user model entries have a term that is part of the
-     *         message.
+     * @return a map of user model types to user model entries. all user model entries have a term
+     *         that is part of the message.
      */
-    public Map<Term, UserModelEntry> getMatchingUserModelEntries() {
+    public Map<String, Map<Term, UserModelEntry>> getMatchingUserModelEntries() {
         return matchingUserModelEntries;
     }
 
@@ -143,7 +144,7 @@ public class UserSpecificMessageFeatureContext extends FeatureContext {
         this.interactionLevel = interactionLevel;
     }
 
-    public void setMatchingUserModelEntries(Map<Term, UserModelEntry> entries) {
+    public void setMatchingUserModelEntries(Map<String, Map<Term, UserModelEntry>> entries) {
         this.matchingUserModelEntries = entries;
     }
 

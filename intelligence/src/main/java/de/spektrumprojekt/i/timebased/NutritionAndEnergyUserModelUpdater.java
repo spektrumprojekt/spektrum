@@ -39,6 +39,8 @@ public class NutritionAndEnergyUserModelUpdater {
 
     private final double G;
 
+    private final int nutritionHistoryLength;
+
     NutritionCalculationStrategy strategy;
 
     public NutritionAndEnergyUserModelUpdater(Persistence persistence,
@@ -54,10 +56,11 @@ public class NutritionAndEnergyUserModelUpdater {
             }
         }
         this.shortTermMemoryConfiguration = configuration.getShortTermMemoryConfiguration();
-        // NutritionCalculationStrategy strategy = energyCalculationConfiguration.getStrategy();
         d = shortTermMemoryConfiguration.getEnergyCalculationConfiguration().getD();
         k = shortTermMemoryConfiguration.getEnergyCalculationConfiguration().getK();
         G = shortTermMemoryConfiguration.getEnergyCalculationConfiguration().getG();
+        nutritionHistoryLength = shortTermMemoryConfiguration.getEnergyCalculationConfiguration()
+                .getNutritionHistLength();
         switch (shortTermMemoryConfiguration.getEnergyCalculationConfiguration().getStrategy()) {
         case RELATIVE:
             strategy = new RelativeNutritionCalculationStrategy();
@@ -112,15 +115,15 @@ public class NutritionAndEnergyUserModelUpdater {
                     float energy = 0;
                     for (int histNutrIndex = length
                             - shortTermMemoryConfiguration.getEnergyCalculationConfiguration()
-                                    .getHistoryLength(); histNutrIndex < length; histNutrIndex++) {
+                                    .getEnergyHistoryLength(); histNutrIndex < length; histNutrIndex++) {
                         float historicalNutrition;
                         if (histNutrIndex < 0) {
                             historicalNutrition = 0;
                         } else {
                             historicalNutrition = nutrition[histNutrIndex];
                         }
-                        energy += (Math.pow(currentNutrition, 2) - Math.pow(historicalNutrition, 2))
-                                / (length - histNutrIndex);
+                        energy += (Math.pow(weightedAverage(nutrition, nutritionHistoryLength), 2) - Math
+                                .pow(historicalNutrition, 2)) / (length - histNutrIndex);
                     }
                     weight = (float) (G / (1 + d
                             * Math.pow(Math.E, -k * G * currentNutrition * energy)));
@@ -132,4 +135,17 @@ public class NutritionAndEnergyUserModelUpdater {
         LOGGER.debug("Finished updating UserModels");
     }
 
+    private float weightedAverage(float[] nutrition, int nutritionHistoryLength2) {
+        float result = 0;
+        int currentBin = nutrition.length - 1;
+        result = nutrition[currentBin];
+        if (nutritionHistoryLength > 0) {
+            int binsToUse = Math.min(currentBin, nutritionHistoryLength);
+            for (int i = 0; i <= binsToUse; i++) {
+                result += (float) Math.pow(2, -i - 1) * nutrition[currentBin - i];
+
+            }
+        }
+        return result;
+    }
 }

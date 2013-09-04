@@ -49,6 +49,7 @@ public class DirectedUserModelAdapter implements
         MessageHandler<DirectedUserModelAdaptationMessage>, ConfigurationDescriptable {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(DirectedUserModelAdapter.class);
+
     private long adaptedCount = 0;
 
     private long requestedAdaptedCount = 0;
@@ -104,8 +105,13 @@ public class DirectedUserModelAdapter implements
             Persistence persistence,
             Ranker ranker,
             UserToUserInterestSelector userToUserInterestRetriever) {
-        this(persistence, ranker, UserModel.DEFAULT_USER_MODEL_TYPE, userToUserInterestRetriever,
-                true, false);
+        this(
+                persistence,
+                ranker,
+                UserModel.DEFAULT_USER_MODEL_TYPE,
+                userToUserInterestRetriever,
+                true,
+                false);
     }
 
     private ValueAggregator createNewValueAggregator() {

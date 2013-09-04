@@ -36,6 +36,7 @@ import de.spektrumprojekt.communication.transfer.RankingCommunicationMessage;
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
+import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionConfiguration;
 import de.spektrumprojekt.i.ranker.chain.AdaptMessageRankByCMFOfSimilarUsersCommand;
@@ -201,8 +202,11 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         invokeLearnerCommand = new InvokeLearnerCommand(this.persistence, this.communicator,
                 this.rankerConfiguration);
         triggerUserModelAdaptationCommand = new TriggerUserModelAdaptationCommand(
-                this.communicator, this.rankerConfiguration.getUserModelAdapterConfiguration()
-                        .getConfidenceThreshold(), this.rankerConfiguration
+                this.communicator,
+                UserModel.DEFAULT_USER_MODEL_TYPE,
+                this.rankerConfiguration.getUserModelAdapterConfiguration()
+                        .getConfidenceThreshold(),
+                this.rankerConfiguration
                         .getUserModelAdapterConfiguration().getRankThreshold());
 
         // TODO where to take the configuration values from ?
@@ -215,7 +219,9 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         storeMessageRankCommand = new StoreMessageRankCommand(persistence);
 
         // add the commands to the chain
-        rankerChain.addCommand(this.informationExtractionChain);
+        if (!this.rankerConfiguration.hasFlag(RankerConfigurationFlag.NO_INFORMATION_EXTRACTION)) {
+            rankerChain.addCommand(this.informationExtractionChain);
+        }
 
         // store the message after the terms have been extracted
         rankerChain.addCommand(storeMessageCommand);

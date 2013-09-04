@@ -33,6 +33,10 @@ public class ManualTimeProvider implements TimeProvider {
         return currentTime;
     }
 
+    public void reset() {
+        this.currentTime = 0;
+    }
+
     public void setCurrentTime(long currentTime) {
         if (currentTime < this.currentTime) {
             throw new IllegalArgumentException(

@@ -3,7 +3,9 @@ package de.spektrumprojekt.i.timebased.config;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ShortTermMemoryConfiguration {
+import de.spektrumprojekt.configuration.ConfigurationDescriptable;
+
+public class ShortTermMemoryConfiguration implements ConfigurationDescriptable {
 
     private EnergyCalculationConfiguration energyCalculationConfiguration;
 
@@ -22,6 +24,30 @@ public class ShortTermMemoryConfiguration {
         this.energyCalculationConfiguration = energyCalculationConfiguration;
         this.mergeValuesStrategy = mergeValuesStrategy;
         this.precision = precision;
+    }
+
+    @Override
+    public String getConfigurationDescription() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        boolean first = true;
+        for (Map.Entry<String, Float> entry : raitingWeights.entrySet()) {
+            if (first) {
+                first = false;
+            } else {
+                sb.append(", ");
+            }
+            sb.append(entry.getKey());
+            sb.append(":");
+            sb.append(entry.getValue());
+        }
+        sb.append("]");
+        return "ShortTermMemoryConfiguration [mergeValuesStrategy=" + mergeValuesStrategy
+                + ", precision=" + precision + ", balanceMisingUserModelWeights="
+                + balanceMisingUserModelWeights + ", raitingWeights=" + sb.toString()
+                + ", energyCalculationConfiguration="
+                + (energyCalculationConfiguration == null ? "null" :
+                        energyCalculationConfiguration.getConfigurationDescription()) + "]";
     }
 
     public EnergyCalculationConfiguration getEnergyCalculationConfiguration() {
@@ -67,6 +93,11 @@ public class ShortTermMemoryConfiguration {
 
     public void setPrecision(long precision) {
         this.precision = precision;
+    }
+
+    @Override
+    public String toString() {
+        return getConfigurationDescription();
     }
 
 }

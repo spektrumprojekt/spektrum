@@ -53,6 +53,7 @@ import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.Ranker;
 import de.spektrumprojekt.i.ranker.RankerConfiguration;
 import de.spektrumprojekt.i.ranker.RankerConfigurationFlag;
+import de.spektrumprojekt.i.ranker.UserModelConfiguration;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
 import de.spektrumprojekt.i.term.TermWeightStrategy;
@@ -143,6 +144,8 @@ public class RankerTest extends IntelligenceSpektrumTest {
 
         RankerConfiguration rankerConfiguration = new RankerConfiguration(
                 TermWeightStrategy.TRIVIAL, TermVectorSimilarityStrategy.AVG, flags);
+        rankerConfiguration.put(UserModel.DEFAULT_USER_MODEL_TYPE,
+                UserModelConfiguration.getPlainModelConfiguration());
 
         Ranker ranker = new Ranker(getPersistence(), communicator,
                 new SimpleMessageGroupMemberRunner<MessageFeatureContext>(userForRanking),

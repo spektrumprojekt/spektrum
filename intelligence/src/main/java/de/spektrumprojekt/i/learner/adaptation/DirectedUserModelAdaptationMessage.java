@@ -46,7 +46,9 @@ public class DirectedUserModelAdaptationMessage implements CommunicationMessage 
         // for json deserialization
     }
 
-    public DirectedUserModelAdaptationMessage(String userGlobalId, String messageId,
+    public DirectedUserModelAdaptationMessage(
+            String userGlobalId,
+            String messageId,
             String messageGroupGlobalId,
             Term[] termsToAdapt,
             MessageRank rankBeforeAdaptation) {
