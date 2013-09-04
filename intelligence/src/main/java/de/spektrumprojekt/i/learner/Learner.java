@@ -95,7 +95,8 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
                         userModelConfiguration.isCalculateLater());
             }
             this.learnerChain.addCommand(new UserModelLearnerCommand(this.persistence,
-                    userModelType, userModelEntryIntegrationStrategy));
+                    userModelType, userModelEntryIntegrationStrategy, configuration
+                            .isCreateUnknownTermsInUsermodel()));
         }
         this.learnerChain.addCommand(new StoreObservationCommand(this.persistence));
         this.learnerChain.addCommand(new TermCounterCommand(configuration, this.persistence));

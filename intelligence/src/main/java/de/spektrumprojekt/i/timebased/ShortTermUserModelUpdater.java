@@ -1,18 +1,25 @@
 package de.spektrumprojekt.i.timebased;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.i.ranker.RankerConfiguration;
 import de.spektrumprojekt.i.ranker.UserModelConfiguration;
+import de.spektrumprojekt.i.timebased.config.LongTermMemoryConfiguration;
+import de.spektrumprojekt.i.timebased.config.PermanentLongTermInterestDetector;
 import de.spektrumprojekt.i.timebased.config.ShortTermMemoryConfiguration;
 import de.spektrumprojekt.persistence.Persistence;
 
@@ -46,6 +53,12 @@ public class ShortTermUserModelUpdater {
 
     private final int aggregatedCount;
 
+    private final boolean transferTermsToLongTermModel;
+
+    private final List<LongTermInterestDetector> longTermInterestDetectors = new ArrayList<LongTermInterestDetector>();;
+
+    NutritionCalculationStrategy nutritionConverter = new AbsoluteNutritionCalculationStrategy();;
+
     public ShortTermUserModelUpdater(Persistence persistence, RankerConfiguration configuration) {
         super();
         this.rankerConfiguration = configuration;
@@ -76,6 +89,19 @@ public class ShortTermUserModelUpdater {
         aggregatedCount = shortTermMemoryConfiguration.getEnergyCalculationConfiguration()
                 .getBinAggregationCount();
         entryDecorator = new BinAggregatedUserModelEntryDecorator(aggregatedCount);
+        transferTermsToLongTermModel = !rankerConfiguration.isCreateUnknownTermsInUsermodel();
+        LongTermMemoryConfiguration longTermMemoryConfiguration = configuration
+                .getShortTermMemoryConfiguration().getLongTermMemoryConfiguration();
+        if (transferTermsToLongTermModel) {
+            longTermInterestDetectors.add(new PeriodicLongTermInterestDetector(
+                    longTermMemoryConfiguration.getPeriodicInterestScoreThreshold(),
+                    longTermMemoryConfiguration.getPeriodicInterestDistanceInBins(),
+                    longTermMemoryConfiguration.getPeriodicInterestOccuranceCount()));
+            longTermInterestDetectors.add(new PermanentLongTermInterestDetector(
+                    longTermMemoryConfiguration.getPermanentInterestScoreThreshold(),
+                    longTermMemoryConfiguration.getPermanentInterestOccurenceMinLengthInBins(),
+                    longTermMemoryConfiguration.getPermanentInterestBinsFilledPercentage()));
+        }
     }
 
     /**
@@ -100,6 +126,14 @@ public class ShortTermUserModelUpdater {
         return result;
     }
 
+    private boolean isInUserModel(UserModel userModel, Term term) {
+        Set<Term> terms = new HashSet<Term>();
+        terms.add(term);
+        Map<Term, UserModelEntry> userModelEntries = persistence.getUserModelEntriesForTerms(
+                userModel, terms);
+        return userModelEntries.size() > 0;
+    }
+
     public boolean itsTimeToCalculateModels(Date date) {
         if (firstBinStartTime == null) {
             firstBinStartTime = date;
@@ -122,10 +156,59 @@ public class ShortTermUserModelUpdater {
         }
     }
 
-    private boolean needsToBeCalculated(UserModelConfiguration entryIntegrationStrategy) {
-        return (entryIntegrationStrategy.getUserModelEntryIntegrationStrategy()
-                .equals(UserModelConfiguration.UserModelEntryIntegrationStrategy.TIMEBINNED)) ? entryIntegrationStrategy
+    /**
+     * only UserModelEntryIntegrationStrategy.TIMEBINNED user models with the attribute
+     * isCalculateLater are calculated
+     * 
+     * @param userModelConfiguration
+     * @return
+     */
+    private boolean needsToBeCalculated(UserModelConfiguration userModelConfiguration) {
+        return (userModelConfiguration.getUserModelEntryIntegrationStrategy()
+                .equals(UserModelConfiguration.UserModelEntryIntegrationStrategy.TIMEBINNED)) ? userModelConfiguration
                 .isCalculateLater() : false;
+    }
+
+    /**
+     * sorts by adding a decorator
+     * 
+     * @param entry
+     * @return
+     */
+    private UserModelEntry sort(UserModelEntry entry) {
+        BinAggregatedUserModelEntryDecorator entryDecorator = new BinAggregatedUserModelEntryDecorator(
+                1);
+        entryDecorator.setEntry(entry);
+        return entryDecorator;
+    }
+
+    private void transferTermsToLongTermModel(Collection<UserModelEntry> entries,
+            String userGlobalId) {
+        for (UserModelEntry entry : entries) {
+            UserModel LongTermUserModel = persistence.getOrCreateUserModelByUser(userGlobalId,
+                    UserModel.DEFAULT_USER_MODEL_TYPE);
+            Term term = entry.getScoredTerm().getTerm();
+            if (!isInUserModel(LongTermUserModel, term)) {
+                entry = sort(entry);
+                float[] nutrition = nutritionConverter.getNutrition(entry, persistence);
+                nutrition = addMissingZeros(nutrition, shortTermMemoryConfiguration.getPrecision(),
+                        1);
+                checkLongTermInterest: for (LongTermInterestDetector detector : longTermInterestDetectors) {
+                    if (detector.isLongTermInterest(nutrition)) {
+                        transferTermToLongTermUsermodel(LongTermUserModel, entry);
+                        break checkLongTermInterest;
+                    }
+                }
+            }
+        }
+    }
+
+    private void transferTermToLongTermUsermodel(UserModel longTermUserModel, UserModelEntry entry) {
+        UserModelEntry longTermUserEntry = new UserModelEntry(longTermUserModel,
+                entry.getScoredTerm());
+        Collection<UserModelEntry> modelEntries = new HashSet<UserModelEntry>();
+        modelEntries.add(longTermUserEntry);
+        persistence.storeOrUpdateUserModelEntries(longTermUserModel, modelEntries);
     }
 
     public void updateUserModels() {
@@ -165,6 +248,9 @@ public class ShortTermUserModelUpdater {
                     entry.getScoredTerm().setWeight(weight);
                 }
                 persistence.storeOrUpdateUserModelEntries(userModel, entries);
+                if (transferTermsToLongTermModel) {
+                    transferTermsToLongTermModel(entries, userModel.getUser().getGlobalId());
+                }
             }
         }
         LOGGER.debug("Finished updating UserModels");

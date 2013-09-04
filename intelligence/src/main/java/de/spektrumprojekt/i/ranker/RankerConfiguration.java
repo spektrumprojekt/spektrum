@@ -56,6 +56,8 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     private ShortTermMemoryConfiguration shortTermMemoryConfiguration;
 
+    private boolean createUnknownTermsInUsermodel = true;
+
     public RankerConfiguration(TermWeightStrategy strategy, TermVectorSimilarityStrategy aggregation) {
         this(strategy, aggregation, null, null, (RankerConfigurationFlag[]) null);
     }
@@ -213,6 +215,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         this.immutable = true;
     }
 
+    public boolean isCreateUnknownTermsInUsermodel() {
+        return createUnknownTermsInUsermodel;
+    }
+
     public boolean isImmutable() {
         return immutable;
     }
@@ -228,6 +234,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
     public UserModelConfiguration put(String userModelType,
             UserModelConfiguration modelConfiguration) {
         return userModelTypes.put(userModelType, modelConfiguration);
+    }
+
+    public void setCreateUnknownTermsInUsermodel(boolean createUnknownTermsInUsermodel) {
+        this.createUnknownTermsInUsermodel = createUnknownTermsInUsermodel;
     }
 
     public void setFlags(RankerConfigurationFlag... flags) {
