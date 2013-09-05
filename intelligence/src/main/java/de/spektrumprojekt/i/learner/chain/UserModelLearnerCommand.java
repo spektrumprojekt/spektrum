@@ -193,7 +193,7 @@ public class UserModelLearnerCommand implements Command<LearnerMessageContext> {
         for (Term t : entriesToRemove) {
             entries.remove(t);
         }
-        // terms not know so far are left
+        // terms not known so far are left
         if (createUnknownTermsInUsermodel) {
             for (Term t : terms) {
                 UserModelEntry entry = userModelEntryIntegrationStrategy.createNew(userModel,

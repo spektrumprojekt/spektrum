@@ -37,5 +37,32 @@ public class LongTermInterestDetectorTest {
         Assert.assertFalse(permanentLongTermInterestDetector.isLongTermInterest(testArray3));
         Assert.assertFalse(permanentLongTermInterestDetector.isLongTermInterest(testArray4));
         Assert.assertTrue(permanentLongTermInterestDetector.isLongTermInterest(testArray5));
+
+        testArray1 = new float[] { 1, 1, 0, 0, 1, 0, 1, 0, 0, 1 };
+        testArray2 = new float[] { 1, 1, 0, 0, 1, 0, 1, 1, 0, 1 };
+
+        Assert.assertFalse(permanentLongTermInterestDetector.isLongTermInterest(testArray1));
+        Assert.assertTrue(permanentLongTermInterestDetector.isLongTermInterest(testArray2));
+
+        testArray1 = new float[] { 1, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0.4f, 1, 0, 1, 0, 0, 1, 0 };
+        testArray2 = new float[] { 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0,
+                0, 1 };
+
+        Assert.assertFalse(permanentLongTermInterestDetector.isLongTermInterest(testArray1));
+        Assert.assertTrue(permanentLongTermInterestDetector.isLongTermInterest(testArray2));
+
+        permanentLongTermInterestDetector = new PermanentLongTermInterestDetector(0.5f, 1, 1f);
+        testArray1 = new float[] { 1 };
+        Assert.assertTrue(permanentLongTermInterestDetector.isLongTermInterest(testArray1));
+
+        periodicLongTermInterestDetector = new PeriodicLongTermInterestDetector(0.5f, 1, 2);
+        testArray1 = new float[] { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
+        testArray2 = new float[] { 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0,
+                0, 1 };
+        testArray3 = new float[] { 1, 0, 1 };
+        Assert.assertTrue(periodicLongTermInterestDetector.isLongTermInterest(testArray1));
+        Assert.assertTrue(periodicLongTermInterestDetector.isLongTermInterest(testArray2));
+        Assert.assertTrue(periodicLongTermInterestDetector.isLongTermInterest(testArray3));
     }
 }

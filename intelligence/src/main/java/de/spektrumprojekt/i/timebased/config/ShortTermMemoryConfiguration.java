@@ -58,12 +58,13 @@ public class ShortTermMemoryConfiguration implements ConfigurationDescriptable {
         sb.append("]");
         String energyCalculationConfiguration = this.energyCalculationConfiguration != null ? this.energyCalculationConfiguration
                 .getConfigurationDescription() : "null";
+        String longTermMemoryConfiguration = this.longTermMemoryConfiguration != null ? this.longTermMemoryConfiguration
+                .getConfigurationDescription() : "null";
         return "ShortTermMemoryConfiguration [mergeValuesStrategy=" + mergeValuesStrategy
                 + ", precision=" + precision + ", balanceMisingUserModelWeights="
                 + balanceMisingUserModelWeights + ", raitingWeights=" + sb.toString()
                 + ", energyCalculationConfiguration=" + energyCalculationConfiguration
-                + ", longTermMemoryConfiguration="
-                + longTermMemoryConfiguration.getConfigurationDescription() + "]";
+                + ", longTermMemoryConfiguration=" + longTermMemoryConfiguration + "]";
     }
 
     public EnergyCalculationConfiguration getEnergyCalculationConfiguration() {

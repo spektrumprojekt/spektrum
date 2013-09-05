@@ -1,10 +1,12 @@
 package de.spektrumprojekt.i.ranker;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -56,7 +58,7 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     private ShortTermMemoryConfiguration shortTermMemoryConfiguration;
 
-    private boolean createUnknownTermsInUsermodel = true;
+    private final List<String> modelsToNotCreateUnknownTermsIn = new ArrayList<String>();
 
     public RankerConfiguration(TermWeightStrategy strategy, TermVectorSimilarityStrategy aggregation) {
         this(strategy, aggregation, null, null, (RankerConfigurationFlag[]) null);
@@ -113,6 +115,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
         this.informationExtractionConfiguration.setBeMessageGroupSpecific(this
                 .hasFlag(RankerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL));
+    }
+
+    public boolean addModelsToNotCreateUnknownTermsIn(String modelType) {
+        return modelsToNotCreateUnknownTermsIn.add(modelType);
     }
 
     private void assert01(float value, String field) {
@@ -215,8 +221,8 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         this.immutable = true;
     }
 
-    public boolean isCreateUnknownTermsInUsermodel() {
-        return createUnknownTermsInUsermodel;
+    public boolean isCreateUnknownTermsInUsermodel(String userModelType) {
+        return !modelsToNotCreateUnknownTermsIn.contains(userModelType);
     }
 
     public boolean isImmutable() {
@@ -234,10 +240,6 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
     public UserModelConfiguration put(String userModelType,
             UserModelConfiguration modelConfiguration) {
         return userModelTypes.put(userModelType, modelConfiguration);
-    }
-
-    public void setCreateUnknownTermsInUsermodel(boolean createUnknownTermsInUsermodel) {
-        this.createUnknownTermsInUsermodel = createUnknownTermsInUsermodel;
     }
 
     public void setFlags(RankerConfigurationFlag... flags) {

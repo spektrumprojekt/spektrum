@@ -16,19 +16,24 @@ public class LongTermMemoryConfiguration implements ConfigurationDescriptable {
 
     private float permanentInterestBinsFilledPercentage;
 
+    private int longTermCalculationPeriodInBins = -1;
+
     public LongTermMemoryConfiguration() {
         super();
     }
 
     public LongTermMemoryConfiguration(int periodicInterestOccuranceCount,
             int periodicInterestDistanceInBins, float periodicInterestScoreThreshold,
-            float permanentInterestScoreThreshold, int permanentInterestOccurenceMinLengthInBins) {
+            float permanentInterestScoreThreshold, int permanentInterestOccurenceMinLengthInBins,
+            float permanentInterestBinsFilledPercentage, int longTermCalculationPeriodInBins) {
         super();
         this.periodicInterestOccuranceCount = periodicInterestOccuranceCount;
         this.periodicInterestDistanceInBins = periodicInterestDistanceInBins;
         this.periodicInterestScoreThreshold = periodicInterestScoreThreshold;
         this.permanentInterestScoreThreshold = permanentInterestScoreThreshold;
         this.permanentInterestOccurenceMinLengthInBins = permanentInterestOccurenceMinLengthInBins;
+        this.permanentInterestBinsFilledPercentage = permanentInterestBinsFilledPercentage;
+        this.longTermCalculationPeriodInBins = longTermCalculationPeriodInBins;
     }
 
     @Override
@@ -40,7 +45,12 @@ public class LongTermMemoryConfiguration implements ConfigurationDescriptable {
                 + permanentInterestScoreThreshold + ", permanentInterestOccurenceMinLengthInBins="
                 + permanentInterestOccurenceMinLengthInBins
                 + ", permanentInterestBinsFilledPercentage="
-                + permanentInterestBinsFilledPercentage + "]";
+                + permanentInterestBinsFilledPercentage + ", longTermCalculationPeriodInBins="
+                + longTermCalculationPeriodInBins + "]";
+    }
+
+    public int getLongTermCalculationPeriodInBins() {
+        return longTermCalculationPeriodInBins;
     }
 
     public int getPeriodicInterestDistanceInBins() {
@@ -65,6 +75,10 @@ public class LongTermMemoryConfiguration implements ConfigurationDescriptable {
 
     public float getPermanentInterestScoreThreshold() {
         return permanentInterestScoreThreshold;
+    }
+
+    public void setLongTermCalculationPeriodInBins(int longTermCalculationPeriodInBins) {
+        this.longTermCalculationPeriodInBins = longTermCalculationPeriodInBins;
     }
 
     public void setPeriodicInterestDistanceInBins(int periodicInterestDistanceInBins) {

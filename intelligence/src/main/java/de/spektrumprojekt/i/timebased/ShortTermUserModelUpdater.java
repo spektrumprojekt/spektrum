@@ -49,15 +49,19 @@ public class ShortTermUserModelUpdater {
 
     private final BinAggregatedUserModelEntryDecorator entryDecorator;
 
-    NutritionCalculationStrategy strategy;
+    private final NutritionCalculationStrategy strategy;
 
     private final int aggregatedCount;
 
-    private final boolean transferTermsToLongTermModel;
+    private final List<String> modelsToTransferTermsFrom = new ArrayList<String>();
 
     private final List<LongTermInterestDetector> longTermInterestDetectors = new ArrayList<LongTermInterestDetector>();;
 
-    NutritionCalculationStrategy nutritionConverter = new AbsoluteNutritionCalculationStrategy();;
+    private final NutritionCalculationStrategy nutritionConverter = new AbsoluteNutritionCalculationStrategy();
+
+    private final int longTermCalculationPeriodInBins;
+
+    private int calculatedLongTermPeriodsAgo;
 
     public ShortTermUserModelUpdater(Persistence persistence, RankerConfiguration configuration) {
         super();
@@ -82,17 +86,28 @@ public class ShortTermUserModelUpdater {
                     new BinAggregatedUserModelEntryDecorator(shortTermMemoryConfiguration
                             .getEnergyCalculationConfiguration().getBinAggregationCount()));
             break;
-        case ABSOLUTE:
+        // case ABSOLUTE:
+        default:
             strategy = new AbsoluteNutritionCalculationStrategy();
             break;
         }
         aggregatedCount = shortTermMemoryConfiguration.getEnergyCalculationConfiguration()
                 .getBinAggregationCount();
         entryDecorator = new BinAggregatedUserModelEntryDecorator(aggregatedCount);
-        transferTermsToLongTermModel = !rankerConfiguration.isCreateUnknownTermsInUsermodel();
+        for (String userModel : configuration.getUserModelTypes().keySet()) {
+            // no new terms are created in the user model, this indicates this model is a long term
+            // model
+            if (rankerConfiguration.isCreateUnknownTermsInUsermodel(userModel)) {
+                modelsToTransferTermsFrom.add(userModel);
+            }
+        }
         LongTermMemoryConfiguration longTermMemoryConfiguration = configuration
                 .getShortTermMemoryConfiguration().getLongTermMemoryConfiguration();
-        if (transferTermsToLongTermModel) {
+        longTermCalculationPeriodInBins = configuration.getShortTermMemoryConfiguration()
+                .getLongTermMemoryConfiguration().getLongTermCalculationPeriodInBins();
+        // if in all user models the unknown terms are created no separated long term user model
+        // exists
+        if (!(modelsToTransferTermsFrom.size() == rankerConfiguration.getUserModelTypes().size())) {
             longTermInterestDetectors.add(new PeriodicLongTermInterestDetector(
                     longTermMemoryConfiguration.getPeriodicInterestScoreThreshold(),
                     longTermMemoryConfiguration.getPeriodicInterestDistanceInBins(),
@@ -126,6 +141,33 @@ public class ShortTermUserModelUpdater {
         return result;
     }
 
+    private float calculateTermWeight(UserModelEntry entry) {
+        entryDecorator.setEntry(entry);
+        float[] nutrition = strategy.getNutrition(entryDecorator, persistence);
+        nutrition = addMissingZeros(nutrition, shortTermMemoryConfiguration.getPrecision(),
+                aggregatedCount);// TODO try if can be removed
+        int length = nutrition.length - 1;
+        if (length < 0) {
+            return -1f;
+        }
+        float currentNutrition = nutrition[length];
+        float energy = 0;
+        for (int histNutrIndex = length
+                - shortTermMemoryConfiguration.getEnergyCalculationConfiguration()
+                        .getEnergyHistoryLength(); histNutrIndex < length; histNutrIndex++) {
+            float historicalNutrition;
+            if (histNutrIndex < 0) {
+                historicalNutrition = 0;
+            } else {
+                historicalNutrition = nutrition[histNutrIndex];
+            }
+            energy += (Math.pow(weightedAverage(nutrition, nutritionHistoryLength), 2) - Math.pow(
+                    historicalNutrition, 2)) / (length - histNutrIndex);
+        }
+        float weight = (float) (G / (1 + d * Math.pow(Math.E, -k * G * currentNutrition * energy)));
+        return weight;
+    }
+
     private boolean isInUserModel(UserModel userModel, Term term) {
         Set<Term> terms = new HashSet<Term>();
         terms.add(term);
@@ -134,7 +176,15 @@ public class ShortTermUserModelUpdater {
         return userModelEntries.size() > 0;
     }
 
-    public boolean itsTimeToCalculateModels(Date date) {
+    private boolean itsTimeToCalculateLongTermInterests() {
+        if ((longTermCalculationPeriodInBins != -1)
+                && (longTermCalculationPeriodInBins <= calculatedLongTermPeriodsAgo)) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean itsTimeToCalculateModels(Date date) {
         if (firstBinStartTime == null) {
             firstBinStartTime = date;
         }
@@ -182,25 +232,22 @@ public class ShortTermUserModelUpdater {
         return entryDecorator;
     }
 
-    private void transferTermsToLongTermModel(Collection<UserModelEntry> entries,
-            String userGlobalId) {
-        for (UserModelEntry entry : entries) {
-            UserModel LongTermUserModel = persistence.getOrCreateUserModelByUser(userGlobalId,
-                    UserModel.DEFAULT_USER_MODEL_TYPE);
-            Term term = entry.getScoredTerm().getTerm();
-            if (!isInUserModel(LongTermUserModel, term)) {
-                entry = sort(entry);
-                float[] nutrition = nutritionConverter.getNutrition(entry, persistence);
-                nutrition = addMissingZeros(nutrition, shortTermMemoryConfiguration.getPrecision(),
-                        1);
-                checkLongTermInterest: for (LongTermInterestDetector detector : longTermInterestDetectors) {
-                    if (detector.isLongTermInterest(nutrition)) {
-                        transferTermToLongTermUsermodel(LongTermUserModel, entry);
-                        break checkLongTermInterest;
-                    }
+    private void transferTermsToLongTermModelIfNecessary(UserModelEntry entry, String userGlobalId) {
+        // for (UserModelEntry entry : entries) {
+        UserModel LongTermUserModel = persistence.getOrCreateUserModelByUser(userGlobalId,
+                UserModel.DEFAULT_USER_MODEL_TYPE);
+        Term term = entry.getScoredTerm().getTerm();
+        if (!isInUserModel(LongTermUserModel, term)) {
+            entry = sort(entry);
+            float[] nutrition = nutritionConverter.getNutrition(entry, persistence);
+            checkLongTermInterest: for (LongTermInterestDetector detector : longTermInterestDetectors) {
+                if (detector.isLongTermInterest(nutrition)) {
+                    transferTermToLongTermUsermodel(LongTermUserModel, entry);
+                    break checkLongTermInterest;
                 }
             }
         }
+        // }
     }
 
     private void transferTermToLongTermUsermodel(UserModel longTermUserModel, UserModelEntry entry) {
@@ -211,49 +258,38 @@ public class ShortTermUserModelUpdater {
         persistence.storeOrUpdateUserModelEntries(longTermUserModel, modelEntries);
     }
 
-    public void updateUserModels() {
-        LOGGER.debug("Starting to update UserModels");
-        for (String userModelType : userModelTypes.keySet()) {
-            Map<UserModel, Collection<UserModelEntry>> userModelsAndEntries = persistence
-                    .getAllUserModelEntries(userModelType);
-            for (UserModel userModel : userModelsAndEntries.keySet()) {
-                LOGGER.debug("working on modeltype {}", userModel.getUserModelType());
-                Collection<UserModelEntry> entries = userModelsAndEntries.get(userModel);
-                calculateEntry: for (UserModelEntry entry : entries) {
-                    float weight = 0;
-                    entryDecorator.setEntry(entry);
-                    float[] nutrition = strategy.getNutrition(entryDecorator, persistence);
-                    nutrition = addMissingZeros(nutrition,
-                            shortTermMemoryConfiguration.getPrecision(), aggregatedCount);
-                    int length = nutrition.length - 1;
-                    if (length < 0) {
-                        continue calculateEntry;
-                    }
-                    float currentNutrition = nutrition[length];
-                    float energy = 0;
-                    for (int histNutrIndex = length
-                            - shortTermMemoryConfiguration.getEnergyCalculationConfiguration()
-                                    .getEnergyHistoryLength(); histNutrIndex < length; histNutrIndex++) {
-                        float historicalNutrition;
-                        if (histNutrIndex < 0) {
-                            historicalNutrition = 0;
-                        } else {
-                            historicalNutrition = nutrition[histNutrIndex];
+    public void updateUserModels(Date date) {
+        if (itsTimeToCalculateModels(date)) {
+            boolean calculateLongTermInterests = itsTimeToCalculateLongTermInterests();
+            LOGGER.debug("Starting to update UserModels");
+            for (String userModelType : userModelTypes.keySet()) {
+                Map<UserModel, Collection<UserModelEntry>> userModelsAndEntries = persistence
+                        .getAllUserModelEntries(userModelType);
+                for (UserModel userModel : userModelsAndEntries.keySet()) {
+                    LOGGER.debug("working on modeltype {}", userModel.getUserModelType());
+                    Collection<UserModelEntry> entries = userModelsAndEntries.get(userModel);
+                    for (UserModelEntry entry : entries) {
+                        float weight = calculateTermWeight(entry);
+                        if (weight != -1) {
+                            entry.getScoredTerm().setWeight(weight);
                         }
-                        energy += (Math.pow(weightedAverage(nutrition, nutritionHistoryLength), 2) - Math
-                                .pow(historicalNutrition, 2)) / (length - histNutrIndex);
+                        if (calculateLongTermInterests
+                                && modelsToTransferTermsFrom.contains(userModelType)) {
+                            transferTermsToLongTermModelIfNecessary(entry, userModel.getUser()
+                                    .getGlobalId());
+                        }
                     }
-                    weight = (float) (G / (1 + d
-                            * Math.pow(Math.E, -k * G * currentNutrition * energy)));
-                    entry.getScoredTerm().setWeight(weight);
-                }
-                persistence.storeOrUpdateUserModelEntries(userModel, entries);
-                if (transferTermsToLongTermModel) {
-                    transferTermsToLongTermModel(entries, userModel.getUser().getGlobalId());
+                    persistence.storeOrUpdateUserModelEntries(userModel, entries);
+
                 }
             }
+            if (calculateLongTermInterests) {
+                calculatedLongTermPeriodsAgo = 1;
+            } else {
+                calculatedLongTermPeriodsAgo++;
+            }
+            LOGGER.debug("Finished updating UserModels");
         }
-        LOGGER.debug("Finished updating UserModels");
     }
 
     private float weightedAverage(float[] nutrition, int nutritionHistoryLength2) {
