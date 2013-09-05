@@ -107,18 +107,6 @@ public final class FeedAdapter extends BasePollingAdapter {
 
     private static final int THREAD_POOL_SIZE = 100;
 
-    /**
-     * @deprecated Use {@link Property#PROPERTY_KEY_DC_CREATOR} instead.
-     */
-    @Deprecated
-    public static final String DC_CREATOR = Property.PROPERTY_KEY_DC_CREATOR;
-
-    /**
-     * @deprecated Use {@link Property#PROPERTY_KEY_AUTHOR_NAME} instead.
-     */
-    @Deprecated
-    public static final String AUTOR_NAME = Property.PROPERTY_KEY_AUTHOR_NAME;
-
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     /**
