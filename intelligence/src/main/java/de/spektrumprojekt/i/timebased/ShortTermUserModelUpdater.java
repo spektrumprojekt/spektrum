@@ -104,7 +104,9 @@ public class ShortTermUserModelUpdater {
         LongTermMemoryConfiguration longTermMemoryConfiguration = configuration
                 .getShortTermMemoryConfiguration().getLongTermMemoryConfiguration();
         longTermCalculationPeriodInBins = configuration.getShortTermMemoryConfiguration()
-                .getLongTermMemoryConfiguration().getLongTermCalculationPeriodInBins();
+                .getLongTermMemoryConfiguration() == null ? -1 : configuration
+                .getShortTermMemoryConfiguration().getLongTermMemoryConfiguration()
+                .getLongTermCalculationPeriodInBins();
         // if in all user models the unknown terms are created no separated long term user model
         // exists
         if (!(modelsToTransferTermsFrom.size() == rankerConfiguration.getUserModelTypes().size())) {
