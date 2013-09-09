@@ -89,6 +89,15 @@ public final class FeedAdapter extends BasePollingAdapter {
     /** The source type of this adapter. */
     public static final String SOURCE_TYPE = "RSS";
 
+    /**
+     * The key for the access parameter specifying the title of the source.
+     * 
+     * TODO it is not an access parameter, it is a property read by the souce. So we need to mark it
+     * somewhow, either give access params a property or add "properties" to the source addtional
+     * the access params
+     */
+    public static final String ACCESS_PARAMETER_TITLE = "title";
+
     /** The key for the access parameter specifying the feed's URL. */
     public static final String ACCESS_PARAMETER_URI = "feeduri";
 

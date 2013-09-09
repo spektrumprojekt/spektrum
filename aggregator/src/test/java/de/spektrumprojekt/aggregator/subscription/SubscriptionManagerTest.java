@@ -111,7 +111,7 @@ public class SubscriptionManagerTest {
 
     private SubscriptionPersistence subscriptionPersistence;
 
-    private SubscriptionManager manager;
+    private PersistentSubscriptionManager manager;
     private Aggregator aggregator;
     private AggregatorConfiguration aggregatorConfiguration;
 
@@ -170,7 +170,7 @@ public class SubscriptionManagerTest {
 
         aggregatorChain = aggregator.getAggregatorChain();
 
-        manager = new SubscriptionManager(communicator,
+        manager = new PersistentSubscriptionManager(communicator,
                 persistence, aggregatorChain, aggregatorConfiguration);
 
         communicator.open();

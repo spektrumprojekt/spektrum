@@ -4,12 +4,12 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * This non entity filter defines filter criterias once a new subscriptions is created and already
+ * This non entity filter defines filter criteria once a new subscriptions is created and already
  * existing messages should be returned.
  * 
  * If both values lastXMessages and startDate are defined it will be combined by OR. For example if
  * lastXMessages is 10 and startDate is 2013-01-01 than at least 10 messages are returned plus all
- * message since january 2013.
+ * message since January 2013.
  * 
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 

@@ -33,6 +33,7 @@ import de.spektrumprojekt.aggregator.chain.PublicationDateFilterCommand;
 import de.spektrumprojekt.aggregator.chain.SendAggregatorMessageCommand;
 import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
 import de.spektrumprojekt.aggregator.duplicate.hashduplicate.HashDuplicationDetection;
+import de.spektrumprojekt.aggregator.subscription.PersistentSubscriptionManager;
 import de.spektrumprojekt.aggregator.subscription.SubscriptionManager;
 import de.spektrumprojekt.aggregator.subscription.handler.CreateSubscriptionMessageHandler;
 import de.spektrumprojekt.aggregator.subscription.handler.DeleteSubscriptionMessageHandler;
@@ -103,14 +104,14 @@ public class Aggregator {
     }
 
     /**
-     * loads the configuration and creates a {@link SubscriptionManager}
+     * loads the configuration and creates a {@link PersistentSubscriptionManager}
      * 
      * @throws ConfigurationException
      *             something is wring with the configuration file
      */
     private void createSubscriptionManager() throws ConfigurationException {
 
-        subscriptionManager = new SubscriptionManager(communicator,
+        subscriptionManager = new PersistentSubscriptionManager(communicator,
                 persistence, aggregatorChain, aggregatorConfiguration);
     }
 
@@ -128,6 +129,10 @@ public class Aggregator {
 
     public AggregatorChain getAggregatorChain() {
         return aggregatorChain;
+    }
+
+    public SubscriptionManager getSubscriptionManager() {
+        return subscriptionManager;
     }
 
     private void setupChains() {
