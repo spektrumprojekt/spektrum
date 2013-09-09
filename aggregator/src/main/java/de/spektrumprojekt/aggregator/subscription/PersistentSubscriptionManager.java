@@ -52,9 +52,10 @@ import de.spektrumprojekt.persistence.Persistence;
 
 /**
  * <p>
- * The {@link PersistentSubscriptionManager} is responsible for managing subscriptions by dispatching them to
- * the correct {@link IAdapter} implementations obtained from {@link AdapterManager}. When
- * initialized, already existing, persistent subscriptions are read from the persistence layer.
+ * The {@link PersistentSubscriptionManager} is responsible for managing subscriptions by
+ * dispatching them to the correct {@link IAdapter} implementations obtained from
+ * {@link AdapterManager}. When initialized, already existing, persistent subscriptions are read
+ * from the persistence layer.
  * </p>
  * 
  * @author Philipp Katz
@@ -80,8 +81,8 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
 
     /**
      * <p>
-     * Initialize a new {@link PersistentSubscriptionManager} with the specified queue delivering new
-     * subscriptions and the specified server configuration. Upon initialization, persistent
+     * Initialize a new {@link PersistentSubscriptionManager} with the specified queue delivering
+     * new subscriptions and the specified server configuration. Upon initialization, persistent
      * subscriptions from the database are added.
      * </p>
      * 
@@ -316,6 +317,7 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
     /**
      * tells the adapterManager to stop
      */
+    @Override
     public void stop() {
         adapterManager.stop();
     }
@@ -369,9 +371,9 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
             }
 
         } else {
+            // everything is new so create subscription with source and a new source status
             subscription = this.persistence.storeSubscription(subscription);
 
-            // everything is new so create subscription with source and a new source status
             try {
                 // create subscription and source and start working it
                 sourceStatus = this.createAndStartSource(subscription.getSource());
@@ -430,6 +432,7 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
      * 
      * @param currentSubscriptions
      */
+    @Override
     public void synchronizeSubscriptions(List<Subscription> currentSubscriptions) {
         List<String> subscriptionsToRemove = new ArrayList<String>();
         // find Subscriptions to remove
