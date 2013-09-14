@@ -77,6 +77,8 @@ public class RankerTest extends IntelligenceSpektrumTest {
     private Communicator communicator;
     private Queue<CommunicationMessage> rankerQueue;
 
+    private DirectedUserModelAdapter adapter;
+
     private void checkUserModelTerms(MessageFeatureContext context, UserModel... userModelsToAssert) {
         Collection<ScoredTerm> terms = context.getMessage().getMessageParts().iterator().next()
                 .getScoredTerms();
@@ -158,7 +160,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
         communicator.registerMessageHandler(learner);
 
         if (rankerConfiguration.hasFlag(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)) {
-            DirectedUserModelAdapter adapter = new DirectedUserModelAdapter(getPersistence(),
+            adapter = new DirectedUserModelAdapter(getPersistence(),
                     ranker, new UserSimilarityRetriever(getPersistence()));
             communicator.registerMessageHandler(adapter);
         }
@@ -294,6 +296,9 @@ public class RankerTest extends IntelligenceSpektrumTest {
         MessageRank rankForUser2 = getPersistence().getMessageRank(user2.getGlobalId(),
                 message.getGlobalId());
         Assert.assertNotNull(rankForUser2);
+        Assert.assertTrue("RequestAdaptedCount should be > 0",
+                this.adapter.getRequestAdaptedCount() > 0);
+        Assert.assertTrue("getAdaptedCount should be > 0", this.adapter.getAdaptedCount() > 0);
         Assert.assertTrue("rankForUser2 should positive if adaption run, but it is: "
                 + rankForUser2.getRank(), rankForUser2.getRank() > 0.5);
 

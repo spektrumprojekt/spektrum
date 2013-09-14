@@ -49,17 +49,16 @@ public class UserModelLearnerCommand implements Command<LearnerMessageContext> {
     private final Persistence persistence;
     private final String userModelType;
     private final UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy;
+    private final boolean createUnknownTermsInUsermodel;
 
-    public UserModelLearnerCommand(
-            Persistence persistence,
-            String userModelType,
-            UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy) {
+    public UserModelLearnerCommand(Persistence persistence, String userModelType,
+            UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy,
+            boolean createUnknownTermsInUsermodel) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
         }
         if (userModelEntryIntegrationStrategy == null) {
-            throw new IllegalArgumentException(
-                    "userModelEntryIntegrationStrategy cannot be null.");
+            throw new IllegalArgumentException("userModelEntryIntegrationStrategy cannot be null.");
         }
         if (userModelType == null) {
             throw new IllegalArgumentException("userModelType cannot be null.");
@@ -68,12 +67,12 @@ public class UserModelLearnerCommand implements Command<LearnerMessageContext> {
         this.persistence = persistence;
         this.userModelType = userModelType;
         this.userModelEntryIntegrationStrategy = userModelEntryIntegrationStrategy;
+        this.createUnknownTermsInUsermodel = createUnknownTermsInUsermodel;
     }
 
     @Override
     public String getConfigurationDescription() {
-        return this.getClass().getSimpleName() + ": "
-                + "userModelEntryIntegrationStrategy="
+        return this.getClass().getSimpleName() + ": " + "userModelEntryIntegrationStrategy="
                 + userModelEntryIntegrationStrategy.getConfigurationDescription()
                 + "userModelType=" + userModelType;
     }
@@ -99,22 +98,20 @@ public class UserModelLearnerCommand implements Command<LearnerMessageContext> {
             if (!observationForDisintegration.getMessageGlobalId().equals(message.getGlobalId())) {
                 throw new IllegalStateException(
                         "messageGlobalId of observation does not match! observation="
-                                + observationForDisintegration
-                                + " message=" + message);
+                                + observationForDisintegration + " message=" + message);
             }
             if (!observationForDisintegration.getUserGlobalId().equals(
                     context.getObservation().getUserGlobalId())) {
                 throw new IllegalStateException(
                         "userGlobalId of observation does not match! observation="
-                                + observationForDisintegration
-                                + " message=" + message);
+                                + observationForDisintegration + " message=" + message);
             }
             if (!observationForDisintegration.getObservationType().equals(
                     context.getObservation().getObservationType())) {
                 throw new IllegalStateException(
                         "observationType of observation does not match! observation1="
-                                + observationForDisintegration
-                                + " context.observation=" + context.getObservation());
+                                + observationForDisintegration + " context.observation="
+                                + context.getObservation());
             }
 
         }
@@ -155,17 +152,15 @@ public class UserModelLearnerCommand implements Command<LearnerMessageContext> {
             throw new UnsupportedOperationException(
                     "Not yet implemented: 'generate a interest if not yet available' ");
         }
-        UserModel userModel = persistence.getOrCreateUserModelByUser(
-                userToLearnForGlobalId, userModelType);
+        UserModel userModel = persistence.getOrCreateUserModelByUser(userToLearnForGlobalId,
+                userModelType);
 
-        Observation observationForDisintegration = getObservationForDisintegration(context,
-                message);
+        Observation observationForDisintegration = getObservationForDisintegration(context, message);
 
         if (observationForDisintegration != null
-                && (observationForDisintegration.getInterest().equals(interest)
-                || context.getObservation().getPriority().priorityValue() < observationForDisintegration
-                        .getPriority().priorityValue()
-                )) {
+                && (observationForDisintegration.getInterest().equals(interest) || context
+                        .getObservation().getPriority().priorityValue() < observationForDisintegration
+                        .getPriority().priorityValue())) {
             // nothing to do here. we got an observation with the same interest or the observation
             // has a lower priority as one we used before
             return;
@@ -174,25 +169,21 @@ public class UserModelLearnerCommand implements Command<LearnerMessageContext> {
         Map<Term, ScoredTerm> scoredTermsOfMessage = getScoredTermsOfMessage(message);
 
         Collection<Term> terms = new HashSet<Term>(scoredTermsOfMessage.keySet());
-        Map<Term, UserModelEntry> entries = context.getPersistence()
-                .getUserModelEntriesForTerms(userModel,
-                        scoredTermsOfMessage.keySet());
+        Map<Term, UserModelEntry> entries = context.getPersistence().getUserModelEntriesForTerms(
+                userModel, scoredTermsOfMessage.keySet());
 
         Collection<Term> entriesToRemove = new HashSet<Term>();
         for (Entry<Term, UserModelEntry> entry : entries.entrySet()) {
             if (entry.getValue() != null) {
                 if (observationForDisintegration != null) {
-                    userModelEntryIntegrationStrategy.disintegrate(
-                            entry.getValue(),
+                    userModelEntryIntegrationStrategy.disintegrate(entry.getValue(),
                             observationForDisintegration.getInterest(),
                             scoredTermsOfMessage.get(entry.getKey()),
                             observationForDisintegration.getObservationDate());
                 }
-                boolean remove = userModelEntryIntegrationStrategy.integrate(
-                        entry.getValue(),
-                        interest,
-                        scoredTermsOfMessage.get(entry.getKey()),
-                        context.getObservation().getObservationDate());
+                boolean remove = userModelEntryIntegrationStrategy.integrate(entry.getValue(),
+                        interest, scoredTermsOfMessage.get(entry.getKey()), context
+                                .getObservation().getObservationDate());
                 if (remove) {
                     entriesToRemove.add(entry.getKey());
                 }
@@ -202,13 +193,14 @@ public class UserModelLearnerCommand implements Command<LearnerMessageContext> {
         for (Term t : entriesToRemove) {
             entries.remove(t);
         }
-        // terms not know so far are left
-        for (Term t : terms) {
-            UserModelEntry entry = userModelEntryIntegrationStrategy.createNew(userModel,
-                    interest,
-                    scoredTermsOfMessage.get(t), message.getPublicationDate());
-            if (entry != null) {
-                entries.put(t, entry);
+        // terms not known so far are left
+        if (createUnknownTermsInUsermodel) {
+            for (Term t : terms) {
+                UserModelEntry entry = userModelEntryIntegrationStrategy.createNew(userModel,
+                        interest, scoredTermsOfMessage.get(t), message.getPublicationDate());
+                if (entry != null) {
+                    entries.put(t, entry);
+                }
             }
         }
 

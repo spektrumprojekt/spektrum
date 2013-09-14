@@ -90,6 +90,7 @@ public class ContentMatchFeatureCommand implements Command<UserSpecificMessageFe
                     rankerConfiguration.getShortTermMemoryConfiguration());
             break;
         }
+
     }
 
     /**

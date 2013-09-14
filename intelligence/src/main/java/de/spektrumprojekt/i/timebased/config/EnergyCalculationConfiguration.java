@@ -10,24 +10,31 @@ public class EnergyCalculationConfiguration implements ConfigurationDescriptable
     private int energyHistoryLength;
     private int nutritionHistLength;
 
+    private final int binAggregationCount;
+
     public EnergyCalculationConfiguration(
             float k,
             double d,
             int energyHistoryLength,
             int nutritionHistLength,
-            NutritionCalculationStrategy strategy) {
+            NutritionCalculationStrategy strategy,
+            int binAggregationCount) {
+
         this.k = k;
         this.d = d;
         this.energyHistoryLength = energyHistoryLength;
         this.strategy = strategy;
         this.nutritionHistLength = nutritionHistLength;
+        this.binAggregationCount = binAggregationCount;
+    }
+
+    public int getBinAggregationCount() {
+        return binAggregationCount;
     }
 
     @Override
     public String getConfigurationDescription() {
-        return "EnergyCalculationConfiguration [k=" + k + ", d=" + d + ", strategy=" + strategy
-                + ", energyHistoryLength=" + energyHistoryLength + ", nutritionHistLength"
-                + nutritionHistLength + "]";
+        return toString();
     }
 
     public double getD() {
@@ -76,7 +83,9 @@ public class EnergyCalculationConfiguration implements ConfigurationDescriptable
 
     @Override
     public String toString() {
-        return getConfigurationDescription();
+        return "EnergyCalculationConfiguration [k=" + k + ", d=" + d + ", strategy=" + strategy
+                + ", energyHistoryLength=" + energyHistoryLength + ", nutritionHistLength="
+                + nutritionHistLength + ", binAggregationCount=" + binAggregationCount + "]";
     }
 
 }

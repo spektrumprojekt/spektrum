@@ -32,7 +32,6 @@ public class TermCounterCommand implements Command<LearnerMessageContext> {
     private final TimeBinnedUserModelEntryIntegrationStrategy modelEntryIntegrationStrategy;
 
     public TermCounterCommand(RankerConfiguration configuration, Persistence persistence) {
-
         this.persistence = persistence;
 
         if (configuration.getShortTermMemoryConfiguration() == null

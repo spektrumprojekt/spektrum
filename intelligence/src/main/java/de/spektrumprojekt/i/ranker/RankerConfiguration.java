@@ -1,10 +1,12 @@
 package de.spektrumprojekt.i.ranker;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -58,6 +60,8 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
     private boolean mixMemoriesForRating = false;
 
     private ShortTermMemoryConfiguration shortTermMemoryConfiguration;
+
+    private final List<String> modelsToNotCreateUnknownTermsIn = new ArrayList<String>();
 
     public RankerConfiguration(TermWeightStrategy strategy, TermVectorSimilarityStrategy aggregation) {
         this(strategy, aggregation, null, null, (RankerConfigurationFlag[]) null);
@@ -114,6 +118,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
         this.informationExtractionConfiguration.setBeMessageGroupSpecific(this
                 .hasFlag(RankerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL));
+    }
+
+    public boolean addModelsToNotCreateUnknownTermsIn(String modelType) {
+        return modelsToNotCreateUnknownTermsIn.add(modelType);
     }
 
     private void assert01(float value, String field) {
@@ -214,6 +222,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
     public void immutable() {
 
         this.immutable = true;
+    }
+
+    public boolean isCreateUnknownTermsInUsermodel(String userModelType) {
+        return !modelsToNotCreateUnknownTermsIn.contains(userModelType);
     }
 
     public boolean isImmutable() {

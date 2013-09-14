@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
+import de.spektrumprojekt.datamodel.user.UserModel;
 
 public class ShortTermMemoryConfiguration implements ConfigurationDescriptable {
 
@@ -17,6 +18,8 @@ public class ShortTermMemoryConfiguration implements ConfigurationDescriptable {
 
     private final Map<String, Float> raitingWeights = new HashMap<String, Float>();
 
+    private LongTermMemoryConfiguration longTermMemoryConfiguration;
+
     public ShortTermMemoryConfiguration(
             EnergyCalculationConfiguration energyCalculationConfiguration,
             MergeValuesStrategy mergeValuesStrategy, long precision) {
@@ -24,6 +27,17 @@ public class ShortTermMemoryConfiguration implements ConfigurationDescriptable {
         this.energyCalculationConfiguration = energyCalculationConfiguration;
         this.mergeValuesStrategy = mergeValuesStrategy;
         this.precision = precision;
+    }
+
+    public ShortTermMemoryConfiguration(
+            EnergyCalculationConfiguration energyCalculationConfiguration,
+            MergeValuesStrategy mergeValuesStrategy, long precision,
+            LongTermMemoryConfiguration longTermMemoryConfiguration) {
+        super();
+        this.energyCalculationConfiguration = energyCalculationConfiguration;
+        this.mergeValuesStrategy = mergeValuesStrategy;
+        this.precision = precision;
+        this.longTermMemoryConfiguration = longTermMemoryConfiguration;
     }
 
     @Override
@@ -42,26 +56,48 @@ public class ShortTermMemoryConfiguration implements ConfigurationDescriptable {
             sb.append(entry.getValue());
         }
         sb.append("]");
+        String energyCalculationConfiguration = this.energyCalculationConfiguration != null ? this.energyCalculationConfiguration
+                .getConfigurationDescription()
+                : "null";
+        String longTermMemoryConfiguration = this.longTermMemoryConfiguration != null ? this.longTermMemoryConfiguration
+                .getConfigurationDescription()
+                : "null";
         return "ShortTermMemoryConfiguration [mergeValuesStrategy=" + mergeValuesStrategy
                 + ", precision=" + precision + ", balanceMisingUserModelWeights="
                 + balanceMisingUserModelWeights + ", raitingWeights=" + sb.toString()
-                + ", energyCalculationConfiguration="
-                + (energyCalculationConfiguration == null ? "null" :
-                        energyCalculationConfiguration.getConfigurationDescription()) + "]";
+                + ", energyCalculationConfiguration=" + energyCalculationConfiguration + "]"
+                + ", longTermMemoryConfiguration=" + longTermMemoryConfiguration + "]";
+
     }
 
     public EnergyCalculationConfiguration getEnergyCalculationConfiguration() {
         return energyCalculationConfiguration;
     }
 
+    public LongTermMemoryConfiguration getLongTermMemoryConfiguration() {
+        return longTermMemoryConfiguration;
+    }
+
     public MergeValuesStrategy getMergeValuesStrategy() {
         return mergeValuesStrategy;
     }
 
+    /**
+     * the length of one bin of the time binned model, also the period between recalculating the
+     * short term user model
+     * 
+     * @return period length in ms
+     */
     public long getPrecision() {
         return precision;
     }
 
+    /**
+     * the weight of a {@link UserModel} instance for rating messages
+     * 
+     * @param key
+     * @return
+     */
     public Float getRaitingWeight(Object key) {
         return raitingWeights.get(key);
     }
@@ -70,6 +106,11 @@ public class ShortTermMemoryConfiguration implements ConfigurationDescriptable {
         return raitingWeights;
     }
 
+    /**
+     * if a weight is missing the other weights are scaled to be 1 in sum.
+     * 
+     * @return
+     */
     public boolean isBalanceMisingUserModelWeights() {
         return balanceMisingUserModelWeights;
     }
@@ -85,6 +126,11 @@ public class ShortTermMemoryConfiguration implements ConfigurationDescriptable {
     public void setEnergyCalculationConfiguration(
             EnergyCalculationConfiguration energyCalculationConfiguration) {
         this.energyCalculationConfiguration = energyCalculationConfiguration;
+    }
+
+    public void setLongTermMemoryConfiguration(
+            LongTermMemoryConfiguration longTermMemoryConfiguration) {
+        this.longTermMemoryConfiguration = longTermMemoryConfiguration;
     }
 
     public void setMergeValuesStrategy(MergeValuesStrategy mergeValuesStrategy) {

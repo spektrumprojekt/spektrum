@@ -15,6 +15,7 @@ public class AbsoluteNutritionCalculationStrategy implements NutritionCalculatio
         int i = 0;
         for (UserModelEntryTimeBin bin : timeBinEntries) {
             result[i] = bin.getScoreSum();
+            i++;
         }
         return result;
     }
