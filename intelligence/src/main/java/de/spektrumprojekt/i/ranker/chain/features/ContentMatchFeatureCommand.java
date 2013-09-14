@@ -74,14 +74,18 @@ public class ContentMatchFeatureCommand implements Command<UserSpecificMessageFe
         this.interestTermTreshold = interestTermTreshold;
         this.termVectorSimilarityComputer = termVectorSimilarityComputer;
         this.rankerConfiguration = rankerConfiguration;
-        switch (rankerConfiguration.getShortTermMemoryConfiguration().getMergeValuesStrategy()) {
-        case MAX:
+        if (rankerConfiguration.getShortTermMemoryConfiguration() == null) {
             valuesStrategy = new MaxMergeValuesStrategy();
-            break;
-        default:
-            valuesStrategy = new WeightedMergeValuesStrategy(
-                    rankerConfiguration.getShortTermMemoryConfiguration());
-            break;
+        } else {
+            switch (rankerConfiguration.getShortTermMemoryConfiguration().getMergeValuesStrategy()) {
+            case MAX:
+                valuesStrategy = new MaxMergeValuesStrategy();
+                break;
+            default:
+                valuesStrategy = new WeightedMergeValuesStrategy(
+                        rankerConfiguration.getShortTermMemoryConfiguration());
+                break;
+            }
         }
     }
 

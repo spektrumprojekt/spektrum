@@ -34,23 +34,18 @@ public class TermCounterCommand implements Command<LearnerMessageContext> {
     private boolean disabled;
 
     public TermCounterCommand(RankerConfiguration configuration, Persistence persistence) {
-        // ,
-        // }
-        // InformationExtractionConfiguration
-        // informationExtractionConfiguration) {
         super();
         this.persistence = persistence;
         this.configuration = configuration;
-        if (configuration.getShortTermMemoryConfiguration().getEnergyCalculationConfiguration() == null) {
+        if (configuration.getShortTermMemoryConfiguration() == null
+                || configuration.getShortTermMemoryConfiguration()
+                        .getEnergyCalculationConfiguration() == null) {
             disabled = true;
         } else {
             modelEntryIntegrationStrategy = new TimeBinnedUserModelEntryIntegrationStrategy(0,
                     DateUtils.MILLIS_PER_DAY * 31 * 10, configuration
                             .getShortTermMemoryConfiguration().getPrecision());
         }
-
-        // this.informationExtractionConfiguration =
-        // informationExtractionConfiguration;
     }
 
     @Override
