@@ -341,6 +341,19 @@ public class SimplePersistence implements Persistence {
         return observations;
     }
 
+    public Collection<Observation> getObservations(
+            ObservationType observationType) {
+        Collection<Observation> filtered = new HashSet<Observation>();
+        for (Collection<Observation> allObservations : this.observations.values()) {
+            for (Observation obs : allObservations) {
+                if (observationType.equals(obs.getObservationType())) {
+                    filtered.add(obs);
+                }
+            }
+        }
+        return filtered;
+    }
+
     @Override
     public Collection<Observation> getObservations(String userGlobalId, String messageGlobalId,
             ObservationType observationType) {
@@ -373,7 +386,7 @@ public class SimplePersistence implements Persistence {
 
     @Override
     public User getOrCreateUser(String userGlobalId) {
-        User user = users.get(userGlobalId);
+        User user = getUserByGlobalId(userGlobalId);
         if (user == null) {
             user = new User(userGlobalId);
             users.put(userGlobalId, user);
@@ -415,6 +428,11 @@ public class SimplePersistence implements Persistence {
     public TermFrequency getTermFrequency() {
         termFrequency.init();
         return termFrequency;
+    }
+
+    @Override
+    public User getUserByGlobalId(String userGlobalId) {
+        return users.get(userGlobalId);
     }
 
     public User getUserById(Long userId) {

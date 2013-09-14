@@ -63,6 +63,8 @@ public class CommandChain<T extends Object> implements Command<T> {
 
     /**
      * {@inheritDoc}
+     * 
+     * @throws CommandException
      */
     @Override
     public void process(T context) {
@@ -73,7 +75,10 @@ public class CommandChain<T extends Object> implements Command<T> {
                 command.process(context);
 
             } catch (CommandException ce) {
-
+                if (ce.isRethrow()) {
+                    // TODO do a checked exception
+                    throw new RuntimeException(ce);
+                }
                 if (!ce.isContinueChain()) {
                     break commands;
                 }

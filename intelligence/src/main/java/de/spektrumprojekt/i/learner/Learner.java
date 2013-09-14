@@ -55,6 +55,13 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
 
     private final static Logger LOGGER = LoggerFactory.getLogger(Ranker.class);
 
+    public Learner(
+            Persistence persistence,
+            RankerConfiguration configuration,
+            InformationExtractionCommand<MessageFeatureContext> ieChain) {
+        this(persistence, configuration, ieChain, false);
+    }
+
     /**
      * TODO use a LearnerConfiguration
      * 
@@ -63,49 +70,57 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
      * @param userModelEntryIntegrationStrategy
      *            the strategy to integrate the user model
      */
-    public Learner(Persistence persistence, RankerConfiguration configuration,
-            InformationExtractionCommand<MessageFeatureContext> ieChain) {
+    public Learner(
+            Persistence persistence,
+            RankerConfiguration configuration,
+            InformationExtractionCommand<MessageFeatureContext> ieChain,
+            boolean onlyDoObservations) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null!");
         }
         if (configuration == null) {
             throw new IllegalArgumentException("configuration cannot be null!");
         }
-        if (configuration.getUserModelTypes() == null
-                || configuration.getUserModelTypes().size() == 0) {
+        if (!onlyDoObservations && (configuration.getUserModelTypes() == null
+                || configuration.getUserModelTypes().size() == 0)) {
             throw new IllegalArgumentException(
                     "configuration.getUserModelTypes() cannot be null or empty !");
         }
         this.persistence = persistence;
 
         this.learnerChain = new CommandChain<LearnerMessageContext>();
-        if (!configuration.hasFlag(RankerConfigurationFlag.NO_INFORMATION_EXTRACTION)) {
+        if (!onlyDoObservations
+                && !configuration.hasFlag(RankerConfigurationFlag.NO_INFORMATION_EXTRACTION)) {
             this.learnerChain
                     .addCommand(new ProxyCommand<MessageFeatureContext, LearnerMessageContext>(
                             ieChain));
         }
         this.learnerChain.addCommand(new LoadRelatedObservationsCommand(this.persistence));
 
-        for (String userModelType : configuration.getUserModelTypes().keySet()) {
-            UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy;
-            UserModelConfiguration userModelConfiguration = configuration.getUserModelTypes().get(
-                    userModelType);
-            switch (userModelConfiguration.getUserModelEntryIntegrationStrategy()) {
-            case PLAIN:
-                userModelEntryIntegrationStrategy = new UserModelEntryIntegrationPlainStrategy();
-                break;
-            default:
-                userModelEntryIntegrationStrategy = new TimeBinnedUserModelEntryIntegrationStrategy(
-                        userModelConfiguration.getStartTime(), userModelConfiguration.getBinSize(),
-                        userModelConfiguration.getPrecision(),
-                        userModelConfiguration.isCalculateLater());
+        if (!onlyDoObservations) {
+            for (String userModelType : configuration.getUserModelTypes().keySet()) {
+                UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy;
+                UserModelConfiguration userModelConfiguration = configuration.getUserModelTypes()
+                        .get(
+                                userModelType);
+                switch (userModelConfiguration.getUserModelEntryIntegrationStrategy()) {
+                case PLAIN:
+                    userModelEntryIntegrationStrategy = new UserModelEntryIntegrationPlainStrategy();
+                    break;
+                default:
+                    userModelEntryIntegrationStrategy = new TimeBinnedUserModelEntryIntegrationStrategy(
+                            userModelConfiguration.getStartTime(),
+                            userModelConfiguration.getBinSize(),
+                            userModelConfiguration.getPrecision(),
+                            userModelConfiguration.isCalculateLater());
+                }
+                this.learnerChain.addCommand(new UserModelLearnerCommand(this.persistence,
+                        userModelType, userModelEntryIntegrationStrategy));
             }
-            this.learnerChain.addCommand(new UserModelLearnerCommand(this.persistence,
-                    userModelType, userModelEntryIntegrationStrategy));
         }
         this.learnerChain.addCommand(new StoreObservationCommand(this.persistence));
 
-        if (configuration.getShortTermMemoryConfiguration() != null
+        if (!onlyDoObservations && configuration.getShortTermMemoryConfiguration() != null
                 && configuration.getShortTermMemoryConfiguration()
                         .getEnergyCalculationConfiguration() != null) {
             this.learnerChain.addCommand(new TermCounterCommand(configuration, this.persistence));
@@ -147,6 +162,10 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
     public String getConfigurationDescription() {
         return this.getClass().getSimpleName() + " learnerChain: "
                 + this.learnerChain.getConfigurationDescription();
+    }
+
+    public CommandChain<LearnerMessageContext> getLearnerChain() {
+        return learnerChain;
     }
 
     /**

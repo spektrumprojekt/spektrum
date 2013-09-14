@@ -82,6 +82,10 @@
 			<artifactId>jlangdetect-extra</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>org.apache.mahout</groupId>
+			<artifactId>mahout-core</artifactId>
+		</dependency>		
+		<dependency>
 			<groupId>org.apache.opennlp</groupId>
 			<artifactId>opennlp-tools</artifactId>
 		</dependency>

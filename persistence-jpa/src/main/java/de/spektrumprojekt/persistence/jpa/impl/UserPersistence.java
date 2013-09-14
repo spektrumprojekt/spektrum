@@ -99,7 +99,7 @@ public class UserPersistence extends AbstractPersistenceLayer {
     }
 
     public User getOrCreateUser(final String userGlobalId) {
-        User user = getEntityByGlobalId(User.class, userGlobalId);
+        User user = getUserByGlobalId(userGlobalId);
         if (user == null) {
 
             Transaction<User> transaction = new Transaction<User>() {
@@ -167,6 +167,11 @@ public class UserPersistence extends AbstractPersistenceLayer {
         }
 
         return result;
+    }
+
+    public User getUserByGlobalId(String userGlobalId) {
+
+        return getEntityByGlobalId(User.class, userGlobalId);
     }
 
     /**

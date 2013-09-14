@@ -139,6 +139,8 @@ public interface Persistence {
 
     TermFrequency getTermFrequency();
 
+    User getUserByGlobalId(String userGlobalId);
+
     Map<String, String> getUserModelEntriesCountDescription();
 
     /**
