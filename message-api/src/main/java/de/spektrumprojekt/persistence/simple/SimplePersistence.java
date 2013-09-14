@@ -615,10 +615,14 @@ public class SimplePersistence implements Persistence {
 
     @Override
     public Message storeMessage(Message message) {
-        // TODO check that terms have an id ?
         if (message.getId() == null) {
-            // TODO
-            // message.setId(idGenerator.getNextMessage());
+            message.setId(idGenerator.getNextMessage());
+        } else {
+            Message exists = this.messages.get(message.getGlobalId());
+            if (!message.getId().equals(exists.getId())) {
+                throw new RuntimeException(
+                        "Can not replace a message with same global id but different (long) id.");
+            }
         }
         for (MessagePart mp : message.getMessageParts()) {
             for (ScoredTerm scoredTerm : mp.getScoredTerms()) {

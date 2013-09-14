@@ -2,11 +2,9 @@ package de.spektrumprojekt.i.collab;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
@@ -27,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.spektrumprojekt.commons.computer.Computer;
+import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.observation.Interest;
 import de.spektrumprojekt.datamodel.observation.Observation;
@@ -61,7 +60,7 @@ public class CollaborativeRankerComputer implements Computer {
 
     private Collection<User> users;
 
-    private List<String> sortedMessageIds;
+    private Collection<Message> messagesWithOberservations;
 
     private DataModel dataModel;
 
@@ -91,6 +90,8 @@ public class CollaborativeRankerComputer implements Computer {
     public final static ObservationType[] OT_ONLY_MESSAGE = new ObservationType[] { ObservationType.MESSAGE };
 
     private final ObservationType[] observationTypesToUseForDataModel;
+
+    private int nanRanks = 0;
 
     public CollaborativeRankerComputer(Persistence persistence,
             ObservationType[] observationTypesToUseForDataModel, boolean useGenericRecommender) {
@@ -122,13 +123,14 @@ public class CollaborativeRankerComputer implements Computer {
                 }
 
                 GenericUserPreferenceArray genericUserPreferenceArray = new GenericUserPreferenceArray(
-                        sortedMessageIds.size());
+                        messagesWithOberservations.size());
 
                 int index = 0;
 
-                for (String messageId : sortedMessageIds) {
+                for (Message message : messagesWithOberservations) {
                     boolean add = false;
-                    float pref = getPreferenceValue(observations, user.getGlobalId(), messageId);
+                    float pref = getPreferenceValue(observations, user.getGlobalId(),
+                            message.getGlobalId());
 
                     if (pref != 0) {
                         add = true;
@@ -141,20 +143,21 @@ public class CollaborativeRankerComputer implements Computer {
                         neg++;
                     }
                     if (pref < -1 || pref > 1) {
-                        throw new RuntimeException(messageId + " " + user.getGlobalId() + " "
+                        throw new RuntimeException(message + " " + user.getGlobalId() + " "
                                 + pref);
                     }
 
                     if (add) {
 
-                        genericUserPreferenceArray.setItemID(index, new Integer(messageId));
+                        genericUserPreferenceArray.setItemID(index, message.getId());
                         genericUserPreferenceArray.setUserID(index, user.getId());
                         genericUserPreferenceArray.setValue(index, pref);
 
                         index++;
 
                         if (outPreferencesToFile) {
-                            fw.write(index + " " + messageId + " " + user.getId() + " " + pref
+                            fw.write(index + " " + message.getGlobalId() + " " + user.getId() + " "
+                                    + pref
                                     + "\n");
                         }
                     }
@@ -175,9 +178,9 @@ public class CollaborativeRankerComputer implements Computer {
 
     public Interest getBestInterestOfObservations(
             Map<ObservationKey, Collection<Observation>> allObservations, String userId,
-            String messageId, ObservationType observationType) {
+            String messageGlobalId, ObservationType observationType) {
         Collection<Observation> observations = allObservations.get(new ObservationKey(userId,
-                messageId, observationType));
+                messageGlobalId, observationType));
 
         Observation maxPrioObs = getMaxPriorityObservation(observations);
 
@@ -225,6 +228,10 @@ public class CollaborativeRankerComputer implements Computer {
         return messageRanks;
     }
 
+    public int getNanRanks() {
+        return nanRanks;
+    }
+
     public int getNeg() {
         return neg;
     }
@@ -243,12 +250,12 @@ public class CollaborativeRankerComputer implements Computer {
 
     private float getPreferenceValue(
             Map<ObservationKey, Collection<Observation>> allObservations, String userId,
-            String messageId) {
+            String messageGlobalId) {
 
         Interest interest = null;
         for (ObservationType observationType : observationTypesToUseForDataModel) {
 
-            interest = getBestInterestOfObservations(allObservations, userId, messageId,
+            interest = getBestInterestOfObservations(allObservations, userId, messageGlobalId,
                     observationType);
             if (interest != null) {
                 break;
@@ -276,15 +283,21 @@ public class CollaborativeRankerComputer implements Computer {
             LOGGER.warn("Got no observations to learn from!");
         }
 
-        Collection<String> messageIds = new HashSet<String>();
+        Collection<Message> messages = new HashSet<Message>();
 
         for (ObservationKey key : observations.keySet()) {
-            messageIds.add(key.getMessageGlobalId());
+            Message message = persistence.getMessageByGlobalId(key.getMessageGlobalId());
+            if (message == null) {
+                throw new InconsistentDataException("message cannot be null for globalId="
+                        + key.getMessageGlobalId());
+            }
+            if (message.getId() == null) {
+                throw new InconsistentDataException("message.id cannot be null for globalId="
+                        + key.getMessageGlobalId() + " message=" + message);
+            }
+            messages.add(message);
         }
-
-        sortedMessageIds = new ArrayList<String>(messageIds);
-        Collections.sort(sortedMessageIds);
-        sortedMessageIds = Collections.unmodifiableList(sortedMessageIds);
+        this.messagesWithOberservations = Collections.unmodifiableCollection(messages);
 
         createDataModel();
 
@@ -316,20 +329,23 @@ public class CollaborativeRankerComputer implements Computer {
             Long userId = it.next();
             User user = this.persistence.getUserById(userId);
 
-            for (String messageId : sortedMessageIds) {
+            for (Message message : messagesWithOberservations) {
                 final float estimate = recommender.estimatePreference(userId,
-                        new Integer(messageId));
+                        message.getId());
                 if (estimate != 0) {
                     nonZeroRanks++;
                 }
                 float rank = convertScoreFromMahoutValue(estimate, true);
 
                 if (!Float.isNaN(rank)) {
-                    MessageRank messageRank = new MessageRank(messageId, user.getGlobalId());
+                    MessageRank messageRank = new MessageRank(message.getGlobalId(),
+                            user.getGlobalId());
 
                     messageRank.setRank(rank);
 
                     messageRanks.add(messageRank);
+                } else {
+                    nanRanks++;
                 }
 
             }
