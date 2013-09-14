@@ -27,25 +27,19 @@ import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import twitter4j.Status;
 import twitter4j.TwitterException;
 import twitter4j.TwitterStream;
 import twitter4j.TwitterStreamFactory;
-import twitter4j.User;
-import twitter4j.UserStreamAdapter;
 import twitter4j.conf.Configuration;
 import twitter4j.conf.ConfigurationBuilder;
 import de.spektrumprojekt.aggregator.adapter.BaseAdapter;
 import de.spektrumprojekt.aggregator.chain.AggregatorChain;
 import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
 import de.spektrumprojekt.commons.SpektrumUtils;
-import de.spektrumprojekt.datamodel.common.MimeType;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.Message;
-import de.spektrumprojekt.datamodel.message.MessagePart;
-import de.spektrumprojekt.datamodel.message.MessageType;
-import de.spektrumprojekt.datamodel.subscription.Subscription;
-import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
+import de.spektrumprojekt.datamodel.source.Source;
+import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 
 /**
@@ -54,68 +48,18 @@ import de.spektrumprojekt.datamodel.subscription.status.StatusType;
  * </p>
  * 
  * @see <a href="http://twitter4j.org/">Twitter4J</a>
+ * 
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * @author Philipp Katz
  */
 public final class TwitterAdapter extends BaseAdapter {
-
-    /**
-     * Listener adapter for Twitter4j, responsible for transforming the {@link Status} items to
-     * {@link Message}s.
-     */
-    private final class UserListener extends UserStreamAdapter {
-        private final SubscriptionStatus subscriptionStatus;
-
-        private UserListener(SubscriptionStatus subscription) {
-            this.subscriptionStatus = subscription;
-        }
-
-        @Override
-        public void onException(Exception ex) {
-            LOGGER.warn("twitter exception " + ex);
-            triggerListener(subscriptionStatus.getSubscription(),
-                    StatusType.ERROR_INTERNAL_ADAPTER, ex);
-        }
-
-        @Override
-        public void onStatus(Status status) {
-            LOGGER.debug("status " + status);
-            String text = status.getText();
-            if (SpektrumUtils.notNullOrEmpty(text)) {
-                Message message = new Message(MessageType.CONTENT,
-                        StatusType.OK, subscriptionStatus.getSubscription()
-                                .getGlobalId(), status.getCreatedAt());
-                MessagePart messagePart = new MessagePart(MimeType.TEXT_PLAIN,
-                        text);
-                message.addMessagePart(messagePart);
-                User user = status.getUser();
-                if (user != null) {
-                    String screenName = user.getScreenName();
-                    message.addProperty(new Property(SCREEN_NAME, screenName));
-                    if (user.getProfileImageURL() != null) {
-                        String profileImageUrl = user.getProfileImageURL()
-                                .toString();
-                        message.addProperty(new Property("profileImageUrl",
-                                profileImageUrl));
-                    }
-                }
-                String statusId = String.valueOf(status.getId());
-                String replyToStatusId = String.valueOf(status
-                        .getInReplyToStatusId());
-                message.addProperty(new Property(STATUS_ID, statusId));
-                message.addProperty(new Property("replyToStatusId",
-                        replyToStatusId));
-                addMessage(message);
-            }
-        }
-    }
 
     public static final String SCREEN_NAME = "screenName";
 
     public static final String STATUS_ID = "statusId";
 
     /** The logger for this class. */
-    private static final Logger LOGGER = LoggerFactory
+    static final Logger LOGGER = LoggerFactory
             .getLogger(TwitterAdapter.class);
 
     /** The Twitter consumer key necessary for authentication at Twitter API. */
@@ -177,24 +121,41 @@ public final class TwitterAdapter extends BaseAdapter {
     }
 
     @Override
-    public void addSubscription(SubscriptionStatus subscriptionStatus) {
+    public void addSource(SourceStatus sourceStatus) {
 
-        Subscription subscription = subscriptionStatus.getSubscription();
-        Property token = subscription
+        Source source = sourceStatus.getSource();
+        Property token = source
                 .getAccessParameter(ACCESS_PARAMETER_TOKEN);
-        Property tokenSecret = subscription
+        Property tokenSecret = source
                 .getAccessParameter(ACCESS_PARAMETER_TOKEN_SECRET);
 
-        String subscriptionID = subscription.getGlobalId();
-        if (twitterStreams.containsKey(subscriptionID)) {
-            LOGGER.error("already subscribed to {}", subscriptionID);
+        String sourceGlobalId = source.getGlobalId();
+        if (twitterStreams.containsKey(sourceGlobalId)) {
+            LOGGER.error("already subscribed to {}", sourceGlobalId);
         } else if (SpektrumUtils.notNull(token, tokenSecret)) {
-            subscribe(token.getPropertyValue(), tokenSecret.getPropertyValue(),
-                    subscriptionStatus);
+            listenToSource(token.getPropertyValue(), tokenSecret.getPropertyValue(),
+                    sourceStatus);
         } else {
             LOGGER.error("necessary information missing");
-            triggerListener(subscription, StatusType.ERROR_INSUFFICIENT_DATA);
+            triggerListener(source, StatusType.ERROR_INSUFFICIENT_DATA);
         }
+    }
+
+    /**
+     * <p>
+     * Allows subclasses to put acquired messages in the queue.
+     * </p>
+     * 
+     * @param message
+     *            The message to put into the queue.
+     */
+    void addTwitterMessage(Message message) {
+        this.addMessage(message);
+    }
+
+    @Override
+    public Collection<String> getSourceGlobalIds() {
+        return twitterStreams.keySet();
     }
 
     @Override
@@ -202,32 +163,8 @@ public final class TwitterAdapter extends BaseAdapter {
         return SOURCE_TYPE;
     }
 
-    @Override
-    public Collection<String> getSubscriptionGlobalIds() {
-        return twitterStreams.keySet();
-    }
-
-    @Override
-    public void removeSubscription(String subscriptionId) {
-        TwitterStream twitterStream = twitterStreams.remove(subscriptionId);
-        if (twitterStream != null) {
-            twitterStream.shutdown();
-            LOGGER.debug("unsubscribed from " + subscriptionId);
-        } else {
-            LOGGER.warn("no subscription for " + subscriptionId
-                    + " to unsubscribe from");
-        }
-    }
-
-    @Override
-    public void stop() {
-        for (TwitterStream stream : twitterStreams.values()) {
-            stream.cleanUp();
-        }
-    }
-
-    private void subscribe(String accessToken, String accessTokenSecret,
-            final SubscriptionStatus subscription) {
+    private void listenToSource(String accessToken, String accessTokenSecret,
+            final SourceStatus sourceStatus) {
         ConfigurationBuilder configBuilder = new ConfigurationBuilder();
         configBuilder.setOAuthConsumerKey(consumerKey);
         configBuilder.setOAuthConsumerSecret(consumerSecret);
@@ -240,22 +177,46 @@ public final class TwitterAdapter extends BaseAdapter {
             LOGGER.info("subscription for screenName "
                     + twitterStream.getScreenName());
         } catch (IllegalStateException e) {
-            LOGGER.debug("IllegalStateException for {}: {}", subscription,
+            LOGGER.debug("IllegalStateException for {}: {}", sourceStatus,
                     e.getMessage());
-            triggerListener(subscription.getSubscription(),
+            triggerListener(sourceStatus.getSource(),
                     StatusType.ERROR_INTERNAL_ADAPTER);
             return;
         } catch (TwitterException e) {
-            LOGGER.debug("TwitterException for {}: {}", subscription,
+            LOGGER.debug("TwitterException for {}: {}", sourceStatus,
                     e.getMessage());
-            triggerListener(subscription.getSubscription(),
+            triggerListener(sourceStatus.getSource(),
                     StatusType.ERROR_NETWORK);
             return;
         }
-        twitterStream.addListener(new UserListener(subscription));
+        twitterStream.addListener(new UserListener(this, sourceStatus));
         twitterStream.user();
-        twitterStreams.put(subscription.getSubscription().getGlobalId(),
+        twitterStreams.put(sourceStatus.getSource().getGlobalId(),
                 twitterStream);
+    }
+
+    @Override
+    public void removeSource(String sourceGlobalId) {
+        TwitterStream twitterStream = twitterStreams.remove(sourceGlobalId);
+        if (twitterStream != null) {
+            twitterStream.shutdown();
+            LOGGER.debug("removed source " + sourceGlobalId);
+        } else {
+            LOGGER.warn("no source for " + sourceGlobalId
+                    + " to remove from");
+        }
+    }
+
+    @Override
+    public void stop() {
+        for (TwitterStream stream : twitterStreams.values()) {
+            stream.cleanUp();
+        }
+    }
+
+    void triggerTwitterListener(Source source, StatusType statusType,
+            Exception exception) {
+        this.triggerListener(source, statusType, exception);
     }
 
 }

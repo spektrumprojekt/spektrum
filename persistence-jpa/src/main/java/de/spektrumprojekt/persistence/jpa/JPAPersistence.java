@@ -26,8 +26,10 @@ import java.util.List;
 import java.util.Map;
 
 import de.spektrumprojekt.configuration.Configuration;
+import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate;
 import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
@@ -36,7 +38,9 @@ import de.spektrumprojekt.datamodel.message.Term.TermCategory;
 import de.spektrumprojekt.datamodel.message.TermFrequency;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
-import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
+import de.spektrumprojekt.datamodel.source.Source;
+import de.spektrumprojekt.datamodel.source.SourceStatus;
+import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
@@ -44,9 +48,11 @@ import de.spektrumprojekt.datamodel.user.UserSimilarity;
 import de.spektrumprojekt.persistence.MessageRankVisitor;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.Statistics;
-import de.spektrumprojekt.persistence.jpa.impl.AggregationSubscriptionPersistence;
 import de.spektrumprojekt.persistence.jpa.impl.DuplicationDetectionPersistence;
 import de.spektrumprojekt.persistence.jpa.impl.MessagePersistence;
+import de.spektrumprojekt.persistence.jpa.impl.SourcePersistence;
+import de.spektrumprojekt.persistence.jpa.impl.SourceStatusPersistence;
+import de.spektrumprojekt.persistence.jpa.impl.SubscriptionPersistence;
 import de.spektrumprojekt.persistence.jpa.impl.UserPersistence;
 
 /**
@@ -56,10 +62,12 @@ import de.spektrumprojekt.persistence.jpa.impl.UserPersistence;
  */
 public class JPAPersistence implements Persistence {
 
-    private AggregationSubscriptionPersistence aggregationSubscriptionPersistence;
-    private UserPersistence userPersistence;
-    private MessagePersistence messagePersistence;
     private DuplicationDetectionPersistence duplicationDetectionPersistence;
+    private MessagePersistence messagePersistence;
+    private SourcePersistence sourcePersistence;
+    private SourceStatusPersistence sourceStatusPersistence;
+    private SubscriptionPersistence subscriptionPersistence;
+    private UserPersistence userPersistence;
 
     private final JPAConfiguration jpaConfiguration;
 
@@ -73,9 +81,25 @@ public class JPAPersistence implements Persistence {
 
     @Override
     public void close() {
-        if (this.aggregationSubscriptionPersistence != null) {
-            this.aggregationSubscriptionPersistence.shutdown();
+        if (this.duplicationDetectionPersistence != null) {
+            this.duplicationDetectionPersistence.shutdown();
         }
+        if (this.messagePersistence != null) {
+            this.messagePersistence.shutdown();
+        }
+        if (this.sourceStatusPersistence != null) {
+            this.sourceStatusPersistence.shutdown();
+        }
+        if (this.sourcePersistence != null) {
+            this.sourcePersistence.shutdown();
+        }
+        if (this.subscriptionPersistence != null) {
+            this.subscriptionPersistence.shutdown();
+        }
+        if (this.userPersistence != null) {
+            this.userPersistence.shutdown();
+        }
+
     }
 
     @Override
@@ -85,7 +109,7 @@ public class JPAPersistence implements Persistence {
 
     @Override
     public void deleteAggregationSubscription(String subscriptionId) {
-        aggregationSubscriptionPersistence.deleteAggregationSubscription(subscriptionId);
+        sourceStatusPersistence.deleteSourceStatus(subscriptionId);
 
     }
 
@@ -100,18 +124,30 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public SubscriptionStatus getAggregationSubscription(String subscriptionId) {
-        return aggregationSubscriptionPersistence.getAggregationSubscription(subscriptionId);
+    public void deleteSource(String sourceGlobalId) {
+        this.sourcePersistence.deleteSource(sourceGlobalId);
     }
 
     @Override
-    public List<SubscriptionStatus> getAggregationSubscriptions() {
-        return aggregationSubscriptionPersistence.getAggregationSubscriptions();
+    public void deleteSubscription(String subscriptionGlobalId) {
+
+        this.subscriptionPersistence.deleteSubscription(subscriptionGlobalId);
+    }
+
+    @Override
+    public Source findSource(String connectorType, Collection<Property> accessParameters) {
+        return this.sourcePersistence.findSource(connectorType, accessParameters);
     }
 
     @Override
     public Collection<MessageGroup> getAllMessageGroups() {
         return this.messagePersistence.getAllMessageGroups();
+    }
+
+    @Override
+    public List<Subscription> getAllSubscriptionsBySourceGlobalId(String sourceGlobalId) {
+
+        return this.subscriptionPersistence.getAllSubscriptionsBySourceGlobalId(sourceGlobalId);
     }
 
     @Override
@@ -157,19 +193,14 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public Collection<Message> getMessagesForPattern(String pattern,
-            Date messagePublicationFilterDate) {
-        return messagePersistence.getMessagesForPattern(pattern, messagePublicationFilterDate);
+    public List<Message> getMessages(MessageFilter messageFilter) {
+        return this.messagePersistence.getMessages(messageFilter);
     }
 
     @Override
-    public Collection<Message> getMessagesSince(Date fromDate) {
-        return this.messagePersistence.getMessagesSince(fromDate);
-    }
-
-    @Override
-    public List<Message> getMessagesSince(String topicId, Date fromDate) {
-        return this.messagePersistence.getMessagesSince(topicId, fromDate);
+    public int getNumberOfSubscriptionsBySourceGlobalId(String sourceGlobalId) {
+        return this.subscriptionPersistence
+                .getNumberOfSubscriptionsBySourceGlobalId(sourceGlobalId);
     }
 
     @Override
@@ -192,6 +223,26 @@ public class JPAPersistence implements Persistence {
     @Override
     public UserModel getOrCreateUserModelByUser(String userGlobalId, String userModelType) {
         return this.userPersistence.getOrCreateUserModelByUser(userGlobalId, userModelType);
+    }
+
+    @Override
+    public Source getSourceByGlobalId(String sourceGlobalId) {
+        return this.sourcePersistence.getSourceByGlobalId(sourceGlobalId);
+    }
+
+    @Override
+    public SourceStatus getSourceStatusBySourceGlobalId(String subscriptionId) {
+        return sourceStatusPersistence.getSourceStatusBySourceGlobalId(subscriptionId);
+    }
+
+    @Override
+    public List<SourceStatus> getSourceStatusList() {
+        return sourceStatusPersistence.getSourceStatusList();
+    }
+
+    @Override
+    public Subscription getSubscriptionByGlobalId(String subscriptionGlobalId) {
+        return this.subscriptionPersistence.getSubscriptionByGlobalId(subscriptionGlobalId);
     }
 
     @Override
@@ -244,11 +295,16 @@ public class JPAPersistence implements Persistence {
 
     @Override
     public void initialize() {
-        this.aggregationSubscriptionPersistence = new AggregationSubscriptionPersistence(
+        this.duplicationDetectionPersistence = new DuplicationDetectionPersistence(jpaConfiguration);
+        this.messagePersistence = new MessagePersistence(jpaConfiguration);
+        this.sourcePersistence = new SourcePersistence(
+                jpaConfiguration);
+        this.sourceStatusPersistence = new SourceStatusPersistence(
+                jpaConfiguration);
+        this.subscriptionPersistence = new SubscriptionPersistence(
                 jpaConfiguration);
         this.userPersistence = new UserPersistence(jpaConfiguration);
-        this.messagePersistence = new MessagePersistence(jpaConfiguration);
-        this.duplicationDetectionPersistence = new DuplicationDetectionPersistence(jpaConfiguration);
+
     }
 
     @Override
@@ -262,14 +318,19 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public SubscriptionStatus saveAggregationSubscription(SubscriptionStatus aggregationSubscription) {
-        return aggregationSubscriptionPersistence
-                .saveAggregationSubscription(aggregationSubscription);
+    public HashWithDate saveHashWithDate(HashWithDate hashWithDate) {
+        return duplicationDetectionPersistence.saveHashWithDate(hashWithDate);
     }
 
     @Override
-    public HashWithDate saveHashWithDate(HashWithDate hashWithDate) {
-        return duplicationDetectionPersistence.saveHashWithDate(hashWithDate);
+    public Source saveSource(Source source) {
+        return this.sourcePersistence.saveSource(source);
+    }
+
+    @Override
+    public SourceStatus saveSourceStatus(SourceStatus aggregationSubscription) {
+        return sourceStatusPersistence
+                .storeSourceStatus(aggregationSubscription);
     }
 
     @Override
@@ -309,19 +370,35 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public void storeUserSimilarity(UserSimilarity stat) {
-        this.userPersistence.storeUserSimilarity(stat);
+    public Subscription storeSubscription(Subscription subscription) {
+
+        return this.subscriptionPersistence.storeSubscription(subscription);
     }
 
     @Override
-    public void updateAggregationSubscription(SubscriptionStatus aggregationStatus) {
-        aggregationSubscriptionPersistence.updateAggregationSubscription(aggregationStatus);
+    public void storeUserSimilarity(UserSimilarity stat) {
+        this.userPersistence.storeUserSimilarity(stat);
     }
 
     @Override
     public void updateMessageRank(MessageRank rankToUpdate) {
         this.messagePersistence.updateMessageRank(rankToUpdate);
 
+    }
+
+    @Override
+    public Source updateSource(Source source) {
+        return this.sourcePersistence.updateSource(source);
+    }
+
+    @Override
+    public void updateSourceStatus(SourceStatus aggregationStatus) {
+        sourceStatusPersistence.updateSourceStatus(aggregationStatus);
+    }
+
+    @Override
+    public Subscription updateSubscription(Subscription subscription) {
+        return this.subscriptionPersistence.updateSubscription(subscription);
     }
 
     @Override
@@ -339,4 +416,5 @@ public class JPAPersistence implements Persistence {
         this.messagePersistence.visitAllMessageRanks(visitor, startDate, endDate);
 
     }
+
 }

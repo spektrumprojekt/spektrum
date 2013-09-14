@@ -19,7 +19,9 @@
 
 package de.spektrumprojekt.aggregator.subscription;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.UUID;
@@ -36,15 +38,64 @@ import de.spektrumprojekt.aggregator.chain.AggregatorChain;
 import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
 import de.spektrumprojekt.communication.CommunicationMessage;
 import de.spektrumprojekt.communication.Communicator;
+import de.spektrumprojekt.communication.MessageHandler;
+import de.spektrumprojekt.communication.transfer.MessageCommunicationMessage;
 import de.spektrumprojekt.communication.vm.VirtualMachineCommunicator;
 import de.spektrumprojekt.configuration.properties.SimpleProperties;
 import de.spektrumprojekt.datamodel.common.Property;
+import de.spektrumprojekt.datamodel.source.Source;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionMessageFilter;
 import de.spektrumprojekt.persistence.jpa.JPAConfiguration;
 import de.spektrumprojekt.persistence.jpa.JPAPersistence;
 import de.spektrumprojekt.persistence.jpa.impl.SubscriptionPersistence;
 
 public class SubscriptionManagerTest {
+
+    /**
+     * Handler to recive the {@link TestMessage}
+     * 
+     * @author Communardo Software GmbH - <a
+     *         href="http://www.communardo.de/">http://www.communardo.de/</a>
+     * 
+     */
+    public class MessageHandlerTest implements MessageHandler<MessageCommunicationMessage> {
+
+        private final List<MessageCommunicationMessage> messages = new ArrayList<MessageCommunicationMessage>();
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void deliverMessage(MessageCommunicationMessage message) throws Exception {
+            messages.add(message);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public Class<MessageCommunicationMessage> getMessageClass() {
+            return MessageCommunicationMessage.class;
+        }
+
+        /**
+         * getter for received messages
+         * 
+         * @return messages
+         */
+        public List<MessageCommunicationMessage> getMessages() {
+            return messages;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public boolean supports(CommunicationMessage message) {
+            return message instanceof MessageCommunicationMessage;
+        }
+    }
 
     private static final String PERSISTENCE_UNIT_NAME = "de.spektrumprojekt.datamodel.test";
 
@@ -52,17 +103,25 @@ public class SubscriptionManagerTest {
 
     private static final String URL_2 = "http://www.engadget.com/rss.xml";
 
+    private static final String URL_3 = "http://www.spektrumprojekt.de/thegit";
+
+    private static final String URL_4 = "http://www.spiegel.de/schlagzeilen/tops/index.rss";
+
     private JPAPersistence persistence;
 
     private SubscriptionPersistence subscriptionPersistence;
 
-    private SubscriptionManager manager;
-
+    private PersistentSubscriptionManager manager;
     private Aggregator aggregator;
     private AggregatorConfiguration aggregatorConfiguration;
+
     private AggregatorChain aggregatorChain;
 
     private Communicator communicator;
+
+    private MessageHandlerTest messageHandlerTest;
+
+    private Queue<CommunicationMessage> queue;
 
     private int getNumberOfSubscriptions() {
         return subscriptionPersistence.getSubscriptions().size();
@@ -79,16 +138,22 @@ public class SubscriptionManagerTest {
         if (subscriptionGlobalId == null) {
             subscriptionGlobalId = UUID.randomUUID().toString();
         }
-        Subscription sub = new Subscription(subscriptionGlobalId, FeedAdapter.SOURCE_TYPE);
-        sub.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_URI, feedURI));
+        Source source = new Source(FeedAdapter.SOURCE_TYPE);
+        Subscription sub = new Subscription(subscriptionGlobalId, source);
+        source.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_URI, feedURI));
+
         return sub;
     }
 
     @Before
     public void setup() throws Exception {
 
-        Queue<CommunicationMessage> queue = new ConcurrentLinkedQueue<CommunicationMessage>();
+        messageHandlerTest = new MessageHandlerTest();
+
+        queue = new ConcurrentLinkedQueue<CommunicationMessage>();
         communicator = new VirtualMachineCommunicator(queue, queue);
+
+        communicator.registerMessageHandler(messageHandlerTest);
 
         Map<String, String> properties = new HashMap<String, String>();
         properties.put("persistenceUnit", PERSISTENCE_UNIT_NAME);
@@ -105,24 +170,100 @@ public class SubscriptionManagerTest {
 
         aggregatorChain = aggregator.getAggregatorChain();
 
-        manager = new SubscriptionManager(communicator,
+        manager = new PersistentSubscriptionManager(communicator,
                 persistence, aggregatorChain, aggregatorConfiguration);
+
+        communicator.open();
     }
 
     @Test
     public void testSubscribe() {
         Subscription subscription = getRSSSubscription(URL_1, null);
         manager.subscribe(subscription);
-        Assert.assertNotNull(persistence.getAggregationSubscription(subscription.getGlobalId()));
+
+        Assert.assertNotNull(persistence.getSubscriptionByGlobalId(subscription.getGlobalId()));
+    }
+
+    @Test
+    public void testSubscribeWithFilter() throws InterruptedException {
+
+        int initalCount = 10;
+        SubscriptionMessageFilter subscriptionMessageFilter = new SubscriptionMessageFilter(
+                initalCount,
+                null);
+
+        this.messageHandlerTest.getMessages().clear();
+        Subscription subscription1 = getRSSSubscription(URL_4, null);
+        manager.subscribe(subscription1);
+        Assert.assertNotNull(persistence.getSubscriptionByGlobalId(subscription1.getGlobalId()));
+
+        // wait for the subscriptions to run.
+        Thread.sleep(1000);
+        waitForQueueToEmpty();
+
+        // wait for all messages to be delivered
+        int size = this.messageHandlerTest.getMessages().size();
+        Assert.assertTrue(size >= 5);
+
+        this.messageHandlerTest.getMessages().clear();
+        Subscription subscription2 = getRSSSubscription(URL_4, null);
+        manager.subscribe(subscription2, subscriptionMessageFilter);
+        Assert.assertNotNull(persistence.getSubscriptionByGlobalId(subscription2.getGlobalId()));
+
+        Thread.sleep(1000);
+        waitForQueueToEmpty();
+
+        Assert.assertEquals(Math.min(size, initalCount), this.messageHandlerTest.getMessages()
+                .size());
+
+        // wait for all messages to be delivered
+        // check the subscription somehow
+    }
+
+    @Test
+    public void testSubscribeWithSameSource() {
+        Subscription subscription = getRSSSubscription(URL_3, null);
+
+        manager.subscribe(subscription);
+        Subscription persistedSubscription = this.persistence
+                .getSubscriptionByGlobalId(subscription.getGlobalId());
+        Assert.assertNotNull(persistedSubscription);
+        Assert.assertNotNull(persistedSubscription.getGlobalId());
+
+        Subscription subscription2 = getRSSSubscription(URL_3, null);
+        Assert.assertFalse("Global Ids should be different.", subscription.getGlobalId()
+                .equals(subscription2
+                        .getGlobalId()));
+
+        manager.subscribe(subscription2);
+        Subscription persistedSubscription2 = this.persistence
+                .getSubscriptionByGlobalId(subscription2.getGlobalId());
+        Assert.assertNotNull(persistedSubscription2);
+        Assert.assertNotNull(persistedSubscription2.getGlobalId());
+
+        Assert.assertEquals(persistedSubscription.getSource().getGlobalId(), persistedSubscription2
+                .getSource().getGlobalId());
+        Assert.assertEquals(persistedSubscription.getSource().getId(), persistedSubscription2
+                .getSource().getId());
+        Assert.assertFalse("Global Ids should be different.", persistedSubscription.getGlobalId()
+                .equals(persistedSubscription2
+                        .getGlobalId()));
+        Assert.assertFalse("Database Ids should be different.", persistedSubscription.getId()
+                .equals(persistedSubscription2
+                        .getId()));
+
     }
 
     @Test
     public void testUnsubscribe() {
         Subscription subscription = getRSSSubscription(URL_1, null);
         manager.subscribe(subscription);
+        Assert.assertNotNull(persistence.getSubscriptionByGlobalId(subscription.getGlobalId()));
+
         int numberOfSubscriptions = getNumberOfSubscriptions();
         manager.unsubscribe(subscription.getGlobalId());
-        Assert.assertNull(persistence.getAggregationSubscription(subscription.getGlobalId()));
+
+        Assert.assertNull(persistence.getSubscriptionByGlobalId(subscription.getGlobalId()));
         Assert.assertEquals(numberOfSubscriptions - 1, getNumberOfSubscriptions());
     }
 
@@ -130,16 +271,32 @@ public class SubscriptionManagerTest {
     public void testUpdate() {
         Subscription subscription = getRSSSubscription(URL_1, null);
         manager.subscribe(subscription);
+
         Subscription updatedSubscription = getRSSSubscription(
-                URL_2, subscription.getGlobalId());
+                URL_1, subscription.getGlobalId());
+
+        updatedSubscription.addSubscriptionParameter(new Property("subKey", "subValue"));
+
         Assert.assertTrue(manager.updateOrCreate(updatedSubscription));
-        Assert.assertFalse(manager.updateOrCreate(updatedSubscription));
-        Property urlProp = persistence.getAggregationSubscription(subscription.getGlobalId())
-                .getSubscription().getAccessParameter(FeedAdapter.ACCESS_PARAMETER_URI);
+        Assert.assertFalse("No update should have been made.",
+                manager.updateOrCreate(updatedSubscription));
+
+        Property urlProp = persistence.getSubscriptionByGlobalId(subscription.getGlobalId())
+                .getSubscriptionParameter("subKey");
 
         Assert.assertNotNull(urlProp);
         Assert.assertNotNull(urlProp.getPropertyValue());
-        Assert.assertEquals(URL_2, urlProp.getPropertyValue());
+        Assert.assertEquals("subValue", urlProp.getPropertyValue());
+    }
+
+    private void waitForQueueToEmpty() throws InterruptedException {
+        int limit = 10;
+        while (queue.size() > 0 && limit > 0) {
+            Thread.sleep(500);
+            limit--;
+        }
+        Assert.assertEquals("Waited some seconds but here are still messages in the queue!", 0,
+                queue.size());
     }
 
 }

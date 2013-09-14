@@ -31,10 +31,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate;
 import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessagePart;
+import de.spektrumprojekt.datamodel.message.MessagePublicationDateComperator;
 import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
@@ -43,7 +46,9 @@ import de.spektrumprojekt.datamodel.message.Term.TermCategory;
 import de.spektrumprojekt.datamodel.message.TermFrequency;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
-import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
+import de.spektrumprojekt.datamodel.source.Source;
+import de.spektrumprojekt.datamodel.source.SourceStatus;
+import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
@@ -165,7 +170,7 @@ public class SimplePersistence implements Persistence {
 
     private final Map<ObservationKey, Collection<Observation>> observations = new HashMap<SimplePersistence.ObservationKey, Collection<Observation>>();
 
-    private final Map<String, SubscriptionStatus> subscriptionStatusMap = new HashMap<String, SubscriptionStatus>();
+    private final Map<String, SourceStatus> sourceStatusMap = new HashMap<String, SourceStatus>();
 
     private TermFrequency termFrequency = new TermFrequency();
 
@@ -219,6 +224,16 @@ public class SimplePersistence implements Persistence {
         throw new UnsupportedOperationException("Not yet implemented.");
     }
 
+    @Override
+    public void deleteSource(String sourceGlobalId) {
+        throw new UnsupportedOperationException("Implement me ...");
+    }
+
+    @Override
+    public void deleteSubscription(String subscriptionGlobalId) {
+        throw new UnsupportedOperationException("Implement me ...");
+    }
+
     public String dumpUserModelSizes() {
         String result = "UserModel Sizes (userModelType => userId => userModelEntries.size) \n";
         for (Entry<String, Map<User, UserModelHolder>> userModelTypeEntry : this.userModelByTypeHolders
@@ -232,20 +247,18 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
-    public SubscriptionStatus getAggregationSubscription(String subscriptionId) {
-        return subscriptionStatusMap.get(subscriptionId);
-    }
-
-    @Override
-    public List<SubscriptionStatus> getAggregationSubscriptions() {
-        LinkedList<SubscriptionStatus> result = new LinkedList<SubscriptionStatus>();
-        result.addAll(subscriptionStatusMap.values());
-        return result;
+    public Source findSource(String connectorType, Collection<Property> accessParameters) {
+        throw new UnsupportedOperationException("Implement me.");
     }
 
     @Override
     public Collection<MessageGroup> getAllMessageGroups() {
         return this.messageGroups.values();
+    }
+
+    @Override
+    public List<Subscription> getAllSubscriptionsBySourceGlobalId(String sourceGlobalId) {
+        throw new UnsupportedOperationException("implement me.");
     }
 
     @Override
@@ -301,37 +314,32 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
-    public Collection<Message> getMessagesForPattern(String pattern,
-            Date messagePublicationFilterDate) {
-        List<Message> messages = patternMessages.get(pattern);
-        if (messages == null) {
-            return Collections.emptyList();
-        }
-        List<Message> result = new ArrayList<Message>();
-        for (Message message : messages) {
-            if (message.getPublicationDate().after(messagePublicationFilterDate)) {
-                result.add(message);
-            }
-        }
-        return result;
-    }
+    public List<Message> getMessages(MessageFilter messageFilter) {
+        List<Message> filteredMessages = new ArrayList<Message>();
+        List<Message> baseMessages = new ArrayList<Message>();
 
-    @Override
-    public Collection<Message> getMessagesSince(Date fromDate) {
-        return getMessagesSince(null, fromDate);
-    }
+        if (messageFilter.getPattern() != null) {
+            baseMessages.addAll(patternMessages.get(messageFilter.getPattern()));
+        } else {
+            baseMessages.addAll(this.messages.values());
+        }
+        Collections.sort(baseMessages, new MessagePublicationDateComperator());
 
-    @Override
-    public Collection<Message> getMessagesSince(String messageGroupGlobalId, Date fromDate) {
-        Collection<Message> filteredMessages = new HashSet<Message>();
-        for (Message message : this.messages.values()) {
-            if (messageGroupGlobalId != null
-                    && !messageGroupGlobalId.equals(message.getMessageGroup().getGlobalId())) {
+        for (Message message : baseMessages) {
+            if (messageFilter.getMessageGroupGlobalId() != null
+                    && !messageFilter.getMessageGroupGlobalId().equals(
+                            message.getMessageGroup().getGlobalId())) {
                 continue;
             }
 
-            if (message.getPublicationDate().after(fromDate)) {
+            if (messageFilter.getMinPublicationDate() == null
+                    || message.getPublicationDate().after(messageFilter.getMinPublicationDate())) {
                 filteredMessages.add(message);
+            }
+
+            if (messageFilter.getLastMessagesCount() > 0
+                    && messageFilter.getLastMessagesCount() <= filteredMessages.size()) {
+                break;
             }
         }
         return filteredMessages;
@@ -352,6 +360,11 @@ public class SimplePersistence implements Persistence {
             }
         }
         return filtered;
+    }
+
+    @Override
+    public int getNumberOfSubscriptionsBySourceGlobalId(String globalId) {
+        throw new UnsupportedOperationException("Implement me.");
     }
 
     @Override
@@ -422,6 +435,28 @@ public class SimplePersistence implements Persistence {
 
     public Map<String, List<Message>> getPatternMessages() {
         return patternMessages;
+    }
+
+    @Override
+    public Source getSourceByGlobalId(String sourceGlobalId) {
+        throw new UnsupportedOperationException("Implement me ...");
+    }
+
+    @Override
+    public SourceStatus getSourceStatusBySourceGlobalId(String subscriptionId) {
+        return sourceStatusMap.get(subscriptionId);
+    }
+
+    @Override
+    public List<SourceStatus> getSourceStatusList() {
+        LinkedList<SourceStatus> result = new LinkedList<SourceStatus>();
+        result.addAll(sourceStatusMap.values());
+        return result;
+    }
+
+    @Override
+    public Subscription getSubscriptionByGlobalId(String subscriptionGlobalId) {
+        throw new UnsupportedOperationException("Implement me ...");
     }
 
     @Override
@@ -602,15 +637,20 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
-    public SubscriptionStatus saveAggregationSubscription(SubscriptionStatus aggregationSubscription) {
-        subscriptionStatusMap.put(aggregationSubscription.getSubscription().getGlobalId(),
-                aggregationSubscription);
-        return aggregationSubscription;
+    public HashWithDate saveHashWithDate(HashWithDate hashWithDate) {
+        throw new UnsupportedOperationException("Not yet implemented.");
     }
 
     @Override
-    public HashWithDate saveHashWithDate(HashWithDate hashWithDate) {
-        throw new UnsupportedOperationException("Not yet implemented.");
+    public Source saveSource(Source source) {
+        throw new UnsupportedOperationException("Implement me ...");
+    }
+
+    @Override
+    public SourceStatus saveSourceStatus(SourceStatus sourceStatus) {
+        sourceStatusMap.put(sourceStatus.getSource().getGlobalId(),
+                sourceStatus);
+        return sourceStatus;
     }
 
     @Override
@@ -695,15 +735,14 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
-    public void storeUserSimilarity(UserSimilarity stat) {
-        this.userSimilarities.put(stat.getKey(), stat);
-
+    public Subscription storeSubscription(Subscription subscription) {
+        throw new UnsupportedOperationException("Implement me ...");
     }
 
     @Override
-    public void updateAggregationSubscription(SubscriptionStatus aggregationStatus) {
-        subscriptionStatusMap.put(aggregationStatus.getSubscription().getGlobalId(),
-                aggregationStatus);
+    public void storeUserSimilarity(UserSimilarity stat) {
+        this.userSimilarities.put(stat.getKey(), stat);
+
     }
 
     @Override
@@ -714,6 +753,21 @@ public class SimplePersistence implements Persistence {
         if (existingRank != rankToUpdate) {
             this.messageRanks.put(userMessageIdentifier, rankToUpdate);
         }
+    }
+
+    @Override
+    public Source updateSource(Source source) {
+        throw new UnsupportedOperationException("Implement me ...");
+    }
+
+    @Override
+    public void updateSourceStatus(SourceStatus sourceStatus) {
+        sourceStatusMap.put(sourceStatus.getSource().getGlobalId(), sourceStatus);
+    }
+
+    @Override
+    public Subscription updateSubscription(Subscription subscription) {
+        throw new UnsupportedOperationException("Implement me ...");
     }
 
     @Override
@@ -746,4 +800,5 @@ public class SimplePersistence implements Persistence {
             visitor.visit(messageRank, message);
         }
     }
+
 }

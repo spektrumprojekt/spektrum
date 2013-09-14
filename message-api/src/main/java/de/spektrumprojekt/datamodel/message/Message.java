@@ -28,8 +28,6 @@ import java.util.Map;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -49,13 +47,11 @@ import de.spektrumprojekt.datamodel.subscription.status.StatusType;
  * The Message.
  * </p>
  * 
- * @author Marius Feldmann
  * @author Philipp Katz
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 
  */
 @Entity
-@Inheritance(strategy = InheritanceType.JOINED)
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = "globalId"))
 public class Message extends Identifiable {
 
@@ -74,7 +70,7 @@ public class Message extends Identifiable {
 
     private StatusType statusType;
 
-    private String subscriptionGlobalId;
+    private String sourceGlobalId;
 
     // TODO ? author of this message - if known.
     private String authorGlobalId;
@@ -93,7 +89,7 @@ public class Message extends Identifiable {
         this(messageType, statusType, null, publicationDate);
     }
 
-    public Message(MessageType messageType, StatusType statusType, String subscriptionGlobalId,
+    public Message(MessageType messageType, StatusType statusType, String sourceGlobalId,
             Date publicationDate) {
         if (publicationDate == null) {
             throw new IllegalArgumentException("publicationDate cannot be null!");
@@ -106,12 +102,12 @@ public class Message extends Identifiable {
         }
         this.messageType = messageType;
         this.statusType = statusType;
-        this.subscriptionGlobalId = subscriptionGlobalId;
+        this.sourceGlobalId = sourceGlobalId;
         this.publicationDate = publicationDate;
     }
 
     public Message(String globalId, MessageType messageType, StatusType statusType,
-            String subscriptionGlobalId,
+            String sourceGlobalId,
             Date publicationDate) {
         super(globalId);
         if (publicationDate == null) {
@@ -125,7 +121,7 @@ public class Message extends Identifiable {
         }
         this.messageType = messageType;
         this.statusType = statusType;
-        this.subscriptionGlobalId = subscriptionGlobalId;
+        this.sourceGlobalId = sourceGlobalId;
         this.publicationDate = publicationDate;
     }
 
@@ -191,12 +187,12 @@ public class Message extends Identifiable {
         return publicationDate;
     }
 
-    public StatusType getStatusType() {
-        return statusType;
+    public String getSourceGlobalId() {
+        return sourceGlobalId;
     }
 
-    public String getSubscriptionGlobalId() {
-        return subscriptionGlobalId;
+    public StatusType getStatusType() {
+        return statusType;
     }
 
     public void removeFromMessageParts(MessagePart value) {
@@ -213,13 +209,25 @@ public class Message extends Identifiable {
 
     @Override
     public String toString() {
-        final int maxLen = 5;
-        return "Message [messageParts="
-                + (messageParts != null ? toString(messageParts, maxLen) : null) + ", properties="
-                + (properties != null ? toString(properties, maxLen) : null) + ", messageType="
-                + messageType + ", statusType=" + statusType + ", subscriptionGlobalId="
-                + subscriptionGlobalId + ", authorGlobalId=" + authorGlobalId + ", messageGroup="
-                + messageGroup + ", publicationDate=" + publicationDate + "]";
+        StringBuilder builder = new StringBuilder();
+        builder.append("Message [messageParts=");
+        builder.append(messageParts);
+        builder.append(", properties=");
+        builder.append(properties);
+        builder.append(", messageType=");
+        builder.append(messageType);
+        builder.append(", statusType=");
+        builder.append(statusType);
+        builder.append(", sourceGlobalId=");
+        builder.append(sourceGlobalId);
+        builder.append(", authorGlobalId=");
+        builder.append(authorGlobalId);
+        builder.append(", messageGroup=");
+        builder.append(messageGroup);
+        builder.append(", publicationDate=");
+        builder.append(publicationDate);
+        builder.append("]");
+        return builder.toString();
     }
 
     private String toString(Collection<?> collection, int maxLen) {

@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.MessageRelation.MessageRelationType;
@@ -101,8 +102,11 @@ public class PatternConsolidationCommand implements Command<InformationExtractio
                 calendar.add(GregorianCalendar.MILLISECOND, -patternProvider.getPeriodOfTime()
                         .intValue());
 
-                Collection<Message> relatedMessages = persistence.getMessagesForPattern(match,
-                        calendar.getTime());
+                MessageFilter messageFilter = new MessageFilter();
+                messageFilter.setPattern(match);
+                messageFilter.setMinPublicationDate(calendar.getTime());
+
+                Collection<Message> relatedMessages = persistence.getMessages(messageFilter);
                 context.add(match);
                 if (relatedMessages.isEmpty()) {
                     continue;

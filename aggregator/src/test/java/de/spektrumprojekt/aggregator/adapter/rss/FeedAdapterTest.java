@@ -49,8 +49,8 @@ import de.spektrumprojekt.communication.vm.VirtualMachineCommunicator;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageType;
-import de.spektrumprojekt.datamodel.subscription.Subscription;
-import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
+import de.spektrumprojekt.datamodel.source.Source;
+import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.simple.PersistenceMock;
 
@@ -102,37 +102,37 @@ public class FeedAdapterTest {
         String login = config.getString("feed.user");
         String password = EncryptionUtils.encrypt(config.getString("feed.password"));
 
-        Subscription subscription = new Subscription(FeedAdapter.SOURCE_TYPE);
-        SubscriptionStatus subscriptionStatus = new SubscriptionStatus(subscription);
+        Source source = new Source(FeedAdapter.SOURCE_TYPE);
+        SourceStatus sourceStatus = new SourceStatus(source);
 
-        subscription
+        source
                 .addAccessParameter(new Property(
                         FeedAdapter.ACCESS_PARAMETER_URI, url));
-        subscription.addAccessParameter(new Property(
+        source.addAccessParameter(new Property(
                 FeedAdapter.ACCESS_PARAMETER_CREDENTIALS_LOGIN, login));
-        subscription.addAccessParameter(new Property(
+        source.addAccessParameter(new Property(
                 FeedAdapter.ACCESS_PARAMETER_CREDENTIALS_PASSWORD, password));
 
         FeedAdapter adapter = new FeedAdapter(aggregatorChain, aggregatorConfiguration);
-        List<Message> messages = adapter.poll(subscriptionStatus);
+        List<Message> messages = adapter.poll(sourceStatus);
         assertTrue(messages.size() > 0);
         assertTrue(messages.get(0).getMessageType().equals(MessageType.CONTENT));
     }
 
     private void testFeed(String feedUrl) throws AdapterException {
-        Subscription subscription = new Subscription(FeedAdapter.SOURCE_TYPE);
-        SubscriptionStatus subscriptionStatus = new SubscriptionStatus(subscription);
+        Source source = new Source(FeedAdapter.SOURCE_TYPE);
+        SourceStatus sourceStatus = new SourceStatus(source);
 
-        subscription.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_URI,
+        source.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_URI,
                 feedUrl));
         FeedAdapter feedAdapter = new FeedAdapter(aggregatorChain, aggregatorConfiguration);
-        List<Message> messages = feedAdapter.poll(subscriptionStatus);
+        List<Message> messages = feedAdapter.poll(sourceStatus);
         assertTrue(messages.size() > 0);
         assertTrue(messages.get(0) instanceof Message);
-        assertNotNull(subscriptionStatus.getLastContentTimestamp());
+        assertNotNull(sourceStatus.getLastContentTimestamp());
 
         // this is dirty, and might fail.
-        messages = feedAdapter.poll(subscriptionStatus);
+        messages = feedAdapter.poll(sourceStatus);
         assertTrue(messages.size() == 0);
     }
 
@@ -154,18 +154,19 @@ public class FeedAdapterTest {
         // TODO use public available feed for test
         String url = "";
 
-        Subscription subscription = new Subscription(FeedAdapter.SOURCE_TYPE);
-        SubscriptionStatus subscriptionStatus = new SubscriptionStatus(subscription);
-        subscription
+        Source source = new Source(FeedAdapter.SOURCE_TYPE);
+        SourceStatus sourceStatus = new SourceStatus(source);
+
+        source
                 .addAccessParameter(new Property(
                         FeedAdapter.ACCESS_PARAMETER_URI, url));
-        subscription.addAccessParameter(new Property(
+        source.addAccessParameter(new Property(
                 FeedAdapter.ACCESS_PARAMETER_CREDENTIALS_LOGIN, "wrong"));
-        subscription.addAccessParameter(new Property(
+        source.addAccessParameter(new Property(
                 FeedAdapter.ACCESS_PARAMETER_CREDENTIALS_PASSWORD, EncryptionUtils
                         .encrypt("abcdefghijklmnopqrstuvwxyz")));
         FeedAdapter feedAdapter = new FeedAdapter(aggregatorChain, aggregatorConfiguration);
-        List<Message> messages = feedAdapter.poll(subscriptionStatus);
+        List<Message> messages = feedAdapter.poll(sourceStatus);
         assertEquals(1, messages.size());
         assertTrue(messages.get(0).getMessageType().equals(MessageType.ERROR));
 
@@ -192,19 +193,19 @@ public class FeedAdapterTest {
             encryptedPassword = EncryptionUtils.encrypt(realPassword, "123456");
         }
 
-        Subscription subscription = new Subscription(FeedAdapter.SOURCE_TYPE);
-        SubscriptionStatus subscriptionStatus = new SubscriptionStatus(subscription);
+        Source source = new Source(FeedAdapter.SOURCE_TYPE);
+        SourceStatus sourceStatus = new SourceStatus(source);
 
-        subscription
+        source
                 .addAccessParameter(new Property(
                         FeedAdapter.ACCESS_PARAMETER_URI, url));
-        subscription.addAccessParameter(new Property(
+        source.addAccessParameter(new Property(
                 FeedAdapter.ACCESS_PARAMETER_CREDENTIALS_LOGIN, login));
-        subscription.addAccessParameter(new Property(
+        source.addAccessParameter(new Property(
                 FeedAdapter.ACCESS_PARAMETER_CREDENTIALS_PASSWORD, encryptedPassword));
 
         FeedAdapter feedAdapter = new FeedAdapter(aggregatorChain, aggregatorConfiguration);
-        List<Message> messages = feedAdapter.poll(subscriptionStatus);
+        List<Message> messages = feedAdapter.poll(sourceStatus);
         assertTrue(messages.size() > 0);
         assertTrue(messages.get(0).getMessageType().equals(MessageType.CONTENT));
 
@@ -213,12 +214,13 @@ public class FeedAdapterTest {
     @Test(expected = AdapterException.class)
     public void testNoFeed() throws AdapterException {
 
-        Subscription subscription = new Subscription(FeedAdapter.SOURCE_TYPE);
-        SubscriptionStatus subscriptionStatus = new SubscriptionStatus(subscription);
-        subscription.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_URI,
+        Source source = new Source(FeedAdapter.SOURCE_TYPE);
+        SourceStatus sourceStatus = new SourceStatus(source);
+
+        source.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_URI,
                 "http://example.com/nofeedhere"));
         FeedAdapter feedAdapter = new FeedAdapter(aggregatorChain, aggregatorConfiguration);
-        feedAdapter.poll(subscriptionStatus);
+        feedAdapter.poll(sourceStatus);
     }
 
 }

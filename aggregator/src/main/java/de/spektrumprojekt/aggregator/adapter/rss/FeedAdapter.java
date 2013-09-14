@@ -70,7 +70,7 @@ import de.spektrumprojekt.datamodel.message.MessageType;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
-import de.spektrumprojekt.datamodel.subscription.SubscriptionStatus;
+import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 
 /**
@@ -89,6 +89,15 @@ public final class FeedAdapter extends BasePollingAdapter {
     /** The source type of this adapter. */
     public static final String SOURCE_TYPE = "RSS";
 
+    /**
+     * The key for the access parameter specifying the title of the source.
+     * 
+     * TODO it is not an access parameter, it is a property read by the souce. So we need to mark it
+     * somewhow, either give access params a property or add "properties" to the source addtional
+     * the access params
+     */
+    public static final String ACCESS_PARAMETER_TITLE = "title";
+
     /** The key for the access parameter specifying the feed's URL. */
     public static final String ACCESS_PARAMETER_URI = "feeduri";
 
@@ -106,18 +115,6 @@ public final class FeedAdapter extends BasePollingAdapter {
     public static final String MESSAGE_PROPERTY_ID = "id";
 
     private static final int THREAD_POOL_SIZE = 100;
-
-    /**
-     * @deprecated Use {@link Property#PROPERTY_KEY_DC_CREATOR} instead.
-     */
-    @Deprecated
-    public static final String DC_CREATOR = Property.PROPERTY_KEY_DC_CREATOR;
-
-    /**
-     * @deprecated Use {@link Property#PROPERTY_KEY_AUTHOR_NAME} instead.
-     */
-    @Deprecated
-    public static final String AUTOR_NAME = Property.PROPERTY_KEY_AUTHOR_NAME;
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -290,12 +287,12 @@ public final class FeedAdapter extends BasePollingAdapter {
     }
 
     @Override
-    public List<Message> poll(SubscriptionStatus subscriptionStatus) throws AdapterException {
+    public List<Message> poll(SourceStatus subscriptionStatus) throws AdapterException {
         LOGGER.trace(">handleSubscription {}", subscriptionStatus);
         boolean success = false;
         List<Message> messages = new ArrayList<Message>();
 
-        Collection<Property> accParams = subscriptionStatus.getSubscription().getAccessParameters();
+        Collection<Property> accParams = subscriptionStatus.getSource().getAccessParameters();
         // logger.debug("access parameters for {}: {}", subscription,
         // accParams);
         String uri = "";
@@ -303,7 +300,6 @@ public final class FeedAdapter extends BasePollingAdapter {
         String login = "";
         String password = "";
 
-        // FIXME shouldn't this be set via CredentialElement???
         for (Property accessParam : accParams) {
             if (accessParam.getPropertyKey().equals(ACCESS_PARAMETER_URI)) {
                 uri = accessParam.getPropertyValue();
@@ -383,11 +379,11 @@ public final class FeedAdapter extends BasePollingAdapter {
         return messages;
     }
 
-    private List<Message> processMessages(SyndFeed feed, SubscriptionStatus subscription) {
+    private List<Message> processMessages(SyndFeed feed, SourceStatus sourceStatus) {
         @SuppressWarnings("unchecked")
         List<SyndEntry> entries = feed.getEntries();
         List<Message> messages = new ArrayList<Message>();
-        Date lastContentTime = subscription.getLastContentTimestamp();
+        Date lastContentTime = sourceStatus.getLastContentTimestamp();
         Date mostRecentTime = null;
 
         // TODO for feeds which provide no date information for their items,
@@ -402,7 +398,7 @@ public final class FeedAdapter extends BasePollingAdapter {
                 continue;
             }
 
-            Message message = convertMessage(subscription.getSubscription().getGlobalId(), entry);
+            Message message = convertMessage(sourceStatus.getSource().getGlobalId(), entry);
             messages.add(message);
 
             if (mostRecentTime == null || mostRecentTime.before(itemPublishDate)) {
@@ -410,9 +406,9 @@ public final class FeedAdapter extends BasePollingAdapter {
             }
         }
         if (mostRecentTime != null) {
-            subscription.setLastContentTimestamp(mostRecentTime);
+            sourceStatus.setLastContentTimestamp(mostRecentTime);
         }
-        LOGGER.debug("# new items in subscription {}: {}", subscription.getGlobalId(),
+        LOGGER.debug("# new items in subscription {}: {}", sourceStatus.getGlobalId(),
                 messages.size());
         return messages;
     }
