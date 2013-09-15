@@ -3,6 +3,7 @@ package de.spektrumprojekt.i.collab;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -94,6 +95,8 @@ public class CollaborativeRankerComputer implements Computer {
     private final ObservationType[] observationTypesToUseForDataModel;
 
     private int nanRanks = 0;
+
+    private boolean emptyDataModel;
 
     public CollaborativeRankerComputer(Persistence persistence,
             ObservationType[] observationTypesToUseForDataModel, boolean useGenericRecommender) {
@@ -195,7 +198,9 @@ public class CollaborativeRankerComputer implements Computer {
     @Override
     public String getConfigurationDescription() {
         return this.getClass().getSimpleName()
-                + " useGenericRecommender: " + this.useGenericRecommender;
+                + " useGenericRecommender: " + this.useGenericRecommender
+                + " observationTypesToUseForDataModel: "
+                + Arrays.toString(this.observationTypesToUseForDataModel);
     }
 
     public DataModel getDataModel() {
@@ -312,15 +317,18 @@ public class CollaborativeRankerComputer implements Computer {
         userNeighborhood = new ThresholdUserNeighborhood(0, userSimilarity,
                 dataModel);
 
-        if (useGenericRecommender) {
-            recommender = new GenericUserBasedRecommender(
-                    dataModel,
-                    userNeighborhood,
-                    userSimilarity);
+        if (dataModel.getNumItems() == 0) {
+            emptyDataModel = true;
         } else {
-            recommender = new CachingRecommender(new SlopeOneRecommender(dataModel));
+            if (useGenericRecommender) {
+                recommender = new GenericUserBasedRecommender(
+                        dataModel,
+                        userNeighborhood,
+                        userSimilarity);
+            } else {
+                recommender = new CachingRecommender(new SlopeOneRecommender(dataModel));
+            }
         }
-
     }
 
     @Override
@@ -331,6 +339,11 @@ public class CollaborativeRankerComputer implements Computer {
     public void run(Collection<Message> messagesToRun) throws TasteException {
 
         messageRanks = new HashSet<MessageRank>();
+
+        if (emptyDataModel) {
+            LOGGER.info("Empty datamodel. Skip run.");
+            return;
+        }
 
         Collection<Message> needEstimation = messagesToRun == null ? messagesWithOberservations
                 : messagesToRun;
