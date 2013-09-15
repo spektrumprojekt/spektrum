@@ -345,6 +345,11 @@ public class SimplePersistence implements Persistence {
         return filteredMessages;
     }
 
+    @Override
+    public int getNumberOfSubscriptionsBySourceGlobalId(String globalId) {
+        throw new UnsupportedOperationException("Implement me.");
+    }
+
     public Map<ObservationKey, Collection<Observation>> getObservations() {
         return observations;
     }
@@ -360,11 +365,6 @@ public class SimplePersistence implements Persistence {
             }
         }
         return filtered;
-    }
-
-    @Override
-    public int getNumberOfSubscriptionsBySourceGlobalId(String globalId) {
-        throw new UnsupportedOperationException("Implement me.");
     }
 
     @Override
@@ -659,7 +659,7 @@ public class SimplePersistence implements Persistence {
             message.setId(idGenerator.getNextMessage());
         } else {
             Message exists = this.messages.get(message.getGlobalId());
-            if (!message.getId().equals(exists.getId())) {
+            if (exists != null && !message.getId().equals(exists.getId())) {
                 throw new RuntimeException(
                         "Can not replace a message with same global id but different (long) id.");
             }

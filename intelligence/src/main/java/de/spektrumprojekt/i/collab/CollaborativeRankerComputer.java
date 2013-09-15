@@ -2,12 +2,14 @@ package de.spektrumprojekt.i.collab;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.mahout.cf.taste.common.TasteException;
 import org.apache.mahout.cf.taste.impl.common.FastByIDMap;
 import org.apache.mahout.cf.taste.impl.common.LongPrimitiveIterator;
 import org.apache.mahout.cf.taste.impl.model.GenericDataModel;
@@ -108,7 +110,7 @@ public class CollaborativeRankerComputer implements Computer {
         this.useGenericRecommender = useGenericRecommender;
     }
 
-    private void createDataModel() throws Exception {
+    private void createDataModel() {
 
         FileWriter fw = null;
         try {
@@ -170,6 +172,8 @@ public class CollaborativeRankerComputer implements Computer {
             }
 
             dataModel = new GenericDataModel(userData);
+        } catch (IOException io) {
+            throw new RuntimeException(io);
         } finally {
             IOUtils.closeQuietly(fw);
         }
@@ -275,7 +279,7 @@ public class CollaborativeRankerComputer implements Computer {
         return recommender;
     }
 
-    public void init() throws Exception {
+    public void init() throws InconsistentDataException, TasteException {
         observations = persistence.getObservations();
         users = persistence.getAllUsers();
 
@@ -320,7 +324,7 @@ public class CollaborativeRankerComputer implements Computer {
     }
 
     @Override
-    public void run() throws Exception {
+    public void run() throws TasteException {
 
         messageRanks = new HashSet<MessageRank>();
 
@@ -355,7 +359,7 @@ public class CollaborativeRankerComputer implements Computer {
         this.persistence.storeMessageRanks(messageRanks);
     }
 
-    public String someStats() throws Exception {
+    public String someStats() throws TasteException {
         String stats =
                 "prefs: " + prefCount
                         + " pos prefs: " + pos
