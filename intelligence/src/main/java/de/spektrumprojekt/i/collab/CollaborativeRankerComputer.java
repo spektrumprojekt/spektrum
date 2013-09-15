@@ -325,15 +325,21 @@ public class CollaborativeRankerComputer implements Computer {
 
     @Override
     public void run() throws TasteException {
+        run(null);
+    }
+
+    public void run(Collection<Message> messagesToRun) throws TasteException {
 
         messageRanks = new HashSet<MessageRank>();
 
+        Collection<Message> needEstimation = messagesToRun == null ? messagesWithOberservations
+                : messagesToRun;
         LongPrimitiveIterator it = dataModel.getUserIDs();
         while (it.hasNext()) {
             Long userId = it.next();
             User user = this.persistence.getUserById(userId);
 
-            for (Message message : messagesWithOberservations) {
+            for (Message message : needEstimation) {
                 final float estimate = recommender.estimatePreference(userId,
                         message.getId());
                 if (estimate != 0) {
