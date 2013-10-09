@@ -3,7 +3,6 @@ package de.spektrumprojekt.i.timebased;
 import org.junit.Assert;
 import org.junit.Test;
 
-import de.spektrumprojekt.i.timebased.config.PermanentLongTermInterestDetector;
 
 public class LongTermInterestDetectorTest {
 

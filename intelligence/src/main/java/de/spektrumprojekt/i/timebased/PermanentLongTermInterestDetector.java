@@ -1,9 +1,8 @@
-package de.spektrumprojekt.i.timebased.config;
+package de.spektrumprojekt.i.timebased;
 
 import java.util.LinkedList;
 import java.util.List;
 
-import de.spektrumprojekt.i.timebased.LongTermInterestDetector;
 
 public class PermanentLongTermInterestDetector implements LongTermInterestDetector {
 

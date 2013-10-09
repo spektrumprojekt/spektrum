@@ -19,7 +19,6 @@ import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.i.ranker.RankerConfiguration;
 import de.spektrumprojekt.i.ranker.UserModelConfiguration;
 import de.spektrumprojekt.i.timebased.config.LongTermMemoryConfiguration;
-import de.spektrumprojekt.i.timebased.config.PermanentLongTermInterestDetector;
 import de.spektrumprojekt.i.timebased.config.ShortTermMemoryConfiguration;
 import de.spektrumprojekt.persistence.Persistence;
 
