@@ -53,7 +53,7 @@ public class SourceStatus extends Identifiable {
      */
     private static final long serialVersionUID = 1L;
 
-    @OneToOne(cascade = { }, optional = false)
+    @OneToOne(cascade = {}, optional = false)
     private Source source;
 
     @Temporal(TemporalType.TIMESTAMP)
@@ -87,6 +87,9 @@ public class SourceStatus extends Identifiable {
 
     /** The hash of the most recent item in the source at the last poll. */
     private String lastContentHash;
+
+    /** The last message occurred while accessing the source */
+    private String lastAccessMessage;
 
     /** Constructor for ORM layer. */
     protected SourceStatus() {
@@ -130,6 +133,10 @@ public class SourceStatus extends Identifiable {
         return errorCount;
     }
 
+    public String getLastAccessMessage() {
+        return lastAccessMessage;
+    }
+
     /**
      * @return the lastContentHash
      */
@@ -162,6 +169,13 @@ public class SourceStatus extends Identifiable {
         return lastSuccessfulCheck;
     }
 
+    /**
+     * @return the last date when tried to access the subscription
+     */
+    public Date getLatestCheckDate() {
+        return lastSuccessfulCheck.after(lastError) ? lastSuccessfulCheck : lastError;
+    }
+
     public Source getSource() {
         return source;
     }
@@ -182,6 +196,10 @@ public class SourceStatus extends Identifiable {
 
     public void setBlocked(boolean blocked) {
         this.blocked = blocked;
+    }
+
+    public void setLastAccessMessage(String lastAccessMessage) {
+        this.lastAccessMessage = lastAccessMessage;
     }
 
     /**
@@ -249,6 +267,7 @@ public class SourceStatus extends Identifiable {
             successfulCheckCount++;
             consecutiveErrorCount = 0;
             lastError = null;
+            lastAccessMessage = null;
             setLastSuccessfulCheck(new Date());
         } else {
             errorCount++;
