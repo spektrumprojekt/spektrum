@@ -89,23 +89,18 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
      * @param messageQueue
      *            The message queue where outgoing messages will be put.
      */
-    public PersistentSubscriptionManager(
-            Communicator communicator,
-            Persistence persistence,
-            AggregatorChain aggregatorChain,
-            AggregatorConfiguration aggregatorConfiguration) {
+    public PersistentSubscriptionManager(Communicator communicator, Persistence persistence,
+            AggregatorChain aggregatorChain, AggregatorConfiguration aggregatorConfiguration) {
 
         Validate.notNull(communicator, "Communicator cannot be null.");
         Validate.notNull(persistence, "persistence cannot be null.");
         Validate.notNull(aggregatorChain, "aggregatorChain cannot be null.");
-        Validate.notNull(aggregatorConfiguration,
-                "AggregatorConfiguration cannot be null.");
+        Validate.notNull(aggregatorConfiguration, "AggregatorConfiguration cannot be null.");
 
         this.communicator = communicator;
         this.persistence = persistence;
         this.aggregatorConfiguration = aggregatorConfiguration;
-        this.adapterManager = new AdapterManager(aggregatorChain,
-                aggregatorConfiguration, this);
+        this.adapterManager = new AdapterManager(aggregatorChain, aggregatorConfiguration, this);
         this.aggregatorChain = aggregatorChain;
 
         addPersistentSubscriptions();
@@ -132,9 +127,7 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
             String sourceType = subscription.getSource().getConnectorType();
             Adapter adapter = adapterManager.getAdapter(sourceType);
             if (adapter == null) {
-                LOGGER.warn(
-                        "no adapter implementation for sourceType {} available",
-                        sourceType);
+                LOGGER.warn("no adapter implementation for sourceType {} available", sourceType);
                 continue;
             }
             adapter.addSource(subscription);
@@ -149,20 +142,17 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
         Adapter adapter = adapterManager.getAdapter(sourceType);
         if (adapter != null) {
             adapter.removeSource(sourceStatus.getSource().getGlobalId());
-            LOGGER.info(
-                    "subscription {} had too many errors ({}), therefore it is blocked now",
+            LOGGER.info("subscription {} had too many errors ({}), therefore it is blocked now",
                     numErrors, sourceStatus.getSource().getGlobalId());
         } else {
             LOGGER.warn("no adapter found for {}", sourceStatus.getSource().getGlobalId());
         }
     }
 
-    private SourceStatus createAndStartSource(Source source)
-            throws AdapterNotFoundException {
+    private SourceStatus createAndStartSource(Source source) throws AdapterNotFoundException {
         Adapter adapter = adapterManager.getAdapter(source.getConnectorType());
         if (adapter == null) {
-            LOGGER.warn(
-                    "no adapter implementation for connector type {} available",
+            LOGGER.warn("no adapter implementation for connector type {} available",
                     source.getConnectorType());
             throw new AdapterNotFoundException("No adapter for connector="
                     + source.getConnectorType(), source);
@@ -188,20 +178,16 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
     private boolean equal(Subscription subscription1, Subscription subscription2) {
 
         for (Property property : subscription1.getSubscriptionParameters()) {
-            Property property2 = subscription2.getSubscriptionParameter(property
-                    .getPropertyKey());
+            Property property2 = subscription2.getSubscriptionParameter(property.getPropertyKey());
             if (property2 == null
-                    || !property.getPropertyValue().equals(
-                            property2.getPropertyValue())) {
+                    || !property.getPropertyValue().equals(property2.getPropertyValue())) {
                 return false;
             }
         }
         for (Property property : subscription2.getSubscriptionParameters()) {
-            Property property2 = subscription1.getSubscriptionParameter(property
-                    .getPropertyKey());
+            Property property2 = subscription1.getSubscriptionParameter(property.getPropertyKey());
             if (property2 == null
-                    || !property.getPropertyValue().equals(
-                            property2.getPropertyValue())) {
+                    || !property.getPropertyValue().equals(property2.getPropertyValue())) {
                 return false;
             }
         }
@@ -215,17 +201,14 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
         status.append("subscriptionId;sourceType;successfulCheckCount;errorCount;consecutiveErrorCount;lastStatus;lastSuccessfulCheck;lastError;blocked");
         status.append('\n');
 
-        List<SourceStatus> allSourceStatusList = persistence
-                .getSourceStatusList();
+        List<SourceStatus> allSourceStatusList = persistence.getSourceStatusList();
         for (SourceStatus subscriptionStatus : allSourceStatusList) {
             Source source = subscriptionStatus.getSource();
             status.append(source.getGlobalId()).append(';');
             status.append(source.getConnectorType()).append(';');
-            status.append(subscriptionStatus.getSuccessfulCheckCount()).append(
-                    ';');
+            status.append(subscriptionStatus.getSuccessfulCheckCount()).append(';');
             status.append(subscriptionStatus.getErrorCount()).append(';');
-            status.append(subscriptionStatus.getConsecutiveErrorCount())
-                    .append(';');
+            status.append(subscriptionStatus.getConsecutiveErrorCount()).append(';');
             String statusType = "";
             if (subscriptionStatus.getLastStatusType() != null) {
                 statusType = subscriptionStatus.getLastStatusType().toString();
@@ -233,13 +216,12 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
             status.append(statusType).append(';');
             String lastSuccessfulCheck = "";
             if (subscriptionStatus.getLastSuccessfulCheck() != null) {
-                lastSuccessfulCheck = String.valueOf(subscriptionStatus
-                        .getLastSuccessfulCheck().getTime());
+                lastSuccessfulCheck = String.valueOf(subscriptionStatus.getLastSuccessfulCheck()
+                        .getTime());
             }
             String lastError = "";
             if (subscriptionStatus.getLastError() != null) {
-                lastError = String.valueOf(subscriptionStatus.getLastError()
-                        .getTime());
+                lastError = String.valueOf(subscriptionStatus.getLastError().getTime());
             }
             status.append(lastSuccessfulCheck).append(';');
             status.append(lastError).append(';');
@@ -255,16 +237,14 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
     }
 
     @Override
-    public void processed(Source source, StatusType statusType,
-            Exception exception) {
+    public void processed(Source source, StatusType statusType, Exception exception) {
         String sourceGlobalId = source.getGlobalId();
-        SourceStatus sourceStatus = persistence
-                .getSourceStatusBySourceGlobalId(sourceGlobalId);
+        SourceStatus sourceStatus = persistence.getSourceStatusBySourceGlobalId(sourceGlobalId);
         sourceStatus.updateCheck(statusType);
         Integer errors = sourceStatus.getConsecutiveErrorCount();
-        if (errors == aggregatorConfiguration.getErrorsForMessage()) {
-            String message = String.format(
-                    "Warning: Subscription %s had %d subsequent errors",
+        if (errors == aggregatorConfiguration.getErrorsForMessage()
+                && aggregatorConfiguration.getErrorsForMessage() != 0) {
+            String message = String.format("Warning: Subscription %s had %d subsequent errors",
                     sourceGlobalId, errors);
             if (exception != null) {
                 StringBuilder stringBuilder = new StringBuilder();
@@ -275,20 +255,19 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
                 stringBuilder.append(exception.toString());
                 message = stringBuilder.toString();
             }
-            Message errorMessage = new Message(MessageType.ERROR, statusType,
-                    sourceGlobalId, new Date());
-            MessagePart messagePart = new MessagePart(MimeType.TEXT_PLAIN,
-                    message);
+            Message errorMessage = new Message(MessageType.ERROR, statusType, sourceGlobalId,
+                    new Date());
+            MessagePart messagePart = new MessagePart(MimeType.TEXT_PLAIN, message);
 
             errorMessage.addMessagePart(messagePart);
 
             // TODO separate error message ?
-            MessageCommunicationMessage mcm = new MessageCommunicationMessage(
-                    errorMessage);
+            MessageCommunicationMessage mcm = new MessageCommunicationMessage(errorMessage);
             communicator.sendMessage(mcm);
 
         }
-        if (errors >= aggregatorConfiguration.getMaxConsecErrors()) {
+        if (errors >= aggregatorConfiguration.getMaxConsecErrors()
+                && aggregatorConfiguration.getMaxConsecErrors() != 0) {
             blockSource(sourceStatus, errors);
             String message = String
                     .format("Error: Subscription %s had %d subsequent errors, blocking from further checks",
@@ -300,15 +279,13 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
                 stringBuilder.append(exception.getMessage());
                 message = stringBuilder.toString();
             }
-            Message errorMessage = new Message(MessageType.ERROR, statusType,
-                    sourceGlobalId, new Date());
-            MessagePart messagePart = new MessagePart(MimeType.TEXT_PLAIN,
-                    message);
+            Message errorMessage = new Message(MessageType.ERROR, statusType, sourceGlobalId,
+                    new Date());
+            MessagePart messagePart = new MessagePart(MimeType.TEXT_PLAIN, message);
             errorMessage.addMessagePart(messagePart);
 
             // TODO separate error message ?
-            MessageCommunicationMessage mcm = new MessageCommunicationMessage(
-                    errorMessage);
+            MessageCommunicationMessage mcm = new MessageCommunicationMessage(errorMessage);
             communicator.sendMessage(mcm);
         }
         persistence.updateSourceStatus(sourceStatus);
@@ -343,8 +320,7 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
         Source source = subscription.getSource();
         String sourceType = source.getConnectorType();
         if (sourceType == null) {
-            LOGGER.warn(
-                    "sourceType for subscription {} is missing, cannot schedule adapter",
+            LOGGER.warn("sourceType for subscription {} is missing, cannot schedule adapter",
                     subscription);
             return;
         }
@@ -355,8 +331,8 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
             this.unsubscribe(subscription.getGlobalId());
         }
 
-        Source existingSource = this.persistence.findSource(source
-                .getConnectorType(), source.getAccessParameters());
+        Source existingSource = this.persistence.findSource(source.getConnectorType(),
+                source.getAccessParameters());
 
         SourceStatus sourceStatus;
         if (existingSource != null) {
@@ -364,8 +340,8 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
             subscription.setSource(existingSource);
             this.persistence.storeSubscription(subscription);
 
-            sourceStatus = this.persistence
-                    .getSourceStatusBySourceGlobalId(existingSource.getGlobalId());
+            sourceStatus = this.persistence.getSourceStatusBySourceGlobalId(existingSource
+                    .getGlobalId());
             if (sourceStatus.isBlocked()) {
                 this.unblockSource(sourceStatus);
             }
@@ -379,16 +355,14 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
                 sourceStatus = this.createAndStartSource(subscription.getSource());
             } catch (AdapterNotFoundException e) {
 
-                Message errorMessage = new Message(MessageType.ERROR,
-                        StatusType.ERROR_NO_ADAPTER, subscription.getGlobalId(), new Date());
+                Message errorMessage = new Message(MessageType.ERROR, StatusType.ERROR_NO_ADAPTER,
+                        subscription.getGlobalId(), new Date());
                 MessagePart messagePart = new MessagePart(MimeType.TEXT_PLAIN,
-                        "no adapter implementation for sourceType " + sourceType
-                                + " available");
+                        "no adapter implementation for sourceType " + sourceType + " available");
                 errorMessage.addMessagePart(messagePart);
 
                 // TODO separate error message ?
-                MessageCommunicationMessage mcm = new MessageCommunicationMessage(
-                        errorMessage);
+                MessageCommunicationMessage mcm = new MessageCommunicationMessage(errorMessage);
                 communicator.sendMessage(mcm);
 
                 return;
@@ -438,10 +412,8 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
         // find Subscriptions to remove
         // search in all adapters
         for (Adapter adapter : adapterManager.getAllAdapters()) {
-            for (String subscriptionGlobalId : adapter
-                    .getSourceGlobalIds()) {
-                LOGGER.debug("Checking existing subscription {}",
-                        subscriptionGlobalId);
+            for (String subscriptionGlobalId : adapter.getSourceGlobalIds()) {
+                LOGGER.debug("Checking existing subscription {}", subscriptionGlobalId);
                 boolean isContained = false;
                 for (Subscription subscription : currentSubscriptions) {
                     if (subscriptionGlobalId.equals(subscription.getGlobalId())) {
@@ -493,8 +465,7 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
 
             String connectorType = subscription.getSource().getConnectorType();
             if (connectorType == null) {
-                LOGGER.warn("no source type specified for subscription with id {}",
-                        subscriptionId);
+                LOGGER.warn("no source type specified for subscription with id {}", subscriptionId);
                 return;
             }
             Adapter adapter = adapterManager.getAdapter(connectorType);
