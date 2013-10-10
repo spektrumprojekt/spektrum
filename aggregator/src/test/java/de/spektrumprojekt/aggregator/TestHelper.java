@@ -1,5 +1,8 @@
 package de.spektrumprojekt.aggregator;
 
+import org.junit.Ignore;
+
+@Ignore
 public class TestHelper {
 
     public static String FILE_NAME_VALID_XML = "validXML.txt";

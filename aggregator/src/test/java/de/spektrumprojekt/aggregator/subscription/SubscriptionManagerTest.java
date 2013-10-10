@@ -218,9 +218,9 @@ public class SubscriptionManagerTest {
         status = persistence
                 .getSourceStatusBySourceGlobalId(subscription.getSource().getGlobalId());
         Assert.assertNotNull(status.getLastAccessMessage());
-        Assert.assertEquals(
-                "FeedException Invalid XML: Error on line 15: Elementtyp \"item\" muss mit dem entsprechenden Endtag \"</item>\" beendet werden.",
-                status.getLastAccessMessage());
+        // be careful because of the l18n of the Errormessage
+        Assert.assertTrue(status.getLastAccessMessage().contains("\"</item>\""));
+        Assert.assertTrue(status.getLastAccessMessage().contains("Error on line 15"));
         manager.processed(status.getSource(), StatusType.OK);
         status = persistence
                 .getSourceStatusBySourceGlobalId(subscription.getSource().getGlobalId());
