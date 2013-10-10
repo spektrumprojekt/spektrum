@@ -504,8 +504,7 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
 
             // check if the ids of the sources match
             if (persistedSource != null
-                    && subscription.getSource().getGlobalId().equals(persistedSource.getGlobalId())
-                    && subscription.getSource().getId().equals(persistedSource.getId())) {
+                    && subscription.getSource().getGlobalId().equals(persistedSource.getGlobalId())) {
 
                 SourceStatus sourceStatus = this.persistence
                         .getSourceStatusBySourceGlobalId(persistedSource.getGlobalId());
