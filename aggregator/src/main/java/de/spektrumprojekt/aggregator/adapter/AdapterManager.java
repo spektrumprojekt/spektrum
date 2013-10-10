@@ -27,6 +27,7 @@ import org.apache.commons.lang3.Validate;
 
 import de.spektrumprojekt.aggregator.adapter.ping.PingAdapter;
 import de.spektrumprojekt.aggregator.adapter.rss.FeedAdapter;
+import de.spektrumprojekt.aggregator.adapter.rss.FileAdapter;
 import de.spektrumprojekt.aggregator.adapter.twitter.TwitterAdapter;
 import de.spektrumprojekt.aggregator.chain.AggregatorChain;
 import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
@@ -59,8 +60,7 @@ public final class AdapterManager {
      *            implementations.
      */
     public AdapterManager(AggregatorChain aggregatorChain,
-            AggregatorConfiguration aggregatorConfiguration,
-            AdapterListener adapterListener) {
+            AggregatorConfiguration aggregatorConfiguration, AdapterListener adapterListener) {
 
         Validate.notNull(aggregatorChain, "aggregatorChain must not be null");
         Validate.notNull(aggregatorConfiguration, "aggregatorConfiguration must not be null");
@@ -74,6 +74,7 @@ public final class AdapterManager {
             addAdapter(new TwitterAdapter(aggregatorChain, aggregatorConfiguration));
         }
         addAdapter(new PingAdapter(aggregatorChain, aggregatorConfiguration));
+        addAdapter(new FileAdapter(aggregatorChain, aggregatorConfiguration));
     }
 
     /**

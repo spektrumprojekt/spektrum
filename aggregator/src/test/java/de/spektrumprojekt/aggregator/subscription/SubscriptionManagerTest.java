@@ -33,7 +33,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import de.spektrumprojekt.aggregator.Aggregator;
+import de.spektrumprojekt.aggregator.TestHelper;
+import de.spektrumprojekt.aggregator.adapter.AdapterException;
 import de.spektrumprojekt.aggregator.adapter.rss.FeedAdapter;
+import de.spektrumprojekt.aggregator.adapter.rss.FileAdapter;
 import de.spektrumprojekt.aggregator.chain.AggregatorChain;
 import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
 import de.spektrumprojekt.communication.CommunicationMessage;
@@ -44,8 +47,10 @@ import de.spektrumprojekt.communication.vm.VirtualMachineCommunicator;
 import de.spektrumprojekt.configuration.properties.SimpleProperties;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.source.Source;
+import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionMessageFilter;
+import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 import de.spektrumprojekt.persistence.jpa.JPAConfiguration;
 import de.spektrumprojekt.persistence.jpa.JPAPersistence;
 import de.spektrumprojekt.persistence.jpa.impl.SubscriptionPersistence;
@@ -123,6 +128,24 @@ public class SubscriptionManagerTest {
 
     private Queue<CommunicationMessage> queue;
 
+    /**
+     * Creates a RSS Subscription
+     * 
+     * @param feedURI
+     *            URL of the feed
+     * @return Subscription
+     */
+    private Subscription getFileSubscription(String path, String subscriptionGlobalId) {
+        if (subscriptionGlobalId == null) {
+            subscriptionGlobalId = UUID.randomUUID().toString();
+        }
+        Source source = new Source(FileAdapter.SOURCE_TYPE);
+        Subscription sub = new Subscription(subscriptionGlobalId, source);
+        source.addAccessParameter(new Property(FileAdapter.ACCESS_PARAMETER_PATH, path));
+
+        return sub;
+    }
+
     private int getNumberOfSubscriptions() {
         return subscriptionPersistence.getSubscriptions().size();
     }
@@ -170,10 +193,38 @@ public class SubscriptionManagerTest {
 
         aggregatorChain = aggregator.getAggregatorChain();
 
-        manager = new PersistentSubscriptionManager(communicator,
-                persistence, aggregatorChain, aggregatorConfiguration);
+        manager = new PersistentSubscriptionManager(communicator, persistence, aggregatorChain,
+                aggregatorConfiguration);
 
         communicator.open();
+    }
+
+    @Test
+    public void testLastAccessMessage() {
+        String subscriptionId = "testLastAccessMessageSubscriptionId";
+        Subscription subscription = getFileSubscription(
+                TestHelper.getTestFilePath(TestHelper.FILE_NAME_INVALID_XML), subscriptionId);
+        manager.subscribe(subscription);
+        FileAdapter adapter = new FileAdapter(aggregatorChain, aggregatorConfiguration);
+        SourceStatus status = persistence.getSourceStatusBySourceGlobalId(subscription.getSource()
+                .getGlobalId());
+        AdapterException exception = null;
+        try {
+            adapter.poll(status);
+        } catch (AdapterException e) {
+            exception = e;
+        }
+        manager.processed(subscription.getSource(), exception.getStatusType(), exception);
+        status = persistence
+                .getSourceStatusBySourceGlobalId(subscription.getSource().getGlobalId());
+        Assert.assertNotNull(status.getLastAccessMessage());
+        Assert.assertEquals(
+                "FeedException Invalid XML: Error on line 15: Elementtyp \"item\" muss mit dem entsprechenden Endtag \"</item>\" beendet werden.",
+                status.getLastAccessMessage());
+        manager.processed(status.getSource(), StatusType.OK);
+        status = persistence
+                .getSourceStatusBySourceGlobalId(subscription.getSource().getGlobalId());
+        Assert.assertNull(status.getLastAccessMessage());
     }
 
     @Test
@@ -189,8 +240,7 @@ public class SubscriptionManagerTest {
 
         int initalCount = 10;
         SubscriptionMessageFilter subscriptionMessageFilter = new SubscriptionMessageFilter(
-                initalCount,
-                null);
+                initalCount, null);
 
         this.messageHandlerTest.getMessages().clear();
         Subscription subscription1 = getRSSSubscription(URL_4, null);
@@ -231,9 +281,8 @@ public class SubscriptionManagerTest {
         Assert.assertNotNull(persistedSubscription.getGlobalId());
 
         Subscription subscription2 = getRSSSubscription(URL_3, null);
-        Assert.assertFalse("Global Ids should be different.", subscription.getGlobalId()
-                .equals(subscription2
-                        .getGlobalId()));
+        Assert.assertFalse("Global Ids should be different.",
+                subscription.getGlobalId().equals(subscription2.getGlobalId()));
 
         manager.subscribe(subscription2);
         Subscription persistedSubscription2 = this.persistence
@@ -246,11 +295,9 @@ public class SubscriptionManagerTest {
         Assert.assertEquals(persistedSubscription.getSource().getId(), persistedSubscription2
                 .getSource().getId());
         Assert.assertFalse("Global Ids should be different.", persistedSubscription.getGlobalId()
-                .equals(persistedSubscription2
-                        .getGlobalId()));
+                .equals(persistedSubscription2.getGlobalId()));
         Assert.assertFalse("Database Ids should be different.", persistedSubscription.getId()
-                .equals(persistedSubscription2
-                        .getId()));
+                .equals(persistedSubscription2.getId()));
 
     }
 
@@ -272,8 +319,7 @@ public class SubscriptionManagerTest {
         Subscription subscription = getRSSSubscription(URL_1, null);
         manager.subscribe(subscription);
 
-        Subscription updatedSubscription = getRSSSubscription(
-                URL_1, subscription.getGlobalId());
+        Subscription updatedSubscription = getRSSSubscription(URL_1, subscription.getGlobalId());
 
         updatedSubscription.addSubscriptionParameter(new Property("subKey", "subValue"));
 

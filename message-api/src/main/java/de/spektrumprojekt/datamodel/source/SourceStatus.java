@@ -249,6 +249,8 @@ public class SourceStatus extends Identifiable {
         builder.append(lastContentTimestamp);
         builder.append(", lastContentHash=");
         builder.append(lastContentHash);
+        builder.append(", lastAccessMessage=");
+        builder.append(lastAccessMessage);
         builder.append("]");
         return builder.toString();
     }
