@@ -22,6 +22,7 @@ package de.spektrumprojekt.aggregator.subscription;
 import java.util.List;
 
 import de.spektrumprojekt.datamodel.subscription.Subscription;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionMessageFilter;
 
 /**
@@ -35,6 +36,12 @@ import de.spektrumprojekt.datamodel.subscription.SubscriptionMessageFilter;
  * 
  */
 public interface SubscriptionManager {
+
+    boolean continueSubscription(String subscriptionId);
+
+    Subscription getSubscription(String subscriptionGlobalId);
+
+    List<Subscription> getSubscriptions(SubscriptionFilter subscriptionFilter);
 
     /**
      * Stop this manager
@@ -63,6 +70,8 @@ public interface SubscriptionManager {
      *            {@link SubscriptionMessageFilter#NONE} will be used.
      */
     void subscribe(Subscription subscription, SubscriptionMessageFilter subscriptionMessageFilter);
+
+    boolean suspendSubscription(String subscriptionId);
 
     /**
      * Use exactly the subscriptions as in the provided list. Remove all not in the list.

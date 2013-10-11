@@ -46,6 +46,7 @@ import de.spektrumprojekt.datamodel.message.MessageType;
 import de.spektrumprojekt.datamodel.source.Source;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionMessageFilter;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 import de.spektrumprojekt.persistence.Persistence;
@@ -149,6 +150,30 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
         }
     }
 
+    @Override
+    public boolean continueSubscription(String subscriptionId) {
+
+        if (subscriptionId == null) {
+            throw new IllegalArgumentException("subscriptionId cannot be null.");
+        }
+        Subscription subscription = this.persistence.getSubscriptionByGlobalId(subscriptionId);
+        if (subscription == null) {
+            LOGGER.warn("no subscription with id {}", subscriptionId);
+            return false;
+        }
+        if (!subscription.isSuspended()) {
+            LOGGER.debug("subscription with id {} already active, no action will be taken.",
+                    subscriptionId);
+            return false;
+        }
+
+        subscription.setSuspended(false);
+
+        this.persistence.updateSubscription(subscription);
+
+        return true;
+    }
+
     private SourceStatus createAndStartSource(Source source) throws AdapterNotFoundException {
         Adapter adapter = adapterManager.getAdapter(source.getConnectorType());
         if (adapter == null) {
@@ -229,6 +254,16 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
             status.append('\n');
         }
         return status.toString();
+    }
+
+    @Override
+    public Subscription getSubscription(String subscriptionGlobalId) {
+        return this.persistence.getSubscriptionByGlobalId(subscriptionGlobalId);
+    }
+
+    @Override
+    public List<Subscription> getSubscriptions(SubscriptionFilter subscriptionFilter) {
+        return this.persistence.getSubscriptions(subscriptionFilter);
     }
 
     @Override
@@ -402,6 +437,30 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
         }
     }
 
+    @Override
+    public boolean suspendSubscription(String subscriptionId) {
+
+        if (subscriptionId == null) {
+            throw new IllegalArgumentException("subscriptionId cannot be null.");
+        }
+        Subscription subscription = this.persistence.getSubscriptionByGlobalId(subscriptionId);
+        if (subscription == null) {
+            LOGGER.warn("no subscription with id {}", subscriptionId);
+            return false;
+        }
+        if (subscription.isSuspended()) {
+            LOGGER.debug("subscription with id {} already suspended, no action will be taken.",
+                    subscriptionId);
+            return false;
+        }
+
+        subscription.setSuspended(true);
+
+        this.persistence.updateSubscription(subscription);
+
+        return true;
+    }
+
     /**
      * synchronizes the subscriptions, old subscriptions which are not contained by
      * currentSubscriptions are deleted, new ones are created, existing ones are updated if
@@ -520,5 +579,4 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
 
         return true;
     }
-
 }

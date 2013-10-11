@@ -41,6 +41,7 @@ import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.source.Source;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
@@ -145,12 +146,6 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public List<Subscription> getAllSubscriptionsBySourceGlobalId(String sourceGlobalId) {
-
-        return this.subscriptionPersistence.getAllSubscriptionsBySourceGlobalId(sourceGlobalId);
-    }
-
-    @Override
     public Collection<Term> getAllTerms() {
         return this.messagePersistence.getAllTerms();
     }
@@ -243,6 +238,11 @@ public class JPAPersistence implements Persistence {
     @Override
     public Subscription getSubscriptionByGlobalId(String subscriptionGlobalId) {
         return this.subscriptionPersistence.getSubscriptionByGlobalId(subscriptionGlobalId);
+    }
+
+    @Override
+    public List<Subscription> getSubscriptions(SubscriptionFilter subscriptionFilter) {
+        return this.subscriptionPersistence.getSubscriptions(subscriptionFilter);
     }
 
     @Override

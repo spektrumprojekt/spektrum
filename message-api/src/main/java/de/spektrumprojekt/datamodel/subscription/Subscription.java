@@ -55,6 +55,8 @@ public class Subscription extends Identifiable {
     @ManyToOne(cascade = { CascadeType.PERSIST }, fetch = FetchType.EAGER, optional = false)
     private Source source;
 
+    private boolean suspended;
+
     private transient Long lastProcessedMessagedId;
     // private String serializedFilterExpression;
 
@@ -132,14 +134,22 @@ public class Subscription extends Identifiable {
         return null;
     }
 
+    public Collection<Property> getSubscriptionParameters() {
+        return subscriptionParameters;
+    }
+
+    /**
+     * 
+     * @return true if the subscription is suspended and new message will not be forwarded
+     */
+    public boolean isSuspended() {
+        return suspended;
+    }
+
     // private FilterExpression deserialze(String serializedFilterExpression) {
     // // TODO serialize the filter expression into JSON or XML or something else
     // throw new UnsupportedOperationException("Not yet implemented.");
     // }
-
-    public Collection<Property> getSubscriptionParameters() {
-        return subscriptionParameters;
-    }
 
     public void setFilterExpression(FilterExpression filterExpression) {
         this.filterExpression = filterExpression;
@@ -147,6 +157,13 @@ public class Subscription extends Identifiable {
 
     public void setLastProcessedMessagedId(Long lastProcessedMessagedId) {
         this.lastProcessedMessagedId = lastProcessedMessagedId;
+    }
+
+    public void setSource(Source source) {
+        if (source == null) {
+            throw new IllegalArgumentException("source cannot be null.");
+        }
+        this.source = source;
     }
 
     // public String getSerializedFilterExpression() {
@@ -159,11 +176,8 @@ public class Subscription extends Identifiable {
     // throw new UnsupportedOperationException("Not yet implemented.");
     // }
 
-    public void setSource(Source source) {
-        if (source == null) {
-            throw new IllegalArgumentException("source cannot be null.");
-        }
-        this.source = source;
+    public void setSuspended(boolean suspended) {
+        this.suspended = suspended;
     }
 
     // public void setSerializedFilterExpression(String serializedFilterExpression) {

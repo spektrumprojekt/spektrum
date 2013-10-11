@@ -49,6 +49,7 @@ import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.source.Source;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
@@ -257,11 +258,6 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
-    public List<Subscription> getAllSubscriptionsBySourceGlobalId(String sourceGlobalId) {
-        throw new UnsupportedOperationException("implement me.");
-    }
-
-    @Override
     public Collection<Term> getAllTerms() {
         return this.termsTerms.values();
     }
@@ -345,13 +341,13 @@ public class SimplePersistence implements Persistence {
         return filteredMessages;
     }
 
-    public Map<ObservationKey, Collection<Observation>> getObservations() {
-        return observations;
-    }
-
     @Override
     public int getNumberOfSubscriptionsBySourceGlobalId(String globalId) {
         throw new UnsupportedOperationException("Implement me.");
+    }
+
+    public Map<ObservationKey, Collection<Observation>> getObservations() {
+        return observations;
     }
 
     @Override
@@ -444,6 +440,11 @@ public class SimplePersistence implements Persistence {
     @Override
     public Subscription getSubscriptionByGlobalId(String subscriptionGlobalId) {
         throw new UnsupportedOperationException("Implement me ...");
+    }
+
+    @Override
+    public List<Subscription> getSubscriptions(SubscriptionFilter subscriptionFilter) {
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override

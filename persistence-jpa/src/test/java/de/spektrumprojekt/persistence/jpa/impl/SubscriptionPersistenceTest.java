@@ -37,6 +37,7 @@ import de.spektrumprojekt.configuration.properties.SimpleProperties;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.source.Source;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
 import de.spektrumprojekt.persistence.jpa.JPAConfiguration;
 
 public class SubscriptionPersistenceTest {
@@ -69,7 +70,43 @@ public class SubscriptionPersistenceTest {
     }
 
     @Test
-    public void testGetAll() {
+    public void testGetByProperty() {
+
+        Source mySource = new Source("propertyTestSourc1", "someConnector");
+        Source anotherMySource = new Source("notPropertyTestSourc1", "someConnector");
+
+        mySource = sourcePersistence.saveSource(mySource);
+        anotherMySource = sourcePersistence.saveSource(anotherMySource);
+
+        for (int i = 0; i < 10; i++) {
+            Subscription subscription = new Subscription("findMeId" + i, mySource);
+            subscription.addSubscriptionParameter(new Property("myprop", "find"));
+
+            subsciptionPersistence.storeSubscription(subscription);
+        }
+        for (int i = 0; i < 10; i++) {
+            Subscription subscription = new Subscription("dontFindMeId" + i, anotherMySource);
+            if (i % 2 == 0) {
+                subscription.addSubscriptionParameter(new Property("myprop", "notfind" + i));
+            }
+            subsciptionPersistence.storeSubscription(subscription);
+        }
+
+        SubscriptionFilter subscriptionFilter = new SubscriptionFilter();
+        subscriptionFilter.setSubscriptionProperty(new Property("myprop", "find"));
+
+        List<Subscription> subscriptions = subsciptionPersistence
+                .getSubscriptions(subscriptionFilter);
+        Assert.assertNotNull(subscriptions);
+        Assert.assertEquals(10, subscriptions.size());
+        for (Subscription sub : subscriptions) {
+            Assert.assertEquals("someConnector", sub.getSource().getConnectorType());
+            Assert.assertTrue(sub.getGlobalId().startsWith("findMeId"));
+        }
+    }
+
+    @Test
+    public void testGetBySourceId() {
 
         Source mySource = new Source("mySource", "someConnector");
         Source anotherMySource = new Source(
@@ -87,8 +124,11 @@ public class SubscriptionPersistenceTest {
             subsciptionPersistence.storeSubscription(subscription);
         }
 
+        SubscriptionFilter subscriptionFilter = new SubscriptionFilter();
+        subscriptionFilter.setSourceGlobalId("mySource");
+
         List<Subscription> subscriptions = subsciptionPersistence
-                .getAllSubscriptionsBySourceGlobalId("mySource");
+                .getSubscriptions(subscriptionFilter);
         Assert.assertNotNull(subscriptions);
         Assert.assertEquals(10, subscriptions.size());
         for (Subscription sub : subscriptions) {
