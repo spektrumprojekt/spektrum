@@ -107,6 +107,10 @@ public abstract class BaseAdapter implements Adapter {
         }
     }
 
+    public AggregatorChain getAggregatorChain() {
+        return aggregatorChain;
+    }
+
     public AggregatorConfiguration getAggregatorConfiguration() {
         return this.aggregatorConfiguration;
     }
@@ -121,8 +125,7 @@ public abstract class BaseAdapter implements Adapter {
         triggerListener(source, statusType, null);
     }
 
-    protected final void triggerListener(Source source, StatusType statusType,
-            Exception exception) {
+    protected final void triggerListener(Source source, StatusType statusType, Exception exception) {
         if (listener != null) {
             listener.processed(source, statusType, exception);
         }

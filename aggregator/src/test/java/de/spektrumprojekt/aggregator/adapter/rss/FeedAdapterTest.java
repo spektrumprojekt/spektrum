@@ -68,7 +68,7 @@ public class FeedAdapterTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(FeedAdapterTest.class);
 
     private Communicator communicator;
-    private Persistence persistence = new PersistenceMock();
+    private final Persistence persistence = new PersistenceMock();
 
     private Aggregator aggregator;
     private AggregatorConfiguration aggregatorConfiguration;
@@ -105,13 +105,11 @@ public class FeedAdapterTest {
         Source source = new Source(FeedAdapter.SOURCE_TYPE);
         SourceStatus sourceStatus = new SourceStatus(source);
 
-        source
-                .addAccessParameter(new Property(
-                        FeedAdapter.ACCESS_PARAMETER_URI, url));
-        source.addAccessParameter(new Property(
-                FeedAdapter.ACCESS_PARAMETER_CREDENTIALS_LOGIN, login));
-        source.addAccessParameter(new Property(
-                FeedAdapter.ACCESS_PARAMETER_CREDENTIALS_PASSWORD, password));
+        source.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_URI, url));
+        source.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_CREDENTIALS_LOGIN,
+                login));
+        source.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_CREDENTIALS_PASSWORD,
+                password));
 
         FeedAdapter adapter = new FeedAdapter(aggregatorChain, aggregatorConfiguration);
         List<Message> messages = adapter.poll(sourceStatus);
@@ -123,8 +121,7 @@ public class FeedAdapterTest {
         Source source = new Source(FeedAdapter.SOURCE_TYPE);
         SourceStatus sourceStatus = new SourceStatus(source);
 
-        source.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_URI,
-                feedUrl));
+        source.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_URI, feedUrl));
         FeedAdapter feedAdapter = new FeedAdapter(aggregatorChain, aggregatorConfiguration);
         List<Message> messages = feedAdapter.poll(sourceStatus);
         assertTrue(messages.size() > 0);
@@ -157,14 +154,11 @@ public class FeedAdapterTest {
         Source source = new Source(FeedAdapter.SOURCE_TYPE);
         SourceStatus sourceStatus = new SourceStatus(source);
 
-        source
-                .addAccessParameter(new Property(
-                        FeedAdapter.ACCESS_PARAMETER_URI, url));
-        source.addAccessParameter(new Property(
-                FeedAdapter.ACCESS_PARAMETER_CREDENTIALS_LOGIN, "wrong"));
-        source.addAccessParameter(new Property(
-                FeedAdapter.ACCESS_PARAMETER_CREDENTIALS_PASSWORD, EncryptionUtils
-                        .encrypt("abcdefghijklmnopqrstuvwxyz")));
+        source.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_URI, url));
+        source.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_CREDENTIALS_LOGIN,
+                "wrong"));
+        source.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_CREDENTIALS_PASSWORD,
+                EncryptionUtils.encrypt("abcdefghijklmnopqrstuvwxyz")));
         FeedAdapter feedAdapter = new FeedAdapter(aggregatorChain, aggregatorConfiguration);
         List<Message> messages = feedAdapter.poll(sourceStatus);
         assertEquals(1, messages.size());
@@ -196,13 +190,11 @@ public class FeedAdapterTest {
         Source source = new Source(FeedAdapter.SOURCE_TYPE);
         SourceStatus sourceStatus = new SourceStatus(source);
 
-        source
-                .addAccessParameter(new Property(
-                        FeedAdapter.ACCESS_PARAMETER_URI, url));
-        source.addAccessParameter(new Property(
-                FeedAdapter.ACCESS_PARAMETER_CREDENTIALS_LOGIN, login));
-        source.addAccessParameter(new Property(
-                FeedAdapter.ACCESS_PARAMETER_CREDENTIALS_PASSWORD, encryptedPassword));
+        source.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_URI, url));
+        source.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_CREDENTIALS_LOGIN,
+                login));
+        source.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_CREDENTIALS_PASSWORD,
+                encryptedPassword));
 
         FeedAdapter feedAdapter = new FeedAdapter(aggregatorChain, aggregatorConfiguration);
         List<Message> messages = feedAdapter.poll(sourceStatus);
@@ -223,4 +215,14 @@ public class FeedAdapterTest {
         feedAdapter.poll(sourceStatus);
     }
 
+    @Test(expected = AdapterException.class)
+    public void testNullURI() throws AdapterException {
+
+        Source source = new Source(FeedAdapter.SOURCE_TYPE);
+        SourceStatus sourceStatus = new SourceStatus(source);
+
+        source.addAccessParameter(new Property(FeedAdapter.ACCESS_PARAMETER_URI, null));
+        FeedAdapter feedAdapter = new FeedAdapter(aggregatorChain, aggregatorConfiguration);
+        feedAdapter.poll(sourceStatus);
+    }
 }

@@ -54,6 +54,78 @@ import de.spektrumprojekt.datamodel.subscription.status.StatusType;
  */
 public abstract class XMLAdapter extends BasePollingAdapter {
 
+    /**
+     * this class applies changes of a property of a source to its internal representation if
+     * necessary
+     */
+    private abstract class PropertyExtractor {
+
+        /**
+         * the key of the {@link Property}
+         */
+        private final String propertyKey;
+
+        public PropertyExtractor(String propertyKey) {
+            super();
+            this.propertyKey = propertyKey;
+        }
+
+        /**
+         * 
+         * @param sourceStatus
+         * @param property
+         * @param value
+         *            propertyValue
+         * @param key
+         *            propertyKey
+         * @return true if the sourceStatus was modified
+         */
+        private boolean changePropertyIfNecessary(SourceStatus sourceStatus, Property property,
+                String value, String key) {
+            if (value == null) {
+                if (property != null) {
+                    sourceStatus.remove(property);
+                    return true;
+                }
+            } else {
+                if (property == null || !value.equals(property.getPropertyValue())) {
+                    sourceStatus.addProperty(new Property(key, value));
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * the method is used to extract Information from the dc module, its only called if no
+         * information where extracted by extractSimple and there is a dc module
+         * 
+         * @param dcModule
+         * @return the property's value
+         */
+        protected abstract String extractFrom(DCModule dcModule);
+
+        /**
+         * the method is used to extract Information from the syndFeed
+         * 
+         * @param syndFeed
+         * @return the property's value
+         */
+        protected abstract String extractSimple(SyndFeed syndFeed);
+
+        public boolean getPropertyValue(SyndFeed syndFeed, SourceStatus sourceStatus) {
+            Property property = sourceStatus.getProperty(propertyKey);
+            String currentValue = extractSimple(syndFeed);
+            if (currentValue == null) {
+                Object module = syndFeed.getModule(DCModule.URI);
+                if (module != null && module instanceof DCModule) {
+                    currentValue = extractFrom((DCModule) syndFeed.getModule(DCModule.URI));
+                }
+            }
+            return changePropertyIfNecessary(sourceStatus, property, currentValue, propertyKey);
+        }
+    }
+
     /** The logger for this class. */
     private static final Logger LOGGER = LoggerFactory.getLogger(FeedAdapter.class);
 
@@ -66,11 +138,61 @@ public abstract class XMLAdapter extends BasePollingAdapter {
 
     protected static final String CONTEXT_SOURCE_STATUS = "source_status";
 
+    /** the property key for the property containing the copyright information of the source */
+    public static final String SOURCE_PROPERTY_KEY_COPYRIGHT = "copyright";
+
+    /** the property key for the property containing the copyright information of the source */
+    public static final String SOURCE_PROPERTY_KEY_TITLE = "title";
+
+    /** the property key for the property containing the copyright information of the source */
+    public static final String SOURCE_PROPERTY_KEY_DESCRIPTION = "description";
+
+    /** used to copy the copyright information */
+    private final PropertyExtractor copyrightExtractor = new PropertyExtractor(
+            SOURCE_PROPERTY_KEY_COPYRIGHT) {
+        @Override
+        protected String extractFrom(DCModule dcModule) {
+            return dcModule.getRights();
+        }
+
+        @Override
+        protected String extractSimple(SyndFeed syndFeed) {
+            return syndFeed.getCopyright();
+        }
+    };
+
+    /** used to copy the title information */
+    private final PropertyExtractor titleExtractor = new PropertyExtractor(
+            SOURCE_PROPERTY_KEY_TITLE) {
+        @Override
+        protected String extractFrom(DCModule dcModule) {
+            return dcModule.getTitle();
+        }
+
+        @Override
+        protected String extractSimple(SyndFeed syndFeed) {
+            return syndFeed.getTitle();
+        }
+    };
+
+    /** used to copy the description information */
+    private final PropertyExtractor descriptionExtractor = new PropertyExtractor(
+            SOURCE_PROPERTY_KEY_DESCRIPTION) {
+        @Override
+        protected String extractFrom(DCModule dcModule) {
+            return dcModule.getDescription();
+        }
+
+        @Override
+        protected String extractSimple(SyndFeed syndFeed) {
+            return syndFeed.getDescription();
+        }
+    };
+
     public XMLAdapter(AggregatorChain aggregatorChain,
             AggregatorConfiguration aggregatorConfiguration) {
         super(aggregatorChain, aggregatorConfiguration, aggregatorConfiguration
                 .getPollingInterval(), THREAD_POOL_SIZE);
-
     }
 
     /**
@@ -169,6 +291,30 @@ public abstract class XMLAdapter extends BasePollingAdapter {
         return publishedDate;
     }
 
+    /**
+     * 
+     * @param syndFeed
+     *            current Information
+     * @param sourceStatus
+     * @return true if the source was modified
+     */
+    private boolean extractFeedPropertiesIfUnset(SyndFeed syndFeed, SourceStatus sourceStatus) {
+        sourceStatus = getAggregatorChain().getPersistence().getSourceStatusBySourceGlobalId(
+                sourceStatus.getSource().getGlobalId());
+        if (sourceStatus != null) {
+            boolean modified = false;
+            modified = copyrightExtractor.getPropertyValue(syndFeed, sourceStatus);
+            modified = titleExtractor.getPropertyValue(syndFeed, sourceStatus);
+            modified = descriptionExtractor.getPropertyValue(syndFeed, sourceStatus);
+            if (modified) {
+                getAggregatorChain().getPersistence().updateSourceStatus(sourceStatus);
+            }
+            return modified;
+        } else {
+            return false;
+        }
+    }
+
     private String extractTags(SyndEntry syndEntry) {
         List<String> tags = new LinkedList<String>();
         for (Object category : syndEntry.getCategories()) {
@@ -209,6 +355,7 @@ public abstract class XMLAdapter extends BasePollingAdapter {
             if (in != null) {
                 SyndFeedInput feedInput = new SyndFeedInput();
                 SyndFeed syndFeed = feedInput.build(new InputSource(in));
+                extractFeedPropertiesIfUnset(syndFeed, subscriptionStatus);
                 // LOGGER.debug("retrieved {} items from {}", syndFeed.getEntries().size(), uri);
                 messages = processMessages(syndFeed, subscriptionStatus);
                 success = true;

@@ -179,6 +179,9 @@ public final class FeedAdapter extends XMLAdapter {
                 }
             }
         }
+        if (uri == null) {
+            throw new AdapterException("No URI provided!", StatusType.ERROR_INVALID_DATA);
+        }
         // only if login + password were supplied
         if (login.length() > 0 && password.length() > 0) {
             try {
@@ -193,6 +196,7 @@ public final class FeedAdapter extends XMLAdapter {
         HttpClient httpClient = null;
         httpClient = new ContentEncodingHttpClient();
         get = createHttpGetRequest(uri, base64EncodedCredentials);
+        context.put(CONTEXT_HTTTP_GET, get);
         try {
             httpResult = httpClient.execute(get);
             int statusCode = httpResult.getStatusLine().getStatusCode();
