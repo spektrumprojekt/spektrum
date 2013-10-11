@@ -55,8 +55,9 @@ public interface SubscriptionManager {
      * 
      * @param subscription
      *            The subscription to subscribe to.
+     * @throws AdapterNotFoundException
      */
-    void subscribe(Subscription subscription);
+    void subscribe(Subscription subscription) throws AdapterNotFoundException;
 
     /**
      * <p>
@@ -68,8 +69,10 @@ public interface SubscriptionManager {
      * @param subscriptionMessageFilter
      *            Use this filter to also return the messages already fetched. If null
      *            {@link SubscriptionMessageFilter#NONE} will be used.
+     * @throws AdapterNotFoundException
      */
-    void subscribe(Subscription subscription, SubscriptionMessageFilter subscriptionMessageFilter);
+    void subscribe(Subscription subscription, SubscriptionMessageFilter subscriptionMessageFilter)
+            throws AdapterNotFoundException;
 
     boolean suspendSubscription(String subscriptionId);
 
@@ -78,8 +81,9 @@ public interface SubscriptionManager {
      * 
      * @param subscriptions
      *            the subscriptions to synchronize
+     * @throws AdapterNotFoundException
      */
-    void synchronizeSubscriptions(List<Subscription> subscriptions);
+    void synchronizeSubscriptions(List<Subscription> subscriptions) throws AdapterNotFoundException;
 
     /**
      * <p>

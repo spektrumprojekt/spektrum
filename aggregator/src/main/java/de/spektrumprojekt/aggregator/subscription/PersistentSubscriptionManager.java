@@ -338,13 +338,13 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
     }
 
     @Override
-    public void subscribe(Subscription subscription) {
+    public void subscribe(Subscription subscription) throws AdapterNotFoundException {
         this.subscribe(subscription, null);
     }
 
     @Override
     public void subscribe(Subscription subscription,
-            SubscriptionMessageFilter subscriptionMessageFilter) {
+            SubscriptionMessageFilter subscriptionMessageFilter) throws AdapterNotFoundException {
         LOGGER.debug("handle subscription " + subscription);
         if (subscription == null) {
             throw new IllegalArgumentException("subscription cannot be null");
@@ -367,6 +367,7 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
                 .getGlobalId());
         if (existingSubscription != null) {
             this.unsubscribe(subscription.getGlobalId());
+
         }
 
         Source existingSource = this.persistence.findSource(source.getConnectorType(),
@@ -388,26 +389,12 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
             // everything is new so create subscription with source and a new source status
             subscription = this.persistence.storeSubscription(subscription);
 
-            try {
-                // create subscription and source and start working it
-                sourceStatus = this.createAndStartSource(subscription.getSource());
-            } catch (AdapterNotFoundException e) {
-
-                Message errorMessage = new Message(MessageType.ERROR, StatusType.ERROR_NO_ADAPTER,
-                        subscription.getGlobalId(), new Date());
-                MessagePart messagePart = new MessagePart(MimeType.TEXT_PLAIN,
-                        "no adapter implementation for sourceType " + sourceType + " available");
-                errorMessage.addMessagePart(messagePart);
-
-                // TODO separate error message ?
-                MessageCommunicationMessage mcm = new MessageCommunicationMessage(errorMessage);
-                communicator.sendMessage(mcm);
-
-                return;
-            }
+            // create subscription and source and start working it
+            sourceStatus = this.createAndStartSource(subscription.getSource());
 
         }
 
+        // push existing messages to the subscription
         if (existingSource != null && subscriptionMessageFilter != null
                 && !SubscriptionMessageFilter.NONE.equals(subscriptionMessageFilter)) {
             MessageFilter messageFilter = new MessageFilter();
@@ -467,9 +454,11 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
      * necessary
      * 
      * @param currentSubscriptions
+     * @throws AdapterNotFoundException
      */
     @Override
-    public void synchronizeSubscriptions(List<Subscription> currentSubscriptions) {
+    public void synchronizeSubscriptions(List<Subscription> currentSubscriptions)
+            throws AdapterNotFoundException {
         List<String> subscriptionsToRemove = new ArrayList<String>();
         // find Subscriptions to remove
         // search in all adapters
@@ -548,8 +537,9 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
      * @param subscription
      *            subscription
      * @return true if it needed to be updated
+     * @throws AdapterNotFoundException
      */
-    public boolean updateOrCreate(Subscription subscription) {
+    public boolean updateOrCreate(Subscription subscription) throws AdapterNotFoundException {
 
         Subscription persistentSubscription = persistence.getSubscriptionByGlobalId(subscription
                 .getGlobalId());
