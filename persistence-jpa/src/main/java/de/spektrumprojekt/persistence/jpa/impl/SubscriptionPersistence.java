@@ -19,7 +19,10 @@
 
 package de.spektrumprojekt.persistence.jpa.impl;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -31,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.spektrumprojekt.datamodel.subscription.Subscription;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
 import de.spektrumprojekt.persistence.jpa.JPAConfiguration;
 import de.spektrumprojekt.persistence.jpa.transaction.Transaction;
 
@@ -94,29 +98,6 @@ public final class SubscriptionPersistence extends AbstractPersistenceLayer {
         transaction.executeTransaction(getEntityManager());
     }
 
-    public List<Subscription> getAllSubscriptionsBySourceGlobalId(final String sourceGlobalId) {
-        Transaction<List<Subscription>> transaction = new Transaction<List<Subscription>>() {
-
-            @Override
-            protected List<Subscription> doTransaction(EntityManager entityManager) {
-                TypedQuery<Subscription> query = entityManager
-                        .createQuery(
-                                "SELECT subscription "
-                                        + " FROM Subscription subscription left join subscription.source source"
-                                        + " WHERE source.globalId = :sourceGlobalId"
-                                        + " ORDER BY subscription.id desc", Subscription.class);
-                query.setParameter("sourceGlobalId", sourceGlobalId);
-
-                List<Subscription> subscriptions = query.getResultList();
-                return subscriptions;
-            }
-        };
-
-        List<Subscription> result = transaction.executeTransaction(getEntityManager());
-
-        return result;
-    }
-
     public int getNumberOfSubscriptionsBySourceGlobalId(final String sourceGlobalId) {
         Transaction<Number> transaction = new Transaction<Number>() {
 
@@ -168,6 +149,70 @@ public final class SubscriptionPersistence extends AbstractPersistenceLayer {
 
     public List<Subscription> getSubscriptions() {
         return getAll(Subscription.class);
+    }
+
+    public List<Subscription> getSubscriptions(final SubscriptionFilter subscriptionFilter) {
+        Transaction<List<Subscription>> transaction = new Transaction<List<Subscription>>() {
+
+            @Override
+            protected List<Subscription> doTransaction(EntityManager entityManager) {
+                Map<String, Object> params = new HashMap<String, Object>();
+
+                String select = "subscription ";
+                StringBuilder from = new StringBuilder();
+                StringBuilder where = new StringBuilder();
+
+                from.append("Subscription subscription ");
+
+                String wherePrefix = "";
+
+                if (subscriptionFilter.getSourceGlobalId() != null) {
+                    from.append("left join subscription.source source ");
+                    where.append(wherePrefix);
+                    wherePrefix = " AND ";
+                    where.append("source.globalId = :sourceGlobalId ");
+                    params.put("sourceGlobalId", subscriptionFilter.getSourceGlobalId());
+
+                }
+                if (subscriptionFilter.getSubscriptionProperty() != null) {
+                    from.append("left join subscription.subscriptionParameters params ");
+                    where.append(wherePrefix);
+                    wherePrefix = " AND ";
+                    where.append("params.propertyKey = :propertyKey ");
+                    where.append(wherePrefix);
+                    where.append("params.propertyValue = :propertyValue ");
+
+                    params.put("propertyKey", subscriptionFilter.getSubscriptionProperty()
+                            .getPropertyKey());
+                    params.put("propertyValue", subscriptionFilter
+                            .getSubscriptionProperty().getPropertyValue());
+
+                }
+
+                StringBuilder q = new StringBuilder();
+                q.append("SELECT ");
+                q.append(select);
+                q.append("FROM ");
+                q.append(from);
+                q.append("WHERE ");
+                q.append(where);
+                q.append(" ORDER BY subscription.id desc");
+
+                TypedQuery<Subscription> query = entityManager.createQuery(q.toString(),
+                        Subscription.class);
+
+                for (Entry<String, Object> param : params.entrySet()) {
+                    query.setParameter(param.getKey(), param.getValue());
+                }
+
+                List<Subscription> subscriptions = query.getResultList();
+                return subscriptions;
+            }
+        };
+
+        List<Subscription> result = transaction.executeTransaction(getEntityManager());
+
+        return result;
     }
 
     public Subscription storeSubscription(Subscription subscription) {

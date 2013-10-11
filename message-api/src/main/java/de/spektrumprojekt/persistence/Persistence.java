@@ -39,6 +39,7 @@ import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.source.Source;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
@@ -74,8 +75,6 @@ public interface Persistence {
     Source findSource(String connectorType, Collection<Property> accessParameters);
 
     Collection<MessageGroup> getAllMessageGroups();
-
-    List<Subscription> getAllSubscriptionsBySourceGlobalId(String sourceGlobalId);
 
     Collection<Term> getAllTerms();
 
@@ -148,6 +147,8 @@ public interface Persistence {
     List<SourceStatus> getSourceStatusList();
 
     Subscription getSubscriptionByGlobalId(String subscriptionGlobalId);
+
+    List<Subscription> getSubscriptions(SubscriptionFilter subscriptionFilter);
 
     TermFrequency getTermFrequency();
 

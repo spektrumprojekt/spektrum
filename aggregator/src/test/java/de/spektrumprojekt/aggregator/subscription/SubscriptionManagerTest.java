@@ -302,6 +302,40 @@ public class SubscriptionManagerTest {
     }
 
     @Test
+    public void testSuspendSubscription() {
+        Subscription subscription = getRSSSubscription(URL_3, null);
+
+        manager.subscribe(subscription);
+        Subscription persistedSubscription = manager.getSubscription(subscription.getGlobalId());
+        Assert.assertNotNull(persistedSubscription);
+        Assert.assertNotNull(persistedSubscription.getGlobalId());
+
+        Assert.assertFalse("Subscription not be suspended at the start.",
+                persistedSubscription.isSuspended());
+
+        // suspend
+        manager.suspendSubscription(persistedSubscription.getGlobalId());
+
+        persistedSubscription = manager.getSubscription(subscription.getGlobalId());
+        Assert.assertNotNull(persistedSubscription);
+        Assert.assertNotNull(persistedSubscription.getGlobalId());
+
+        Assert.assertTrue("Subscription should be suspended now.",
+                persistedSubscription.isSuspended());
+
+        // continue
+        manager.continueSubscription(persistedSubscription.getGlobalId());
+
+        persistedSubscription = manager.getSubscription(subscription.getGlobalId());
+        Assert.assertNotNull(persistedSubscription);
+        Assert.assertNotNull(persistedSubscription.getGlobalId());
+
+        Assert.assertFalse("Subscription not be suspended any more.",
+                persistedSubscription.isSuspended());
+
+    }
+
+    @Test
     public void testUnsubscribe() {
         Subscription subscription = getRSSSubscription(URL_1, null);
         manager.subscribe(subscription);
