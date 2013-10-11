@@ -20,6 +20,7 @@
 package de.spektrumprojekt.datamodel.source;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 
@@ -131,10 +132,20 @@ public class SourceStatus extends Identifiable {
     /**
      * @param e
      *            Property
-     * @return true if this collection changed as a result of the call
+     * @return the old value of the property, null if it did not exist
      */
-    public boolean addProperty(Property e) {
-        return properties.add(e);
+    public Property addProperty(Property e) {
+        Property oldValue = null;
+        for (Property property : properties) {
+            if (property.getPropertyKey().equals(e.getPropertyKey())) {
+                oldValue = property;
+            }
+        }
+        if (oldValue != null) {
+            properties.remove(oldValue);
+        }
+        properties.add(e);
+        return oldValue;
     }
 
     /**
@@ -195,7 +206,7 @@ public class SourceStatus extends Identifiable {
     }
 
     public Collection<Property> getProperties() {
-        return properties;
+        return Collections.unmodifiableCollection(properties);
     }
 
     /**
