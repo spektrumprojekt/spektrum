@@ -66,11 +66,45 @@ public abstract class XMLAdapter extends BasePollingAdapter {
 
     protected static final String CONTEXT_SOURCE_STATUS = "source_status";
 
+    /** the property key for the property containing the copyright information of the source */
+    public static final String SOURCE_PROPERTY_KEY_COPYRIGHT = "copyright";
+
+    /** the property key for the property containing the copyright information of the source */
+    public static final String SOURCE_PROPERTY_KEY_TITLE = "title";
+
+    /** the property key for the property containing the copyright information of the source */
+    public static final String SOURCE_PROPERTY_KEY_DESCRIPTION = "description";
+
     public XMLAdapter(AggregatorChain aggregatorChain,
             AggregatorConfiguration aggregatorConfiguration) {
         super(aggregatorChain, aggregatorConfiguration, aggregatorConfiguration
                 .getPollingInterval(), THREAD_POOL_SIZE);
+    }
 
+    /**
+     * 
+     * @param sourceStatus
+     * @param property
+     * @param value
+     *            propertyValue
+     * @param key
+     *            propertyKey
+     * @return true if the sourceStatus was modified
+     */
+    private boolean changePropertyIfNecessary(SourceStatus sourceStatus, Property property,
+            String value, String key) {
+        if (value == null) {
+            if (property != null) {
+                sourceStatus.remove(property);
+                return true;
+            }
+        } else {
+            if (property == null || !value.equals(property.getPropertyValue())) {
+                sourceStatus.addProperty(new Property(key, value));
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -169,6 +203,45 @@ public abstract class XMLAdapter extends BasePollingAdapter {
         return publishedDate;
     }
 
+    /**
+     * 
+     * @param syndFeed
+     *            current Information
+     * @param sourceStatus
+     * @return true if the source was modified
+     */
+    private boolean extractFeedPropertiesIfUnset(SyndFeed syndFeed, SourceStatus sourceStatus) {
+        sourceStatus = getAggregatorChain().getPersistence().getSourceStatusBySourceGlobalId(
+                sourceStatus.getSource().getGlobalId());
+        if (sourceStatus != null) {
+            boolean modified = false;
+            Property property = sourceStatus.getProperty(SOURCE_PROPERTY_KEY_COPYRIGHT);
+            String currentValue = syndFeed.getCopyright();
+            if (currentValue == null) {
+                Object module = syndFeed.getModule(DCModule.URI);
+                if (module != null && module instanceof DCModule) {
+                    currentValue = ((DCModule) syndFeed.getModule(DCModule.URI)).getRights();
+                }
+            }
+            modified = changePropertyIfNecessary(sourceStatus, property, currentValue,
+                    SOURCE_PROPERTY_KEY_COPYRIGHT);
+            property = sourceStatus.getProperty(SOURCE_PROPERTY_KEY_DESCRIPTION);
+            currentValue = syndFeed.getDescription();
+            modified = changePropertyIfNecessary(sourceStatus, property, currentValue,
+                    SOURCE_PROPERTY_KEY_DESCRIPTION);
+            property = sourceStatus.getProperty(SOURCE_PROPERTY_KEY_TITLE);
+            currentValue = syndFeed.getTitle();
+            modified = changePropertyIfNecessary(sourceStatus, property, currentValue,
+                    SOURCE_PROPERTY_KEY_TITLE);
+            if (modified) {
+                getAggregatorChain().getPersistence().updateSourceStatus(sourceStatus);
+            }
+            return modified;
+        } else {
+            return false;
+        }
+    }
+
     private String extractTags(SyndEntry syndEntry) {
         List<String> tags = new LinkedList<String>();
         for (Object category : syndEntry.getCategories()) {
@@ -209,6 +282,7 @@ public abstract class XMLAdapter extends BasePollingAdapter {
             if (in != null) {
                 SyndFeedInput feedInput = new SyndFeedInput();
                 SyndFeed syndFeed = feedInput.build(new InputSource(in));
+                extractFeedPropertiesIfUnset(syndFeed, subscriptionStatus);
                 // LOGGER.debug("retrieved {} items from {}", syndFeed.getEntries().size(), uri);
                 messages = processMessages(syndFeed, subscriptionStatus);
                 success = true;

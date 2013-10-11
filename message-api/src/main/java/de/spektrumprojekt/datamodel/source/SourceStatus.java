@@ -19,9 +19,13 @@
 
 package de.spektrumprojekt.datamodel.source;
 
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
@@ -30,6 +34,7 @@ import javax.persistence.UniqueConstraint;
 
 import org.apache.commons.lang3.Validate;
 
+import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.identifiable.Identifiable;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
@@ -91,6 +96,10 @@ public class SourceStatus extends Identifiable {
     /** The last message occurred while accessing the source */
     private String lastAccessMessage;
 
+    /** Properties for additional information */
+    @OneToMany(cascade = CascadeType.ALL)
+    private final Collection<Property> properties = new HashSet<Property>();
+
     /** Constructor for ORM layer. */
     protected SourceStatus() {
 
@@ -117,6 +126,15 @@ public class SourceStatus extends Identifiable {
         this.blocked = false;
         this.lastContentTimestamp = null;
         this.lastContentHash = null;
+    }
+
+    /**
+     * @param e
+     *            Property
+     * @return true if this collection changed as a result of the call
+     */
+    public boolean addProperty(Property e) {
+        return properties.add(e);
     }
 
     /**
@@ -176,6 +194,25 @@ public class SourceStatus extends Identifiable {
         return lastSuccessfulCheck.after(lastError) ? lastSuccessfulCheck : lastError;
     }
 
+    public Collection<Property> getProperties() {
+        return properties;
+    }
+
+    /**
+     * 
+     * @param key
+     *            propertykey
+     * @return property
+     */
+    public Property getProperty(String key) {
+        for (Property property : properties) {
+            if (property.getPropertyKey().equals(key)) {
+                return property;
+            }
+        }
+        return null;
+    }
+
     public Source getSource() {
         return source;
     }
@@ -192,6 +229,10 @@ public class SourceStatus extends Identifiable {
      */
     public boolean isBlocked() {
         return blocked;
+    }
+
+    public boolean remove(Object o) {
+        return properties.remove(o);
     }
 
     public void setBlocked(boolean blocked) {
