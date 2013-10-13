@@ -49,6 +49,7 @@ import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionMessageFilter;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
+import de.spektrumprojekt.exceptions.SubscriptionNotFoundException;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**
@@ -151,7 +152,7 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
     }
 
     @Override
-    public boolean continueSubscription(String subscriptionId) {
+    public boolean continueSubscription(String subscriptionId) throws SubscriptionNotFoundException {
 
         if (subscriptionId == null) {
             throw new IllegalArgumentException("subscriptionId cannot be null.");
@@ -257,7 +258,8 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
     }
 
     @Override
-    public Subscription getSubscription(String subscriptionGlobalId) {
+    public Subscription getSubscription(String subscriptionGlobalId)
+            throws SubscriptionNotFoundException {
         return this.persistence.getSubscriptionByGlobalId(subscriptionGlobalId);
     }
 
@@ -338,7 +340,8 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
     }
 
     @Override
-    public void subscribe(Subscription subscription) throws AdapterNotFoundException {
+    public void subscribe(Subscription subscription) throws AdapterNotFoundException,
+            SubscriptionNotFoundException {
         this.subscribe(subscription, null);
     }
 
@@ -363,11 +366,16 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
             return;
         }
 
-        Subscription existingSubscription = this.persistence.getSubscriptionByGlobalId(subscription
-                .getGlobalId());
-        if (existingSubscription != null) {
-            this.unsubscribe(subscription.getGlobalId());
+        try {
+            Subscription existingSubscription = this.persistence
+                    .getSubscriptionByGlobalId(subscription
+                            .getGlobalId());
+            if (existingSubscription != null) {
 
+                this.unsubscribe(subscription.getGlobalId());
+            }
+        } catch (SubscriptionNotFoundException e) {
+            // ignore
         }
 
         Source existingSource = this.persistence.findSource(source.getConnectorType(),
@@ -425,7 +433,7 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
     }
 
     @Override
-    public boolean suspendSubscription(String subscriptionId) {
+    public boolean suspendSubscription(String subscriptionId) throws SubscriptionNotFoundException {
 
         if (subscriptionId == null) {
             throw new IllegalArgumentException("subscriptionId cannot be null.");
@@ -455,6 +463,7 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
      * 
      * @param currentSubscriptions
      * @throws AdapterNotFoundException
+     * @throws SubscriptionNotFoundException
      */
     @Override
     public void synchronizeSubscriptions(List<Subscription> currentSubscriptions)
@@ -478,14 +487,21 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
                 }
             }
         }
-        // remove old subscriptions
-        for (String subscriptionGlobalId : subscriptionsToRemove) {
-            unsubscribe(subscriptionGlobalId);
+        try {
+            // remove old subscriptions
+            for (String subscriptionGlobalId : subscriptionsToRemove) {
+
+                unsubscribe(subscriptionGlobalId);
+            }
+            // update the current subscriptions if neccessary
+            for (Subscription subscription : currentSubscriptions) {
+                updateOrCreate(subscription);
+            }
+        } catch (SubscriptionNotFoundException e) {
+            // should not occur since only subscriptions are used that exist
+            throw new RuntimeException(e);
         }
-        // update the current subscriptions if neccessary
-        for (Subscription subscription : currentSubscriptions) {
-            updateOrCreate(subscription);
-        }
+
     }
 
     private void unblockSource(SourceStatus sourceStatus) {
@@ -497,7 +513,7 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
     }
 
     @Override
-    public void unsubscribe(String subscriptionId) {
+    public void unsubscribe(String subscriptionId) throws SubscriptionNotFoundException {
         if (subscriptionId == null) {
             throw new IllegalArgumentException("subscriptionId cannot be null.");
         }
@@ -538,8 +554,10 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
      *            subscription
      * @return true if it needed to be updated
      * @throws AdapterNotFoundException
+     * @throws SubscriptionNotFoundException
      */
-    public boolean updateOrCreate(Subscription subscription) throws AdapterNotFoundException {
+    public boolean updateOrCreate(Subscription subscription) throws AdapterNotFoundException,
+            SubscriptionNotFoundException {
 
         Subscription persistentSubscription = persistence.getSubscriptionByGlobalId(subscription
                 .getGlobalId());

@@ -24,6 +24,7 @@ import java.util.List;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionMessageFilter;
+import de.spektrumprojekt.exceptions.SubscriptionNotFoundException;
 
 /**
  * <p>
@@ -37,9 +38,9 @@ import de.spektrumprojekt.datamodel.subscription.SubscriptionMessageFilter;
  */
 public interface SubscriptionManager {
 
-    boolean continueSubscription(String subscriptionId);
+    boolean continueSubscription(String subscriptionGlobalId) throws SubscriptionNotFoundException;
 
-    Subscription getSubscription(String subscriptionGlobalId);
+    Subscription getSubscription(String subscriptionGlobalId) throws SubscriptionNotFoundException;
 
     List<Subscription> getSubscriptions(SubscriptionFilter subscriptionFilter);
 
@@ -57,7 +58,8 @@ public interface SubscriptionManager {
      *            The subscription to subscribe to.
      * @throws AdapterNotFoundException
      */
-    void subscribe(Subscription subscription) throws AdapterNotFoundException;
+    void subscribe(Subscription subscription) throws AdapterNotFoundException,
+            SubscriptionNotFoundException;
 
     /**
      * <p>
@@ -74,7 +76,7 @@ public interface SubscriptionManager {
     void subscribe(Subscription subscription, SubscriptionMessageFilter subscriptionMessageFilter)
             throws AdapterNotFoundException;
 
-    boolean suspendSubscription(String subscriptionId);
+    boolean suspendSubscription(String subscriptionId) throws SubscriptionNotFoundException;
 
     /**
      * Use exactly the subscriptions as in the provided list. Remove all not in the list.
@@ -92,7 +94,8 @@ public interface SubscriptionManager {
      * 
      * @param subscriptionId
      *            The subscription ID for the subscription which shall be removed.
+     * @throws SubscriptionNotFoundException
      */
-    void unsubscribe(String subscriptionId);
+    void unsubscribe(String subscriptionId) throws SubscriptionNotFoundException;
 
 }

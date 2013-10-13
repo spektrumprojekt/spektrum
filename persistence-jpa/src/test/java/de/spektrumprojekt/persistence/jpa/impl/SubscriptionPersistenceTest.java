@@ -149,7 +149,7 @@ public class SubscriptionPersistenceTest {
     }
 
     @Test
-    public void testSaveSubscription() {
+    public void testSaveSubscription() throws Exception {
         Source source = new Source("connectorType");
 
         Subscription subscription = new Subscription("subId", source);
