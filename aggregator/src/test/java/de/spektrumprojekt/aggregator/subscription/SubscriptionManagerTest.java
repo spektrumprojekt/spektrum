@@ -51,6 +51,7 @@ import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionMessageFilter;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
+import de.spektrumprojekt.exceptions.SubscriptionNotFoundException;
 import de.spektrumprojekt.persistence.jpa.JPAConfiguration;
 import de.spektrumprojekt.persistence.jpa.JPAPersistence;
 import de.spektrumprojekt.persistence.jpa.impl.SubscriptionPersistence;
@@ -344,7 +345,12 @@ public class SubscriptionManagerTest {
         int numberOfSubscriptions = getNumberOfSubscriptions();
         manager.unsubscribe(subscription.getGlobalId());
 
-        Assert.assertNull(persistence.getSubscriptionByGlobalId(subscription.getGlobalId()));
+        try {
+            persistence.getSubscriptionByGlobalId(subscription.getGlobalId());
+            Assert.fail("Subscription should not exist anymore and a SubscriptionNotFoundException should be thrown.");
+        } catch (SubscriptionNotFoundException e) {
+            // success
+        }
         Assert.assertEquals(numberOfSubscriptions - 1, getNumberOfSubscriptions());
     }
 
