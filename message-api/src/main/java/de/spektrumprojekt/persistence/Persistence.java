@@ -44,6 +44,7 @@ import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
+import de.spektrumprojekt.exceptions.SubscriptionNotFoundException;
 
 /**
  * The main interface for accessing the persistence.
@@ -146,7 +147,8 @@ public interface Persistence {
 
     List<SourceStatus> getSourceStatusList();
 
-    Subscription getSubscriptionByGlobalId(String subscriptionGlobalId);
+    Subscription getSubscriptionByGlobalId(String subscriptionGlobalId)
+            throws SubscriptionNotFoundException;
 
     List<Subscription> getSubscriptions(SubscriptionFilter subscriptionFilter);
 
@@ -250,7 +252,7 @@ public interface Persistence {
 
     void updateSourceStatus(SourceStatus sourceStatus);
 
-    Subscription updateSubscription(Subscription subscription);
+    Subscription updateSubscription(Subscription subscription) throws SubscriptionNotFoundException;
 
     void updateTermFrequency(TermFrequency termFrequency);
 

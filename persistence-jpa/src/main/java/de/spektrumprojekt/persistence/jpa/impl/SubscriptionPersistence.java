@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
+import de.spektrumprojekt.exceptions.SubscriptionNotFoundException;
 import de.spektrumprojekt.persistence.jpa.JPAConfiguration;
 import de.spektrumprojekt.persistence.jpa.transaction.Transaction;
 
@@ -128,22 +129,38 @@ public final class SubscriptionPersistence extends AbstractPersistenceLayer {
      * @param subscriptionId
      *            The {@link Subscription}, or <code>null</code> if no such Subscription.
      * @return
+     * @throws SubscriptionNotFoundException
      */
-    public Subscription getSubscriptionByGlobalId(String subscriptionId) {
-        EntityManager entityManager = getEntityManager();
-        TypedQuery<Subscription> query = entityManager.createQuery(
-                "SELECT s FROM Subscription s WHERE s.globalId = :subscriptionId",
-                Subscription.class);
-        query.setParameter("subscriptionId", subscriptionId);
-        EntityTransaction transaction = entityManager.getTransaction();
-        transaction.begin();
-        Subscription subscription = null;
-        try {
-            subscription = query.getSingleResult();
-        } catch (NoResultException e) {
+    public Subscription getSubscriptionByGlobalId(final String subscriptionGlobalId)
+            throws SubscriptionNotFoundException {
+
+        Transaction<Subscription> transaction = new Transaction<Subscription>() {
+
+            @Override
+            protected Subscription doTransaction(EntityManager entityManager) {
+                Subscription subscription = null;
+                try {
+
+                    TypedQuery<Subscription> query = entityManager
+                            .createQuery(
+                                    "SELECT s FROM Subscription s WHERE s.globalId = :subscriptionGlobalId",
+                                    Subscription.class);
+                    query.setParameter("subscriptionGlobalId", subscriptionGlobalId);
+
+                    subscription = query.getSingleResult();
+
+                } catch (NoResultException e) {
+                }
+                return subscription;
+            }
+        };
+
+        Subscription subscription = transaction.executeTransaction(getEntityManager());
+        if (subscription == null) {
+            throw new SubscriptionNotFoundException(
+                    "No subscription found for subscriptionGlobalId=" + subscriptionGlobalId,
+                    subscriptionGlobalId);
         }
-        transaction.commit();
-        entityManager.close();
         return subscription;
     }
 
@@ -219,7 +236,8 @@ public final class SubscriptionPersistence extends AbstractPersistenceLayer {
         return save(subscription);
     }
 
-    public Subscription updateSubscription(Subscription subscription) {
+    public Subscription updateSubscription(Subscription subscription)
+            throws SubscriptionNotFoundException {
 
         EntityManager entityManager = getEntityManager();
         EntityTransaction transaction = entityManager.getTransaction();
@@ -227,6 +245,10 @@ public final class SubscriptionPersistence extends AbstractPersistenceLayer {
 
         Subscription persistentSubscription = findByGlobalId(entityManager, Subscription.class,
                 subscription.getGlobalId());
+        if (persistentSubscription == null) {
+            throw new SubscriptionNotFoundException("Subscription not found for "
+                    + subscription.getGlobalId(), subscription.getGlobalId());
+        }
         subscription.setId(persistentSubscription.getId());
 
         persistentSubscription = entityManager.merge(subscription);

@@ -51,6 +51,7 @@ import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionMessageFilter;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
+import de.spektrumprojekt.exceptions.SubscriptionNotFoundException;
 import de.spektrumprojekt.persistence.jpa.JPAConfiguration;
 import de.spektrumprojekt.persistence.jpa.JPAPersistence;
 import de.spektrumprojekt.persistence.jpa.impl.SubscriptionPersistence;
@@ -200,7 +201,7 @@ public class SubscriptionManagerTest {
     }
 
     @Test
-    public void testLastAccessMessage() {
+    public void testLastAccessMessage() throws Exception {
         String subscriptionId = "testLastAccessMessageSubscriptionId";
         Subscription subscription = getFileSubscription(
                 TestHelper.getTestFilePath(TestHelper.FILE_NAME_INVALID_XML), subscriptionId);
@@ -228,7 +229,7 @@ public class SubscriptionManagerTest {
     }
 
     @Test
-    public void testSubscribe() {
+    public void testSubscribe() throws Exception {
         Subscription subscription = getRSSSubscription(URL_1, null);
         manager.subscribe(subscription);
 
@@ -236,7 +237,7 @@ public class SubscriptionManagerTest {
     }
 
     @Test
-    public void testSubscribeWithFilter() throws InterruptedException {
+    public void testSubscribeWithFilter() throws Exception {
 
         int initalCount = 10;
         SubscriptionMessageFilter subscriptionMessageFilter = new SubscriptionMessageFilter(
@@ -253,7 +254,7 @@ public class SubscriptionManagerTest {
 
         // wait for all messages to be delivered
         int size = this.messageHandlerTest.getMessages().size();
-        Assert.assertTrue(size >= 5);
+        Assert.assertTrue("Should have at least 5 messages but have: " + size, size >= 5);
 
         this.messageHandlerTest.getMessages().clear();
         Subscription subscription2 = getRSSSubscription(URL_4, null);
@@ -271,7 +272,7 @@ public class SubscriptionManagerTest {
     }
 
     @Test
-    public void testSubscribeWithSameSource() {
+    public void testSubscribeWithSameSource() throws Exception {
         Subscription subscription = getRSSSubscription(URL_3, null);
 
         manager.subscribe(subscription);
@@ -302,7 +303,7 @@ public class SubscriptionManagerTest {
     }
 
     @Test
-    public void testSuspendSubscription() {
+    public void testSuspendSubscription() throws Exception {
         Subscription subscription = getRSSSubscription(URL_3, null);
 
         manager.subscribe(subscription);
@@ -336,7 +337,7 @@ public class SubscriptionManagerTest {
     }
 
     @Test
-    public void testUnsubscribe() {
+    public void testUnsubscribe() throws Exception {
         Subscription subscription = getRSSSubscription(URL_1, null);
         manager.subscribe(subscription);
         Assert.assertNotNull(persistence.getSubscriptionByGlobalId(subscription.getGlobalId()));
@@ -344,12 +345,17 @@ public class SubscriptionManagerTest {
         int numberOfSubscriptions = getNumberOfSubscriptions();
         manager.unsubscribe(subscription.getGlobalId());
 
-        Assert.assertNull(persistence.getSubscriptionByGlobalId(subscription.getGlobalId()));
+        try {
+            persistence.getSubscriptionByGlobalId(subscription.getGlobalId());
+            Assert.fail("Subscription should not exist anymore and a SubscriptionNotFoundException should be thrown.");
+        } catch (SubscriptionNotFoundException e) {
+            // success
+        }
         Assert.assertEquals(numberOfSubscriptions - 1, getNumberOfSubscriptions());
     }
 
     @Test
-    public void testUpdate() {
+    public void testUpdate() throws Exception {
         Subscription subscription = getRSSSubscription(URL_1, null);
         manager.subscribe(subscription);
 

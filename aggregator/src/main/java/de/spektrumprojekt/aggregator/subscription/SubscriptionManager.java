@@ -24,6 +24,7 @@ import java.util.List;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionMessageFilter;
+import de.spektrumprojekt.exceptions.SubscriptionNotFoundException;
 
 /**
  * <p>
@@ -37,9 +38,9 @@ import de.spektrumprojekt.datamodel.subscription.SubscriptionMessageFilter;
  */
 public interface SubscriptionManager {
 
-    boolean continueSubscription(String subscriptionId);
+    boolean continueSubscription(String subscriptionGlobalId) throws SubscriptionNotFoundException;
 
-    Subscription getSubscription(String subscriptionGlobalId);
+    Subscription getSubscription(String subscriptionGlobalId) throws SubscriptionNotFoundException;
 
     List<Subscription> getSubscriptions(SubscriptionFilter subscriptionFilter);
 
@@ -55,8 +56,10 @@ public interface SubscriptionManager {
      * 
      * @param subscription
      *            The subscription to subscribe to.
+     * @throws AdapterNotFoundException
      */
-    void subscribe(Subscription subscription);
+    void subscribe(Subscription subscription) throws AdapterNotFoundException,
+            SubscriptionNotFoundException;
 
     /**
      * <p>
@@ -68,18 +71,21 @@ public interface SubscriptionManager {
      * @param subscriptionMessageFilter
      *            Use this filter to also return the messages already fetched. If null
      *            {@link SubscriptionMessageFilter#NONE} will be used.
+     * @throws AdapterNotFoundException
      */
-    void subscribe(Subscription subscription, SubscriptionMessageFilter subscriptionMessageFilter);
+    void subscribe(Subscription subscription, SubscriptionMessageFilter subscriptionMessageFilter)
+            throws AdapterNotFoundException;
 
-    boolean suspendSubscription(String subscriptionId);
+    boolean suspendSubscription(String subscriptionId) throws SubscriptionNotFoundException;
 
     /**
      * Use exactly the subscriptions as in the provided list. Remove all not in the list.
      * 
      * @param subscriptions
      *            the subscriptions to synchronize
+     * @throws AdapterNotFoundException
      */
-    void synchronizeSubscriptions(List<Subscription> subscriptions);
+    void synchronizeSubscriptions(List<Subscription> subscriptions) throws AdapterNotFoundException;
 
     /**
      * <p>
@@ -88,7 +94,8 @@ public interface SubscriptionManager {
      * 
      * @param subscriptionId
      *            The subscription ID for the subscription which shall be removed.
+     * @throws SubscriptionNotFoundException
      */
-    void unsubscribe(String subscriptionId);
+    void unsubscribe(String subscriptionId) throws SubscriptionNotFoundException;
 
 }
