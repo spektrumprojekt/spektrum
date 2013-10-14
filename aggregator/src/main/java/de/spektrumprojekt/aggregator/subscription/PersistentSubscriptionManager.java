@@ -332,6 +332,41 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
     }
 
     /**
+     * Push existing messages to subscription
+     * 
+     * @param subscription
+     * @param subscriptionMessageFilter
+     * @param existingSource
+     */
+    private void pushMessages(Subscription subscription,
+            SubscriptionMessageFilter subscriptionMessageFilter, Source existingSource) {
+        MessageFilter messageFilter = new MessageFilter();
+        messageFilter.setSourceGlobalId(existingSource.getGlobalId());
+        messageFilter.setMessageIdOrderDirection(OrderDirection.ASC);
+
+        List<Message> messages = Collections.emptyList();
+
+        if (subscriptionMessageFilter.getStartDate() != null) {
+            messageFilter.setMinPublicationDate(subscriptionMessageFilter.getStartDate());
+            messages = this.persistence.getMessages(messageFilter);
+        }
+        if (messages.size() < subscriptionMessageFilter.getLastXMessages()) {
+            messageFilter.setMinPublicationDate(null);
+            messageFilter.setLastMessagesCount(subscriptionMessageFilter.getLastXMessages());
+            messages = this.persistence.getMessages(messageFilter);
+        }
+
+        for (Message message : messages) {
+
+            AggregatorMessageContext aggregatorMessageContext = new AggregatorMessageContext(
+                    this.aggregatorChain.getPersistence(), message, subscription.getGlobalId());
+            this.aggregatorChain.getAddMessageToSubscriptionChain().process(
+                    aggregatorMessageContext);
+
+        }
+    }
+
+    /**
      * tells the adapterManager to stop
      */
     @Override
@@ -405,30 +440,7 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
         // push existing messages to the subscription
         if (existingSource != null && subscriptionMessageFilter != null
                 && !SubscriptionMessageFilter.NONE.equals(subscriptionMessageFilter)) {
-            MessageFilter messageFilter = new MessageFilter();
-            messageFilter.setSourceGlobalId(existingSource.getGlobalId());
-            messageFilter.setMessageIdOrderDirection(OrderDirection.ASC);
-
-            List<Message> messages = Collections.emptyList();
-
-            if (subscriptionMessageFilter.getStartDate() != null) {
-                messageFilter.setMinPublicationDate(subscriptionMessageFilter.getStartDate());
-                messages = this.persistence.getMessages(messageFilter);
-            }
-            if (messages.size() < subscriptionMessageFilter.getLastXMessages()) {
-                messageFilter.setMinPublicationDate(null);
-                messageFilter.setLastMessagesCount(subscriptionMessageFilter.getLastXMessages());
-                messages = this.persistence.getMessages(messageFilter);
-            }
-
-            for (Message message : messages) {
-
-                AggregatorMessageContext aggregatorMessageContext = new AggregatorMessageContext(
-                        this.aggregatorChain.getPersistence(), message, subscription.getGlobalId());
-                this.aggregatorChain.getAddMessageToSubscriptionChain().process(
-                        aggregatorMessageContext);
-
-            }
+            pushMessages(subscription, subscriptionMessageFilter, existingSource);
         }
     }
 
