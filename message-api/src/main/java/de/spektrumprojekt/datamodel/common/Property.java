@@ -82,6 +82,15 @@ public class Property extends Identifiable {
     @Lob
     private String propertyValue;
 
+    /** the property key for the property containing the copyright information of the source */
+    public static final String SOURCE_PROPERTY_KEY_COPYRIGHT = "copyright";
+
+    /** the property key for the property containing the copyright information of the source */
+    public static final String SOURCE_PROPERTY_KEY_TITLE = "title";
+
+    /** the property key for the property containing the copyright information of the source */
+    public static final String SOURCE_PROPERTY_KEY_DESCRIPTION = "description";
+
     /** Constructor for ORM layer only. */
     protected Property() {
 

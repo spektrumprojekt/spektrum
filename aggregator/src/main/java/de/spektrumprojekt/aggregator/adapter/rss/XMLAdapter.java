@@ -138,18 +138,9 @@ public abstract class XMLAdapter extends BasePollingAdapter {
 
     protected static final String CONTEXT_SOURCE_STATUS = "source_status";
 
-    /** the property key for the property containing the copyright information of the source */
-    public static final String SOURCE_PROPERTY_KEY_COPYRIGHT = "copyright";
-
-    /** the property key for the property containing the copyright information of the source */
-    public static final String SOURCE_PROPERTY_KEY_TITLE = "title";
-
-    /** the property key for the property containing the copyright information of the source */
-    public static final String SOURCE_PROPERTY_KEY_DESCRIPTION = "description";
-
     /** used to copy the copyright information */
     private final PropertyExtractor copyrightExtractor = new PropertyExtractor(
-            SOURCE_PROPERTY_KEY_COPYRIGHT) {
+            Property.SOURCE_PROPERTY_KEY_COPYRIGHT) {
         @Override
         protected String extractFrom(DCModule dcModule) {
             return dcModule.getRights();
@@ -163,7 +154,7 @@ public abstract class XMLAdapter extends BasePollingAdapter {
 
     /** used to copy the title information */
     private final PropertyExtractor titleExtractor = new PropertyExtractor(
-            SOURCE_PROPERTY_KEY_TITLE) {
+            Property.SOURCE_PROPERTY_KEY_TITLE) {
         @Override
         protected String extractFrom(DCModule dcModule) {
             return dcModule.getTitle();
@@ -177,7 +168,7 @@ public abstract class XMLAdapter extends BasePollingAdapter {
 
     /** used to copy the description information */
     private final PropertyExtractor descriptionExtractor = new PropertyExtractor(
-            SOURCE_PROPERTY_KEY_DESCRIPTION) {
+            Property.SOURCE_PROPERTY_KEY_DESCRIPTION) {
         @Override
         protected String extractFrom(DCModule dcModule) {
             return dcModule.getDescription();

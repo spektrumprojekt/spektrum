@@ -148,43 +148,43 @@ public class FileAdapterTest {
     }
 
     private void testPropertiesFilledDC(SourceStatus sourceStatus) {
-        Assert.assertNotNull(sourceStatus.getProperty(XMLAdapter.SOURCE_PROPERTY_KEY_TITLE));
-        Assert.assertNotNull(sourceStatus.getProperty(XMLAdapter.SOURCE_PROPERTY_KEY_DESCRIPTION));
+        Assert.assertNotNull(sourceStatus.getProperty(Property.SOURCE_PROPERTY_KEY_TITLE));
+        Assert.assertNotNull(sourceStatus.getProperty(Property.SOURCE_PROPERTY_KEY_DESCRIPTION));
 
         // The Framework seems not to support the dc rights TODO change if support is added
-        Assert.assertNull(sourceStatus.getProperty(XMLAdapter.SOURCE_PROPERTY_KEY_COPYRIGHT));
+        Assert.assertNull(sourceStatus.getProperty(Property.SOURCE_PROPERTY_KEY_COPYRIGHT));
         // Assert.assertEquals("copyright456",
         // sourceStatus.getProperty(XMLAdapter.SOURCE_PROPERTY_KEY_COPYRIGHT)
         // .getPropertyValue());
 
         Assert.assertEquals("title456",
-                sourceStatus.getProperty(XMLAdapter.SOURCE_PROPERTY_KEY_TITLE).getPropertyValue());
+                sourceStatus.getProperty(Property.SOURCE_PROPERTY_KEY_TITLE).getPropertyValue());
         Assert.assertEquals("description456",
-                sourceStatus.getProperty(XMLAdapter.SOURCE_PROPERTY_KEY_DESCRIPTION)
+                sourceStatus.getProperty(Property.SOURCE_PROPERTY_KEY_DESCRIPTION)
                         .getPropertyValue());
     }
 
     private void testPropertiesFilledNoDC(SourceStatus sourceStatus) {
         testPropertiesNotNull(sourceStatus);
         Assert.assertEquals("copyright123",
-                sourceStatus.getProperty(XMLAdapter.SOURCE_PROPERTY_KEY_COPYRIGHT)
+                sourceStatus.getProperty(Property.SOURCE_PROPERTY_KEY_COPYRIGHT)
                         .getPropertyValue());
         Assert.assertEquals("title123",
-                sourceStatus.getProperty(XMLAdapter.SOURCE_PROPERTY_KEY_TITLE).getPropertyValue());
+                sourceStatus.getProperty(Property.SOURCE_PROPERTY_KEY_TITLE).getPropertyValue());
         Assert.assertEquals("description123",
-                sourceStatus.getProperty(XMLAdapter.SOURCE_PROPERTY_KEY_DESCRIPTION)
+                sourceStatus.getProperty(Property.SOURCE_PROPERTY_KEY_DESCRIPTION)
                         .getPropertyValue());
     }
 
     private void testPropertiesNotNull(SourceStatus sourceStatus) {
-        Assert.assertNotNull(sourceStatus.getProperty(XMLAdapter.SOURCE_PROPERTY_KEY_COPYRIGHT));
-        Assert.assertNotNull(sourceStatus.getProperty(XMLAdapter.SOURCE_PROPERTY_KEY_TITLE));
-        Assert.assertNotNull(sourceStatus.getProperty(XMLAdapter.SOURCE_PROPERTY_KEY_DESCRIPTION));
+        Assert.assertNotNull(sourceStatus.getProperty(Property.SOURCE_PROPERTY_KEY_COPYRIGHT));
+        Assert.assertNotNull(sourceStatus.getProperty(Property.SOURCE_PROPERTY_KEY_TITLE));
+        Assert.assertNotNull(sourceStatus.getProperty(Property.SOURCE_PROPERTY_KEY_DESCRIPTION));
     }
 
     private void testPropertiesNull(SourceStatus sourceStatus) {
-        Assert.assertNull(sourceStatus.getProperty(XMLAdapter.SOURCE_PROPERTY_KEY_COPYRIGHT));
-        Assert.assertNull(sourceStatus.getProperty(XMLAdapter.SOURCE_PROPERTY_KEY_TITLE));
-        Assert.assertNull(sourceStatus.getProperty(XMLAdapter.SOURCE_PROPERTY_KEY_DESCRIPTION));
+        Assert.assertNull(sourceStatus.getProperty(Property.SOURCE_PROPERTY_KEY_COPYRIGHT));
+        Assert.assertNull(sourceStatus.getProperty(Property.SOURCE_PROPERTY_KEY_TITLE));
+        Assert.assertNull(sourceStatus.getProperty(Property.SOURCE_PROPERTY_KEY_DESCRIPTION));
     }
 }
