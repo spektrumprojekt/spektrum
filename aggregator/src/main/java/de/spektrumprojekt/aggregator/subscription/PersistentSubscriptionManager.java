@@ -348,10 +348,18 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
 
         if (subscriptionMessageFilter.getStartDate() != null) {
             messageFilter.setMinPublicationDate(subscriptionMessageFilter.getStartDate());
+            if (subscription.getLastProcessedMessagePublicationDate() != null
+                    && subscription.getLastProcessedMessagePublicationDate().after(
+                            subscriptionMessageFilter.getStartDate())) {
+                messageFilter.setMinPublicationDate(subscription
+                        .getLastProcessedMessagePublicationDate());
+            }
             messages = this.persistence.getMessages(messageFilter);
         }
         if (messages.size() < subscriptionMessageFilter.getLastXMessages()) {
-            messageFilter.setMinPublicationDate(null);
+
+            messageFilter.setMinPublicationDate(subscription
+                    .getLastProcessedMessagePublicationDate());
             messageFilter.setLastMessagesCount(subscriptionMessageFilter.getLastXMessages());
             messages = this.persistence.getMessages(messageFilter);
         }

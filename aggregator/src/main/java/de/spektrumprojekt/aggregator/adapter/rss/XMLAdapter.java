@@ -183,7 +183,7 @@ public abstract class XMLAdapter extends BasePollingAdapter {
     public XMLAdapter(AggregatorChain aggregatorChain,
             AggregatorConfiguration aggregatorConfiguration) {
         super(aggregatorChain, aggregatorConfiguration, aggregatorConfiguration
-                .getPollingInterval(), THREAD_POOL_SIZE);
+                .getPollingInterval(), aggregatorConfiguration.getThreadPoolSize());
     }
 
     /**
@@ -314,7 +314,7 @@ public abstract class XMLAdapter extends BasePollingAdapter {
         }
         if (tags.size() > 0) {
             try {
-                return MAPPER.writeValueAsString(tags.toArray(new String[] {}));
+                return MAPPER.writeValueAsString(tags.toArray(new String[] { }));
             } catch (JsonGenerationException e) {
                 LOGGER.error("Error processing tags: {}", e);
             } catch (JsonMappingException e) {
@@ -332,6 +332,7 @@ public abstract class XMLAdapter extends BasePollingAdapter {
     @Override
     public List<Message> poll(SourceStatus subscriptionStatus) throws AdapterException {
         LOGGER.trace(">handleSubscription {}", subscriptionStatus);
+
         boolean success = false;
         List<Message> messages = new ArrayList<Message>();
         Map<String, Object> context = new HashMap<String, Object>();
@@ -340,7 +341,6 @@ public abstract class XMLAdapter extends BasePollingAdapter {
         // logger.debug("access parameters for {}: {}", subscription,
         // accParams);
 
-        // if (SpektrumUtils.notNullOrEmpty(uri)) { TODO
         InputStream in = getInputStream(context);
         try {
             if (in != null) {
@@ -365,7 +365,6 @@ public abstract class XMLAdapter extends BasePollingAdapter {
         } finally {
             cleanUpResources(in, context, success);
         }
-        // }
         LOGGER.trace("<handleSubscription, success {}", success);
         return messages;
     }

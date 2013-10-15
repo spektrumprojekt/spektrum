@@ -50,7 +50,7 @@ public class HashDuplicationDetection implements DuplicateDetection {
     private final int maxValue;
 
     @ManyToMany
-    private final Set<SubscriptionMessageHashes> subsctiptionsWithHashes = new HashSet<SubscriptionMessageHashes>();
+    private final Set<SourceMessageHashes> sourcesWithHashes = new HashSet<SourceMessageHashes>();
 
     /**
      * constructor
@@ -67,19 +67,19 @@ public class HashDuplicationDetection implements DuplicateDetection {
     /**
      * searches the hashes for the subscription with the given id
      * 
-     * @param subscriptionGlobalId
+     * @param sourceGlobalId
      *            global id of the subscription
      * @return hashes
      */
-    private SubscriptionMessageHashes getHashes(String subscriptionGlobalId) {
-        for (SubscriptionMessageHashes subscriptionHashes : subsctiptionsWithHashes) {
-            if (subscriptionHashes.getSubscriptionGlobalId().equals(subscriptionGlobalId)) {
+    private SourceMessageHashes getHashes(String sourceGlobalId) {
+        for (SourceMessageHashes subscriptionHashes : sourcesWithHashes) {
+            if (subscriptionHashes.getSourceGlobalId().equals(sourceGlobalId)) {
                 return subscriptionHashes;
             }
         }
-        SubscriptionMessageHashes hashes = new SubscriptionMessageHashes(persistence,
-                subscriptionGlobalId, minValue, maxValue);
-        subsctiptionsWithHashes.add(hashes);
+        SourceMessageHashes hashes = new SourceMessageHashes(persistence,
+                sourceGlobalId, minValue, maxValue);
+        sourcesWithHashes.add(hashes);
         return hashes;
     }
 

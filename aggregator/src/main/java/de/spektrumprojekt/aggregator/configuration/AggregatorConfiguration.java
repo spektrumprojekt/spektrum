@@ -196,6 +196,17 @@ public final class AggregatorConfiguration extends SimpleConfigurationHolder {
 
     /**
      * <p>
+     * The interval used by polling adapters, in seconds.
+     * </p>
+     * 
+     * @return
+     */
+    public int getThreadPoolSize() {
+        return configuration.getIntProperty("adapter.threadPoolSize", 1);
+    }
+
+    /**
+     * <p>
      * Get the "consumer key" necessary for the Twitter adapter.
      * </p>
      * 

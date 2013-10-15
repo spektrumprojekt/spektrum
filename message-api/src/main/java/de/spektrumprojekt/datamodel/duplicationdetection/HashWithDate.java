@@ -53,9 +53,9 @@ public class HashWithDate implements SpektrumEntity {
     public HashWithDate() {
     }
 
-    public HashWithDate(String subscriptionGlobalId, Date time, String hash) {
+    public HashWithDate(String sourceGlobalId, Date time, String hash) {
         super();
-        this.subscriptionGlobalId = subscriptionGlobalId;
+        this.subscriptionGlobalId = sourceGlobalId;
         this.time = time;
         this.hash = hash;
     }
@@ -68,10 +68,6 @@ public class HashWithDate implements SpektrumEntity {
         return subscriptionGlobalId;
     }
 
-    public String getSubscriptionId() {
-        return subscriptionGlobalId;
-    }
-
     public Date getTime() {
         return time;
     }
@@ -80,8 +76,8 @@ public class HashWithDate implements SpektrumEntity {
         this.hash = hash;
     }
 
-    public void setSubscriptionGlobalId(String subscriptionGlobalId) {
-        this.subscriptionGlobalId = subscriptionGlobalId;
+    public void setSubscriptionGlobalId(String sourceGlobalId) {
+        this.subscriptionGlobalId = sourceGlobalId;
     }
 
     public void setTime(Date time) {
