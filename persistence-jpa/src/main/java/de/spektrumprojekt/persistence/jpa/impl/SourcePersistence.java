@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.source.Source;
+import de.spektrumprojekt.datamodel.source.SourceNotFoundException;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.persistence.jpa.JPAConfiguration;
 import de.spektrumprojekt.persistence.jpa.transaction.Transaction;
@@ -160,11 +161,17 @@ public class SourcePersistence extends AbstractPersistenceLayer {
      * @param sourceGlobalId
      *            The source ID for which to retrieve the status, not <code>null</code>.
      * @return The {@link Source} for the global id
+     * @throws SourceNotFoundException
      */
-    public Source getSourceByGlobalId(String sourceGlobalId) {
+    public Source getSourceByGlobalId(String sourceGlobalId) throws SourceNotFoundException {
         Validate.notNull(sourceGlobalId, "sourceGlobalId must not be null");
 
-        return this.getEntityByGlobalId(Source.class, sourceGlobalId);
+        Source source = this.getEntityByGlobalId(Source.class, sourceGlobalId);
+        if (source == null) {
+            throw new SourceNotFoundException("Source not found for sourceGlobalId="
+                    + sourceGlobalId, sourceGlobalId);
+        }
+        return source;
     }
 
     public Source saveSource(Source source) {
@@ -173,14 +180,11 @@ public class SourcePersistence extends AbstractPersistenceLayer {
         return save(source);
     }
 
-    public Source updateSource(Source source) {
+    public Source updateSource(Source source) throws SourceNotFoundException {
         Validate.notNull(source, "source must not be null");
 
         Source persistentSource = this.getSourceByGlobalId(source.getGlobalId());
-        if (persistentSource == null) {
-            throw new IllegalStateException(
-                    "The supplied Source does not exist; cannot update.");
-        }
+
         source.setId(persistentSource.getId());
 
         return this.save(source);

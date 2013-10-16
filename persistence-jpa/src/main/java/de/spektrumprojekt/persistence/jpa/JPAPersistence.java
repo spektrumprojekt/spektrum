@@ -39,6 +39,7 @@ import de.spektrumprojekt.datamodel.message.TermFrequency;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.source.Source;
+import de.spektrumprojekt.datamodel.source.SourceNotFoundException;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
@@ -142,6 +143,11 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
+    public List<SourceStatus> findSourceStatusByProperty(Property property) {
+        return this.sourceStatusPersistence.findSourceStatusByProperty(property);
+    }
+
+    @Override
     public Collection<MessageGroup> getAllMessageGroups() {
         return this.messagePersistence.getAllMessageGroups();
     }
@@ -153,7 +159,6 @@ public class JPAPersistence implements Persistence {
 
     @Override
     public Map<UserModel, Collection<UserModelEntry>> getAllUserModelEntries(String userModelType) {
-        // TODO Auto-generated method stub
         throw new RuntimeException("Not implemented yet.");
     }
 
@@ -222,13 +227,13 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public Source getSourceByGlobalId(String sourceGlobalId) {
+    public Source getSourceByGlobalId(String sourceGlobalId) throws SourceNotFoundException {
         return this.sourcePersistence.getSourceByGlobalId(sourceGlobalId);
     }
 
     @Override
-    public SourceStatus getSourceStatusBySourceGlobalId(String subscriptionId) {
-        return sourceStatusPersistence.getSourceStatusBySourceGlobalId(subscriptionId);
+    public SourceStatus getSourceStatusBySourceGlobalId(String sourceGlobalId) {
+        return sourceStatusPersistence.getSourceStatusBySourceGlobalId(sourceGlobalId);
     }
 
     @Override
@@ -384,7 +389,7 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public Source updateSource(Source source) {
+    public Source updateSource(Source source) throws SourceNotFoundException {
         return this.sourcePersistence.updateSource(source);
     }
 

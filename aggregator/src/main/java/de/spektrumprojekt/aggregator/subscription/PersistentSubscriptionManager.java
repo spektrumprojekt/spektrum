@@ -20,10 +20,12 @@
 package de.spektrumprojekt.aggregator.subscription;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +46,7 @@ import de.spektrumprojekt.datamodel.message.MessageFilter.OrderDirection;
 import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.datamodel.message.MessageType;
 import de.spektrumprojekt.datamodel.source.Source;
+import de.spektrumprojekt.datamodel.source.SourceNotFoundException;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
@@ -136,6 +139,33 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
         }
     }
 
+    /**
+     * 
+     * @param sourceStatus
+     * @param sourceStatusProperties
+     * @return true if at least one property has been added
+     */
+    private boolean addProperties(SourceStatus sourceStatus,
+            Collection<Property> sourceStatusProperties) {
+
+        boolean modified = false;
+        if (sourceStatusProperties != null) {
+            for (Property prop : sourceStatusProperties) {
+
+                Property existing = sourceStatus.getProperty(prop.getPropertyKey());
+                if (existing == null
+                        || StringUtils.equals(existing.getPropertyValue(), prop.getPropertyValue())) {
+                    // add it only if the value is different
+                    sourceStatus.addProperty(prop);
+                    modified = true;
+                }
+            }
+        }
+
+        return modified;
+
+    }
+
     private void blockSource(SourceStatus sourceStatus, Integer numErrors) {
 
         // remove subscription from being checked
@@ -175,7 +205,8 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
         return true;
     }
 
-    private SourceStatus createAndStartSource(Source source) throws AdapterNotFoundException {
+    private SourceStatus createAndStartSource(Source source,
+            Collection<Property> sourceStatusProperties) throws AdapterNotFoundException {
         Adapter adapter = adapterManager.getAdapter(source.getConnectorType());
         if (adapter == null) {
             LOGGER.warn("no adapter implementation for connector type {} available",
@@ -185,6 +216,7 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
         }
 
         SourceStatus sourceStatus = new SourceStatus(source);
+        this.addProperties(sourceStatus, sourceStatusProperties);
         sourceStatus = persistence.saveSourceStatus(sourceStatus);
 
         adapter.addSource(sourceStatus);
@@ -218,6 +250,11 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
             }
         }
         return true;
+    }
+
+    @Override
+    public List<SourceStatus> findSourceStatusByProperty(Property property) {
+        return this.persistence.findSourceStatusByProperty(property);
     }
 
     public String getStatusReport() {
@@ -385,12 +422,19 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
     @Override
     public void subscribe(Subscription subscription) throws AdapterNotFoundException,
             SubscriptionNotFoundException {
-        this.subscribe(subscription, null);
+        this.subscribe(subscription, null, null);
     }
 
     @Override
     public void subscribe(Subscription subscription,
             SubscriptionMessageFilter subscriptionMessageFilter) throws AdapterNotFoundException {
+        this.subscribe(subscription, subscriptionMessageFilter, null);
+    }
+
+    @Override
+    public void subscribe(Subscription subscription,
+            SubscriptionMessageFilter subscriptionMessageFilter,
+            Collection<Property> sourceStatusProperties) throws AdapterNotFoundException {
         LOGGER.debug("handle subscription " + subscription);
         if (subscription == null) {
             throw new IllegalArgumentException("subscription cannot be null");
@@ -435,13 +479,17 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
             if (sourceStatus.isBlocked()) {
                 this.unblockSource(sourceStatus);
             }
+            if (this.addProperties(sourceStatus, sourceStatusProperties)) {
+                this.persistence.updateSourceStatus(sourceStatus);
+            }
 
         } else {
             // everything is new so create subscription with source and a new source status
             subscription = this.persistence.storeSubscription(subscription);
 
             // create subscription and source and start working it
-            sourceStatus = this.createAndStartSource(subscription.getSource());
+            sourceStatus = this.createAndStartSource(subscription.getSource(),
+                    sourceStatusProperties);
 
         }
 
@@ -529,7 +577,7 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
         this.persistence.updateSourceStatus(sourceStatus);
 
         Adapter adapter = this.adapterManager.getAdapter(sourceStatus.getSource());
-        adapter.removeSource(sourceStatus.getGlobalId());
+        adapter.addSource(sourceStatus);
     }
 
     @Override
@@ -606,5 +654,32 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
         subscribe(subscription);
 
         return true;
+    }
+
+    @Override
+    public void updateSourceAccessParameter(String sourceGlobalId,
+            Collection<Property> accessParameters) throws SourceNotFoundException,
+            AdapterNotFoundException {
+        Source source = this.persistence.getSourceByGlobalId(sourceGlobalId);
+
+        for (Property property : accessParameters) {
+            if (property.getPropertyValue() == null) {
+                source.removeAccessParameter(property.getPropertyKey());
+            } else {
+                source.addAccessParameter(property);
+            }
+        }
+
+        this.persistence.updateSource(source);
+        SourceStatus sourceStatus = this.persistence
+                .getSourceStatusBySourceGlobalId(sourceGlobalId);
+
+        Adapter adapter = this.adapterManager.getAdapter(source);
+        if (adapter == null) {
+            throw new AdapterNotFoundException("No adapter found for connector="
+                    + source.getConnectorType(), source);
+        }
+        adapter.addSource(sourceStatus);
+
     }
 }

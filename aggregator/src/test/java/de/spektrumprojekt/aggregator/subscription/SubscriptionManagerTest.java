@@ -20,7 +20,10 @@
 package de.spektrumprojekt.aggregator.subscription;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -47,6 +50,7 @@ import de.spektrumprojekt.communication.vm.VirtualMachineCommunicator;
 import de.spektrumprojekt.configuration.properties.SimpleProperties;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.source.Source;
+import de.spektrumprojekt.datamodel.source.SourceNotFoundException;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionMessageFilter;
@@ -112,6 +116,8 @@ public class SubscriptionManagerTest {
     private static final String URL_3 = "http://www.spektrumprojekt.de/thegit";
 
     private static final String URL_4 = "http://www.spiegel.de/schlagzeilen/tops/index.rss";
+
+    private static final String URL_5 = "http://www.spiegel.de/schlagzeilen/eilmeldungen/index.rss";
 
     private JPAPersistence persistence;
 
@@ -303,6 +309,45 @@ public class SubscriptionManagerTest {
     }
 
     @Test
+    public void testSubscribeWithSourceStatusProperties() throws Exception {
+
+        this.messageHandlerTest.getMessages().clear();
+
+        Collection<Property> sourceStatusProperties = new HashSet<Property>();
+        for (int i = 1; i <= 3; i++) {
+            sourceStatusProperties.add(new Property("testKey" + i, "val" + i));
+        }
+
+        Subscription subscription = getRSSSubscription(URL_5, null);
+        manager.subscribe(subscription, null, sourceStatusProperties);
+        subscription = persistence.getSubscriptionByGlobalId(subscription.getGlobalId());
+        Assert.assertNotNull(subscription);
+
+        // wait for the subscriptions to run.
+        Thread.sleep(1000);
+        waitForQueueToEmpty();
+
+        SourceStatus sourceStatus = persistence.getSourceStatusBySourceGlobalId(subscription
+                .getSource().getGlobalId());
+
+        Assert.assertNotNull(sourceStatus);
+        Assert.assertTrue(sourceStatus.getProperties().size() >= 3);
+
+        for (int i = 1; i <= 3; i++) {
+            Property prop = null;
+            p: for (Property property : sourceStatus.getProperties()) {
+                if (("testKey" + i).equals(property.getPropertyKey())) {
+                    prop = property;
+                    break p;
+                }
+            }
+            Assert.assertNotNull(prop);
+            Assert.assertEquals("val" + i, prop.getPropertyValue());
+        }
+
+    }
+
+    @Test
     public void testSuspendSubscription() throws Exception {
         Subscription subscription = getRSSSubscription(URL_3, null);
 
@@ -373,6 +418,30 @@ public class SubscriptionManagerTest {
         Assert.assertNotNull(urlProp);
         Assert.assertNotNull(urlProp.getPropertyValue());
         Assert.assertEquals("subValue", urlProp.getPropertyValue());
+    }
+
+    public void testUpdateProperty() throws AdapterNotFoundException, SourceNotFoundException,
+            SubscriptionNotFoundException {
+        Subscription subscription = getRSSSubscription(URL_1, null);
+        Collection<Property> sourceStatusProperties = new HashSet<Property>();
+        sourceStatusProperties.add(new Property("stat1", "1"));
+
+        manager.subscribe(subscription, null, sourceStatusProperties);
+
+        List<SourceStatus> status = manager.findSourceStatusByProperty(new Property("stat1", "1"));
+        Assert.assertEquals(1, status.size());
+        String sourceId = status.get(0).getSource().getGlobalId();
+
+        manager.updateSourceAccessParameter(sourceId,
+                Collections.singleton(new Property(FeedAdapter.ACCESS_PARAMETER_TITLE, "title")));
+
+        subscription = manager.getSubscription(subscription.getGlobalId());
+        Assert.assertNotNull(subscription);
+
+        Property prop = subscription.getSource().getAccessParameter(
+                FeedAdapter.ACCESS_PARAMETER_TITLE);
+        Assert.assertNotNull(prop);
+        Assert.assertEquals("title", prop.getPropertyValue());
     }
 
     private void waitForQueueToEmpty() throws InterruptedException {

@@ -59,7 +59,7 @@ public class SourceStatus extends Identifiable {
      */
     private static final long serialVersionUID = 1L;
 
-    @OneToOne(cascade = {}, optional = false)
+    @OneToOne(cascade = { }, optional = false)
     private Source source;
 
     @Temporal(TemporalType.TIMESTAMP)
@@ -242,8 +242,12 @@ public class SourceStatus extends Identifiable {
         return blocked;
     }
 
-    public boolean remove(Object o) {
-        return properties.remove(o);
+    public boolean removeProperty(String propertyKey) {
+        Property prop = this.getProperty(propertyKey);
+        if (prop == null) {
+            return properties.remove(prop);
+        }
+        return false;
     }
 
     public void setBlocked(boolean blocked) {

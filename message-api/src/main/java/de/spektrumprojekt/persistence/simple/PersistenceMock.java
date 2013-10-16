@@ -93,6 +93,11 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
+    public List<SourceStatus> findSourceStatusByProperty(Property property) {
+        return null;
+    }
+
+    @Override
     public Collection<MessageGroup> getAllMessageGroups() {
         return null;
     }

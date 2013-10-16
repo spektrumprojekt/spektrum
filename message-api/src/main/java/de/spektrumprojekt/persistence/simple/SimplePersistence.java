@@ -253,6 +253,11 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
+    public List<SourceStatus> findSourceStatusByProperty(Property property) {
+        return null;
+    }
+
+    @Override
     public Collection<MessageGroup> getAllMessageGroups() {
         return this.messageGroups.values();
     }

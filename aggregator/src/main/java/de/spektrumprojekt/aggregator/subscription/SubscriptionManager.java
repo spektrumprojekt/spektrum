@@ -19,8 +19,12 @@
 
 package de.spektrumprojekt.aggregator.subscription;
 
+import java.util.Collection;
 import java.util.List;
 
+import de.spektrumprojekt.datamodel.common.Property;
+import de.spektrumprojekt.datamodel.source.SourceNotFoundException;
+import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionMessageFilter;
@@ -39,6 +43,8 @@ import de.spektrumprojekt.exceptions.SubscriptionNotFoundException;
 public interface SubscriptionManager {
 
     boolean continueSubscription(String subscriptionGlobalId) throws SubscriptionNotFoundException;
+
+    List<SourceStatus> findSourceStatusByProperty(Property property);
 
     Subscription getSubscription(String subscriptionGlobalId) throws SubscriptionNotFoundException;
 
@@ -71,9 +77,29 @@ public interface SubscriptionManager {
      * @param subscriptionMessageFilter
      *            Use this filter to also return the messages already fetched. If null
      *            {@link SubscriptionMessageFilter#NONE} will be used.
+     * @param sourceStatusProperties
      * @throws AdapterNotFoundException
      */
-    void subscribe(Subscription subscription, SubscriptionMessageFilter subscriptionMessageFilter)
+    void subscribe(Subscription subscription,
+            SubscriptionMessageFilter subscriptionMessageFilter)
+            throws AdapterNotFoundException;
+
+    /**
+     * <p>
+     * Subscribe to the specified subscription.
+     * </p>
+     * 
+     * @param subscription
+     *            The subscription to subscribe to.
+     * @param subscriptionMessageFilter
+     *            Use this filter to also return the messages already fetched. If null
+     *            {@link SubscriptionMessageFilter#NONE} will be used.
+     * @param sourceStatusProperties
+     * @throws AdapterNotFoundException
+     */
+    void subscribe(Subscription subscription,
+            SubscriptionMessageFilter subscriptionMessageFilter,
+            Collection<Property> sourceStatusProperties)
             throws AdapterNotFoundException;
 
     boolean suspendSubscription(String subscriptionId) throws SubscriptionNotFoundException;
@@ -98,4 +124,6 @@ public interface SubscriptionManager {
      */
     void unsubscribe(String subscriptionId) throws SubscriptionNotFoundException;
 
+    void updateSourceAccessParameter(String sourceGlobalId, Collection<Property> accessParameters)
+            throws SourceNotFoundException, AdapterNotFoundException;
 }

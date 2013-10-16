@@ -84,7 +84,7 @@ public abstract class XMLAdapter extends BasePollingAdapter {
                 String value, String key) {
             if (value == null) {
                 if (property != null) {
-                    sourceStatus.remove(property);
+                    sourceStatus.removeProperty(property.getPropertyKey());
                     return true;
                 }
             } else {

@@ -93,7 +93,7 @@ public final class AdapterManager {
         }
     }
 
-    public Adapter getAdapter(Source source) {
+    public Adapter getAdapter(Source source) /* throws AdapterNotFoundException */{
         return this.getAdapter(source.getConnectorType());
     }
 
@@ -107,7 +107,7 @@ public final class AdapterManager {
      * @return The adapter implementation for the specified source type, or <code>null</code> if no
      *         such adapter is available.
      */
-    public Adapter getAdapter(String connectorType) {
+    public Adapter getAdapter(String connectorType) /* throws AdapterNotFoundException */{
         return adapters.get(connectorType);
     }
 

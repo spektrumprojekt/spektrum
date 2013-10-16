@@ -58,8 +58,8 @@ public class FileAdapterTest {
                 sourceStatus.getSource().getGlobalId());
     }
 
-    private void persist(SourceStatus sourceStatus) {
-        aggregatorChain.getPersistence().saveSourceStatus(sourceStatus);
+    private SourceStatus persist(SourceStatus sourceStatus) {
+        return aggregatorChain.getPersistence().saveSourceStatus(sourceStatus);
     }
 
     @Before
@@ -119,7 +119,7 @@ public class FileAdapterTest {
     }
 
     @Test
-    public void testProperties() {
+    public void testProperties() throws AdapterException {
         SourceStatus sourceStatus = createSourceStatus(TestHelper.FILE_NAME_NO_DC);
         testPropertiesNull(sourceStatus);
         persist(sourceStatus);
@@ -137,12 +137,12 @@ public class FileAdapterTest {
         sourceStatus.getSource().addAccessParameter(
                 new Property(FileAdapter.ACCESS_PARAMETER_PATH, TestHelper
                         .getTestFilePath(TestHelper.FILE_NAME_DC_ONLY)));
+        Assert.assertNotNull(sourceStatus.getSource().getAccessParameter(
+                FileAdapter.ACCESS_PARAMETER_PATH));
         persist(sourceStatus);
-        try {
-            testFile(sourceStatus);
-        } catch (AdapterException e) {
-            e.printStackTrace();
-        }
+
+        testFile(sourceStatus);
+
         sourceStatus = load(sourceStatus);
         testPropertiesFilledDC(sourceStatus);
     }
@@ -152,7 +152,7 @@ public class FileAdapterTest {
         Assert.assertNotNull(sourceStatus.getProperty(Property.SOURCE_PROPERTY_KEY_DESCRIPTION));
 
         // The Framework seems not to support the dc rights TODO change if support is added
-        Assert.assertNull(sourceStatus.getProperty(Property.SOURCE_PROPERTY_KEY_COPYRIGHT));
+        Assert.assertNotNull(sourceStatus.getProperty(Property.SOURCE_PROPERTY_KEY_COPYRIGHT));
         // Assert.assertEquals("copyright456",
         // sourceStatus.getProperty(XMLAdapter.SOURCE_PROPERTY_KEY_COPYRIGHT)
         // .getPropertyValue());

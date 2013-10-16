@@ -37,6 +37,7 @@ import de.spektrumprojekt.datamodel.message.TermFrequency;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.source.Source;
+import de.spektrumprojekt.datamodel.source.SourceNotFoundException;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
@@ -74,6 +75,8 @@ public interface Persistence {
     void deleteSubscription(String subscriptionGlobalId);
 
     Source findSource(String connectorType, Collection<Property> accessParameters);
+
+    List<SourceStatus> findSourceStatusByProperty(Property property);
 
     Collection<MessageGroup> getAllMessageGroups();
 
@@ -141,7 +144,7 @@ public interface Persistence {
      */
     UserModel getOrCreateUserModelByUser(String userGlobalId, String userModelType);
 
-    Source getSourceByGlobalId(String sourceGlobalId);
+    Source getSourceByGlobalId(String sourceGlobalId) throws SourceNotFoundException;
 
     SourceStatus getSourceStatusBySourceGlobalId(String sourceGlobalId);
 
@@ -248,7 +251,7 @@ public interface Persistence {
 
     void updateMessageRank(MessageRank rankToUpdate);
 
-    Source updateSource(Source source);
+    Source updateSource(Source source) throws SourceNotFoundException;
 
     void updateSourceStatus(SourceStatus sourceStatus);
 
