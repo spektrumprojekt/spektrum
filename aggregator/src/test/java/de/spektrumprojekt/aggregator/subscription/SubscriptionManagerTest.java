@@ -265,7 +265,8 @@ public class SubscriptionManagerTest {
         this.messageHandlerTest.getMessages().clear();
         Subscription subscription2 = getRSSSubscription(URL_4, null);
         manager.subscribe(subscription2, subscriptionMessageFilter);
-        Assert.assertNotNull(persistence.getSubscriptionByGlobalId(subscription2.getGlobalId()));
+        Subscription persisted = persistence.getSubscriptionByGlobalId(subscription2.getGlobalId());
+        Assert.assertNotNull(persisted);
 
         Thread.sleep(1000);
         waitForQueueToEmpty();
