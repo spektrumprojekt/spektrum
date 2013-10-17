@@ -121,21 +121,21 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
      * @return
      */
     private void addPersistentSubscriptions() {
-        List<SourceStatus> persistentSubscriptions = persistence.getSourceStatusList();
-        LOGGER.debug("adding {} subscriptions from persistence", persistentSubscriptions.size());
+        List<SourceStatus> persistentSourceStatus = persistence.getSourceStatusList();
+        LOGGER.debug("adding {} subscriptions from persistence", persistentSourceStatus.size());
 
-        for (SourceStatus subscription : persistentSubscriptions) {
+        for (SourceStatus sourceStatus : persistentSourceStatus) {
             // LOGGER.warn("To schedule ...: {}", subscription);
-            if (subscription.isBlocked()) {
+            if (sourceStatus.isBlocked()) {
                 continue;
             }
-            String sourceType = subscription.getSource().getConnectorType();
+            String sourceType = sourceStatus.getSource().getConnectorType();
             Adapter adapter = adapterManager.getAdapter(sourceType);
             if (adapter == null) {
                 LOGGER.warn("no adapter implementation for sourceType {} available", sourceType);
                 continue;
             }
-            adapter.addSource(subscription);
+            adapter.addSource(sourceStatus);
         }
     }
 
@@ -435,7 +435,7 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
     public void subscribe(Subscription subscription,
             SubscriptionMessageFilter subscriptionMessageFilter,
             Collection<Property> sourceStatusProperties) throws AdapterNotFoundException {
-        LOGGER.debug("handle subscription " + subscription);
+        LOGGER.debug("Handle subscription " + subscription);
         if (subscription == null) {
             throw new IllegalArgumentException("subscription cannot be null");
         }
@@ -458,7 +458,8 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
                     .getSubscriptionByGlobalId(subscription
                             .getGlobalId());
             if (existingSubscription != null) {
-
+                LOGGER.debug("Existing subscription found. Unsubscribe it first "
+                        + subscription.getGlobalId());
                 this.unsubscribe(subscription.getGlobalId());
             }
         } catch (SubscriptionNotFoundException e) {
@@ -483,6 +484,12 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
                 this.persistence.updateSourceStatus(sourceStatus);
             }
 
+            // push existing messages to the subscription
+            if (subscriptionMessageFilter != null
+                    && !SubscriptionMessageFilter.NONE.equals(subscriptionMessageFilter)) {
+                pushMessages(subscription, subscriptionMessageFilter, existingSource);
+            }
+
         } else {
             // everything is new so create subscription with source and a new source status
             subscription = this.persistence.storeSubscription(subscription);
@@ -493,11 +500,6 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
 
         }
 
-        // push existing messages to the subscription
-        if (existingSource != null && subscriptionMessageFilter != null
-                && !SubscriptionMessageFilter.NONE.equals(subscriptionMessageFilter)) {
-            pushMessages(subscription, subscriptionMessageFilter, existingSource);
-        }
     }
 
     @Override
@@ -573,6 +575,8 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
     }
 
     private void unblockSource(SourceStatus sourceStatus) {
+        LOGGER.info("Unblocking source: " + sourceStatus);
+
         sourceStatus.setBlocked(false);
         this.persistence.updateSourceStatus(sourceStatus);
 
@@ -586,10 +590,6 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
             throw new IllegalArgumentException("subscriptionId cannot be null.");
         }
         Subscription subscription = persistence.getSubscriptionByGlobalId(subscriptionId);
-        if (subscription == null) {
-            LOGGER.warn("no subscription with id {}", subscriptionId);
-            return;
-        }
         Source source = subscription.getSource();
 
         persistence.deleteSubscription(subscriptionId);
@@ -597,7 +597,8 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
         int numberOfSubscriptionsForSource = persistence
                 .getNumberOfSubscriptionsBySourceGlobalId(source.getGlobalId());
         if (numberOfSubscriptionsForSource == 0) {
-
+            LOGGER.info("No more subscriptions found for source: " + source.getGlobalId()
+                    + " Will remove it.");
             String connectorType = subscription.getSource().getConnectorType();
             if (connectorType == null) {
                 LOGGER.warn("no source type specified for subscription with id {}", subscriptionId);
@@ -611,7 +612,7 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
             adapter.removeSource(source.getGlobalId());
 
             this.persistence.deleteSource(source.getGlobalId());
-
+            LOGGER.info("Removed source: " + source.getGlobalId());
         }
     }
 

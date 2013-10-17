@@ -92,7 +92,7 @@ public abstract class BasePollingAdapter extends BaseAdapter {
     }
 
     @Override
-    public void addSource(final SourceStatus sourceStatus) {
+    public synchronized void addSource(final SourceStatus sourceStatus) {
         LOGGER.debug("Adding source status " + sourceStatus);
 
         Future<?> existingTask = this.scheduledSources.get(sourceStatus.getSource().getGlobalId());
@@ -107,8 +107,7 @@ public abstract class BasePollingAdapter extends BaseAdapter {
                 try {
                     List<Message> messages = poll(sourceStatus);
                     addMessages(messages);
-                    triggerListener(sourceStatus.getSource(),
-                            StatusType.OK);
+                    triggerListener(sourceStatus.getSource(), StatusType.OK);
                 } catch (AdapterException e) {
                     LOGGER.warn("encountered AdapterException {} sourceStatus={}",
                             e.toString(), sourceStatus);
