@@ -328,6 +328,10 @@ public class SubscriptionManagerTest {
         Thread.sleep(1000);
         waitForQueueToEmpty();
 
+        // the CI seems to be slow, so we wait.
+        Thread.sleep(1000);
+        waitForQueueToEmpty();
+
         SourceStatus sourceStatus = persistence.getSourceStatusBySourceGlobalId(subscription
                 .getSource().getGlobalId());
 
