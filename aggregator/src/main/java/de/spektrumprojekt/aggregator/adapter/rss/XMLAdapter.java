@@ -398,6 +398,7 @@ public abstract class XMLAdapter extends BasePollingAdapter {
         if (mostRecentTime != null) {
             sourceStatus.setLastContentTimestamp(mostRecentTime);
         }
+
         LOGGER.debug("# new items in subscription {}: {}", sourceStatus.getGlobalId(),
                 messages.size());
         return messages;

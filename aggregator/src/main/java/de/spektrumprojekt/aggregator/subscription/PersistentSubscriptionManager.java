@@ -42,6 +42,7 @@ import de.spektrumprojekt.datamodel.common.MimeType;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageFilter;
+import de.spektrumprojekt.datamodel.message.MessagePublicationDateComperator;
 import de.spektrumprojekt.datamodel.message.MessageFilter.OrderDirection;
 import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.datamodel.message.MessageType;
@@ -400,6 +401,8 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
             messageFilter.setLastMessagesCount(subscriptionMessageFilter.getLastXMessages());
             messages = this.persistence.getMessages(messageFilter);
         }
+
+        Collections.sort(messages, MessagePublicationDateComperator.INSTANCE);
 
         for (Message message : messages) {
 
