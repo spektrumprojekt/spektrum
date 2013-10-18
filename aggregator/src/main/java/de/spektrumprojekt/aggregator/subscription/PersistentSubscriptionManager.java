@@ -50,6 +50,7 @@ import de.spektrumprojekt.datamodel.source.Source;
 import de.spektrumprojekt.datamodel.source.SourceNotFoundException;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionAlreadyExistsException;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionMessageFilter;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
@@ -424,20 +425,22 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
 
     @Override
     public void subscribe(Subscription subscription) throws AdapterNotFoundException,
-            SubscriptionNotFoundException {
+            SubscriptionNotFoundException, SubscriptionAlreadyExistsException {
         this.subscribe(subscription, null, null);
     }
 
     @Override
     public void subscribe(Subscription subscription,
-            SubscriptionMessageFilter subscriptionMessageFilter) throws AdapterNotFoundException {
+            SubscriptionMessageFilter subscriptionMessageFilter) throws AdapterNotFoundException,
+            SubscriptionAlreadyExistsException {
         this.subscribe(subscription, subscriptionMessageFilter, null);
     }
 
     @Override
     public void subscribe(Subscription subscription,
             SubscriptionMessageFilter subscriptionMessageFilter,
-            Collection<Property> sourceStatusProperties) throws AdapterNotFoundException {
+            Collection<Property> sourceStatusProperties) throws AdapterNotFoundException,
+            SubscriptionAlreadyExistsException {
         LOGGER.debug("Handle subscription " + subscription);
         if (subscription == null) {
             throw new IllegalArgumentException("subscription cannot be null");
@@ -458,12 +461,12 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
 
         try {
             Subscription existingSubscription = this.persistence
-                    .getSubscriptionByGlobalId(subscription
-                            .getGlobalId());
+                    .getSubscriptionByGlobalId(subscription.getGlobalId());
             if (existingSubscription != null) {
-                LOGGER.debug("Existing subscription found. Unsubscribe it first "
+                LOGGER.debug("Existing subscription found, will not continue."
                         + subscription.getGlobalId());
-                this.unsubscribe(subscription.getGlobalId());
+                throw new SubscriptionAlreadyExistsException(subscription.getGlobalId(),
+                        subscription);
             }
         } catch (SubscriptionNotFoundException e) {
             // ignore
@@ -536,11 +539,12 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
      * 
      * @param currentSubscriptions
      * @throws AdapterNotFoundException
+     * @throws SubscriptionAlreadyExistsException
      * @throws SubscriptionNotFoundException
      */
     @Override
     public void synchronizeSubscriptions(List<Subscription> currentSubscriptions)
-            throws AdapterNotFoundException {
+            throws AdapterNotFoundException, SubscriptionAlreadyExistsException {
         List<String> subscriptionsToRemove = new ArrayList<String>();
         // find Subscriptions to remove
         // search in all adapters
@@ -622,14 +626,24 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
     /**
      * updates a {@link Subscription} if necessary
      * 
+     * TODO: if it is a update it should somehow be specified if old messages should be pushed to
+     * the subscription or not, and the lastprocessedmessage date should be reset or not.
+     * 
+     * Case 1: URLs is slighlty changed but it is still referring to the same resource / feed (e.g.
+     * adding a parameter) Case 2: Compeltly different resource
+     * 
+     * In case 1 the user probably does not want old already pushed messages to be pushed again In
+     * case 2 the user probably wants it all.
+     * 
      * @param subscription
      *            subscription
-     * @return true if it needed to be updated
+     * @return false if it is an update or true an create
      * @throws AdapterNotFoundException
      * @throws SubscriptionNotFoundException
+     * @throws SubscriptionAlreadyExistsException
      */
     public boolean updateOrCreate(Subscription subscription) throws AdapterNotFoundException,
-            SubscriptionNotFoundException {
+            SubscriptionNotFoundException, SubscriptionAlreadyExistsException {
 
         Subscription persistentSubscription = persistence.getSubscriptionByGlobalId(subscription
                 .getGlobalId());
@@ -648,11 +662,21 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
                 SourceStatus sourceStatus = this.persistence
                         .getSourceStatusBySourceGlobalId(persistedSource.getGlobalId());
 
+                this.persistence.updateSubscription(subscription);
+
                 // finally check if the source is blocked so a subscribe will unblock it
-                if (!sourceStatus.isBlocked()) {
-                    return false;
+                if (sourceStatus.isBlocked()) {
+                    this.unblockSource(sourceStatus);
                 }
+                return false;
             }
+
+        }
+
+        if (persistentSubscription != null) {
+            // in this case the source of the subscription changed. therefore unsubscribe it, and
+            // subcribe it below
+            this.unsubscribe(subscription.getGlobalId());
         }
 
         subscribe(subscription);

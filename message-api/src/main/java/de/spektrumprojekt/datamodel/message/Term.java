@@ -24,6 +24,8 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+import org.eclipse.persistence.annotations.Index;
+
 import de.spektrumprojekt.datamodel.identifiable.Identifiable;
 
 @Entity
@@ -41,8 +43,10 @@ public class Term extends Identifiable {
      */
     private static final long serialVersionUID = 1L;
 
+    @Index
     private String value;
     private TermCategory category;
+
     @Column(name = "termcount")
     private int count;
 

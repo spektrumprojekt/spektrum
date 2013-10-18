@@ -27,6 +27,8 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.UniqueConstraint;
 
+import org.eclipse.persistence.annotations.Index;
+
 import de.spektrumprojekt.datamodel.identifiable.Identifiable;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.user.User;
@@ -49,8 +51,10 @@ public class Observation extends Identifiable {
      */
     private static final long serialVersionUID = 1L;
 
+    @Index
     private String userGlobalId;;
 
+    @Index
     private String messageGlobalId;
 
     @Temporal(TemporalType.TIMESTAMP)

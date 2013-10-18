@@ -26,6 +26,7 @@ import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.source.SourceNotFoundException;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionAlreadyExistsException;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionMessageFilter;
 import de.spektrumprojekt.exceptions.SubscriptionNotFoundException;
@@ -63,9 +64,10 @@ public interface SubscriptionManager {
      * @param subscription
      *            The subscription to subscribe to.
      * @throws AdapterNotFoundException
+     * @throws SubscriptionAlreadyExistsException
      */
     void subscribe(Subscription subscription) throws AdapterNotFoundException,
-            SubscriptionNotFoundException;
+            SubscriptionNotFoundException, SubscriptionAlreadyExistsException;
 
     /**
      * <p>
@@ -79,10 +81,11 @@ public interface SubscriptionManager {
      *            {@link SubscriptionMessageFilter#NONE} will be used.
      * @param sourceStatusProperties
      * @throws AdapterNotFoundException
+     * @throws SubscriptionAlreadyExistsException
      */
     void subscribe(Subscription subscription,
             SubscriptionMessageFilter subscriptionMessageFilter)
-            throws AdapterNotFoundException;
+            throws AdapterNotFoundException, SubscriptionAlreadyExistsException;
 
     /**
      * <p>
@@ -96,11 +99,12 @@ public interface SubscriptionManager {
      *            {@link SubscriptionMessageFilter#NONE} will be used.
      * @param sourceStatusProperties
      * @throws AdapterNotFoundException
+     * @throws SubscriptionAlreadyExistsException
      */
     void subscribe(Subscription subscription,
             SubscriptionMessageFilter subscriptionMessageFilter,
             Collection<Property> sourceStatusProperties)
-            throws AdapterNotFoundException;
+            throws AdapterNotFoundException, SubscriptionAlreadyExistsException;
 
     boolean suspendSubscription(String subscriptionId) throws SubscriptionNotFoundException;
 
@@ -110,8 +114,10 @@ public interface SubscriptionManager {
      * @param subscriptions
      *            the subscriptions to synchronize
      * @throws AdapterNotFoundException
+     * @throws SubscriptionAlreadyExistsException
      */
-    void synchronizeSubscriptions(List<Subscription> subscriptions) throws AdapterNotFoundException;
+    void synchronizeSubscriptions(List<Subscription> subscriptions)
+            throws AdapterNotFoundException, SubscriptionAlreadyExistsException;
 
     /**
      * <p>

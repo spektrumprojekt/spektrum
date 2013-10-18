@@ -27,6 +27,8 @@ import javax.persistence.Id;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
+import org.eclipse.persistence.annotations.Index;
+
 import de.spektrumprojekt.datamodel.identifiable.SpektrumEntity;
 
 @Entity
@@ -37,12 +39,14 @@ public class HashWithDate implements SpektrumEntity {
      */
     private static final long serialVersionUID = 1L;
 
+    @Index
     @Id
     private String subscriptionGlobalId;
 
     @Temporal(value = TemporalType.DATE)
     private Date time;
 
+    @Index
     @Id
     @Column(length = 1024)
     private String hash;
