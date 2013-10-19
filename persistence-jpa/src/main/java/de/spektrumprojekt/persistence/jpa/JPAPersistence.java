@@ -39,12 +39,15 @@ import de.spektrumprojekt.datamodel.message.TermFrequency;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.source.Source;
+import de.spektrumprojekt.datamodel.source.SourceNotFoundException;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
+import de.spektrumprojekt.exceptions.SubscriptionNotFoundException;
 import de.spektrumprojekt.persistence.MessageRankVisitor;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.Statistics;
@@ -140,14 +143,13 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public Collection<MessageGroup> getAllMessageGroups() {
-        return this.messagePersistence.getAllMessageGroups();
+    public List<SourceStatus> findSourceStatusByProperty(Property property) {
+        return this.sourceStatusPersistence.findSourceStatusByProperty(property);
     }
 
     @Override
-    public List<Subscription> getAllSubscriptionsBySourceGlobalId(String sourceGlobalId) {
-
-        return this.subscriptionPersistence.getAllSubscriptionsBySourceGlobalId(sourceGlobalId);
+    public Collection<MessageGroup> getAllMessageGroups() {
+        return this.messagePersistence.getAllMessageGroups();
     }
 
     @Override
@@ -157,7 +159,6 @@ public class JPAPersistence implements Persistence {
 
     @Override
     public Map<UserModel, Collection<UserModelEntry>> getAllUserModelEntries(String userModelType) {
-        // TODO Auto-generated method stub
         throw new RuntimeException("Not implemented yet.");
     }
 
@@ -226,13 +227,13 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public Source getSourceByGlobalId(String sourceGlobalId) {
+    public Source getSourceByGlobalId(String sourceGlobalId) throws SourceNotFoundException {
         return this.sourcePersistence.getSourceByGlobalId(sourceGlobalId);
     }
 
     @Override
-    public SourceStatus getSourceStatusBySourceGlobalId(String subscriptionId) {
-        return sourceStatusPersistence.getSourceStatusBySourceGlobalId(subscriptionId);
+    public SourceStatus getSourceStatusBySourceGlobalId(String sourceGlobalId) {
+        return sourceStatusPersistence.getSourceStatusBySourceGlobalId(sourceGlobalId);
     }
 
     @Override
@@ -241,8 +242,14 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public Subscription getSubscriptionByGlobalId(String subscriptionGlobalId) {
+    public Subscription getSubscriptionByGlobalId(String subscriptionGlobalId)
+            throws SubscriptionNotFoundException {
         return this.subscriptionPersistence.getSubscriptionByGlobalId(subscriptionGlobalId);
+    }
+
+    @Override
+    public List<Subscription> getSubscriptions(SubscriptionFilter subscriptionFilter) {
+        return this.subscriptionPersistence.getSubscriptions(subscriptionFilter);
     }
 
     @Override
@@ -387,7 +394,7 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public Source updateSource(Source source) {
+    public Source updateSource(Source source) throws SourceNotFoundException {
         return this.sourcePersistence.updateSource(source);
     }
 
@@ -397,7 +404,8 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public Subscription updateSubscription(Subscription subscription) {
+    public Subscription updateSubscription(Subscription subscription)
+            throws SubscriptionNotFoundException {
         return this.subscriptionPersistence.updateSubscription(subscription);
     }
 

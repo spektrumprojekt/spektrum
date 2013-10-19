@@ -20,6 +20,7 @@
 package de.spektrumprojekt.datamodel.subscription;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 
 import javax.persistence.CascadeType;
@@ -30,6 +31,8 @@ import javax.persistence.InheritanceType;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import javax.persistence.UniqueConstraint;
 
 import de.spektrumprojekt.datamodel.common.Property;
@@ -55,7 +58,10 @@ public class Subscription extends Identifiable {
     @ManyToOne(cascade = { CascadeType.PERSIST }, fetch = FetchType.EAGER, optional = false)
     private Source source;
 
-    private transient Long lastProcessedMessagedId;
+    private boolean suspended;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date lastProcessedMessagePublicationDate;
     // private String serializedFilterExpression;
 
     /**
@@ -115,8 +121,8 @@ public class Subscription extends Identifiable {
         return filterExpression;
     }
 
-    public Long getLastProcessedMessagedId() {
-        return lastProcessedMessagedId;
+    public Date getLastProcessedMessagePublicationDate() {
+        return lastProcessedMessagePublicationDate;
     }
 
     public Source getSource() {
@@ -132,21 +138,25 @@ public class Subscription extends Identifiable {
         return null;
     }
 
+    public Collection<Property> getSubscriptionParameters() {
+        return subscriptionParameters;
+    }
+
     // private FilterExpression deserialze(String serializedFilterExpression) {
     // // TODO serialize the filter expression into JSON or XML or something else
     // throw new UnsupportedOperationException("Not yet implemented.");
     // }
 
-    public Collection<Property> getSubscriptionParameters() {
-        return subscriptionParameters;
+    /**
+     * 
+     * @return true if the subscription is suspended and new message will not be forwarded
+     */
+    public boolean isSuspended() {
+        return suspended;
     }
 
     public void setFilterExpression(FilterExpression filterExpression) {
         this.filterExpression = filterExpression;
-    }
-
-    public void setLastProcessedMessagedId(Long lastProcessedMessagedId) {
-        this.lastProcessedMessagedId = lastProcessedMessagedId;
     }
 
     // public String getSerializedFilterExpression() {
@@ -159,11 +169,18 @@ public class Subscription extends Identifiable {
     // throw new UnsupportedOperationException("Not yet implemented.");
     // }
 
-    public void setSource(Source source) {
-        if (source == null) {
-            throw new IllegalArgumentException("source cannot be null.");
+    public boolean setLastProcessedMessagePublicationDate(Date lastProcessedMessagePublicationDate) {
+        if (lastProcessedMessagePublicationDate == null) {
+            throw new IllegalArgumentException(
+                    "lastProcessedMessagePublicationDate cannot be null.");
         }
-        this.source = source;
+        if (this.lastProcessedMessagePublicationDate == null
+                || this.lastProcessedMessagePublicationDate
+                        .before(lastProcessedMessagePublicationDate)) {
+            this.lastProcessedMessagePublicationDate = lastProcessedMessagePublicationDate;
+            return true;
+        }
+        return false;
     }
 
     // public void setSerializedFilterExpression(String serializedFilterExpression) {
@@ -171,13 +188,26 @@ public class Subscription extends Identifiable {
     // this.filterExpression = deserialze(this.serializedFilterExpression);
     // }
 
+    public void setSource(Source source) {
+        if (source == null) {
+            throw new IllegalArgumentException("source cannot be null.");
+        }
+        this.source = source;
+    }
+
+    public void setSuspended(boolean suspended) {
+        this.suspended = suspended;
+    }
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("Subscription [source=");
         builder.append(source);
-        builder.append(", lastProcessedMessagedId=");
-        builder.append(lastProcessedMessagedId);
+        builder.append(", suspended=");
+        builder.append(suspended);
+        builder.append(", lastProcessedMessagePublicationDate=");
+        builder.append(lastProcessedMessagePublicationDate);
         builder.append(", subscriptionParameters=");
         builder.append(subscriptionParameters);
         builder.append("]");

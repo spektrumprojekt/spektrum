@@ -19,10 +19,17 @@
 
 package de.spektrumprojekt.aggregator.subscription;
 
+import java.util.Collection;
 import java.util.List;
 
+import de.spektrumprojekt.datamodel.common.Property;
+import de.spektrumprojekt.datamodel.source.SourceNotFoundException;
+import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionAlreadyExistsException;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionMessageFilter;
+import de.spektrumprojekt.exceptions.SubscriptionNotFoundException;
 
 /**
  * <p>
@@ -36,6 +43,14 @@ import de.spektrumprojekt.datamodel.subscription.SubscriptionMessageFilter;
  */
 public interface SubscriptionManager {
 
+    boolean continueSubscription(String subscriptionGlobalId) throws SubscriptionNotFoundException;
+
+    List<SourceStatus> findSourceStatusByProperty(Property property);
+
+    Subscription getSubscription(String subscriptionGlobalId) throws SubscriptionNotFoundException;
+
+    List<Subscription> getSubscriptions(SubscriptionFilter subscriptionFilter);
+
     /**
      * Stop this manager
      */
@@ -48,8 +63,11 @@ public interface SubscriptionManager {
      * 
      * @param subscription
      *            The subscription to subscribe to.
+     * @throws AdapterNotFoundException
+     * @throws SubscriptionAlreadyExistsException
      */
-    void subscribe(Subscription subscription);
+    void subscribe(Subscription subscription) throws AdapterNotFoundException,
+            SubscriptionNotFoundException, SubscriptionAlreadyExistsException;
 
     /**
      * <p>
@@ -61,16 +79,45 @@ public interface SubscriptionManager {
      * @param subscriptionMessageFilter
      *            Use this filter to also return the messages already fetched. If null
      *            {@link SubscriptionMessageFilter#NONE} will be used.
+     * @param sourceStatusProperties
+     * @throws AdapterNotFoundException
+     * @throws SubscriptionAlreadyExistsException
      */
-    void subscribe(Subscription subscription, SubscriptionMessageFilter subscriptionMessageFilter);
+    void subscribe(Subscription subscription,
+            SubscriptionMessageFilter subscriptionMessageFilter)
+            throws AdapterNotFoundException, SubscriptionAlreadyExistsException;
+
+    /**
+     * <p>
+     * Subscribe to the specified subscription.
+     * </p>
+     * 
+     * @param subscription
+     *            The subscription to subscribe to.
+     * @param subscriptionMessageFilter
+     *            Use this filter to also return the messages already fetched. If null
+     *            {@link SubscriptionMessageFilter#NONE} will be used.
+     * @param sourceStatusProperties
+     * @throws AdapterNotFoundException
+     * @throws SubscriptionAlreadyExistsException
+     */
+    void subscribe(Subscription subscription,
+            SubscriptionMessageFilter subscriptionMessageFilter,
+            Collection<Property> sourceStatusProperties)
+            throws AdapterNotFoundException, SubscriptionAlreadyExistsException;
+
+    boolean suspendSubscription(String subscriptionId) throws SubscriptionNotFoundException;
 
     /**
      * Use exactly the subscriptions as in the provided list. Remove all not in the list.
      * 
      * @param subscriptions
      *            the subscriptions to synchronize
+     * @throws AdapterNotFoundException
+     * @throws SubscriptionAlreadyExistsException
      */
-    void synchronizeSubscriptions(List<Subscription> subscriptions);
+    void synchronizeSubscriptions(List<Subscription> subscriptions)
+            throws AdapterNotFoundException, SubscriptionAlreadyExistsException;
 
     /**
      * <p>
@@ -79,7 +126,10 @@ public interface SubscriptionManager {
      * 
      * @param subscriptionId
      *            The subscription ID for the subscription which shall be removed.
+     * @throws SubscriptionNotFoundException
      */
-    void unsubscribe(String subscriptionId);
+    void unsubscribe(String subscriptionId) throws SubscriptionNotFoundException;
 
+    void updateSourceAccessParameter(String sourceGlobalId, Collection<Property> accessParameters)
+            throws SourceNotFoundException, AdapterNotFoundException;
 }

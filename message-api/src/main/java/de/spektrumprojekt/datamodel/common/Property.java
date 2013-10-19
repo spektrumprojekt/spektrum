@@ -23,6 +23,7 @@ import javax.persistence.Entity;
 import javax.persistence.Lob;
 
 import org.apache.commons.lang3.Validate;
+import org.eclipse.persistence.annotations.Index;
 
 import de.spektrumprojekt.datamodel.identifiable.Identifiable;
 import de.spektrumprojekt.datamodel.message.Message;
@@ -77,10 +78,21 @@ public class Property extends Identifiable {
 
     public static final String PROPERTY_KEY_AUTHOR_NAME = "autor.name";
 
+    @Index
     private String propertyKey;
 
+    @Index
     @Lob
     private String propertyValue;
+
+    /** the property key for the property containing the copyright information of the source */
+    public static final String SOURCE_PROPERTY_KEY_COPYRIGHT = "copyright";
+
+    /** the property key for the property containing the copyright information of the source */
+    public static final String SOURCE_PROPERTY_KEY_TITLE = "title";
+
+    /** the property key for the property containing the copyright information of the source */
+    public static final String SOURCE_PROPERTY_KEY_DESCRIPTION = "description";
 
     /** Constructor for ORM layer only. */
     protected Property() {

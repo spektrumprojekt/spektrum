@@ -20,6 +20,8 @@
 package de.spektrumprojekt.aggregator.adapter;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import org.apache.commons.lang3.Validate;
 
@@ -27,6 +29,7 @@ import de.spektrumprojekt.aggregator.chain.AggregatorChain;
 import de.spektrumprojekt.aggregator.chain.AggregatorMessageContext;
 import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
 import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.message.MessagePublicationDateComperator;
 import de.spektrumprojekt.datamodel.source.Source;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
@@ -94,7 +97,9 @@ public abstract class BaseAdapter implements Adapter {
      * @param messages
      *            The messages to put into the queue.
      */
-    protected final void addMessages(Collection<Message> messages) {
+    protected void addMessages(List<Message> messages) {
+        Collections.sort(messages, MessagePublicationDateComperator.INSTANCE);
+
         for (Message message : messages) {
             addMessage(message);
         }
@@ -105,6 +110,10 @@ public abstract class BaseAdapter implements Adapter {
         for (SourceStatus subscription : subscriptions) {
             addSource(subscription);
         }
+    }
+
+    public AggregatorChain getAggregatorChain() {
+        return aggregatorChain;
     }
 
     public AggregatorConfiguration getAggregatorConfiguration() {
@@ -121,8 +130,7 @@ public abstract class BaseAdapter implements Adapter {
         triggerListener(source, statusType, null);
     }
 
-    protected final void triggerListener(Source source, StatusType statusType,
-            Exception exception) {
+    protected final void triggerListener(Source source, StatusType statusType, Exception exception) {
         if (listener != null) {
             listener.processed(source, statusType, exception);
         }

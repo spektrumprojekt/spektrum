@@ -67,8 +67,19 @@ public class Source extends Identifiable {
         this.connectorType = connectorType;
     }
 
-    public void addAccessParameter(Property prop) {
+    public Property addAccessParameter(final Property prop) {
+        Property oldValue = null;
+        for (Property property : this.accessParameters) {
+            if (property.getPropertyKey().equals(prop.getPropertyKey())) {
+                oldValue = property;
+                break;
+            }
+        }
+        if (oldValue != null) {
+            this.accessParameters.remove(oldValue);
+        }
         this.accessParameters.add(prop);
+        return oldValue;
     }
 
     public Property getAccessParameter(String propertyKey) {
@@ -86,6 +97,14 @@ public class Source extends Identifiable {
 
     public String getConnectorType() {
         return connectorType;
+    }
+
+    public boolean removeAccessParameter(String propertyKey) {
+        Property prop = this.getAccessParameter(propertyKey);
+        if (prop == null) {
+            return this.accessParameters.remove(prop);
+        }
+        return false;
     }
 
     @Override

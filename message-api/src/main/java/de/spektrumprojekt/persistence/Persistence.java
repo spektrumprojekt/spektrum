@@ -37,12 +37,15 @@ import de.spektrumprojekt.datamodel.message.TermFrequency;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.source.Source;
+import de.spektrumprojekt.datamodel.source.SourceNotFoundException;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
+import de.spektrumprojekt.exceptions.SubscriptionNotFoundException;
 
 /**
  * The main interface for accessing the persistence.
@@ -73,9 +76,9 @@ public interface Persistence {
 
     Source findSource(String connectorType, Collection<Property> accessParameters);
 
-    Collection<MessageGroup> getAllMessageGroups();
+    List<SourceStatus> findSourceStatusByProperty(Property property);
 
-    List<Subscription> getAllSubscriptionsBySourceGlobalId(String sourceGlobalId);
+    Collection<MessageGroup> getAllMessageGroups();
 
     Collection<Term> getAllTerms();
 
@@ -141,13 +144,16 @@ public interface Persistence {
      */
     UserModel getOrCreateUserModelByUser(String userGlobalId, String userModelType);
 
-    Source getSourceByGlobalId(String sourceGlobalId);
+    Source getSourceByGlobalId(String sourceGlobalId) throws SourceNotFoundException;
 
     SourceStatus getSourceStatusBySourceGlobalId(String sourceGlobalId);
 
     List<SourceStatus> getSourceStatusList();
 
-    Subscription getSubscriptionByGlobalId(String subscriptionGlobalId);
+    Subscription getSubscriptionByGlobalId(String subscriptionGlobalId)
+            throws SubscriptionNotFoundException;
+
+    List<Subscription> getSubscriptions(SubscriptionFilter subscriptionFilter);
 
     TermFrequency getTermFrequency();
 
@@ -247,11 +253,11 @@ public interface Persistence {
 
     void updateMessageRank(MessageRank rankToUpdate);
 
-    Source updateSource(Source source);
+    Source updateSource(Source source) throws SourceNotFoundException;
 
     void updateSourceStatus(SourceStatus sourceStatus);
 
-    Subscription updateSubscription(Subscription subscription);
+    Subscription updateSubscription(Subscription subscription) throws SubscriptionNotFoundException;
 
     void updateTermFrequency(TermFrequency termFrequency);
 

@@ -20,6 +20,7 @@
 package de.spektrumprojekt.communication.transfer;
 
 import de.spektrumprojekt.communication.CommunicationMessage;
+import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionMessageFilter;
 
@@ -30,9 +31,15 @@ public class CreateSubscriptionMessage implements CommunicationMessage {
      */
     private static final long serialVersionUID = 1L;
 
+    private Property[] sourceStatusProperties;
+
     private Subscription subscription;
 
     private SubscriptionMessageFilter subscriptionMessageFilter;
+
+    public Property[] getSourceStatusProperties() {
+        return sourceStatusProperties;
+    }
 
     public Subscription getSubscription() {
         return subscription;
@@ -45,6 +52,10 @@ public class CreateSubscriptionMessage implements CommunicationMessage {
     @Override
     public String retrieveMessageType() {
         return this.getClass().getSimpleName();
+    }
+
+    public void setSourceStatusProperties(Property[] sourceStatusProperties) {
+        this.sourceStatusProperties = sourceStatusProperties;
     }
 
     public void setSubscription(Subscription subscription) {

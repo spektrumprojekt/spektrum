@@ -36,9 +36,9 @@ import de.spektrumprojekt.persistence.Persistence;
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 
  */
-public class SubscriptionMessageHashes implements DuplicateDetection {
+public class SourceMessageHashes implements DuplicateDetection {
 
-    private final String subscriptionGlobalId;
+    private final String soruceGlobalId;
 
     private final int maxValue;
 
@@ -53,16 +53,16 @@ public class SubscriptionMessageHashes implements DuplicateDetection {
      * 
      * @param persistence
      *            persistence
-     * @param subscriptionGlobalId
+     * @param sourceGlobalId
      *            subscriptionGlobalId of the subscription
      * @param minValue
      *            minValue
      * @param maxValue
      *            maxValue
      */
-    public SubscriptionMessageHashes(Persistence persistence,
-            String subscriptionGlobalId, int minValue, int maxValue) {
-        this.subscriptionGlobalId = subscriptionGlobalId;
+    public SourceMessageHashes(Persistence persistence,
+            String sourceGlobalId, int minValue, int maxValue) {
+        this.soruceGlobalId = sourceGlobalId;
         this.persistence = persistence;
         this.maxValue = maxValue;
         this.minValue = minValue;
@@ -98,8 +98,8 @@ public class SubscriptionMessageHashes implements DuplicateDetection {
      * 
      * @return subscriptionGlobalId
      */
-    public String getSubscriptionGlobalId() {
-        return subscriptionGlobalId;
+    public String getSourceGlobalId() {
+        return soruceGlobalId;
     }
 
     @Override
@@ -111,7 +111,7 @@ public class SubscriptionMessageHashes implements DuplicateDetection {
                 return true;
             }
         }
-        HashWithDate hashWithDate = new HashWithDate(subscriptionGlobalId, new Date(),
+        HashWithDate hashWithDate = new HashWithDate(soruceGlobalId, new Date(),
                 MessageHashGenerator.generateHashFromMessage(message));
         hashWithDate = persistence.saveHashWithDate(hashWithDate);
         hashes.add(hashWithDate);
@@ -123,6 +123,6 @@ public class SubscriptionMessageHashes implements DuplicateDetection {
      * loads the hashes from the database
      */
     private void loadHashes() {
-        hashes.addAll(persistence.getHashsByGlobalSubscriptionId(subscriptionGlobalId));
+        hashes.addAll(persistence.getHashsByGlobalSubscriptionId(soruceGlobalId));
     }
 }

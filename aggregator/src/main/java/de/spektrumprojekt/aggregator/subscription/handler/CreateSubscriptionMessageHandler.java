@@ -19,10 +19,14 @@
 
 package de.spektrumprojekt.aggregator.subscription.handler;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 import de.spektrumprojekt.aggregator.subscription.SubscriptionManager;
 import de.spektrumprojekt.communication.CommunicationMessage;
 import de.spektrumprojekt.communication.MessageHandler;
 import de.spektrumprojekt.communication.transfer.CreateSubscriptionMessage;
+import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
 
 /**
@@ -48,7 +52,13 @@ public class CreateSubscriptionMessageHandler implements
             throw new IllegalArgumentException("subscription not set for message " + message);
         }
 
-        subscriptionManager.subscribe(subscription, message.getSubscriptionMessageFilter());
+        Collection<Property> sourceStatusProperties = null;
+        if (message.getSourceStatusProperties() != null) {
+            sourceStatusProperties = Arrays.asList(message.getSourceStatusProperties());
+        }
+
+        subscriptionManager.subscribe(subscription, message.getSubscriptionMessageFilter(),
+                sourceStatusProperties);
 
     }
 
