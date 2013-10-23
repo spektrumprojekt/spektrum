@@ -184,19 +184,21 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
     }
 
     @Override
-    public boolean continueSubscription(String subscriptionId) throws SubscriptionNotFoundException {
+    public boolean continueSubscription(String subscriptionGlobalId)
+            throws SubscriptionNotFoundException {
 
-        if (subscriptionId == null) {
+        if (subscriptionGlobalId == null) {
             throw new IllegalArgumentException("subscriptionId cannot be null.");
         }
-        Subscription subscription = this.persistence.getSubscriptionByGlobalId(subscriptionId);
+        Subscription subscription = this.persistence
+                .getSubscriptionByGlobalId(subscriptionGlobalId);
         if (subscription == null) {
-            LOGGER.warn("no subscription with id {}", subscriptionId);
+            LOGGER.warn("no subscription with id {}", subscriptionGlobalId);
             return false;
         }
         if (!subscription.isSuspended()) {
             LOGGER.debug("subscription with id {} already active, no action will be taken.",
-                    subscriptionId);
+                    subscriptionGlobalId);
             return false;
         }
 
@@ -662,6 +664,7 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
                 SourceStatus sourceStatus = this.persistence
                         .getSourceStatusBySourceGlobalId(persistedSource.getGlobalId());
 
+                subscription.setSource(persistedSource);
                 this.persistence.updateSubscription(subscription);
 
                 // finally check if the source is blocked so a subscribe will unblock it
