@@ -13,6 +13,11 @@ public class BinAggregatedUserModelEntryDecorator extends UserModelEntry {
 
     /**
      * 
+     */
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * 
      * @param entriesToAggregate
      *            needs to be ordered, oldest first for correct starttime
      * @return aggregated Entry
@@ -159,7 +164,7 @@ public class BinAggregatedUserModelEntryDecorator extends UserModelEntry {
         int entriesCount = entries.size();
         for (int i = 0; i < entriesCount; i++) {
             // timeBinStart found
-            if ((entries.get(i).getTimeBinStart() == timeBinStartTime)) {
+            if (entries.get(i).getTimeBinStart() == timeBinStartTime) {
                 for (int j = 0; j < binAggragationCount; j++) {
                     int index = j + i;
                     if (index < entries.size()) {
