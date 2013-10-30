@@ -24,6 +24,7 @@ import java.util.Set;
 
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
 import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
@@ -106,6 +107,17 @@ public class FeatureAggregateCommand implements Command<UserSpecificMessageFeatu
             tags.addAll(MessageHelper.getTags(related));
         }
 
+        int numAttach = 0;
+        int numImageAttach = 0;
+        for (MessagePart mp : messageFeatureContext.getMessage().getMessageParts()) {
+            if (mp.isAttachment()) {
+                numAttach++;
+            }
+            if (mp.isImageAttachment()) {
+                numImageAttach++;
+            }
+        }
+
         FeatureAggregate featureAggregate = new FeatureAggregate();
 
         featureAggregate.features.putAll(messageFeatureContext.getFeaturesForUser(userGlobalId));
@@ -126,6 +138,10 @@ public class FeatureAggregateCommand implements Command<UserSpecificMessageFeatu
             throw new IllegalArgumentException("interactionLevel cannot be null! context="
                     + context);
         }
+
+        featureAggregate.numAttachments = numAttach;
+        featureAggregate.numImageAttachments = numImageAttach;
+        featureAggregate.numNoneImageAttachments = numAttach - numImageAttach;
 
         context.setFeatureAggregate(featureAggregate);
     }

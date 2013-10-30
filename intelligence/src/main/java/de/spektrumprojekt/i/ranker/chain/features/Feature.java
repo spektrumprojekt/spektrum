@@ -66,6 +66,9 @@ public class Feature {
     public final static Feature DISCUSSION_MENTION_FEATURE = new Feature(
             "DiscussionMentionFeature", FeatureType.BOOLEAN);
 
+    public final static Feature ATTACHMENT_FEATURE = new Feature("AttachmentFeature",
+            FeatureType.BOOLEAN);
+
     /**
      * The mention
      */
@@ -87,6 +90,7 @@ public class Feature {
     static {
         List<Feature> all = new ArrayList<Feature>();
         all.add(AUTHOR_FEATURE);
+        all.add(ATTACHMENT_FEATURE);
         all.add(MENTION_FEATURE);
         all.add(LIKE_FEATURE);
         all.add(DISCUSSION_ROOT_FEATURE);

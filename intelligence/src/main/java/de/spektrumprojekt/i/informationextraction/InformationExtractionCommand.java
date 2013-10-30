@@ -25,7 +25,6 @@ import java.util.HashSet;
 
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.commons.chain.CommandChain;
-import de.spektrumprojekt.datamodel.common.MimeType;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessagePart;
@@ -187,8 +186,7 @@ public class InformationExtractionCommand<T extends MessageFeatureContext> imple
         if (!hasBeenExecuted) {
 
             for (MessagePart messagePart : message.getMessageParts()) {
-                if (MimeType.TEXT_PLAIN.equals(messagePart.getMimeType())
-                        || MimeType.TEXT_HTML.equals(messagePart.getMimeType())) {
+                if (messagePart.isText()) {
 
                     InformationExtractionContext informationExtractionContext = new InformationExtractionContext(
                             persistence, message, messagePart);

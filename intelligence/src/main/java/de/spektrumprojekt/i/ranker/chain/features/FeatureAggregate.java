@@ -29,7 +29,10 @@ public class FeatureAggregate {
                 "DiscussionParticipaters",
                 "DiscussionMentions",
                 "DiscussionTags",
-                "InteractionLevel"
+                "InteractionLevel",
+                "numAttachments",
+                "numImageAttachments",
+                "numNoneImageAttachments"
         }, " ");
     }
 
@@ -46,6 +49,9 @@ public class FeatureAggregate {
     public int numDiscussionMentions;
     public int numDiscussionTags;
     public InteractionLevel interactionLevel;
+    public int numAttachments;
+    public int numImageAttachments;
+    public int numNoneImageAttachments;
 
     public final Map<Feature, MessageFeature> features = new HashMap<Feature, MessageFeature>();
 
@@ -78,6 +84,9 @@ public class FeatureAggregate {
             throw new IllegalArgumentException("Error reading rank. Invalid interactionLevel: "
                     + stats[index - 1] + " Line was: " + stats);
         }
+        numAttachments = Integer.parseInt(stats[index++]);
+        numImageAttachments = Integer.parseInt(stats[index++]);
+        numNoneImageAttachments = Integer.parseInt(stats[index++]);
     }
 
     private int parseFeatures(String[] stats) {
@@ -109,7 +118,10 @@ public class FeatureAggregate {
                         "" + numAuthors,
                         "" + numDiscussionMentions,
                         "" + numDiscussionTags,
-                        "" + interactionLevel.getNumberValue()
+                        "" + interactionLevel.getNumberValue(),
+                        "" + numAttachments,
+                        "" + numImageAttachments,
+                        "" + numNoneImageAttachments
                 }, " ");
     }
 
