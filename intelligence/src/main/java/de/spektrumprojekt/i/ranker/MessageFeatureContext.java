@@ -102,6 +102,27 @@ public class MessageFeatureContext extends FeatureContext {
         this.userContexts.put(userContext.getUserGlobalId(), userContext);
     }
 
+    /**
+     * get the message specific plus the user specific features
+     * 
+     * @param userGlobalId
+     * @return
+     */
+    public Map<Feature, MessageFeature> getAllFeaturesForUser(String userGlobalId) {
+        Map<Feature, MessageFeature> features = new HashMap<Feature, MessageFeature>(
+                this.getFeatures());
+
+        features.putAll(this.getFeaturesForUser(userGlobalId));
+
+        return features;
+    }
+
+    /**
+     * Get only the user specific features for the user
+     * 
+     * @param userGlobalId
+     * @return
+     */
     public Map<Feature, MessageFeature> getFeaturesForUser(String userGlobalId) {
 
         Map<Feature, MessageFeature> features = Collections.emptyMap();

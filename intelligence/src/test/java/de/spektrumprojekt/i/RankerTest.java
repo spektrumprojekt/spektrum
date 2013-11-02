@@ -22,6 +22,7 @@ package de.spektrumprojekt.i;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Queue;
@@ -34,7 +35,6 @@ import org.junit.Test;
 
 import de.spektrumprojekt.callbacks.SimpleMessageGroupMemberRunner;
 import de.spektrumprojekt.communication.CommunicationMessage;
-import de.spektrumprojekt.communication.Communicator;
 import de.spektrumprojekt.communication.vm.VirtualMachineCommunicator;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
@@ -60,6 +60,7 @@ import de.spektrumprojekt.i.term.TermWeightStrategy;
 import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer;
 import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer.UserSimilaritySimType;
 import de.spektrumprojekt.i.user.similarity.UserSimilarityRetriever;
+import de.spektrumprojekt.persistence.Persistence.MatchMode;
 
 /**
  * Test the ranker
@@ -74,7 +75,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
 
     private final List<UserModel> userModels = new ArrayList<UserModel>();
 
-    private Communicator communicator;
+    private VirtualMachineCommunicator communicator;
     private Queue<CommunicationMessage> rankerQueue;
 
     private DirectedUserModelAdapter adapter;
@@ -86,7 +87,10 @@ public class RankerTest extends IntelligenceSpektrumTest {
         for (ScoredTerm term : terms) {
 
             Collection<UserModel> userModels = getPersistence().getUsersWithUserModel(
-                    Arrays.asList(term.getTerm()), UserModel.DEFAULT_USER_MODEL_TYPE);
+                    Collections.singleton(term.getTerm()),
+                    UserModel.DEFAULT_USER_MODEL_TYPE,
+                    MatchMode.EXACT
+                    );
 
             for (UserModel userModelToAssert : userModelsToAssert) {
                 Assert.assertTrue(
@@ -101,6 +105,14 @@ public class RankerTest extends IntelligenceSpektrumTest {
         for (UserSimilarity sim : similarities) {
             System.out.println(sim);
         }
+    }
+
+    public MessageGroup getAndCreateMG(String messageGroupId) {
+        MessageGroup messageGroup = getPersistence().getMessageGroupByGlobalId(messageGroupId);
+        if (messageGroup == null) {
+            messageGroup = getPersistence().storeMessageGroup(new MessageGroup(messageGroupId));
+        }
+        return messageGroup;
     }
 
     private void runSimilarityComputerAndCheck(User user1, User user2) {
@@ -126,12 +138,10 @@ public class RankerTest extends IntelligenceSpektrumTest {
                 user1sim.getSimilarity() > 0.25);
     }
 
-    private Ranker setupRanker(RankerConfigurationFlag flags) {
+    private Ranker setupRanker(RankerConfigurationFlag flag, boolean useAdaptionFromMGs,
+            String... usersForRanking) {
 
-        Collection<String> userForRanking = new HashSet<String>();
-        userForRanking.add("user1");
-        userForRanking.add("user2");
-        userForRanking.add("user3");
+        Collection<String> userForRanking = new HashSet<String>(Arrays.asList(usersForRanking));
 
         for (String globalId : userForRanking) {
             UserModel userModel = getPersistence().getOrCreateUserModelByUser(globalId,
@@ -145,7 +155,14 @@ public class RankerTest extends IntelligenceSpektrumTest {
         communicator = new VirtualMachineCommunicator(rankerQueue, rankerQueue);
 
         RankerConfiguration rankerConfiguration = new RankerConfiguration(
-                TermWeightStrategy.TRIVIAL, TermVectorSimilarityStrategy.AVG, flags);
+                TermWeightStrategy.TRIVIAL,
+                TermVectorSimilarityStrategy.AVG,
+                RankerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL
+                );
+        if (flag != null) {
+            rankerConfiguration.addFlags(flag);
+        }
+
         rankerConfiguration.put(UserModel.DEFAULT_USER_MODEL_TYPE,
                 UserModelConfiguration.getPlainModelConfiguration());
 
@@ -160,9 +177,18 @@ public class RankerTest extends IntelligenceSpektrumTest {
         communicator.registerMessageHandler(learner);
 
         if (rankerConfiguration.hasFlag(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)) {
-            adapter = new DirectedUserModelAdapter(getPersistence(),
-                    ranker, new UserSimilarityRetriever(getPersistence()));
+
+            if (useAdaptionFromMGs) {
+
+                adapter = new DirectedUserModelAdapter(getPersistence(),
+                        ranker, new UserSimilarityRetriever(getPersistence()), true);
+            } else {
+                adapter = new DirectedUserModelAdapter(getPersistence(),
+                        ranker, new UserSimilarityRetriever(getPersistence()), false);
+            }
+
             communicator.registerMessageHandler(adapter);
+
         }
 
         communicator.open();
@@ -174,10 +200,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
     @Before
     public void setupTest() throws ConfigurationException {
         setupPersistence();
-        messageGroup = getPersistence().getMessageGroupByGlobalId("messageGroup");
-        if (messageGroup == null) {
-            messageGroup = getPersistence().storeMessageGroup(new MessageGroup("messageGroup"));
-        }
+        messageGroup = getAndCreateMG("messageGroup");
     }
 
     /**
@@ -188,7 +211,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
      */
     @Test
     public void testRanker() throws Exception {
-        Ranker ranker = setupRanker(null);
+        Ranker ranker = setupRanker(null, false, "user1", "user2", "user3");
         String authorGlobalId = getPersistence().getOrCreateUser("user1").getGlobalId();
 
         Message message = createPlainTextMessage(
@@ -238,7 +261,78 @@ public class RankerTest extends IntelligenceSpektrumTest {
      *             in case of an error
      */
     @Test
-    public void testRankerWithDirectedAdaptation() throws Exception {
+    public void testRankerWithDirectedAdaptationByMGs() throws Exception {
+
+        User user1 = getPersistence().getOrCreateUser("userMg1");
+        User user2 = getPersistence().getOrCreateUser("userMg2");
+
+        MessageGroup messageGroup1 = getAndCreateMG("mg1");
+        MessageGroup messageGroup2 = getAndCreateMG("mg2");
+
+        UserModel userModel1 = getPersistence().getOrCreateUserModelByUser(user1.getGlobalId(),
+                UserModel.DEFAULT_USER_MODEL_TYPE);
+        UserModel userModel2 = getPersistence().getOrCreateUserModelByUser(user2.getGlobalId(),
+                UserModel.DEFAULT_USER_MODEL_TYPE);
+
+        Ranker ranker = setupRanker(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION,
+                true, "userMg1", "userMg2");
+
+        // user1 write ins mg1
+        Message message = createPlainTextMessage(
+                "Test Content. This is some plain old test content with nothing spectacular in it.",
+                user1.getGlobalId(), messageGroup1);
+
+        // 1st rank
+        MessageFeatureContext context = ranker.rank(message, messageRelation, null, false);
+
+        waitForCommunicatorToDelivierMessages();
+
+        checkUserModelTerms(context, userModel1);
+
+        // here user1 writes a message to user 2
+        message = createPlainTextMessage(
+                "The art of software engineering is the master piece of the modern era.",
+                user2.getGlobalId(), messageGroup1);
+        message.addProperty(MessageHelper.createMentionProperty(Arrays.asList(user1.getGlobalId())));
+
+        // in the same moment the user model adaption should be triggered for user2, and the user
+        // model should be adapted by the just learned items for user 1
+        context = ranker.rank(message, messageRelation, null, false);
+
+        waitForCommunicatorToDelivierMessages();
+
+        checkUserModelTerms(context, userModel1, userModel2);
+
+        // here user1 writes a message to another message group. For user 1 is the author feature to
+        // match, but for user 2 the adaption should run.
+        message = createPlainTextMessage("Is software engineering the master piece ?",
+                user1.getGlobalId(), messageGroup2);
+
+        // here again a rank should exist for user 2
+        context = ranker.rank(message, messageRelation, null, false);
+
+        waitForCommunicatorToDelivierMessages();
+        checkUserModelTerms(context, userModel1);
+
+        MessageRank rankForUser2 = getPersistence().getMessageRank(user2.getGlobalId(),
+                message.getGlobalId());
+        Assert.assertNotNull(rankForUser2);
+        Assert.assertTrue("RequestAdaptedCount should be > 0",
+                this.adapter.getRequestAdaptedCount() > 0);
+        Assert.assertTrue("getAdaptedCount should be > 0", this.adapter.getAdaptedCount() > 0);
+        Assert.assertTrue("rankForUser2 should positive if adaption run, but it is: "
+                + rankForUser2.getRank(), rankForUser2.getRank() > 0.5);
+
+    }
+
+    /**
+     * Test
+     * 
+     * @throws Exception
+     *             in case of an error
+     */
+    @Test
+    public void testRankerWithDirectedAdaptationBySimilarUsers() throws Exception {
 
         User user1 = getPersistence().getOrCreateUser("user1");
         User user2 = getPersistence().getOrCreateUser("user2");
@@ -251,7 +345,8 @@ public class RankerTest extends IntelligenceSpektrumTest {
         UserModel userModel3 = getPersistence().getOrCreateUserModelByUser(user3.getGlobalId(),
                 UserModel.DEFAULT_USER_MODEL_TYPE);
 
-        Ranker ranker = setupRanker(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION);
+        Ranker ranker = setupRanker(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION,
+                false, "user1", "user2", "user3");
 
         // user2 mentions user1
         Message message = createPlainTextMessage(
@@ -313,5 +408,11 @@ public class RankerTest extends IntelligenceSpektrumTest {
                 Assert.fail("Queue not empty after 5 seconds messagesLeft=" + rankerQueue.size());
             }
         }
+
+        if (this.communicator.hasErrors()) {
+            Assert.fail("Communicator delievering has errors. Check the log. "
+                    + this.communicator.getErrors());
+        }
     }
+
 }

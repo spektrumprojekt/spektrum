@@ -35,6 +35,11 @@ import de.spektrumprojekt.datamodel.identifiable.Identifiable;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 
 /**
+ * A user model entry with a term. The actual value to be used is stored in the {@link #scoredTerm}
+ * {@link ScoredTerm#getWeight()}. The {@link #scoreCount} keeps number of scores add to
+ * {@link #scoreSum}. The flag {@link #adapted} tells that the weight of the scored term is not
+ * derived by the sum and count of the entry but from somewhere else (e.g. from other user models or
+ * somewhere else).
  * 
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 

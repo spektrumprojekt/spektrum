@@ -16,9 +16,12 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
 
     private ScoreToUse hitsScoreToUse;
 
+    private boolean adaptFromMessageGroups;
+
     private boolean useWeightedAverageForAggregatingSimilarUsers = true;
 
     private float rankThreshold = 0.75f;
+
     private float confidenceThreshold = 0.5f;
 
     private UserSimilaritySimType userSimilaritySimType;
@@ -39,7 +42,8 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
                                 + useWeightedAverageForAggregatingSimilarUsers,
                         "rankThreshold=" + rankThreshold,
                         "confidenceThreshold=" + confidenceThreshold,
-                        "userSimilaritySimType=" + userSimilaritySimType
+                        "userSimilaritySimType=" + userSimilaritySimType,
+                        "adaptFromMessageGroups=" + adaptFromMessageGroups
                 }, " ");
     }
 
@@ -57,6 +61,16 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
 
     public double getUserSimilarityThreshold() {
         return userSimilarityThreshold;
+    }
+
+    /**
+     * If true the DUMA will adapt from the same user user model but from different message groups.
+     * only works if a message group specific model is maintained.
+     * 
+     * @return
+     */
+    public boolean isAdaptFromMessageGroups() {
+        return adaptFromMessageGroups;
     }
 
     public boolean isUserSelectorUseHITS() {
@@ -79,6 +93,10 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
         return userSelectorUseHITS != userSelectorUseMentionsPercentage
                 && userSimilarityThreshold >= 0
                 && userSimilarityThreshold <= 1;
+    }
+
+    public void setAdaptFromMessageGroups(boolean adaptFromMessageGroups) {
+        this.adaptFromMessageGroups = adaptFromMessageGroups;
     }
 
     public void setConfidenceThreshold(float confidenceThreshold) {
@@ -119,8 +137,8 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
         return "UserModelAdapterConfiguration [userSimilarityThreshold=" + userSimilarityThreshold
                 + ", userSelectorUseHITS=" + userSelectorUseHITS
                 + ", userSelectorUseMentionsPercentage=" + userSelectorUseMentionsPercentage
-                + ", hitsScoreToUse=" + hitsScoreToUse
-                + ", useWeightedAverageForAggregatingSimilarUsers="
+                + ", hitsScoreToUse=" + hitsScoreToUse + ", adaptFromMessageGroups="
+                + adaptFromMessageGroups + ", useWeightedAverageForAggregatingSimilarUsers="
                 + useWeightedAverageForAggregatingSimilarUsers + ", rankThreshold=" + rankThreshold
                 + ", confidenceThreshold=" + confidenceThreshold + ", userSimilaritySimType="
                 + userSimilaritySimType + "]";

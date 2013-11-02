@@ -138,6 +138,7 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         }
     }
 
+    @Deprecated
     public RankerConfiguration cloneMe() {
         RankerConfiguration clone;
         try {

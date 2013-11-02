@@ -35,6 +35,7 @@ import de.spektrumprojekt.communication.CommunicationMessage;
 import de.spektrumprojekt.communication.MessageHandler;
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.user.UserModel;
@@ -44,6 +45,7 @@ import de.spektrumprojekt.i.ranker.Ranker;
 import de.spektrumprojekt.i.user.UserScore;
 import de.spektrumprojekt.i.user.UserToUserInterestSelector;
 import de.spektrumprojekt.persistence.Persistence;
+import de.spektrumprojekt.persistence.Persistence.MatchMode;
 
 public class DirectedUserModelAdapter implements
         MessageHandler<DirectedUserModelAdaptationMessage>, ConfigurationDescriptable {
@@ -68,11 +70,14 @@ public class DirectedUserModelAdapter implements
 
     private final EventHandler<UserModelAdaptationReRankEvent> userModelAdaptationReRankEventHandler = new EventHandler<UserModelAdaptationReRankEvent>();
 
+    private final boolean adaptFromMessageGroups;
+
     public DirectedUserModelAdapter(
             Persistence persistence,
             Ranker ranker,
             String userModelType,
             UserToUserInterestSelector userToUserInterestRetriever,
+            boolean adaptFromMessageGroups,
             boolean useWeightedAverage,
             boolean keepStatistics) {
         if (persistence == null) {
@@ -98,20 +103,69 @@ public class DirectedUserModelAdapter implements
         }
         this.useWeightedAverage = useWeightedAverage;
         this.userModelType = userModelType;
-
+        this.adaptFromMessageGroups = adaptFromMessageGroups;
     }
 
     public DirectedUserModelAdapter(
             Persistence persistence,
             Ranker ranker,
-            UserToUserInterestSelector userToUserInterestRetriever) {
+            UserToUserInterestSelector userToUserInterestRetriever,
+            boolean adaptFromMessageGroups) {
         this(
                 persistence,
                 ranker,
                 UserModel.DEFAULT_USER_MODEL_TYPE,
                 userToUserInterestRetriever,
+                adaptFromMessageGroups,
                 true,
                 false);
+    }
+
+    public Map<Term, UserModelEntry> adaptTerms(
+            UserModel userModelToAdapt, Collection<Term> termsToAdapt,
+            Map<Term, ValueAggregator> statsForTermsToAdaptFrom) {
+        Map<Term, UserModelEntry> entries = persistence.getUserModelEntriesForTerms(
+                userModelToAdapt, termsToAdapt);
+
+        for (Entry<Term, ValueAggregator> statEntryToAdaptFrom : statsForTermsToAdaptFrom
+                .entrySet()) {
+            if (statEntryToAdaptFrom.getValue().getValue() > 0) {
+                // adapt
+                UserModelEntry entryToAdapt = entries.get(statEntryToAdaptFrom.getKey());
+                if (entryToAdapt == null) {
+                    ScoredTerm scoredTerm = new ScoredTerm(statEntryToAdaptFrom.getKey(), 0);
+                    entryToAdapt = new UserModelEntry(userModelToAdapt, scoredTerm);
+                    entries.put(scoredTerm.getTerm(), entryToAdapt);
+                }
+                if (entryToAdapt.getScoredTerm().getWeight() < statEntryToAdaptFrom.getValue()
+                        .getValue()) {
+                    entryToAdapt.getScoredTerm().setWeight(
+                            (float) statEntryToAdaptFrom.getValue().getValue());
+
+                    entryToAdapt.setAdapted(true);
+                    adaptedCount++;
+                    if (LOGGER.isTraceEnabled()) {
+                        LOGGER.trace(
+                                "Adapted user model entry for user '{}' set term '{}' to score '{}'. ",
+                                new Object[] {
+                                        userModelToAdapt.getUser().getGlobalId(),
+                                        entryToAdapt.getScoredTerm().getTerm().getValue(),
+                                        entryToAdapt.getScoredTerm().getWeight() });
+                    }
+
+                    if (descriptiveStatistics != null) {
+                        descriptiveStatistics
+                                .addValue(entryToAdapt.getScoredTerm().getWeight());
+                    }
+                }
+            }
+        }
+        return entries;
+    }
+
+    private boolean adaptTermsOfMG(String mgId) {
+        MessageGroup messageGroup = this.persistence.getMessageGroupByGlobalId("communotedev");
+        return mgId.equals(messageGroup.getId() + "");
     }
 
     private ValueAggregator createNewValueAggregator() {
@@ -130,86 +184,19 @@ public class DirectedUserModelAdapter implements
         // 1. Identify the terms of the messages that are not contained in the user model UMu.
         Collection<Term> termsToAdapt = Arrays.asList(message.getTermsToAdapt());
 
-        // 2. Find user models to adapt from that contain the missing user terms.
-        Collection<UserModel> userModels = persistence
-                .getUsersWithUserModel(termsToAdapt, userModelType);
-        Map<String, UserModel> userToUserModels = new HashMap<String, UserModel>();
-        Collection<String> users = new HashSet<String>();
-        for (UserModel userModel : userModels) {
-            users.add(userModel.getUser().getGlobalId());
-            userToUserModels.put(userModel.getUser().getGlobalId(), userModel);
+        final Map<Term, ValueAggregator> statsForTermsToAdaptFrom = new HashMap<Term, ValueAggregator>();
+
+        if (adaptFromMessageGroups) {
+            determineTermsBySimilarTopics(message, termsToAdapt, statsForTermsToAdaptFrom);
+        } else {
+            determineTermsBySimilarUsers(message, termsToAdapt, statsForTermsToAdaptFrom);
         }
 
-        String messageGroupGlobalId = message.getMessageGroupGlobalId();
-
-        // 3. Compute user similarity between the u and the users of the found user models.
-
-        Collection<UserScore> userToUserInterestScores = this.userToUserInterestRetriever
-                .getUserToUserInterest(message.getUserGlobalId(), messageGroupGlobalId, users);
-
-        // 4. If the user similarity satisfies a threshold u take the weight of the term and apply
-        // it to UMu. If there are more weights available use a weighted average of the term weights
-        // and the user similarity
-
-        if (userToUserInterestScores != null && userToUserInterestScores.size() > 0) {
-            // there are similarities to use
-
-            Map<Term, ValueAggregator> statsForTermsToAdaptFrom = new HashMap<Term, ValueAggregator>();
-            for (Term term : termsToAdapt) {
-                statsForTermsToAdaptFrom.put(term, createNewValueAggregator());
-            }
-
-            for (UserScore userScore : userToUserInterestScores) {
-
-                UserModel userModel = userToUserModels.get(userScore.getUserGlobalId());
-                if (userModel != null) {
-
-                    Map<Term, UserModelEntry> entries = persistence.getUserModelEntriesForTerms(
-                            userModel, termsToAdapt);
-                    for (Entry<Term, UserModelEntry> entry : entries.entrySet()) {
-                        ValueAggregator stat = statsForTermsToAdaptFrom.get(entry
-                                .getKey());
-                        integrateStat(stat, userScore, entry.getValue());
-                    }
-                }
-            }
-
-            Map<Term, UserModelEntry> entries = persistence.getUserModelEntriesForTerms(
-                    userModelToAdapt, termsToAdapt);
-
-            for (Entry<Term, ValueAggregator> statEntryToAdaptFrom : statsForTermsToAdaptFrom
-                    .entrySet()) {
-                if (statEntryToAdaptFrom.getValue().getValue() > 0) {
-                    // adapt
-                    UserModelEntry entryToAdapt = entries.get(statEntryToAdaptFrom.getKey());
-                    if (entryToAdapt == null) {
-                        ScoredTerm scoredTerm = new ScoredTerm(statEntryToAdaptFrom.getKey(), 0);
-                        entryToAdapt = new UserModelEntry(userModelToAdapt, scoredTerm);
-                        entries.put(scoredTerm.getTerm(), entryToAdapt);
-                    }
-                    if (entryToAdapt.getScoredTerm().getWeight() < statEntryToAdaptFrom.getValue()
-                            .getValue()) {
-                        entryToAdapt.getScoredTerm().setWeight(
-                                (float) statEntryToAdaptFrom.getValue().getValue());
-
-                        entryToAdapt.setAdapted(true);
-                        adaptedCount++;
-                        if (LOGGER.isTraceEnabled()) {
-                            LOGGER.trace(
-                                    "Adapted user model entry for user '{}' set term '{}' to score '{}'. ",
-                                    new Object[] {
-                                            message.getUserGlobalId(),
-                                            entryToAdapt.getScoredTerm().getTerm().getValue(),
-                                            entryToAdapt.getScoredTerm().getWeight() });
-                        }
-
-                        if (descriptiveStatistics != null) {
-                            descriptiveStatistics
-                                    .addValue(entryToAdapt.getScoredTerm().getWeight());
-                        }
-                    }
-                }
-            }
+        if (statsForTermsToAdaptFrom.size() > 0) {
+            Map<Term, UserModelEntry> entries = adaptTerms(
+                    userModelToAdapt,
+                    termsToAdapt,
+                    statsForTermsToAdaptFrom);
 
             persistence.storeOrUpdateUserModelEntries(userModelToAdapt, entries.values());
 
@@ -228,6 +215,85 @@ public class DirectedUserModelAdapter implements
 
     }
 
+    private void determineTermsBySimilarTopics(DirectedUserModelAdaptationMessage message,
+            Collection<Term> termsToAdapt, final Map<Term, ValueAggregator> statsForTermsToAdaptFrom) {
+
+        UserModel userModel = persistence.getOrCreateUserModelByUser(message.getUserGlobalId(),
+                userModelType);
+        Collection<String> match = new HashSet<String>();
+        for (Term t : termsToAdapt) {
+            String mg = getMessageGroup(t);
+            if (adaptTermsOfMG(mg)) {
+
+                String toMatch = getMessageGroupFreeTermValue(t);
+                match.add(toMatch);
+            }
+        }
+        Collection<UserModelEntry> userModelEntries = persistence.getUserModelEntries(userModel,
+                match,
+                MatchMode.ENDS_WITH);
+
+        for (Term t : termsToAdapt) {
+            for (UserModelEntry entry : userModelEntries) {
+
+                String mg = getMessageGroup(entry.getScoredTerm().getTerm());
+                if (useMGForAdapation(mg)) {
+
+                    if (!entry.isAdapted()
+                            && MatchMode.EXACT.matches(getMessageGroupFreeTermValue(entry
+                                    .getScoredTerm().getTerm()), getMessageGroupFreeTermValue(t))) {
+
+                        ValueAggregator aggregator = getValueAggegrator(statsForTermsToAdaptFrom, t);
+
+                        aggregator.add(entry.getScoredTerm().getWeight(), entry.getScoreCount());
+                    }
+                }
+            }
+        }
+    }
+
+    private void determineTermsBySimilarUsers(DirectedUserModelAdaptationMessage message,
+            Collection<Term> termsToAdapt, final Map<Term, ValueAggregator> statsForTermsToAdaptFrom) {
+        // 2. Find user models to adapt from that contain the missing user terms.
+        Collection<UserModel> userModels = persistence.getUsersWithUserModel(termsToAdapt,
+                userModelType, MatchMode.EXACT);
+        Map<String, UserModel> userToUserModels = new HashMap<String, UserModel>();
+        Collection<String> users = new HashSet<String>();
+        for (UserModel userModel : userModels) {
+            users.add(userModel.getUser().getGlobalId());
+            userToUserModels.put(userModel.getUser().getGlobalId(), userModel);
+        }
+
+        // 3. Compute user similarity between the u and the users of the found user models.
+
+        Collection<UserScore> userToUserInterestScores = this.userToUserInterestRetriever
+                .getUserToUserInterest(message.getUserGlobalId(),
+                        message.getMessageGroupGlobalId(), users);
+
+        // 4. If the user similarity satisfies a threshold u take the weight of the term and apply
+        // it to UMu. If there are more weights available use a weighted average of the term weights
+        // and the user similarity
+
+        if (userToUserInterestScores != null && userToUserInterestScores.size() > 0) {
+            // there are similarities to use
+
+            for (UserScore userScore : userToUserInterestScores) {
+
+                UserModel userModel = userToUserModels.get(userScore.getUserGlobalId());
+                if (userModel != null) {
+
+                    Map<Term, UserModelEntry> entries = persistence.getUserModelEntriesForTerms(
+                            userModel, termsToAdapt);
+                    for (Entry<Term, UserModelEntry> entry : entries.entrySet()) {
+                        Term t = entry.getKey();
+                        ValueAggregator aggregator = getValueAggegrator(statsForTermsToAdaptFrom, t);
+                        integrateStat(aggregator, userScore, entry.getValue());
+                    }
+                }
+            }
+        }
+    }
+
     public long getAdaptedCount() {
         return adaptedCount;
     }
@@ -235,8 +301,9 @@ public class DirectedUserModelAdapter implements
     @Override
     public String getConfigurationDescription() {
         return this.getClass().getSimpleName()
-                + " userToUserInterestRetriever="
-                + this.userToUserInterestRetriever.getConfigurationDescription();
+                + " userToUserInterestRetriever: "
+                + this.userToUserInterestRetriever.getConfigurationDescription()
+                + " adaptFromMessageGroups: " + this.adaptFromMessageGroups;
     }
 
     public String getDebugInformation() {
@@ -250,12 +317,34 @@ public class DirectedUserModelAdapter implements
         return DirectedUserModelAdaptationMessage.class;
     }
 
+    private String getMessageGroup(Term t) {
+        String[] vals = t.getValue().split("#");
+        String mg = vals[0];
+        return mg;
+    }
+
+    private String getMessageGroupFreeTermValue(Term t) {
+        String[] vals = t.getValue().split("#");
+        String toMatch = "#" + vals[1];
+        return toMatch;
+    }
+
     public long getRequestAdaptedCount() {
         return requestedAdaptedCount;
     }
 
     public EventHandler<UserModelAdaptationReRankEvent> getUserModelAdaptationReRankEventHandler() {
         return userModelAdaptationReRankEventHandler;
+    }
+
+    public ValueAggregator getValueAggegrator(
+            final Map<Term, ValueAggregator> statsForTermsToAdaptFrom, Term term) {
+        ValueAggregator stat = statsForTermsToAdaptFrom.get(term);
+        if (stat == null) {
+            stat = createNewValueAggregator();
+            statsForTermsToAdaptFrom.put(term, stat);
+        }
+        return stat;
     }
 
     private void integrateStat(ValueAggregator stat, UserScore userScore,
@@ -266,6 +355,12 @@ public class DirectedUserModelAdapter implements
     @Override
     public boolean supports(CommunicationMessage message) {
         return message instanceof DirectedUserModelAdaptationMessage;
+    }
+
+    private boolean useMGForAdapation(String mgId) {
+        // MessageGroup messageGroup = this.persistence.getMessageGroupByGlobalId("communotedev");
+        // return mgId.equals(messageGroup.getId() + "");
+        return true;
     }
 
 }

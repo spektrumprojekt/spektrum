@@ -1,27 +1,31 @@
 /*
-* Licensed to the Apache Software Foundation (ASF) under one
-* or more contributor license agreements.  See the NOTICE file
-* distributed with this work for additional information
-* regarding copyright ownership.  The ASF licenses this file
-* to you under the Apache License, Version 2.0 (the
-* "License"); you may not use this file except in compliance
-* with the License.  You may obtain a copy of the License at
-* 
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package de.spektrumprojekt.communication.vm;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Queue;
 
 import de.spektrumprojekt.communication.CommunicationMessage;
+import de.spektrumprojekt.communication.MessageHandler;
 import de.spektrumprojekt.communication.MessageHandlerCommunicator;
 
 public class VirtualMachineCommunicator extends MessageHandlerCommunicator {
@@ -34,6 +38,8 @@ public class VirtualMachineCommunicator extends MessageHandlerCommunicator {
     private boolean stop = false;
 
     private Thread listeningThead;
+
+    private final Map<MessageHandler<? extends CommunicationMessage>, Throwable> errors = new HashMap<MessageHandler<? extends CommunicationMessage>, Throwable>();
 
     public VirtualMachineCommunicator(Queue<CommunicationMessage> outQueue,
             Queue<CommunicationMessage> inQueue) {
@@ -56,6 +62,10 @@ public class VirtualMachineCommunicator extends MessageHandlerCommunicator {
         stop = true;
     }
 
+    public Map<MessageHandler<? extends CommunicationMessage>, Throwable> getErrors() {
+        return Collections.unmodifiableMap(errors);
+    }
+
     private void listen() {
         Runnable delievery = new Runnable() {
 
@@ -68,7 +78,8 @@ public class VirtualMachineCommunicator extends MessageHandlerCommunicator {
                             Thread.sleep(1000);
                             continue;
                         }
-                        deliverMessage(message);
+                        Map<MessageHandler<? extends CommunicationMessage>, Throwable> currentErrors = deliverMessage(message);
+                        errors.putAll(currentErrors);
                     }
                 } catch (InterruptedException e) {
                     LOGGER.error("Got interrupted.", e);

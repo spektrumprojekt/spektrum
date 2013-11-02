@@ -62,7 +62,8 @@ public final class StemmedTokenExtractorCommand implements Command<InformationEx
             if (!TOKEN_PATTERN.matcher(token).matches()) {
                 continue;
             }
-            cleanTokens.add(token);
+
+            cleanTokens.add(token.toLowerCase());
         }
         return cleanTokens;
     }

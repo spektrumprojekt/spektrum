@@ -24,6 +24,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate;
 import de.spektrumprojekt.datamodel.message.Message;
@@ -54,6 +56,24 @@ import de.spektrumprojekt.exceptions.SubscriptionNotFoundException;
  * 
  */
 public interface Persistence {
+
+    public static enum MatchMode {
+        EXACT,
+        STARTS_WITH,
+        ENDS_WITH;
+
+        public boolean matches(String base, String toMatch) {
+            switch (this) {
+            case ENDS_WITH:
+                return base.endsWith(toMatch);
+            case STARTS_WITH:
+                return base.startsWith(toMatch);
+            default:
+            case EXACT:
+                return StringUtils.equals(base, toMatch);
+            }
+        }
+    }
 
     void close();
 
@@ -159,6 +179,9 @@ public interface Persistence {
 
     User getUserByGlobalId(String userGlobalId);
 
+    Collection<UserModelEntry> getUserModelEntries(UserModel userModel,
+            Collection<String> termsToMatch, MatchMode matchMode);
+
     Map<String, String> getUserModelEntriesCountDescription();
 
     /**
@@ -181,7 +204,8 @@ public interface Persistence {
     UserSimilarity getUserSimilarity(String userGlobalIdFrom, String userGlobalIdTo,
             String messageGroupGlobalId);
 
-    Collection<UserModel> getUsersWithUserModel(Collection<Term> terms, String userModelType);
+    Collection<UserModel> getUsersWithUserModel(Collection<Term> terms, String userModelType,
+            MatchMode matchMode);
 
     void initialize();
 

@@ -482,13 +482,29 @@ public class SimplePersistence implements Persistence {
             if (userId.equals(user.getId())) {
                 return user;
             }
-
         }
         return null;
     }
 
     public Map<String, Map<User, UserModelHolder>> getUserModelByTypeHolders() {
         return userModelByTypeHolders;
+    }
+
+    @Override
+    public Collection<UserModelEntry> getUserModelEntries(UserModel userModel,
+            Collection<String> termsToMatch, MatchMode matchMode) {
+        Map<User, UserModelHolder> entries = this.userModelByTypeHolders.get(userModel
+                .getUserModelType());
+        Collection<UserModelEntry> umEntries = new HashSet<UserModelEntry>();
+        if (entries != null) {
+            UserModelHolder holder = entries.get(userModel.getUser());
+            if (holder != null) {
+                for (String t : termsToMatch) {
+                    umEntries.addAll(holder.getUserModelEntry(t, matchMode));
+                }
+            }
+        }
+        return umEntries;
     }
 
     /**
@@ -589,14 +605,26 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
-    public Collection<UserModel> getUsersWithUserModel(Collection<Term> terms, String userModelType) {
+    public Collection<UserModel> getUsersWithUserModel(Collection<Term> terms,
+            String userModelType, MatchMode matchMode) {
         Collection<UserModel> userModels = new HashSet<UserModel>();
         userModels: for (UserModelHolder holder : this
                 .getOrCreateUserModelTypeHoldersByUserModelType(userModelType).values()) {
             for (Term term : terms) {
-                if (holder.getUserModelEntry(term) != null) {
-                    userModels.add(holder.getUserModel());
-                    continue userModels;
+                if (MatchMode.EXACT.equals(matchMode)) {
+
+                    if (holder.getUserModelEntry(term) != null) {
+                        userModels.add(holder.getUserModel());
+                        continue userModels;
+                    }
+                } else {
+
+                    Collection<UserModelEntry> entries = holder.getUserModelEntry(term,
+                            matchMode);
+                    if (entries.size() > 0) {
+                        userModels.add(holder.getUserModel());
+                        continue userModels;
+                    }
                 }
             }
         }

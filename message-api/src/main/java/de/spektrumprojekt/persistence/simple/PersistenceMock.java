@@ -213,6 +213,13 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
+    public Collection<UserModelEntry> getUserModelEntries(UserModel userModel,
+            Collection<String> match, MatchMode endsWith) {
+
+        return null;
+    }
+
+    @Override
     public Map<String, String> getUserModelEntriesCountDescription() {
         Map<String, String> countDesc = new HashMap<String, String>();
         countDesc.put("N/A", "N/A");
@@ -244,7 +251,7 @@ public class PersistenceMock implements Persistence {
 
     @Override
     public Collection<UserModel> getUsersWithUserModel(Collection<Term> arrayList,
-            String userModelType) {
+            String userModelType, MatchMode matchMode) {
         return null;
     }
 

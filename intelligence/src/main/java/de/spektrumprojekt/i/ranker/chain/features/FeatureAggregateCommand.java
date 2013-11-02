@@ -120,7 +120,7 @@ public class FeatureAggregateCommand implements Command<UserSpecificMessageFeatu
 
         FeatureAggregate featureAggregate = new FeatureAggregate();
 
-        featureAggregate.features.putAll(messageFeatureContext.getFeaturesForUser(userGlobalId));
+        featureAggregate.features.putAll(context.getFeatures());
         featureAggregate.messageTextLength = msgLength;
         featureAggregate.cleanedTextLength = cleanedTextLength;
         featureAggregate.numTerms = numTerms;
