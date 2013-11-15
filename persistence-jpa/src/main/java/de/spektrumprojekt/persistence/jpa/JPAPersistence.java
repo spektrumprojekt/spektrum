@@ -43,6 +43,7 @@ import de.spektrumprojekt.datamodel.source.SourceNotFoundException;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionSourceStatus;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
@@ -250,6 +251,11 @@ public class JPAPersistence implements Persistence {
     @Override
     public List<Subscription> getSubscriptions(SubscriptionFilter subscriptionFilter) {
         return this.subscriptionPersistence.getSubscriptions(subscriptionFilter);
+    }
+    
+    @Override
+    public List<SubscriptionSourceStatus> getSubscriptionsWithSourceStatus(SubscriptionFilter subscriptionFilter) {
+        return this.subscriptionPersistence.getSubscriptionsWithSourceStatus(subscriptionFilter);
     }
 
     @Override

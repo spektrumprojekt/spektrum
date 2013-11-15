@@ -29,6 +29,7 @@ import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionAlreadyExistsException;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionMessageFilter;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionSourceStatus;
 import de.spektrumprojekt.exceptions.SubscriptionNotFoundException;
 
 /**
@@ -50,6 +51,9 @@ public interface SubscriptionManager {
     Subscription getSubscription(String subscriptionGlobalId) throws SubscriptionNotFoundException;
 
     List<Subscription> getSubscriptions(SubscriptionFilter subscriptionFilter);
+
+    List<SubscriptionSourceStatus> getSubscriptionsWithSourceStatus(
+            SubscriptionFilter subscriptionFilter);
 
     /**
      * Stop this manager

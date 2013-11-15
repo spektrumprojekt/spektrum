@@ -42,9 +42,9 @@ import de.spektrumprojekt.datamodel.common.MimeType;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageFilter;
-import de.spektrumprojekt.datamodel.message.MessagePublicationDateComperator;
 import de.spektrumprojekt.datamodel.message.MessageFilter.OrderDirection;
 import de.spektrumprojekt.datamodel.message.MessagePart;
+import de.spektrumprojekt.datamodel.message.MessagePublicationDateComperator;
 import de.spektrumprojekt.datamodel.message.MessageType;
 import de.spektrumprojekt.datamodel.source.Source;
 import de.spektrumprojekt.datamodel.source.SourceNotFoundException;
@@ -53,6 +53,7 @@ import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionAlreadyExistsException;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionMessageFilter;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionSourceStatus;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 import de.spektrumprojekt.exceptions.SubscriptionNotFoundException;
 import de.spektrumprojekt.persistence.Persistence;
@@ -307,6 +308,12 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
     @Override
     public List<Subscription> getSubscriptions(SubscriptionFilter subscriptionFilter) {
         return this.persistence.getSubscriptions(subscriptionFilter);
+    }
+
+    @Override
+    public List<SubscriptionSourceStatus> getSubscriptionsWithSourceStatus(
+            SubscriptionFilter subscriptionFilter) {
+        return this.persistence.getSubscriptionsWithSourceStatus(subscriptionFilter);
     }
 
     @Override
