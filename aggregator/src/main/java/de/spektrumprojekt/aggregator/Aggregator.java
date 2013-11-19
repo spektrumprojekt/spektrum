@@ -169,7 +169,7 @@ public class Aggregator {
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void start() throws ConfigurationException {
-        LOGGER.debug("Starting Aggregator ...");
+        LOGGER.info("Starting Aggregator ...");
 
         createSubscriptionManager();
         fillMessageHandlers();
@@ -187,7 +187,7 @@ public class Aggregator {
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void stop() {
-        LOGGER.debug("stopping ...");
+        LOGGER.info("Stopping Aggregator ...");
         for (MessageHandler handler : messageHandlers) {
             if (handler != null) {
                 communicator.unregisterMessageHandler(handler);
@@ -195,6 +195,6 @@ public class Aggregator {
         }
         subscriptionManager.stop();
         communicator.close();
-        LOGGER.debug("... stopped");
+        LOGGER.info("Aggregator stopped");
     }
 }
