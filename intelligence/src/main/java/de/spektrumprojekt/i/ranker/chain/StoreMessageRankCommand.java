@@ -65,8 +65,8 @@ public class StoreMessageRankCommand implements Command<MessageFeatureContext> {
         }
         Collection<UserMessageScore> ranks = new HashSet<UserMessageScore>();
         for (UserSpecificMessageFeatureContext userContext : context.getUserContexts()) {
-            if (userContext.getMessageRank() != null) {
-                ranks.add(userContext.getMessageRank());
+            if (userContext.getMessageScore() != null) {
+                ranks.add(userContext.getMessageScore());
             }
 
             for (UserMessageScore rankToUpdate : userContext.getRanksToUpdate()) {

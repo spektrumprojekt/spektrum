@@ -67,7 +67,7 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     private boolean useFixedDefaultFeatureWeights = true;
 
-    private Map<Feature, Float> featureWeights = new HashMap<Feature, Float>();
+    private Map<Feature, Float> featureWeights;
 
     public RankerConfiguration(TermWeightStrategy strategy, TermVectorSimilarityStrategy aggregation) {
         this(strategy, aggregation, null, null, (RankerConfigurationFlag[]) null);

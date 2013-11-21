@@ -39,9 +39,9 @@ import de.spektrumprojekt.communication.vm.VirtualMachineCommunicator;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessagePart;
-import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
@@ -138,7 +138,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
                 user1sim.getSimilarity() > 0.25);
     }
 
-    private Ranker setupRanker(RankerConfigurationFlag flag, boolean useAdaptionFromMGs,
+    private Ranker setupScorer(RankerConfigurationFlag flag, boolean useAdaptionFromMGs,
             String... usersForRanking) {
 
         Collection<String> userForRanking = new HashSet<String>(Arrays.asList(usersForRanking));
@@ -211,7 +211,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
      */
     @Test
     public void testRanker() throws Exception {
-        Ranker ranker = setupRanker(null, false, "user1", "user2", "user3");
+        Ranker ranker = setupScorer(null, false, "user1", "user2", "user3");
         String authorGlobalId = getPersistence().getOrCreateUser("user1").getGlobalId();
 
         Message message = createPlainTextMessage(
@@ -247,8 +247,8 @@ public class RankerTest extends IntelligenceSpektrumTest {
                     .getUser().getGlobalId());
             Assert.assertNotNull("User context should exist for userGlobalId="
                     + userModel.getUser().getGlobalId(), userContext);
-            Assert.assertNotNull(userContext.getMessageRank());
-            Assert.assertEquals(userContext.getMessageRank().getScore(), i++ % 2, 0.001);
+            Assert.assertNotNull(userContext.getMessageScore());
+            Assert.assertEquals(userContext.getMessageScore().getScore(), i++ % 2, 0.001);
 
         }
 
@@ -274,7 +274,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
         UserModel userModel2 = getPersistence().getOrCreateUserModelByUser(user2.getGlobalId(),
                 UserModel.DEFAULT_USER_MODEL_TYPE);
 
-        Ranker ranker = setupRanker(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION,
+        Ranker ranker = setupScorer(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION,
                 true, "userMg1", "userMg2");
 
         // user1 write ins mg1
@@ -345,7 +345,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
         UserModel userModel3 = getPersistence().getOrCreateUserModelByUser(user3.getGlobalId(),
                 UserModel.DEFAULT_USER_MODEL_TYPE);
 
-        Ranker ranker = setupRanker(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION,
+        Ranker ranker = setupScorer(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION,
                 false, "user1", "user2", "user3");
 
         // user2 mentions user1

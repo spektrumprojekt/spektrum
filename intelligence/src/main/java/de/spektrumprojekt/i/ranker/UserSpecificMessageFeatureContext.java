@@ -127,7 +127,7 @@ public class UserSpecificMessageFeatureContext extends FeatureContext {
      * 
      * @return the rank (null if not computed or uncomputeable)
      */
-    public UserMessageScore getMessageRank() {
+    public UserMessageScore getMessageScore() {
         return messageRank;
     }
 

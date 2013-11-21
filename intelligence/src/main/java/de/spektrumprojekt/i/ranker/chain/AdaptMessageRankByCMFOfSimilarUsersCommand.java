@@ -96,7 +96,7 @@ public class AdaptMessageRankByCMFOfSimilarUsersCommand implements Command<Messa
         String messageGroupGlobalId = context.getMessage().getMessageGroup() == null ? null
                 : context.getMessage().getMessageGroup().getGlobalId();
         for (UserSpecificMessageFeatureContext contextForAdaptation : context.getUserContexts()) {
-            if (contextForAdaptation.getMessageRank().getScore() <= this.messageRankThreshold) {
+            if (contextForAdaptation.getMessageScore().getScore() <= this.messageRankThreshold) {
 
                 float newRank = 0;
 
@@ -113,19 +113,19 @@ public class AdaptMessageRankByCMFOfSimilarUsersCommand implements Command<Messa
                         if (userSimilarity != null
                                 && userSimilarity.getSimilarity() >= this.minUserSimilarity) {
 
-                            newRank = Math.max(newRank, userContext.getMessageRank().getScore());
+                            newRank = Math.max(newRank, userContext.getMessageScore().getScore());
                         }
 
                     }
                 }
 
-                float diff = newRank - contextForAdaptation.getMessageRank().getScore();
+                float diff = newRank - contextForAdaptation.getMessageScore().getScore();
 
                 if (newRank > 0 && diff <= 0) {
 
                     adaptationIncrease += diff;
 
-                    contextForAdaptation.getMessageRank().setScore(newRank);
+                    contextForAdaptation.getMessageScore().setScore(newRank);
                     adaptationCount++;
 
                 }

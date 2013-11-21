@@ -88,7 +88,7 @@ public class TriggerUserModelAdaptationCommand implements
     @Override
     public void process(UserSpecificMessageFeatureContext context) {
 
-        UserMessageScore messageRank = context.getMessageRank();
+        UserMessageScore messageRank = context.getMessageScore();
 
         if (messageRank.getScore() < rankThreshold) {
 
