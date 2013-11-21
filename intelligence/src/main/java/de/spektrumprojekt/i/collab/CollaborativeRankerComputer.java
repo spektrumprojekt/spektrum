@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import de.spektrumprojekt.commons.computer.Computer;
 import de.spektrumprojekt.datamodel.message.Message;
-import de.spektrumprojekt.datamodel.message.MessageRank;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.observation.Interest;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
@@ -71,7 +71,7 @@ public class CollaborativeRankerComputer implements Computer {
 
     private UserNeighborhood userNeighborhood;
 
-    private Collection<MessageRank> messageRanks;
+    private Collection<UserMessageScore> messageRanks;
 
     private final static Logger LOGGER = LoggerFactory.getLogger(CollaborativeRankerComputer.class);
 
@@ -233,7 +233,7 @@ public class CollaborativeRankerComputer implements Computer {
         return maxPrioObs;
     }
 
-    public Collection<MessageRank> getMessageRanks() {
+    public Collection<UserMessageScore> getMessageRanks() {
         return messageRanks;
     }
 
@@ -338,7 +338,7 @@ public class CollaborativeRankerComputer implements Computer {
 
     public void run(Collection<Message> messagesToRun) throws TasteException {
 
-        messageRanks = new HashSet<MessageRank>();
+        messageRanks = new HashSet<UserMessageScore>();
 
         if (emptyDataModel) {
             LOGGER.info("Empty datamodel. Skip run.");
@@ -361,10 +361,10 @@ public class CollaborativeRankerComputer implements Computer {
                 float rank = convertScoreFromMahoutValue(estimate, true);
 
                 if (!Float.isNaN(rank)) {
-                    MessageRank messageRank = new MessageRank(message.getGlobalId(),
+                    UserMessageScore messageRank = new UserMessageScore(message.getGlobalId(),
                             user.getGlobalId());
 
-                    messageRank.setRank(rank);
+                    messageRank.setScore(rank);
 
                     messageRanks.add(messageRank);
                 } else {

@@ -27,7 +27,7 @@ import java.util.Map;
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.i.datamodel.MessageFeature;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
-import de.spektrumprojekt.i.ranker.chain.features.Feature;
+import de.spektrumprojekt.i.ranker.feature.Feature;
 
 /**
  * A command that will create learning message based on the ranked message
@@ -124,10 +124,6 @@ public class FeatureStatisticsCommand implements Command<UserSpecificMessageFeat
             if (feature.getValue() > 0) {
                 stat.greaterZero++;
             }
-        }
-
-        if (context.getFeatures().size() == 0) {
-            this.featureCounts.get(Feature.NULL_FEATURE).exists++;
         }
 
     }

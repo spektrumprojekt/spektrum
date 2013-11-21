@@ -38,7 +38,7 @@ import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.datamodel.message.MessagePublicationDateComperator;
-import de.spektrumprojekt.datamodel.message.MessageRank;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
@@ -159,7 +159,7 @@ public class SimplePersistence implements Persistence {
     // key is global id of message group
     private final Map<String, MessageGroup> messageGroups = new HashMap<String, MessageGroup>();
 
-    private final Map<UserMessageIdentifier, MessageRank> messageRanks = new HashMap<UserMessageIdentifier, MessageRank>();
+    private final Map<UserMessageIdentifier, UserMessageScore> messageRanks = new HashMap<UserMessageIdentifier, UserMessageScore>();
 
     private final Map<String, Term> termsTerms = new HashMap<String, Term>();
 
@@ -300,7 +300,7 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
-    public MessageRank getMessageRank(String userGlobalId, String messageGlobalId) {
+    public UserMessageScore getMessageRank(String userGlobalId, String messageGlobalId) {
 
         return this.messageRanks.get(new UserMessageIdentifier(userGlobalId, messageGlobalId));
     }
@@ -729,8 +729,8 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
-    public void storeMessageRanks(Collection<MessageRank> ranks) {
-        for (MessageRank messageRank : ranks) {
+    public void storeMessageRanks(Collection<UserMessageScore> ranks) {
+        for (UserMessageScore messageRank : ranks) {
             this.messageRanks.put(new UserMessageIdentifier(messageRank.getUserGlobalId(),
                     messageRank.getMessageGlobalId()), messageRank);
         }
@@ -781,9 +781,9 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
-    public void updateMessageRank(MessageRank rankToUpdate) {
+    public void updateMessageRank(UserMessageScore rankToUpdate) {
         UserMessageIdentifier userMessageIdentifier = new UserMessageIdentifier(rankToUpdate);
-        MessageRank existingRank = this.messageRanks.get(userMessageIdentifier);
+        UserMessageScore existingRank = this.messageRanks.get(userMessageIdentifier);
 
         if (existingRank != rankToUpdate) {
             this.messageRanks.put(userMessageIdentifier, rankToUpdate);
@@ -824,7 +824,7 @@ public class SimplePersistence implements Persistence {
     @Override
     public void visitAllMessageRanks(MessageRankVisitor visitor, Date startDate, Date endDate)
             throws Exception {
-        for (MessageRank messageRank : this.messageRanks.values()) {
+        for (UserMessageScore messageRank : this.messageRanks.values()) {
             Message message = this.getMessageByGlobalId(messageRank.getMessageGlobalId());
             if (startDate.after(message.getPublicationDate())) {
                 continue;

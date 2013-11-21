@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public enum RankerConfigurationFlag {
-    ONLY_USE_TERM_MATCHER_FEATURE("onlyTerms"),
 
+    /**
+     * @deprecated Use feature weights instead
+     */
+    @Deprecated
     ONLY_USE_TERM_MATCHER_FEATURE_BUT_LEARN_FROM_FEATURES("onlyTermsButLearn"),
 
     DISCUSSION_PARTICIPATION_LEARN_FROM_PARENT_MESSAGE("learnParent"),

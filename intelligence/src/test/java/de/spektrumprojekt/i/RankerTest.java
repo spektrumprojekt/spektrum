@@ -39,7 +39,7 @@ import de.spektrumprojekt.communication.vm.VirtualMachineCommunicator;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessagePart;
-import de.spektrumprojekt.datamodel.message.MessageRank;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.user.User;
@@ -248,7 +248,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
             Assert.assertNotNull("User context should exist for userGlobalId="
                     + userModel.getUser().getGlobalId(), userContext);
             Assert.assertNotNull(userContext.getMessageRank());
-            Assert.assertEquals(userContext.getMessageRank().getRank(), i++ % 2, 0.001);
+            Assert.assertEquals(userContext.getMessageRank().getScore(), i++ % 2, 0.001);
 
         }
 
@@ -314,14 +314,14 @@ public class RankerTest extends IntelligenceSpektrumTest {
         waitForCommunicatorToDelivierMessages();
         checkUserModelTerms(context, userModel1);
 
-        MessageRank rankForUser2 = getPersistence().getMessageRank(user2.getGlobalId(),
+        UserMessageScore rankForUser2 = getPersistence().getMessageRank(user2.getGlobalId(),
                 message.getGlobalId());
         Assert.assertNotNull(rankForUser2);
         Assert.assertTrue("RequestAdaptedCount should be > 0",
                 this.adapter.getRequestAdaptedCount() > 0);
         Assert.assertTrue("getAdaptedCount should be > 0", this.adapter.getAdaptedCount() > 0);
         Assert.assertTrue("rankForUser2 should positive if adaption run, but it is: "
-                + rankForUser2.getRank(), rankForUser2.getRank() > 0.5);
+                + rankForUser2.getScore(), rankForUser2.getScore() > 0.5);
 
     }
 
@@ -388,14 +388,14 @@ public class RankerTest extends IntelligenceSpektrumTest {
         waitForCommunicatorToDelivierMessages();
         checkUserModelTerms(context, userModel1);
 
-        MessageRank rankForUser2 = getPersistence().getMessageRank(user2.getGlobalId(),
+        UserMessageScore rankForUser2 = getPersistence().getMessageRank(user2.getGlobalId(),
                 message.getGlobalId());
         Assert.assertNotNull(rankForUser2);
         Assert.assertTrue("RequestAdaptedCount should be > 0",
                 this.adapter.getRequestAdaptedCount() > 0);
         Assert.assertTrue("getAdaptedCount should be > 0", this.adapter.getAdaptedCount() > 0);
         Assert.assertTrue("rankForUser2 should positive if adaption run, but it is: "
-                + rankForUser2.getRank(), rankForUser2.getRank() > 0.5);
+                + rankForUser2.getScore(), rankForUser2.getScore() > 0.5);
 
     }
 

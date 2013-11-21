@@ -47,7 +47,7 @@ import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageFilter.OrderDirection;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessagePattern;
-import de.spektrumprojekt.datamodel.message.MessageRank;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
@@ -89,7 +89,7 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
                 statistics.setSubscriptionCount(getEntityCount(entityManager, Subscription.class));
 
                 statistics.setMessageCount(getEntityCount(entityManager, Message.class));
-                statistics.setMessageRankCount(getEntityCount(entityManager, MessageRank.class));
+                statistics.setMessageRankCount(getEntityCount(entityManager, UserMessageScore.class));
 
                 statistics.setScoredTermCount(getEntityCount(entityManager, ScoredTerm.class));
                 statistics.setTermCount(getEntityCount(entityManager, Term.class));
@@ -173,15 +173,15 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
         return this.getEntityByGlobalId(MessageGroup.class, messageGroupGlobalId);
     }
 
-    public MessageRank getMessageRank(final String userGlobalId, final String messageGlobalId) {
+    public UserMessageScore getMessageRank(final String userGlobalId, final String messageGlobalId) {
 
-        Transaction<MessageRank> transaction = new Transaction<MessageRank>() {
+        Transaction<UserMessageScore> transaction = new Transaction<UserMessageScore>() {
 
             @Override
-            protected MessageRank doTransaction(EntityManager entityManager) {
+            protected UserMessageScore doTransaction(EntityManager entityManager) {
                 CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-                CriteriaQuery<MessageRank> query = criteriaBuilder.createQuery(MessageRank.class);
-                Root<MessageRank> entity = query.from(MessageRank.class);
+                CriteriaQuery<UserMessageScore> query = criteriaBuilder.createQuery(UserMessageScore.class);
+                Root<UserMessageScore> entity = query.from(UserMessageScore.class);
 
                 ParameterExpression<String> userGlobalIdParameter = criteriaBuilder
                         .parameter(String.class);
@@ -192,11 +192,11 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
                         userGlobalIdParameter), criteriaBuilder.equal(
                         entity.get("messageGlobalId"), messageGlobalIdParameter)));
 
-                TypedQuery<MessageRank> typedQuery = entityManager.createQuery(query);
+                TypedQuery<UserMessageScore> typedQuery = entityManager.createQuery(query);
                 typedQuery.setParameter(userGlobalIdParameter, userGlobalId);
                 typedQuery.setParameter(messageGlobalIdParameter, messageGlobalId);
 
-                MessageRank messageRank;
+                UserMessageScore messageRank;
                 try {
                     messageRank = typedQuery.getSingleResult();
                 } catch (NoResultException e) {
@@ -457,7 +457,7 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
      * @param ranks
      *            store the ranks
      */
-    public void storeMessageRanks(Collection<MessageRank> ranks) {
+    public void storeMessageRanks(Collection<UserMessageScore> ranks) {
         if (ranks == null) {
             throw new IllegalArgumentException("ranks cannot be null.");
         }
@@ -492,7 +492,7 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
         this.save(observation);
     }
 
-    public void updateMessageRank(MessageRank rankToUpdate) {
+    public void updateMessageRank(UserMessageScore rankToUpdate) {
         this.save(rankToUpdate);
     }
 

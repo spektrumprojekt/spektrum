@@ -15,6 +15,8 @@ import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionConfiguration;
 import de.spektrumprojekt.i.learner.adaptation.UserModelAdapterConfiguration;
+import de.spektrumprojekt.i.ranker.feature.Feature;
+import de.spektrumprojekt.i.ranker.feature.FixWeightFeatureAggregator;
 import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
 import de.spektrumprojekt.i.term.TermWeightStrategy;
 import de.spektrumprojekt.i.timebased.config.ShortTermMemoryConfiguration;
@@ -62,6 +64,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
     private ShortTermMemoryConfiguration shortTermMemoryConfiguration;
 
     private final List<String> modelsToNotCreateUnknownTermsIn = new ArrayList<String>();
+
+    private boolean useFixedDefaultFeatureWeights = true;
+
+    private Map<Feature, Float> featureWeights = new HashMap<Feature, Float>();
 
     public RankerConfiguration(TermWeightStrategy strategy, TermVectorSimilarityStrategy aggregation) {
         this(strategy, aggregation, null, null, (RankerConfigurationFlag[]) null);
@@ -156,6 +162,17 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         return this.getClass().getSimpleName() + " " + this.toString();
     }
 
+    public Map<Feature, Float> getFeatureWeights() {
+        if (useFixedDefaultFeatureWeights && this.featureWeights == null) {
+            featureWeights = FixWeightFeatureAggregator
+                    .getFixedDefaults(this
+                            .hasFlag(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE_BUT_LEARN_FROM_FEATURES));
+        } else if (this.featureWeights == null) {
+            featureWeights = new HashMap<Feature, Float>();
+        }
+        return featureWeights;
+    }
+
     public Collection<RankerConfigurationFlag> getFlags() {
         return Collections.unmodifiableSet(flags);
     }
@@ -241,9 +258,39 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         return treatMissingUserModelEntriesAsZero;
     }
 
+    public boolean isUseFixedDefaultFeatureWeights() {
+        return useFixedDefaultFeatureWeights;
+    }
+
     public UserModelConfiguration put(String userModelType,
             UserModelConfiguration modelConfiguration) {
         return userModelTypes.put(userModelType, modelConfiguration);
+    }
+
+    /**
+     * sets the feature weight without using the default weights. but be carefull, getFeatureWeights
+     * should not be called before unless useFixedDefaultFeatureWeights is set to true counts.
+     * 
+     * @param feature
+     * @param weight
+     */
+    public void setFeatureWeight(Feature feature, float weight) {
+        this.setFeatureWeight(feature, weight, false);
+    }
+
+    public void setFeatureWeight(Feature feature, float weight,
+            boolean useFixedDefaultFeatureWeights) {
+        if (this.featureWeights != null
+                && this.useFixedDefaultFeatureWeights != useFixedDefaultFeatureWeights) {
+            throw new IllegalStateException(
+                    "this.useFixedDefaultFeatureWeights="
+                            + this.useFixedDefaultFeatureWeights
+                            + " and featureWeights already initalized. cannot change useFixedDefaultFeatureWeights to "
+                            + useFixedDefaultFeatureWeights);
+        }
+        this.useFixedDefaultFeatureWeights = useFixedDefaultFeatureWeights;
+        getFeatureWeights();
+        this.featureWeights.put(feature, weight);
     }
 
     public void setFlags(RankerConfigurationFlag... flags) {
@@ -320,6 +367,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
     public void setTreatMissingUserModelEntriesAsZero(boolean treatMissingUserModelEntriesAsZero) {
         assertCanSet();
         this.treatMissingUserModelEntriesAsZero = treatMissingUserModelEntriesAsZero;
+    }
+
+    public void setUseFixedDefaultFeatureWeights(boolean useFixedDefaultFeatureWeights) {
+        this.useFixedDefaultFeatureWeights = useFixedDefaultFeatureWeights;
     }
 
     public void setUserModelType(Map<String, UserModelConfiguration> userModelTypes) {

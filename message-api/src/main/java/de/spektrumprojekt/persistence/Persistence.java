@@ -31,7 +31,7 @@ import de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
-import de.spektrumprojekt.datamodel.message.MessageRank;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
@@ -131,7 +131,7 @@ public interface Persistence {
      */
     MessageGroup getMessageGroupByGlobalId(String globalIdString);
 
-    MessageRank getMessageRank(String userGlobalId, String messageGlobalId);
+    UserMessageScore getMessageRank(String userGlobalId, String messageGlobalId);
 
     MessageRelation getMessageRelation(Message message);
 
@@ -243,7 +243,7 @@ public interface Persistence {
      * @param ranks
      *            store the ranks
      */
-    void storeMessageRanks(Collection<MessageRank> ranks);
+    void storeMessageRanks(Collection<UserMessageScore> ranks);
 
     /**
      * Stores the message relation
@@ -275,7 +275,7 @@ public interface Persistence {
 
     void storeUserSimilarity(UserSimilarity stat);
 
-    void updateMessageRank(MessageRank rankToUpdate);
+    void updateMessageRank(UserMessageScore rankToUpdate);
 
     Source updateSource(Source source) throws SourceNotFoundException;
 

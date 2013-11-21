@@ -23,7 +23,7 @@ import java.util.Collection;
 import java.util.HashSet;
 
 import de.spektrumprojekt.commons.chain.Command;
-import de.spektrumprojekt.datamodel.message.MessageRank;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 import de.spektrumprojekt.persistence.Persistence;
@@ -63,13 +63,13 @@ public class StoreMessageRankCommand implements Command<MessageFeatureContext> {
         if (context.isNoRankingOnlyLearning()) {
             return;
         }
-        Collection<MessageRank> ranks = new HashSet<MessageRank>();
+        Collection<UserMessageScore> ranks = new HashSet<UserMessageScore>();
         for (UserSpecificMessageFeatureContext userContext : context.getUserContexts()) {
             if (userContext.getMessageRank() != null) {
                 ranks.add(userContext.getMessageRank());
             }
 
-            for (MessageRank rankToUpdate : userContext.getRanksToUpdate()) {
+            for (UserMessageScore rankToUpdate : userContext.getRanksToUpdate()) {
 
                 persistence.updateMessageRank(rankToUpdate);
             }

@@ -5,7 +5,7 @@ import org.apache.mahout.cf.taste.recommender.Recommender;
 
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.commons.chain.CommandException;
-import de.spektrumprojekt.datamodel.message.MessageRank;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
@@ -89,9 +89,9 @@ public class FullCollRelevanceScoreCommand implements Command<UserSpecificMessag
                 float rank = CollaborativeRankerComputer
                         .convertScoreFromMahoutValue(estimate, true);
 
-                MessageRank messageRank = new MessageRank(context.getMessage().getGlobalId(),
+                UserMessageScore messageRank = new UserMessageScore(context.getMessage().getGlobalId(),
                         context.getUserGlobalId());
-                messageRank.setRank(rank);
+                messageRank.setScore(rank);
 
                 context.setMessageRank(messageRank);
             }

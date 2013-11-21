@@ -28,7 +28,7 @@ import java.util.Map.Entry;
 
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.communication.Communicator;
-import de.spektrumprojekt.datamodel.message.MessageRank;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
@@ -88,9 +88,9 @@ public class TriggerUserModelAdaptationCommand implements
     @Override
     public void process(UserSpecificMessageFeatureContext context) {
 
-        MessageRank messageRank = context.getMessageRank();
+        UserMessageScore messageRank = context.getMessageRank();
 
-        if (messageRank.getRank() < rankThreshold) {
+        if (messageRank.getScore() < rankThreshold) {
 
             String messageGroupGlobalId = context.getMessage().getMessageGroup().getGlobalId();
 

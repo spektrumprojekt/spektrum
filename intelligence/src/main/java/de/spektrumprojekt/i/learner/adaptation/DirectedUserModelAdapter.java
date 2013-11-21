@@ -35,7 +35,6 @@ import de.spektrumprojekt.communication.CommunicationMessage;
 import de.spektrumprojekt.communication.MessageHandler;
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 import de.spektrumprojekt.datamodel.message.Message;
-import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.user.UserModel;
@@ -164,8 +163,11 @@ public class DirectedUserModelAdapter implements
     }
 
     private boolean adaptTermsOfMG(String mgId) {
-        MessageGroup messageGroup = this.persistence.getMessageGroupByGlobalId("communotedev");
-        return mgId.equals(messageGroup.getId() + "");
+        /*
+         * MessageGroup messageGroup = this.persistence.getMessageGroupByGlobalId("communotedev");
+         * return mgId.equals(messageGroup.getId() + "");
+         */
+        return true;
     }
 
     private ValueAggregator createNewValueAggregator() {

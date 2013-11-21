@@ -28,7 +28,7 @@ import org.eclipse.persistence.annotations.Index;
 import de.spektrumprojekt.datamodel.identifiable.SpektrumEntity;
 
 /**
- * Contains the message rank
+ * Contains the score of a message for a user
  * 
  * TODO move to some persistences package
  * 
@@ -38,14 +38,14 @@ import de.spektrumprojekt.datamodel.identifiable.SpektrumEntity;
 @Entity
 // @Table(uniqueConstraints = @UniqueConstraint(columnNames = { "messageGlobalId", "userGlobalId"
 // }))
-public class MessageRank /* extends Identifiable */implements SpektrumEntity {
+public class UserMessageScore implements SpektrumEntity {
 
     /**
      * 
      */
     private static final long serialVersionUID = 1L;
 
-    private float rank;
+    private float score;
 
     @Index
     @Id
@@ -64,11 +64,11 @@ public class MessageRank /* extends Identifiable */implements SpektrumEntity {
     /**
      * for jpa
      */
-    protected MessageRank() {
+    protected UserMessageScore() {
 
     }
 
-    public MessageRank(String messageGlobalId, String userGlobalId) {
+    public UserMessageScore(String messageGlobalId, String userGlobalId) {
         if (messageGlobalId == null) {
             throw new IllegalArgumentException("messageGlobalId cannot be null.");
         }
@@ -95,8 +95,8 @@ public class MessageRank /* extends Identifiable */implements SpektrumEntity {
      * 
      * @return the rank
      */
-    public float getRank() {
-        return rank;
+    public float getScore() {
+        return score;
     }
 
     /**
@@ -107,10 +107,22 @@ public class MessageRank /* extends Identifiable */implements SpektrumEntity {
         return userGlobalId;
     }
 
+    /**
+     * is this still needed?
+     * 
+     * @return
+     */
+    @Deprecated
     public boolean isAuthor() {
         return author;
     }
 
+    /**
+     * is this still needed?
+     * 
+     * @param author
+     */
+    @Deprecated
     public void setAuthor(boolean author) {
         this.author = author;
     }
@@ -136,8 +148,8 @@ public class MessageRank /* extends Identifiable */implements SpektrumEntity {
      * @param rank
      *            the rank
      */
-    public void setRank(float rank) {
-        this.rank = rank;
+    public void setScore(float rank) {
+        this.score = rank;
     }
 
     /**

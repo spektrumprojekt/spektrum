@@ -4,9 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.spektrumprojekt.i.datamodel.MessageFeature;
-import de.spektrumprojekt.i.ranker.chain.features.Feature;
+import de.spektrumprojekt.i.ranker.feature.Feature;
 
 public class FeatureContext {
+
     private final Map<Feature, MessageFeature> features = new HashMap<Feature, MessageFeature>();
 
     /**

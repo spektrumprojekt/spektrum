@@ -23,7 +23,7 @@ import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
-import de.spektrumprojekt.i.ranker.chain.features.Feature;
+import de.spektrumprojekt.i.ranker.feature.Feature;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**
@@ -96,7 +96,7 @@ public class AdaptMessageRankByCMFOfSimilarUsersCommand implements Command<Messa
         String messageGroupGlobalId = context.getMessage().getMessageGroup() == null ? null
                 : context.getMessage().getMessageGroup().getGlobalId();
         for (UserSpecificMessageFeatureContext contextForAdaptation : context.getUserContexts()) {
-            if (contextForAdaptation.getMessageRank().getRank() <= this.messageRankThreshold) {
+            if (contextForAdaptation.getMessageRank().getScore() <= this.messageRankThreshold) {
 
                 float newRank = 0;
 
@@ -113,19 +113,19 @@ public class AdaptMessageRankByCMFOfSimilarUsersCommand implements Command<Messa
                         if (userSimilarity != null
                                 && userSimilarity.getSimilarity() >= this.minUserSimilarity) {
 
-                            newRank = Math.max(newRank, userContext.getMessageRank().getRank());
+                            newRank = Math.max(newRank, userContext.getMessageRank().getScore());
                         }
 
                     }
                 }
 
-                float diff = newRank - contextForAdaptation.getMessageRank().getRank();
+                float diff = newRank - contextForAdaptation.getMessageRank().getScore();
 
                 if (newRank > 0 && diff <= 0) {
 
                     adaptationIncrease += diff;
 
-                    contextForAdaptation.getMessageRank().setRank(newRank);
+                    contextForAdaptation.getMessageRank().setScore(newRank);
                     adaptationCount++;
 
                 }

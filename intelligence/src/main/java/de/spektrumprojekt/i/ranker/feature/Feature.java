@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package de.spektrumprojekt.i.ranker.chain.features;
+package de.spektrumprojekt.i.ranker.feature;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,17 +43,13 @@ public class Feature {
     private final FeatureType featureType;
 
     /**
-     * NULL Feature indicating no feature matched
-     */
-    public final static Feature NULL_FEATURE = new Feature("NullFeature", FeatureType.BOOLEAN);
-    /**
      * The author feature
      */
-    public final static Feature AUTHOR_FEATURE = new Feature("AuthorFeature", FeatureType.BOOLEAN);
+    public final static Feature AUTHOR_FEATURE = new Feature("Author", FeatureType.BOOLEAN);
     /**
      * The discussion root feature
      */
-    public final static Feature DISCUSSION_ROOT_FEATURE = new Feature("DiscussionRootFeature",
+    public final static Feature MESSAGE_ROOT_FEATURE = new Feature("MessageRoot",
             FeatureType.BOOLEAN);
     /**
      * The discussion participation feature
@@ -82,8 +78,34 @@ public class Feature {
     /**
      * The mention
      */
-    public final static Feature CONTENT_MATCH_FEATURE = new Feature("TermMatch",
+    public final static Feature CONTENT_MATCH_FEATURE = new Feature("ContentMatch",
             FeatureType.NUMERIC);
+
+    public final static Feature MESSAGE_TEXT_LENGTH_FEATURE = new Feature("messageTextLength",
+            FeatureType.NUMERIC);
+    public final static Feature CLEANED_TEXT_LENGTH_FEATURE = new Feature("cleanedTextLength",
+            FeatureType.NUMERIC);
+    public final static Feature NUM_TERMS_FEATURE = new Feature("numTerms", FeatureType.NUMERIC);
+    public final static Feature USER_TO_SIM_FEATURE = new Feature("userToSim", FeatureType.NUMERIC);
+    public final static Feature USER_FROM_SIM_FEATURE = new Feature("userFromSim",
+            FeatureType.NUMERIC);
+    public final static Feature NUM_MENTIONS_FEATURE = new Feature("numMentions",
+            FeatureType.NUMERIC);
+    public final static Feature NUM_LIKES_FEATURE = new Feature("numLikes", FeatureType.NUMERIC);
+    public final static Feature NUM_TAGS_FEATURE = new Feature("numTags", FeatureType.NUMERIC);
+    public final static Feature NUM_DISCUSSION_FEATURE = new Feature("numDiscussion",
+            FeatureType.NUMERIC);
+    public final static Feature NUM_AUTHORS_FEATURE = new Feature("numAuthors", FeatureType.NUMERIC);
+    public final static Feature NUM_DISCUSSION_MENTIONS_FEATURE = new Feature(
+            "numDiscussionMentions", FeatureType.NUMERIC);
+    public final static Feature NUM_DISCUSSION_TAGS_FEATURE = new Feature("numDiscussionTags",
+            FeatureType.NUMERIC);
+    public final static Feature NUM_ATTACHMENTS_FEATURE = new Feature("numAttachments",
+            FeatureType.NUMERIC);
+    public final static Feature NUM_IMAGE_ATTACHMENTS_FEATURE = new Feature("numImageAttachments",
+            FeatureType.NUMERIC);
+    public final static Feature NUM_NONE_IMAGE_ATTACHMENTS_FEATURE = new Feature(
+            "numNoneImageAttachments", FeatureType.NUMERIC);
 
     public final static List<Feature> ALL_FEATURES;
 
@@ -93,11 +115,25 @@ public class Feature {
         all.add(ATTACHMENT_FEATURE);
         all.add(MENTION_FEATURE);
         all.add(LIKE_FEATURE);
-        all.add(DISCUSSION_ROOT_FEATURE);
+        all.add(MESSAGE_ROOT_FEATURE);
         all.add(DISCUSSION_PARTICIPATION_FEATURE);
         all.add(DISCUSSION_MENTION_FEATURE);
         all.add(CONTENT_MATCH_FEATURE);
-        all.add(NULL_FEATURE);
+        all.add(MESSAGE_TEXT_LENGTH_FEATURE);
+        all.add(CLEANED_TEXT_LENGTH_FEATURE);
+        all.add(NUM_TERMS_FEATURE);
+        all.add(USER_TO_SIM_FEATURE);
+        all.add(USER_FROM_SIM_FEATURE);
+        all.add(NUM_MENTIONS_FEATURE);
+        all.add(NUM_LIKES_FEATURE);
+        all.add(NUM_TAGS_FEATURE);
+        all.add(NUM_DISCUSSION_FEATURE);
+        all.add(NUM_AUTHORS_FEATURE);
+        all.add(NUM_DISCUSSION_MENTIONS_FEATURE);
+        all.add(NUM_DISCUSSION_TAGS_FEATURE);
+        all.add(NUM_ATTACHMENTS_FEATURE);
+        all.add(NUM_IMAGE_ATTACHMENTS_FEATURE);
+        all.add(NUM_NONE_IMAGE_ATTACHMENTS_FEATURE);
 
         ALL_FEATURES = Collections.unmodifiableList(all);
     }

@@ -127,6 +127,15 @@ public class InformationExtractionCommand<T extends MessageFeatureContext> imple
         return command;
     }
 
+    public static boolean isInformationExtractionExecuted(Message message) {
+        Property property = message.getPropertiesAsMap().get(
+                PROPERTY_INFORMATION_EXTRACTION_EXECUTION_DATE);
+
+        boolean hasBeenExecuted = property != null
+                && property.getPropertyValue().trim().length() > 0;
+        return hasBeenExecuted;
+    }
+
     private final InformationExtractionConfiguration informationExtractionConfiguration;
 
     private final Persistence persistence;
@@ -175,11 +184,7 @@ public class InformationExtractionCommand<T extends MessageFeatureContext> imple
 
         Message message = context.getMessage();
 
-        Property property = message.getPropertiesAsMap().get(
-                PROPERTY_INFORMATION_EXTRACTION_EXECUTION_DATE);
-
-        boolean hasBeenExecuted = property != null
-                && property.getPropertyValue().trim().length() > 0;
+        boolean hasBeenExecuted = isInformationExtractionExecuted(message);
 
         // only run if it has not been executed some time for, e.g. if message is presented multiple
         // times to learner or both to learned and ranker at the same time

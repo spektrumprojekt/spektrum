@@ -31,7 +31,7 @@ import de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
-import de.spektrumprojekt.datamodel.message.MessageRank;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
@@ -184,7 +184,7 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public MessageRank getMessageRank(String userGlobalId, String messageGlobalId) {
+    public UserMessageScore getMessageRank(String userGlobalId, String messageGlobalId) {
         return this.messagePersistence.getMessageRank(userGlobalId, messageGlobalId);
     }
 
@@ -364,7 +364,7 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public void storeMessageRanks(Collection<MessageRank> ranks) {
+    public void storeMessageRanks(Collection<UserMessageScore> ranks) {
         messagePersistence.storeMessageRanks(ranks);
     }
 
@@ -396,7 +396,7 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public void updateMessageRank(MessageRank rankToUpdate) {
+    public void updateMessageRank(UserMessageScore rankToUpdate) {
         this.messagePersistence.updateMessageRank(rankToUpdate);
 
     }

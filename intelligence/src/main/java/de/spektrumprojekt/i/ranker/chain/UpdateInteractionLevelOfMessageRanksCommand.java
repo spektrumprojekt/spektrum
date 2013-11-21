@@ -27,10 +27,10 @@ import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.InteractionLevel;
 import de.spektrumprojekt.datamodel.message.Message;
-import de.spektrumprojekt.datamodel.message.MessageRank;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
-import de.spektrumprojekt.i.ranker.chain.features.Feature;
+import de.spektrumprojekt.i.ranker.feature.Feature;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**
@@ -108,7 +108,7 @@ public class UpdateInteractionLevelOfMessageRanksCommand implements
         if (context.check(Feature.AUTHOR_FEATURE, 1)) {
 
             for (Message message : parentMessages) {
-                MessageRank parentRank = this.persistence.getMessageRank(
+                UserMessageScore parentRank = this.persistence.getMessageRank(
                         context.getUserGlobalId(), message.getGlobalId());
                 if (parentRank != null) {
                     parentRank.setInteractionLevel(InteractionLevel.DIRECT);

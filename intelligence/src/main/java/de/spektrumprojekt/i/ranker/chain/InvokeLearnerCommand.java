@@ -31,11 +31,12 @@ import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationPriority;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.helper.MessageHelper;
+import de.spektrumprojekt.i.datamodel.MessageFeature;
 import de.spektrumprojekt.i.learner.LearningMessage;
 import de.spektrumprojekt.i.ranker.RankerConfiguration;
 import de.spektrumprojekt.i.ranker.RankerConfigurationFlag;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
-import de.spektrumprojekt.i.ranker.chain.features.Feature;
+import de.spektrumprojekt.i.ranker.feature.Feature;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**
@@ -105,7 +106,8 @@ public class InvokeLearnerCommand implements Command<UserSpecificMessageFeatureC
 
     private Interest generateInterest(UserSpecificMessageFeatureContext context) {
         Interest value = null;
-        if (context.getFeatureAggregate().cleanedTextLength < minimumCleanTextLength) {
+        MessageFeature cleanedText = context.getFeature(Feature.CLEANED_TEXT_LENGTH_FEATURE);
+        if (cleanedText.getValue() < minimumCleanTextLength) {
             return null;
         }
         if (learnFromEveryMessage) {
@@ -123,12 +125,12 @@ public class InvokeLearnerCommand implements Command<UserSpecificMessageFeatureC
             value = Interest.HIGH;
         } else if (learnFromDiscussions && context.check(Feature.DISCUSSION_MENTION_FEATURE, 1)) {
             value = Interest.HIGH;
-        } else if (learnLowInterest && !context.check(Feature.DISCUSSION_ROOT_FEATURE, 1)) {
-            if (context.getMessageRank().getRank() < 0.5f) {
+        } else if (learnLowInterest && !context.check(Feature.MESSAGE_ROOT_FEATURE, 1)) {
+            if (context.getMessageRank().getScore() < 0.5f) {
                 value = Interest.NORMAL;
-            } else if (context.getMessageRank().getRank() < 0.25f) {
+            } else if (context.getMessageRank().getScore() < 0.25f) {
                 value = Interest.LOW;
-            } else if (context.getMessageRank().getRank() < 0.1f) {
+            } else if (context.getMessageRank().getScore() < 0.1f) {
                 value = Interest.NONE;
             }
         }

@@ -30,7 +30,7 @@ import de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
-import de.spektrumprojekt.datamodel.message.MessageRank;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
@@ -134,7 +134,7 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
-    public MessageRank getMessageRank(String userGlobalId, String messageGlobalId) {
+    public UserMessageScore getMessageRank(String userGlobalId, String messageGlobalId) {
         return null;
     }
 
@@ -298,7 +298,7 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
-    public void storeMessageRanks(Collection<MessageRank> ranks) {
+    public void storeMessageRanks(Collection<UserMessageScore> ranks) {
     }
 
     @Override
@@ -326,7 +326,7 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
-    public void updateMessageRank(MessageRank rankToUpdate) {
+    public void updateMessageRank(UserMessageScore rankToUpdate) {
 
     }
 

@@ -1,7 +1,7 @@
 package de.spektrumprojekt.i.ranker.special;
 
 import de.spektrumprojekt.commons.chain.Command;
-import de.spektrumprojekt.datamodel.message.MessageRank;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 
 public class RandomRankerCommand implements Command<UserSpecificMessageFeatureContext> {
@@ -21,13 +21,13 @@ public class RandomRankerCommand implements Command<UserSpecificMessageFeatureCo
     }
 
     public void process(UserSpecificMessageFeatureContext context) {
-        MessageRank messageRank = new MessageRank(context.getMessage().getGlobalId(),
+        UserMessageScore messageRank = new UserMessageScore(context.getMessage().getGlobalId(),
                 context.getUserGlobalId());
         double rnd = Math.random();
         if (thresholdOfRankingRelevant == null) {
-            messageRank.setRank((float) rnd);
+            messageRank.setScore((float) rnd);
         } else {
-            messageRank.setRank(rnd >= thresholdOfRankingRelevant ? 1 : 0);
+            messageRank.setScore(rnd >= thresholdOfRankingRelevant ? 1 : 0);
         }
         messageRank.setInteractionLevel(context.getInteractionLevel());
         context.setMessageRank(messageRank);

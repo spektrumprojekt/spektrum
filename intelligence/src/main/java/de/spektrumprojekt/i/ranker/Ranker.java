@@ -40,7 +40,7 @@ import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionConfiguration;
 import de.spektrumprojekt.i.ranker.chain.AdaptMessageRankByCMFOfSimilarUsersCommand;
-import de.spektrumprojekt.i.ranker.chain.ComputeMessageRankCommand;
+import de.spektrumprojekt.i.ranker.chain.ComputeMessageScoreCommand;
 import de.spektrumprojekt.i.ranker.chain.DetermineInteractionLevelCommand;
 import de.spektrumprojekt.i.ranker.chain.FeatureStatisticsCommand;
 import de.spektrumprojekt.i.ranker.chain.InvokeLearnerCommand;
@@ -54,9 +54,9 @@ import de.spektrumprojekt.i.ranker.chain.features.AuthorFeatureCommand;
 import de.spektrumprojekt.i.ranker.chain.features.ContentMatchFeatureCommand;
 import de.spektrumprojekt.i.ranker.chain.features.DiscussionMentionFeatureCommand;
 import de.spektrumprojekt.i.ranker.chain.features.DiscussionParticipationFeatureCommand;
-import de.spektrumprojekt.i.ranker.chain.features.DiscussionRootFeatureCommand;
 import de.spektrumprojekt.i.ranker.chain.features.FeatureAggregateCommand;
 import de.spektrumprojekt.i.ranker.chain.features.MentionFeatureCommand;
+import de.spektrumprojekt.i.ranker.chain.features.MessageSpecificFeaturesCommand;
 import de.spektrumprojekt.i.term.TermSimilarityWeightComputerFactory;
 import de.spektrumprojekt.i.term.frequency.TermFrequencyComputer;
 import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
@@ -94,7 +94,7 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
 
     private final RankerConfiguration rankerConfiguration;
 
-    private final ComputeMessageRankCommand computeMessageRankCommand;
+    private final ComputeMessageScoreCommand computeMessageRankCommand;
 
     private final InvokeLearnerCommand invokeLearnerCommand;
 
@@ -121,6 +121,16 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
     private final UserSimilarityIntegrationCommand userSimilarityIntegrationCommand;
 
     private int reRankCount;
+
+    private final DiscussionMentionFeatureCommand discussionMentionFeatureCommand;
+
+    private final DiscussionParticipationFeatureCommand discussionParticipationFeatureCommand;
+
+    private final MentionFeatureCommand mentionFeatureCommand;
+
+    private final AuthorFeatureCommand authorFeatureCommand;
+
+    private final MessageSpecificFeaturesCommand discussionRootFeatureCommand;
 
     /**
      * 
@@ -183,21 +193,19 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         storeMessageCommand = new StoreMessageCommand(persistence);
         userSimilarityIntegrationCommand = new UserSimilarityIntegrationCommand(
                 userSimilarityComputer);
-        DiscussionRootFeatureCommand discussionRootFeatureCommand = new DiscussionRootFeatureCommand();
-        AuthorFeatureCommand authorFeatureCommand = new AuthorFeatureCommand();
-        MentionFeatureCommand mentionFeatureCommand = new MentionFeatureCommand();
-        DiscussionParticipationFeatureCommand discussionParticipationFeatureCommand = new DiscussionParticipationFeatureCommand();
-        DiscussionMentionFeatureCommand discussionMentionFeatureCommand = new DiscussionMentionFeatureCommand();
+        discussionRootFeatureCommand = new MessageSpecificFeaturesCommand();
+        authorFeatureCommand = new AuthorFeatureCommand();
+        mentionFeatureCommand = new MentionFeatureCommand();
+        discussionParticipationFeatureCommand = new DiscussionParticipationFeatureCommand();
+        discussionMentionFeatureCommand = new DiscussionMentionFeatureCommand();
 
         termMatchFeatureCommand = new ContentMatchFeatureCommand(persistence,
                 termVectorSimilarityComputer, rankerConfiguration.getInterestTermTreshold(),
                 rankerConfiguration);
         determineInteractionLevelCommand = new DetermineInteractionLevelCommand();
-        computeMessageRankCommand = new ComputeMessageRankCommand(
-                this.rankerConfiguration
-                        .hasFlag(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE_BUT_LEARN_FROM_FEATURES)
-                        || this.rankerConfiguration
-                                .hasFlag(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE),
+
+        computeMessageRankCommand = new ComputeMessageScoreCommand(
+                this.rankerConfiguration.getFeatureWeights(),
                 this.rankerConfiguration.getNonParticipationFactor());
         invokeLearnerCommand = new InvokeLearnerCommand(this.persistence, this.communicator,
                 this.rankerConfiguration);
@@ -217,6 +225,7 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         updateInteractionLevelOfMessageRanksCommand = new UpdateInteractionLevelOfMessageRanksCommand(
                 persistence);
         storeMessageRankCommand = new StoreMessageRankCommand(persistence);
+        featureAggregateCommand = new FeatureAggregateCommand(this.persistence);
 
         // add the commands to the chain
         if (!this.rankerConfiguration.hasFlag(RankerConfigurationFlag.NO_INFORMATION_EXTRACTION)) {
@@ -234,9 +243,7 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         }
 
         if (!this.rankerConfiguration
-                .hasFlag(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE)
-                && !this.rankerConfiguration
-                        .hasFlag(RankerConfigurationFlag.DO_NOT_USE_DISCUSSION_FEATURES)) {
+                .hasFlag(RankerConfigurationFlag.DO_NOT_USE_DISCUSSION_FEATURES)) {
 
             rankerChain.addCommand(discussionRootFeatureCommand);
         }
@@ -244,17 +251,11 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
             rankerChain.addCommand(userFeatureCommand);
         }
 
-        if (!this.rankerConfiguration
-                .hasFlag(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE)) {
-
-            userFeatureCommand.addCommand(authorFeatureCommand);
-            userFeatureCommand.addCommand(mentionFeatureCommand);
-        }
+        userFeatureCommand.addCommand(authorFeatureCommand);
+        userFeatureCommand.addCommand(mentionFeatureCommand);
 
         if (!this.rankerConfiguration
-                .hasFlag(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE)
-                && !this.rankerConfiguration
-                        .hasFlag(RankerConfigurationFlag.DO_NOT_USE_DISCUSSION_FEATURES)) {
+                .hasFlag(RankerConfigurationFlag.DO_NOT_USE_DISCUSSION_FEATURES)) {
 
             userFeatureCommand.getUserSpecificCommandChain().addCommand(
                     discussionParticipationFeatureCommand);
@@ -265,7 +266,6 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
                 .hasFlag(RankerConfigurationFlag.DO_NOT_USE_CONTENT_MATCHER_FEATURE)) {
             userFeatureCommand.addCommand(termMatchFeatureCommand);
         }
-        featureAggregateCommand = new FeatureAggregateCommand(this.persistence);
 
         userFeatureCommand.addCommand(determineInteractionLevelCommand);
         userFeatureCommand.addCommand(featureAggregateCommand);
@@ -393,13 +393,41 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         return userSimilarityComputer;
     }
 
+    /**
+     * setup the reranker chain
+     */
     private void initReRankChain() {
-        // setup the reranker chain. the reranker only uses the term match feature and assumes the
-        // message has been ranked before
+
+        if (!this.rankerConfiguration
+                .hasFlag(RankerConfigurationFlag.DO_NOT_USE_DISCUSSION_FEATURES)) {
+
+            rerankerChain.addCommand(discussionRootFeatureCommand);
+        }
+
         rerankerChain.addCommand(reRankUserFeatureCommand);
+
+        reRankUserFeatureCommand.addCommand(authorFeatureCommand);
+        reRankUserFeatureCommand.addCommand(mentionFeatureCommand);
+
+        if (!this.rankerConfiguration
+                .hasFlag(RankerConfigurationFlag.DO_NOT_USE_DISCUSSION_FEATURES)) {
+
+            reRankUserFeatureCommand.getUserSpecificCommandChain().addCommand(
+                    discussionParticipationFeatureCommand);
+            reRankUserFeatureCommand.addCommand(discussionMentionFeatureCommand);
+        }
+
+        if (!this.rankerConfiguration
+                .hasFlag(RankerConfigurationFlag.DO_NOT_USE_CONTENT_MATCHER_FEATURE)) {
+            reRankUserFeatureCommand.addCommand(termMatchFeatureCommand);
+        }
+
         reRankUserFeatureCommand.addCommand(determineInteractionLevelCommand);
-        reRankUserFeatureCommand.addCommand(termMatchFeatureCommand);
+        reRankUserFeatureCommand.addCommand(featureAggregateCommand);
+        reRankUserFeatureCommand.addCommand(updateInteractionLevelOfMessageRanksCommand);
+
         reRankUserFeatureCommand.addCommand(computeMessageRankCommand);
+
         rerankerChain.addCommand(getStoreMessageRankCommand());
     }
 

@@ -29,6 +29,7 @@ import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.i.datamodel.MessageFeature;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
+import de.spektrumprojekt.i.ranker.feature.Feature;
 
 /**
  * Computes if the user is mentioned in the discussion of the message
@@ -64,7 +65,7 @@ public class DiscussionMentionFeatureCommand implements
         MessageFeatureContext messageFeatureContext = context.getMessageFeatureContext();
 
         // dont evaluate if it is a root message or the user is the author
-        if (!context.check(Feature.DISCUSSION_ROOT_FEATURE, 1)
+        if (!context.check(Feature.MESSAGE_ROOT_FEATURE, 1)
                 || !context.check(Feature.AUTHOR_FEATURE, 1)) {
 
             MessageFeature feature = new MessageFeature(getFeatureId());

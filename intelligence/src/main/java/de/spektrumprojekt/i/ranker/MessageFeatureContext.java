@@ -29,7 +29,7 @@ import java.util.Map;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.i.datamodel.MessageFeature;
-import de.spektrumprojekt.i.ranker.chain.features.Feature;
+import de.spektrumprojekt.i.ranker.feature.Feature;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
 import de.spektrumprojekt.persistence.Persistence;
 
@@ -90,6 +90,14 @@ public class MessageFeatureContext extends FeatureContext {
     public void addInformationExtractionContexts(
             InformationExtractionContext informationExtractionContexts) {
         this.informationExtractionContexts.add(informationExtractionContexts);
+    }
+
+    public void addMessageFeature(Feature featureId, float featureValue) {
+        MessageFeature messageFeature = new MessageFeature(featureId);
+        messageFeature.setMessageGlobalId(this.message.getGlobalId());
+        messageFeature.setValue(featureValue);
+
+        this.addMessageFeature(messageFeature);
     }
 
     /**

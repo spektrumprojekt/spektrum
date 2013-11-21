@@ -19,7 +19,7 @@
 
 package de.spektrumprojekt.persistence.simple;
 
-import de.spektrumprojekt.datamodel.message.MessageRank;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 
 /**
  * Identifier for user and message id, used within the simple persistence
@@ -33,7 +33,7 @@ public class UserMessageIdentifier {
 
     private final String messageGlobalId;
 
-    public UserMessageIdentifier(MessageRank messageRank) {
+    public UserMessageIdentifier(UserMessageScore messageRank) {
         this(messageRank.getUserGlobalId(), messageRank.getMessageGlobalId());
     }
 
