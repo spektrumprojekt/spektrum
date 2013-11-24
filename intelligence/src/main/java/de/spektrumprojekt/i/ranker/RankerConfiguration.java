@@ -8,10 +8,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
+import de.spektrumprojekt.datamodel.observation.Interest;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionConfiguration;
 import de.spektrumprojekt.i.learner.adaptation.UserModelAdapterConfiguration;
@@ -66,8 +66,14 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
     private final List<String> modelsToNotCreateUnknownTermsIn = new ArrayList<String>();
 
     private boolean useFixedDefaultFeatureWeights = true;
+    private boolean useFixedDefaultLearningFeatureWeights = true;
 
     private Map<Feature, Float> featureWeights;
+
+    private Float scoreToLearnThreshold;
+    private Map<Feature, Float> learningFeatureWeights;
+
+    private Map<Feature, Float> learningFeatureTresholds;
 
     public RankerConfiguration(TermWeightStrategy strategy, TermVectorSimilarityStrategy aggregation) {
         this(strategy, aggregation, null, null, (RankerConfigurationFlag[]) null);
@@ -165,7 +171,7 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
     public Map<Feature, Float> getFeatureWeights() {
         if (useFixedDefaultFeatureWeights && this.featureWeights == null) {
             featureWeights = FixWeightFeatureAggregator
-                    .getFixedDefaults(this
+                    .getFixedDefaults4Scoring(this
                             .hasFlag(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE_BUT_LEARN_FROM_FEATURES));
         } else if (this.featureWeights == null) {
             featureWeights = new HashMap<Feature, Float>();
@@ -189,6 +195,24 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         return interestTermTreshold;
     }
 
+    public Map<Feature, Float> getLearningFeatureTresholds() {
+        if (this.learningFeatureTresholds == null) {
+            learningFeatureTresholds = new HashMap<Feature, Float>();
+        }
+        return learningFeatureTresholds;
+    }
+
+    public Map<Feature, Float> getLearningFeatureWeights() {
+
+        if (useFixedDefaultLearningFeatureWeights && this.learningFeatureWeights == null) {
+            learningFeatureWeights = FixWeightFeatureAggregator
+                    .getFixedDefaults4Learning(hasFlag(RankerConfigurationFlag.LEARN_NEGATIVE));
+        } else if (this.learningFeatureWeights == null) {
+            learningFeatureWeights = new HashMap<Feature, Float>();
+        }
+        return learningFeatureWeights;
+    }
+
     public float getMessageRankThreshold() {
         return messageRankThreshold;
     }
@@ -207,6 +231,17 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     public float getNonParticipationFactor() {
         return nonParticipationFactor;
+    }
+
+    public float getScoreToLearnThreshold() {
+        if (scoreToLearnThreshold == null) {
+            if (hasFlag(RankerConfigurationFlag.LEARN_NEGATIVE)) {
+                scoreToLearnThreshold = Interest.VERY_LOW.getScore();
+            } else {
+                scoreToLearnThreshold = Interest.NORMAL.getScore();
+            }
+        }
+        return scoreToLearnThreshold.floatValue();
     }
 
     public ShortTermMemoryConfiguration getShortTermMemoryConfiguration() {
@@ -260,6 +295,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     public boolean isUseFixedDefaultFeatureWeights() {
         return useFixedDefaultFeatureWeights;
+    }
+
+    public boolean isUseFixedDefaultLearningFeatureWeights() {
+        return useFixedDefaultLearningFeatureWeights;
     }
 
     public UserModelConfiguration put(String userModelType,
@@ -337,6 +376,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         this.nonParticipationFactor = nonParticipationFactor;
     }
 
+    public void setScoreToLearnThreshold(float scoreToLearnThreshold) {
+        this.scoreToLearnThreshold = scoreToLearnThreshold;
+    }
+
     public void setShortTermMemoryConfiguration(
             ShortTermMemoryConfiguration shortTermMemoryConfiguration) {
         this.shortTermMemoryConfiguration = shortTermMemoryConfiguration;
@@ -373,6 +416,11 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         this.useFixedDefaultFeatureWeights = useFixedDefaultFeatureWeights;
     }
 
+    public void setUseFixedDefaultLearningFeatureWeights(
+            boolean useFixedDefaultLearningFeatureWeights) {
+        this.useFixedDefaultLearningFeatureWeights = useFixedDefaultLearningFeatureWeights;
+    }
+
     public void setUserModelType(Map<String, UserModelConfiguration> userModelTypes) {
         if (userModelTypes == null) {
             throw new IllegalArgumentException("userModelType cannot be null.");
@@ -383,56 +431,28 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("[");
-        boolean first = true;
-        for (Entry<String, UserModelConfiguration> entry : userModelTypes.entrySet()) {
-            if (first) {
-                first = false;
-            } else {
-                sb.append(", ");
-            }
-            sb.append(entry.getKey());
-            sb.append(":");
-            sb.append(entry.getValue().getConfigurationDescription());
-        }
-        return "RankerConfiguration [flags="
-                + flags
-                + ", minUserSimilarity="
-                + minUserSimilarity
-                + ", minContentMessageScore="
-                + minContentMessageScore
-                + ", messageRankThreshold="
-                + messageRankThreshold
-                + ", nonParticipationFactor="
-                + nonParticipationFactor
+        return "RankerConfiguration [flags=" + flags + ", minUserSimilarity=" + minUserSimilarity
+                + ", minContentMessageScore=" + minContentMessageScore + ", messageRankThreshold="
+                + messageRankThreshold + ", nonParticipationFactor=" + nonParticipationFactor
                 + ", minimumCleanTextLengthForInvokingLearner="
-                + minimumCleanTextLengthForInvokingLearner
-                + ", termWeightStrategy="
-                + termWeightStrategy
-                + ", termVectorSimilarityStrategy="
-                + termVectorSimilarityStrategy
-                + ", immutable="
-                + immutable
-                + ", interestTermTreshold="
-                + interestTermTreshold
-                + ", treatMissingUserModelEntriesAsZero="
-                + treatMissingUserModelEntriesAsZero
-                + ", termUniquenessLogfile="
-                + termUniquenessLogfile
-                + ", userModelTypes="
-                + sb.toString()
-                + ", informationExtractionConfiguration="
-                + informationExtractionConfiguration
-                + ", informationExtractionCommand="
-                + informationExtractionCommand
-                + ", userModelAdapterConfiguration="
-                + userModelAdapterConfiguration
-                + ", mixMemoriesForRating="
-                + mixMemoriesForRating
-                + ", shortTermMemoryConfiguration="
-                + (shortTermMemoryConfiguration == null ? "null" : shortTermMemoryConfiguration
-                        .getConfigurationDescription()) + "]";
+                + minimumCleanTextLengthForInvokingLearner + ", termWeightStrategy="
+                + termWeightStrategy + ", termVectorSimilarityStrategy="
+                + termVectorSimilarityStrategy + ", immutable=" + immutable
+                + ", interestTermTreshold=" + interestTermTreshold
+                + ", treatMissingUserModelEntriesAsZero=" + treatMissingUserModelEntriesAsZero
+                + ", termUniquenessLogfile=" + termUniquenessLogfile + ", userModelTypes="
+                + userModelTypes + ", informationExtractionConfiguration="
+                + informationExtractionConfiguration + ", informationExtractionCommand="
+                + informationExtractionCommand + ", userModelAdapterConfiguration="
+                + userModelAdapterConfiguration + ", mixMemoriesForRating=" + mixMemoriesForRating
+                + ", shortTermMemoryConfiguration=" + shortTermMemoryConfiguration
+                + ", modelsToNotCreateUnknownTermsIn=" + modelsToNotCreateUnknownTermsIn
+                + ", useFixedDefaultFeatureWeights=" + useFixedDefaultFeatureWeights
+                + ", useFixedDefaultLearningFeatureWeights="
+                + useFixedDefaultLearningFeatureWeights + ", featureWeights=" + featureWeights
+                + ", scoreToLearnThreshold=" + scoreToLearnThreshold + ", learningFeatureWeights="
+                + learningFeatureWeights + ", learningFeatureTresholds=" + learningFeatureTresholds
+                + "]";
     }
 
 }

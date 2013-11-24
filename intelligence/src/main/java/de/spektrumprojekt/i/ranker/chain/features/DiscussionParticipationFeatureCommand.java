@@ -65,7 +65,10 @@ public class DiscussionParticipationFeatureCommand implements
         if (!context.check(Feature.MESSAGE_ROOT_FEATURE, 1)
                 || !context.check(Feature.AUTHOR_FEATURE, 1)) {
 
-            MessageFeature feature = new MessageFeature(getFeatureId());
+            MessageFeature partFeature = new MessageFeature(getFeatureId());
+            MessageFeature noPartFeature = new MessageFeature(
+                    Feature.DISCUSSION_NO_PARTICIPATION_FEATURE);
+            noPartFeature.setValue(1f);
 
             MessageRelation relation = context.getMessageRelation();
             if (relation != null
@@ -73,18 +76,20 @@ public class DiscussionParticipationFeatureCommand implements
                 Map<String, Message> messages = messageFeatureContext.getMessagesOfRelation();
                 for (Message message : messages.values()) {
                     if (context.getMessage().getGlobalId().equals(message.getGlobalId())) {
-                        // TODO ignore message itself ?
+                        // ignore message itself ?
                         continue;
                     }
                     if (context.getUserGlobalId().equals(message.getAuthorGlobalId())) {
                         // actually we could also count the participation
-                        feature.setValue(1f);
+                        partFeature.setValue(1f);
+                        noPartFeature.setValue(0f);
                         break;
                     }
                 }
             }
 
-            context.addMessageFeature(feature);
+            context.addMessageFeature(partFeature);
+            context.addMessageFeature(noPartFeature);
         }
 
     }

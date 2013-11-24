@@ -8,6 +8,11 @@ import org.apache.commons.lang3.StringUtils;
 import de.spektrumprojekt.datamodel.message.InteractionLevel;
 import de.spektrumprojekt.i.datamodel.MessageFeature;
 
+/**
+ * 
+ * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
+ * 
+ */
 public class FeatureAggregate {
 
     public static int getLength() {

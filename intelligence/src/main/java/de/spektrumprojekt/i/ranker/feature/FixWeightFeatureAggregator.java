@@ -4,9 +4,35 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import de.spektrumprojekt.datamodel.observation.Interest;
+
+/**
+ * 
+ * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
+ * 
+ */
 public class FixWeightFeatureAggregator implements FeatureAggregator {
 
-    public static Map<Feature, Float> getFixedDefaults(boolean onlyUseContentMatchFeature) {
+    public static Map<Feature, Float> getFixedDefaults4Learning(boolean learnLowInterest) {
+
+        Map<Feature, Float> featureWeights = new HashMap<Feature, Float>();
+
+        featureWeights.put(Feature.AUTHOR_FEATURE, Interest.EXTREME.getScore());
+        featureWeights.put(Feature.MENTION_FEATURE, Interest.HIGH.getScore());
+        featureWeights.put(Feature.LIKE_FEATURE, Interest.HIGH.getScore());
+        featureWeights.put(Feature.DISCUSSION_PARTICIPATION_FEATURE, Interest.HIGH.getScore());
+        featureWeights.put(Feature.DISCUSSION_MENTION_FEATURE, Interest.HIGH.getScore());
+
+        if (learnLowInterest) {
+            featureWeights
+                    .put(Feature.DISCUSSION_NO_PARTICIPATION_FEATURE, Interest.LOW.getScore());
+            featureWeights.put(Feature.DISCUSSION_NO_MENTION_FEATURE, Interest.LOW.getScore());
+        }
+
+        return featureWeights;
+    }
+
+    public static Map<Feature, Float> getFixedDefaults4Scoring(boolean onlyUseContentMatchFeature) {
 
         Map<Feature, Float> featureWeights = new HashMap<Feature, Float>();
 
@@ -22,10 +48,6 @@ public class FixWeightFeatureAggregator implements FeatureAggregator {
     }
 
     private final Map<Feature, Float> featureWeights = new HashMap<Feature, Float>();
-
-    public FixWeightFeatureAggregator(boolean onlyUseContentMatchFeature) {
-
-    }
 
     public FixWeightFeatureAggregator(Map<Feature, Float> featureWeights) {
         this.featureWeights.putAll(featureWeights);
@@ -54,6 +76,10 @@ public class FixWeightFeatureAggregator implements FeatureAggregator {
     @Override
     public String getConfigurationDescription() {
         return this.toString();
+    }
+
+    public Map<Feature, Float> getFeatureWeights() {
+        return featureWeights;
     }
 
     @Override

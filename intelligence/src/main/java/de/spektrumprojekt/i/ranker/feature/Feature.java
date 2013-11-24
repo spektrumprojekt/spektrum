@@ -62,6 +62,12 @@ public class Feature {
     public final static Feature DISCUSSION_MENTION_FEATURE = new Feature(
             "DiscussionMentionFeature", FeatureType.BOOLEAN);
 
+    public final static Feature DISCUSSION_NO_MENTION_FEATURE = new Feature(
+            "DiscussionNoMentionFeature", FeatureType.BOOLEAN);
+
+    public final static Feature DISCUSSION_NO_PARTICIPATION_FEATURE = new Feature(
+            "DiscussionNoParticipationFeature", FeatureType.BOOLEAN);
+
     public final static Feature ATTACHMENT_FEATURE = new Feature("AttachmentFeature",
             FeatureType.BOOLEAN);
 
