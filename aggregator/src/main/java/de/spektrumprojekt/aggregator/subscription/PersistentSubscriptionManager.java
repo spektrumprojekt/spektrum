@@ -601,14 +601,14 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
     }
 
     @Override
-    public void unsubscribe(String subscriptionId) throws SubscriptionNotFoundException {
-        if (subscriptionId == null) {
+    public void unsubscribe(String subscriptionGlobalId) throws SubscriptionNotFoundException {
+        if (subscriptionGlobalId == null) {
             throw new IllegalArgumentException("subscriptionId cannot be null.");
         }
-        Subscription subscription = persistence.getSubscriptionByGlobalId(subscriptionId);
+        Subscription subscription = persistence.getSubscriptionByGlobalId(subscriptionGlobalId);
         Source source = subscription.getSource();
 
-        persistence.deleteSubscription(subscriptionId);
+        persistence.deleteSubscription(subscriptionGlobalId);
 
         int numberOfSubscriptionsForSource = persistence
                 .getNumberOfSubscriptionsBySourceGlobalId(source.getGlobalId());
@@ -617,7 +617,7 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
                     + " Will remove it.");
             String connectorType = subscription.getSource().getConnectorType();
             if (connectorType == null) {
-                LOGGER.warn("no source type specified for subscription with id {}", subscriptionId);
+                LOGGER.warn("no source type specified for subscription with id {}", subscriptionGlobalId);
                 return;
             }
             Adapter adapter = adapterManager.getAdapter(connectorType);

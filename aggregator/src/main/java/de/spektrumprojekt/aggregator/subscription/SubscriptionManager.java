@@ -128,11 +128,11 @@ public interface SubscriptionManager {
      * Remove the subscription with the specified subscription ID from this subscription manager.
      * </p>
      * 
-     * @param subscriptionId
-     *            The subscription ID for the subscription which shall be removed.
+     * @param subscriptionGlobalId
+     *            The subscription global ID for the subscription which shall be removed.
      * @throws SubscriptionNotFoundException
      */
-    void unsubscribe(String subscriptionId) throws SubscriptionNotFoundException;
+    void unsubscribe(String subscriptionGlobalId) throws SubscriptionNotFoundException;
 
     void updateSourceAccessParameter(String sourceGlobalId, Collection<Property> accessParameters)
             throws SourceNotFoundException, AdapterNotFoundException;
