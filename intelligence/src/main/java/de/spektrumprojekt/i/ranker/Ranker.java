@@ -357,6 +357,10 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         return informationExtractionChain;
     }
 
+    public int getInvokerLearnerCount() {
+        return this.invokeLearnerCommand.getLearnCount();
+    }
+
     /**
      * {@inheritDoc}
      */

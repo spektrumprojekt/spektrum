@@ -62,6 +62,8 @@ public class InvokeLearnerCommand implements Command<UserSpecificMessageFeatureC
 
     private final float scoreToLearnThreshold;
 
+    private int learnCount;
+
     public InvokeLearnerCommand(
             Persistence persistence,
             Communicator communicator,
@@ -138,6 +140,10 @@ public class InvokeLearnerCommand implements Command<UserSpecificMessageFeatureC
 
     }
 
+    public int getLearnCount() {
+        return learnCount;
+    }
+
     private void learnFromParentMessage(UserSpecificMessageFeatureContext context, Message message,
             Collection<String> messagesLearnedSoFar) {
         Property parentProperty = MessageHelper.getParentMessage(message);
@@ -202,7 +208,7 @@ public class InvokeLearnerCommand implements Command<UserSpecificMessageFeatureC
                     message,
                     ObservationPriority.FIRST_LEVEL_FEATURE_INFERRED,
                     interest);
-
+            learnCount++;
         }
 
         if (context.check(Feature.DISCUSSION_PARTICIPATION_FEATURE, 1)) {
