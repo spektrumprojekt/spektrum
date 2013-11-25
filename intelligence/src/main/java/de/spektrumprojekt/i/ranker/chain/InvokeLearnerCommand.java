@@ -121,7 +121,7 @@ public class InvokeLearnerCommand implements Command<UserSpecificMessageFeatureC
         }
         float score = this.featureAggregator.aggregate(context.getFeatureAggregate());
 
-        if (score < scoreToLearnThreshold) {
+        if (score >= scoreToLearnThreshold) {
             value = Interest.match(score);
         }
 

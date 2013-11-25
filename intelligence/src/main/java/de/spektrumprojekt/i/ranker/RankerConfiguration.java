@@ -348,6 +348,33 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         this.interestTermTreshold = interestTermTreshold;
     }
 
+    /**
+     * sets the learning feature weight without using the default weights. but be carefull,
+     * getFeatureWeights should not be called before unless useFixedDefaultFeatureWeights is set to
+     * true counts.
+     * 
+     * @param feature
+     * @param weight
+     */
+    public void setLearningFeatureWeight(Feature feature, float weight) {
+        this.setFeatureWeight(feature, weight, false);
+    }
+
+    public void setLearningFeatureWeight(Feature feature, float weight,
+            boolean useFixedDefaultLearningFeatureWeights) {
+        if (this.learningFeatureWeights != null
+                && this.useFixedDefaultLearningFeatureWeights != useFixedDefaultLearningFeatureWeights) {
+            throw new IllegalStateException(
+                    "this.useFixedDefaultLearningFeatureWeights="
+                            + this.useFixedDefaultLearningFeatureWeights
+                            + " and learningFeatureWeights already initalized. cannot change useFixedDefaultLearningFeatureWeights to "
+                            + useFixedDefaultLearningFeatureWeights);
+        }
+        this.useFixedDefaultLearningFeatureWeights = useFixedDefaultLearningFeatureWeights;
+        getLearningFeatureWeights();
+        this.learningFeatureWeights.put(feature, weight);
+    }
+
     public void setMessageRankThreshold(float messageRankThreshold) {
         assert01(messageRankThreshold, "messageRankThreshold");
         this.messageRankThreshold = messageRankThreshold;

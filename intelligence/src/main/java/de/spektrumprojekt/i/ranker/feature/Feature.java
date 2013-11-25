@@ -124,6 +124,8 @@ public class Feature {
         all.add(MESSAGE_ROOT_FEATURE);
         all.add(DISCUSSION_PARTICIPATION_FEATURE);
         all.add(DISCUSSION_MENTION_FEATURE);
+        all.add(DISCUSSION_NO_PARTICIPATION_FEATURE);
+        all.add(DISCUSSION_NO_MENTION_FEATURE);
         all.add(CONTENT_MATCH_FEATURE);
         all.add(MESSAGE_TEXT_LENGTH_FEATURE);
         all.add(CLEANED_TEXT_LENGTH_FEATURE);
