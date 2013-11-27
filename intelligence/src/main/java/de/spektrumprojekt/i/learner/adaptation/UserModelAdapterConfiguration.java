@@ -20,7 +20,7 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
 
     private boolean useWeightedAverageForAggregatingSimilarUsers = true;
 
-    private float rankThreshold = 0.75f;
+    private float scoreThreshold = 0.75f;
 
     private float confidenceThreshold = 0.5f;
 
@@ -40,7 +40,7 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
                         "hitsScoreToUse=" + hitsScoreToUse,
                         "useWeightedAverageForAggregatingSimilarUsers="
                                 + useWeightedAverageForAggregatingSimilarUsers,
-                        "rankThreshold=" + rankThreshold,
+                        "rankThreshold=" + scoreThreshold,
                         "confidenceThreshold=" + confidenceThreshold,
                         "userSimilaritySimType=" + userSimilaritySimType,
                         "adaptFromMessageGroups=" + adaptFromMessageGroups
@@ -51,8 +51,8 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
         return hitsScoreToUse;
     }
 
-    public float getRankThreshold() {
-        return rankThreshold;
+    public float getScoreThreshold() {
+        return scoreThreshold;
     }
 
     public UserSimilaritySimType getUserSimilaritySimType() {
@@ -107,8 +107,8 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
         this.hitsScoreToUse = hitsScoreToUse;
     }
 
-    public void setRankThreshold(float rankThreshold) {
-        this.rankThreshold = rankThreshold;
+    public void setScoreThreshold(float scoreThreshold) {
+        this.scoreThreshold = scoreThreshold;
     }
 
     public void setUserSelectorUseHITS(boolean userSelectorUseHITS) {
@@ -139,9 +139,9 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
                 + ", userSelectorUseMentionsPercentage=" + userSelectorUseMentionsPercentage
                 + ", hitsScoreToUse=" + hitsScoreToUse + ", adaptFromMessageGroups="
                 + adaptFromMessageGroups + ", useWeightedAverageForAggregatingSimilarUsers="
-                + useWeightedAverageForAggregatingSimilarUsers + ", rankThreshold=" + rankThreshold
-                + ", confidenceThreshold=" + confidenceThreshold + ", userSimilaritySimType="
-                + userSimilaritySimType + "]";
+                + useWeightedAverageForAggregatingSimilarUsers + ", scoreThreshold="
+                + scoreThreshold + ", confidenceThreshold=" + confidenceThreshold
+                + ", userSimilaritySimType=" + userSimilaritySimType + "]";
     }
 
 }

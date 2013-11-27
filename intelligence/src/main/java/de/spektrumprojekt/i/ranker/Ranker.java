@@ -215,7 +215,7 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
                 this.rankerConfiguration.getUserModelAdapterConfiguration()
                         .getConfidenceThreshold(),
                 this.rankerConfiguration
-                        .getUserModelAdapterConfiguration().getRankThreshold());
+                        .getUserModelAdapterConfiguration().getScoreThreshold());
 
         // TODO where to take the configuration values from ?
         adaptMessageRankByCMFOfSimilarUsersCommand = new AdaptMessageRankByCMFOfSimilarUsersCommand(
