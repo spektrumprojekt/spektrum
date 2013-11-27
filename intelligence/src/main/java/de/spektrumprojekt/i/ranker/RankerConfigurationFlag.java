@@ -15,6 +15,7 @@ public enum RankerConfigurationFlag {
 
     DISCUSSION_PARTICIPATION_LEARN_FROM_ALL_PARENT_MESSAGES("learnAllParents"),
 
+    @Deprecated
     DO_NOT_LEARN_FROM_DISCUSSION_PARTICIPATION("noLearnDiscussion"),
 
     DO_NOT_USE_DISCUSSION_FEATURES("noDiscussion"),
