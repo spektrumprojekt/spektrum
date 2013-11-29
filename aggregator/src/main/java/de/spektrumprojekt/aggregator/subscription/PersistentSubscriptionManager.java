@@ -472,7 +472,7 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
             Subscription existingSubscription = this.persistence
                     .getSubscriptionByGlobalId(subscription.getGlobalId());
             if (existingSubscription != null) {
-                LOGGER.debug("Existing subscription found, will not continue."
+                LOGGER.debug("Existing subscription found, not subscribing again."
                         + subscription.getGlobalId());
                 throw new SubscriptionAlreadyExistsException(subscription.getGlobalId(),
                         subscription);
@@ -617,7 +617,8 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
                     + " Will remove it.");
             String connectorType = subscription.getSource().getConnectorType();
             if (connectorType == null) {
-                LOGGER.warn("no source type specified for subscription with id {}", subscriptionGlobalId);
+                LOGGER.warn("no source type specified for subscription with id {}",
+                        subscriptionGlobalId);
                 return;
             }
             Adapter adapter = adapterManager.getAdapter(connectorType);
