@@ -22,6 +22,7 @@ package de.spektrumprojekt.aggregator.subscription;
 import java.util.Collection;
 import java.util.List;
 
+import de.spektrumprojekt.aggregator.adapter.AccessParameterValidationException;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.source.SourceNotFoundException;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
@@ -69,9 +70,12 @@ public interface SubscriptionManager {
      *            The subscription to subscribe to.
      * @throws AdapterNotFoundException
      * @throws SubscriptionAlreadyExistsException
+     * @throws AccessParameterValidationException
+     *             in case the contained access parameters are not valid
      */
     void subscribe(Subscription subscription) throws AdapterNotFoundException,
-            SubscriptionNotFoundException, SubscriptionAlreadyExistsException;
+            SubscriptionNotFoundException, SubscriptionAlreadyExistsException,
+            AccessParameterValidationException;
 
     /**
      * <p>
@@ -86,10 +90,13 @@ public interface SubscriptionManager {
      * @param sourceStatusProperties
      * @throws AdapterNotFoundException
      * @throws SubscriptionAlreadyExistsException
+     * @throws AccessParameterValidationException
+     *             in case the contained access parameters are not valid
      */
     void subscribe(Subscription subscription,
             SubscriptionMessageFilter subscriptionMessageFilter)
-            throws AdapterNotFoundException, SubscriptionAlreadyExistsException;
+            throws AdapterNotFoundException, SubscriptionAlreadyExistsException,
+            AccessParameterValidationException;
 
     /**
      * <p>
@@ -104,24 +111,31 @@ public interface SubscriptionManager {
      * @param sourceStatusProperties
      * @throws AdapterNotFoundException
      * @throws SubscriptionAlreadyExistsException
+     * @throws AccessParameterValidationException
+     *             in case the contained access parameters are not valid
      */
     void subscribe(Subscription subscription,
             SubscriptionMessageFilter subscriptionMessageFilter,
             Collection<Property> sourceStatusProperties)
-            throws AdapterNotFoundException, SubscriptionAlreadyExistsException;
+            throws AdapterNotFoundException, SubscriptionAlreadyExistsException,
+            AccessParameterValidationException;
 
     boolean suspendSubscription(String subscriptionId) throws SubscriptionNotFoundException;
 
     /**
-     * Use exactly the subscriptions as in the provided list. Remove all not in the list.
+     * synchronizes the subscriptions, old subscriptions which are not contained in subscriptions
+     * are deleted, new ones are created, existing ones are updated if necessary
      * 
      * @param subscriptions
-     *            the subscriptions to synchronize
      * @throws AdapterNotFoundException
      * @throws SubscriptionAlreadyExistsException
+     * @throws AccessParameterValidationException
+     *             in case the contained access parameters are not valid
+     * @throws SubscriptionNotFoundException
      */
     void synchronizeSubscriptions(List<Subscription> subscriptions)
-            throws AdapterNotFoundException, SubscriptionAlreadyExistsException;
+            throws AdapterNotFoundException, SubscriptionAlreadyExistsException,
+            AccessParameterValidationException;
 
     /**
      * <p>

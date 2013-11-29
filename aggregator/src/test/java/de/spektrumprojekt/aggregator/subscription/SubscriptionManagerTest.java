@@ -51,10 +51,8 @@ import de.spektrumprojekt.communication.vm.VirtualMachineCommunicator;
 import de.spektrumprojekt.configuration.properties.SimpleProperties;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.source.Source;
-import de.spektrumprojekt.datamodel.source.SourceNotFoundException;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
-import de.spektrumprojekt.datamodel.subscription.SubscriptionAlreadyExistsException;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionMessageFilter;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 import de.spektrumprojekt.exceptions.SubscriptionNotFoundException;
@@ -431,8 +429,7 @@ public class SubscriptionManagerTest {
         Assert.assertEquals("subValue", urlProp.getPropertyValue());
     }
 
-    public void testUpdateProperty() throws AdapterNotFoundException, SourceNotFoundException,
-            SubscriptionNotFoundException, SubscriptionAlreadyExistsException {
+    public void testUpdateProperty() throws Exception {
         Subscription subscription = getRSSSubscription(URL_1, null);
         Collection<Property> sourceStatusProperties = new HashSet<Property>();
         sourceStatusProperties.add(new Property("stat1", "1"));

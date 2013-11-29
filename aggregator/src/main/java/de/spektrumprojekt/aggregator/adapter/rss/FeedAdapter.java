@@ -37,6 +37,8 @@ import org.apache.http.impl.client.ContentEncodingHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.spektrumprojekt.aggregator.adapter.AccessParameterMissingException;
+import de.spektrumprojekt.aggregator.adapter.AccessParameterValidationException;
 import de.spektrumprojekt.aggregator.adapter.AdapterException;
 import de.spektrumprojekt.aggregator.chain.AggregatorChain;
 import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
@@ -84,6 +86,11 @@ public final class FeedAdapter extends XMLAdapter {
      * The key for the access parameter specifying the password, if authentication is necessary.
      */
     public static final String ACCESS_PARAMETER_CREDENTIALS_PASSWORD = "credentials_password";
+    /**
+     * The key for the access parameter specifying a cleartext password, if authentication is
+     * necessary.
+     */
+    public static final String ACCESS_PARAMETER_CREDENTIALS_CLEARTEXT_PASSWORD = "credentials_cleartext_password";
 
     /** The key for the id property **/
     public static final String MESSAGE_PROPERTY_ID = "id";
@@ -223,5 +230,78 @@ public final class FeedAdapter extends XMLAdapter {
     @Override
     public String getSourceType() {
         return SOURCE_TYPE;
+    }
+
+    /**
+     * Prepare the source access parameters holding credentials for authenticating against the
+     * source. If a login and a cleartext password is contained the cleartext password is removed
+     * and an encrypted password is added instead. If no login is contained the password parameters
+     * are removed.
+     * 
+     * @param login
+     *            the login/username or null
+     * @param clearPassword
+     *            the cleartext password or null
+     * @param password
+     *            the encrypted password or null
+     * @param accessParameters
+     *            the access parameters
+     * @throws AccessParameterValidationException
+     *             in case the password encryption failed
+     */
+    private void prepareCredentialAccessParameters(Property login, Property clearPassword,
+            Property password, Collection<Property> accessParameters)
+            throws AccessParameterValidationException {
+        if (login != null) {
+            if (clearPassword != null) {
+                accessParameters.remove(clearPassword);
+                String encryptedPassword;
+                try {
+                    encryptedPassword = EncryptionUtils.encrypt(clearPassword.getPropertyValue(),
+                            getAggregatorConfiguration().getEncryptionPassword());
+                } catch (EncryptionException e) {
+                    LOGGER.error("Encryption of source access password failed", e);
+                    throw new AccessParameterValidationException(
+                            ACCESS_PARAMETER_CREDENTIALS_CLEARTEXT_PASSWORD,
+                            "Error during password encryption");
+                }
+                accessParameters.add(new Property(ACCESS_PARAMETER_CREDENTIALS_PASSWORD,
+                        encryptedPassword));
+            }
+        } else {
+            if (password != null) {
+                accessParameters.remove(password);
+            }
+            if (clearPassword != null) {
+                accessParameters.remove(clearPassword);
+            }
+        }
+    }
+
+    @Override
+    public void processAccessParametersBeforeSubscribing(Collection<Property> accessParameters)
+            throws AccessParameterValidationException {
+        Property uri = null;
+        Property login = null;
+        Property clearPassword = null;
+        Property password = null;
+        if (accessParameters != null) {
+            for (Property param : accessParameters) {
+                if (param.getPropertyKey().equals(ACCESS_PARAMETER_URI)) {
+                    uri = param;
+                } else if (param.getPropertyKey().equals(ACCESS_PARAMETER_CREDENTIALS_LOGIN)) {
+                    login = param;
+                } else if (param.getPropertyKey().equals(ACCESS_PARAMETER_CREDENTIALS_PASSWORD)) {
+                    password = param;
+                } else if (param.getPropertyKey().equals(
+                        ACCESS_PARAMETER_CREDENTIALS_CLEARTEXT_PASSWORD)) {
+                    clearPassword = param;
+                }
+            }
+        }
+        if (uri == null) {
+            throw new AccessParameterMissingException(ACCESS_PARAMETER_URI);
+        }
+        prepareCredentialAccessParameters(login, clearPassword, password, accessParameters);
     }
 }
