@@ -8,6 +8,7 @@ import de.spektrumprojekt.commons.chain.CommandException;
 import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.user.User;
+import de.spektrumprojekt.i.collab.CollaborativeScoreComputer.CollaborativeScoreComputerType;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.simple.SimplePersistence;
@@ -16,7 +17,7 @@ public class FullCollRelevanceScoreCommand implements Command<UserSpecificMessag
 
     private final SimplePersistence persistence;
 
-    private CollaborativeRankerComputer collaborativeRankerComputer;
+    private CollaborativeScoreComputer collaborativeRankerComputer;
 
     private final boolean useGenericRecommender;
 
@@ -24,10 +25,18 @@ public class FullCollRelevanceScoreCommand implements Command<UserSpecificMessag
 
     private final ObservationType[] observationTypesToUseForDataModel;
 
-    public FullCollRelevanceScoreCommand(Persistence persistence,
-            ObservationType[] observationTypesToUseForDataModel, boolean useGenericRecommender) {
+    private final CollaborativeScoreComputerType collaborativeScoreComputerType;
+
+    public FullCollRelevanceScoreCommand(
+            Persistence persistence,
+            ObservationType[] observationTypesToUseForDataModel,
+            CollaborativeScoreComputerType collaborativeScoreComputerType,
+            boolean useGenericRecommender) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
+        }
+        if (collaborativeScoreComputerType == null) {
+            throw new IllegalArgumentException("collaborativeScoreComputerType cannot be null.");
         }
         if (!(persistence instanceof SimplePersistence)) {
             throw new IllegalArgumentException("Can only handle SimplePersistence at the moment.");
@@ -40,13 +49,15 @@ public class FullCollRelevanceScoreCommand implements Command<UserSpecificMessag
         this.persistence = (SimplePersistence) persistence;
         this.observationTypesToUseForDataModel = observationTypesToUseForDataModel;
         this.useGenericRecommender = useGenericRecommender;
+        this.collaborativeScoreComputerType = collaborativeScoreComputerType;
     }
 
     @Override
     public String getConfigurationDescription() {
         return getClass().getSimpleName()
                 + " observationTypesToUseForDataModel: " + observationTypesToUseForDataModel
-                + " useGenericRecommender: " + useGenericRecommender;
+                + " useGenericRecommender: " + useGenericRecommender
+                + " collaborativeScoreComputerType: " + collaborativeScoreComputerType;
     }
 
     private Recommender getRecommender() throws Exception {
@@ -54,10 +65,8 @@ public class FullCollRelevanceScoreCommand implements Command<UserSpecificMessag
         int currentObs = persistence.getObservations(ObservationType.RATING).size();
         if (currentObs > lastObservationsSize) {
 
-            collaborativeRankerComputer = new CollaborativeRankerComputer(
-                    persistence,
-                    observationTypesToUseForDataModel,
-                    useGenericRecommender);
+            collaborativeRankerComputer = this.collaborativeScoreComputerType.createComputer(
+                    persistence, observationTypesToUseForDataModel, useGenericRecommender);
             collaborativeRankerComputer.init();
 
             lastObservationsSize = currentObs;
@@ -86,10 +95,11 @@ public class FullCollRelevanceScoreCommand implements Command<UserSpecificMessag
             Recommender recommender = getRecommender();
             if (recommender != null) {
                 float estimate = recommender.estimatePreference(userId, messageId);
-                float rank = CollaborativeRankerComputer
+                float rank = CollaborativeScoreComputer
                         .convertScoreFromMahoutValue(estimate, true);
 
-                UserMessageScore messageRank = new UserMessageScore(context.getMessage().getGlobalId(),
+                UserMessageScore messageRank = new UserMessageScore(context.getMessage()
+                        .getGlobalId(),
                         context.getUserGlobalId());
                 messageRank.setScore(rank);
 

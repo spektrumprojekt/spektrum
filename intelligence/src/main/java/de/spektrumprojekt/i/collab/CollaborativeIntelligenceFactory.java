@@ -3,6 +3,7 @@ package de.spektrumprojekt.i.collab;
 import de.spektrumprojekt.callbacks.MessageGroupMemberRunner;
 import de.spektrumprojekt.communication.Communicator;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
+import de.spektrumprojekt.i.collab.CollaborativeScoreComputer.CollaborativeScoreComputerType;
 import de.spektrumprojekt.i.learner.Learner;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.Ranker;
@@ -15,19 +16,15 @@ public class CollaborativeIntelligenceFactory {
     private Learner learner;
     private Ranker ranker;
 
-    private CollaborativeRankerComputer collaborativeRankerComputer;
-
     public CollaborativeIntelligenceFactory(
             Persistence persistence,
             Communicator communicator,
             MessageGroupMemberRunner<MessageFeatureContext> memberRunner,
             RankerConfiguration rankerConfiguration,
             ObservationType[] observationTypesToUseForDataModel,
+            CollaborativeScoreComputerType collaborativeScoreComputerType,
             boolean useGenericRecommender)
             throws Exception {
-        collaborativeRankerComputer = new CollaborativeRankerComputer(persistence,
-                observationTypesToUseForDataModel,
-                useGenericRecommender);
         // collaborativeRankerComputer.init();
         /*
          * IterativeCollRelevanceScoreCommand collabRankCommand = new
@@ -35,9 +32,11 @@ public class CollaborativeIntelligenceFactory {
          * collaborativeRankerComputer.getRecommender()); CollLearnerCommand collabLearnCommand =
          * new CollLearnerCommand(persistence, collaborativeRankerComputer.getRecommender());
          */
+
         FullCollRelevanceScoreCommand fullCollabRankCommand = new FullCollRelevanceScoreCommand(
                 persistence,
                 observationTypesToUseForDataModel,
+                collaborativeScoreComputerType,
                 useGenericRecommender);
 
         ranker = new SpecialRanker<FullCollRelevanceScoreCommand>(persistence,

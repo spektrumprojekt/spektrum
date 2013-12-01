@@ -38,12 +38,12 @@ import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.datamodel.message.MessagePublicationDateComperator;
-import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
 import de.spektrumprojekt.datamodel.message.TermFrequency;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.source.Source;
@@ -490,6 +490,10 @@ public class SimplePersistence implements Persistence {
         return userModelByTypeHolders;
     }
 
+    public Map<User, UserModelHolder> getUserModelByTypeHolders(String userModelType) {
+        return userModelByTypeHolders.get(userModelType);
+    }
+
     @Override
     public Collection<UserModelEntry> getUserModelEntries(UserModel userModel,
             Collection<String> termsToMatch, MatchMode matchMode) {
@@ -549,6 +553,14 @@ public class SimplePersistence implements Persistence {
             }
         }
         return entries;
+    }
+
+    public UserModelHolder getUserModelHolder(String userModelType, User user) {
+        Map<User, UserModelHolder> userHolders = getUserModelByTypeHolders(userModelType);
+        if (userHolders != null) {
+            return userHolders.get(user);
+        }
+        return null;
     }
 
     public UserModelHolder getUserModelHolder(User user, String userModelType) {

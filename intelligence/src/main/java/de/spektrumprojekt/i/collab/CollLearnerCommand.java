@@ -57,7 +57,7 @@ public class CollLearnerCommand implements Command<LearnerMessageContext> {
                 }
                 try {
                     recommender.setPreference(userId, messageId,
-                            CollaborativeRankerComputer.convertScoreToMahoutValue(obs
+                            CollaborativeScoreComputer.convertScoreToMahoutValue(obs
                                     .getInterest().getScore()));
                 } catch (TasteException e) {
                     throw new CommandException(false, "Error setting preferences. ", e);

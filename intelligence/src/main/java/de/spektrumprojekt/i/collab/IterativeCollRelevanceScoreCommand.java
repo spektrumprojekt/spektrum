@@ -47,7 +47,7 @@ public class IterativeCollRelevanceScoreCommand implements Command<UserSpecificM
         }
         try {
             float estimate = recommender.estimatePreference(userId, messageId);
-            float rank = CollaborativeRankerComputer.convertScoreFromMahoutValue(estimate, true);
+            float rank = CollaborativeScoreComputer.convertScoreFromMahoutValue(estimate, true);
 
             UserMessageScore messageRank = new UserMessageScore(context.getMessage().getGlobalId(),
                     context.getUserGlobalId());

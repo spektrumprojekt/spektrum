@@ -14,7 +14,6 @@ import org.apache.mahout.cf.taste.common.TasteException;
 import org.apache.mahout.cf.taste.impl.common.FastByIDMap;
 import org.apache.mahout.cf.taste.impl.common.LongPrimitiveIterator;
 import org.apache.mahout.cf.taste.impl.model.GenericDataModel;
-import org.apache.mahout.cf.taste.impl.model.GenericUserPreferenceArray;
 import org.apache.mahout.cf.taste.impl.neighborhood.ThresholdUserNeighborhood;
 import org.apache.mahout.cf.taste.impl.recommender.CachingRecommender;
 import org.apache.mahout.cf.taste.impl.recommender.GenericUserBasedRecommender;
@@ -44,7 +43,39 @@ import de.spektrumprojekt.persistence.simple.SimplePersistence.ObservationKey;
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 
  */
-public class CollaborativeRankerComputer implements Computer {
+public abstract class CollaborativeScoreComputer implements Computer {
+
+    public static enum CollaborativeScoreComputerType {
+        USER2MESSAGE,
+        USER2TERM;
+
+        public CollaborativeScoreComputer createComputer(
+                Persistence persistence,
+                ObservationType[] observationTypesToUseForDataModel,
+                boolean useGenericRecommender) {
+            CollaborativeScoreComputer collaborativeRankerComputer;
+            switch (this) {
+            case USER2MESSAGE:
+                collaborativeRankerComputer = new UserToMessageCollaborativeScoreComputer(
+                        persistence,
+                        observationTypesToUseForDataModel,
+                        useGenericRecommender);
+                break;
+            case USER2TERM:
+                collaborativeRankerComputer = new UserToTermCollaborativeScoreComputer(
+                        persistence,
+                        observationTypesToUseForDataModel,
+                        useGenericRecommender);
+                break;
+            default:
+                throw new IllegalArgumentException(this + " is unhandled.");
+
+            }
+            return collaborativeRankerComputer;
+        }
+    }
+
+    private final static Logger LOGGER = LoggerFactory.getLogger(CollaborativeScoreComputer.class);
 
     public static float convertScoreFromMahoutValue(float score, boolean minmax) {
         float val = (score + 1) / 2f;
@@ -59,10 +90,10 @@ public class CollaborativeRankerComputer implements Computer {
     }
 
     private final SimplePersistence persistence;
+
     private Map<ObservationKey, Collection<Observation>> observations;
 
     private Collection<User> users;
-
     private Collection<Message> messagesWithOberservations;
 
     private DataModel dataModel;
@@ -73,15 +104,13 @@ public class CollaborativeRankerComputer implements Computer {
 
     private Collection<UserMessageScore> messageRanks;
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(CollaborativeRankerComputer.class);
-
-    private int prefCount;
+    private int preferenceCount;
 
     private int nonZeroRanks;
 
     private final boolean useGenericRecommender;
 
-    private int pos, neg;
+    private int positivePreferenceCount, negativePreferenceCount;
 
     private File preferencesDebugFile = new File("preferences.txt");
 
@@ -90,15 +119,15 @@ public class CollaborativeRankerComputer implements Computer {
     private Recommender recommender;
 
     public final static ObservationType[] OT_ONLY_RATINGS = new ObservationType[] { ObservationType.RATING };
+
     public final static ObservationType[] OT_ONLY_MESSAGE = new ObservationType[] { ObservationType.MESSAGE };
 
     private final ObservationType[] observationTypesToUseForDataModel;
 
     private int nanRanks = 0;
-
     private boolean emptyDataModel;
 
-    public CollaborativeRankerComputer(Persistence persistence,
+    public CollaborativeScoreComputer(Persistence persistence,
             ObservationType[] observationTypesToUseForDataModel, boolean useGenericRecommender) {
         if (!(persistence instanceof SimplePersistence)) {
             throw new IllegalArgumentException("Can only handle SimplePersistence at the moment.");
@@ -113,8 +142,8 @@ public class CollaborativeRankerComputer implements Computer {
         this.useGenericRecommender = useGenericRecommender;
     }
 
-    private void createDataModel() {
-
+    private DataModel createDataModel() {
+        DataModel dataModel = null;
         FileWriter fw = null;
         try {
             if (outPreferencesToFile) {
@@ -127,50 +156,7 @@ public class CollaborativeRankerComputer implements Computer {
                     throw new IllegalStateException("userId cannot be null: " + user);
                 }
 
-                GenericUserPreferenceArray genericUserPreferenceArray = new GenericUserPreferenceArray(
-                        messagesWithOberservations.size());
-
-                int index = 0;
-
-                for (Message message : messagesWithOberservations) {
-                    boolean add = false;
-                    float pref = getPreferenceValue(observations, user.getGlobalId(),
-                            message.getGlobalId());
-
-                    if (pref != 0) {
-                        add = true;
-                        prefCount++;
-                    }
-                    if (pref == 1) {
-                        pos++;
-                    }
-                    if (pref == -1) {
-                        neg++;
-                    }
-                    if (pref < -1 || pref > 1) {
-                        throw new RuntimeException(message + " " + user.getGlobalId() + " "
-                                + pref);
-                    }
-
-                    if (add) {
-
-                        genericUserPreferenceArray.setItemID(index, message.getId());
-                        genericUserPreferenceArray.setUserID(index, user.getId());
-                        genericUserPreferenceArray.setValue(index, pref);
-
-                        index++;
-
-                        if (outPreferencesToFile) {
-                            fw.write(index + " " + message.getGlobalId() + " " + user.getId() + " "
-                                    + pref
-                                    + "\n");
-                        }
-                    }
-                }
-
-                if (index > 0) {
-                    userData.put(user.getId(), genericUserPreferenceArray);
-                }
+                createUserPreference(userData, user, fw);
 
             }
 
@@ -180,8 +166,13 @@ public class CollaborativeRankerComputer implements Computer {
         } finally {
             IOUtils.closeQuietly(fw);
         }
-
+        return dataModel;
     }
+
+    protected abstract void createUserPreference(FastByIDMap<PreferenceArray> userData, User user,
+            FileWriter fw) throws IOException;
+
+    protected abstract float estimate(User user, Message message) throws TasteException;
 
     public Interest getBestInterestOfObservations(
             Map<ObservationKey, Collection<Observation>> allObservations, String userId,
@@ -233,8 +224,12 @@ public class CollaborativeRankerComputer implements Computer {
         return maxPrioObs;
     }
 
-    public Collection<UserMessageScore> getMessageRanks() {
+    public Collection<UserMessageScore> getMessageScores() {
         return messageRanks;
+    }
+
+    public Collection<Message> getMessagesWithOberservations() {
+        return messagesWithOberservations;
     }
 
     public int getNanRanks() {
@@ -242,27 +237,39 @@ public class CollaborativeRankerComputer implements Computer {
     }
 
     public int getNeg() {
-        return neg;
+        return negativePreferenceCount;
     }
 
     public int getNonZeroRanks() {
         return nonZeroRanks;
     }
 
+    public Map<ObservationKey, Collection<Observation>> getObservations() {
+        return observations;
+    }
+
+    public ObservationType[] getObservationTypesToUseForDataModel() {
+        return observationTypesToUseForDataModel;
+    }
+
+    public SimplePersistence getPersistence() {
+        return persistence;
+    }
+
     public int getPos() {
-        return pos;
+        return positivePreferenceCount;
     }
 
     public int getPrefCount() {
-        return prefCount;
+        return preferenceCount;
     }
 
-    private float getPreferenceValue(
+    protected float getPreferenceValue(
             Map<ObservationKey, Collection<Observation>> allObservations, String userId,
             String messageGlobalId) {
 
         Interest interest = null;
-        for (ObservationType observationType : observationTypesToUseForDataModel) {
+        for (ObservationType observationType : getObservationTypesToUseForDataModel()) {
 
             interest = getBestInterestOfObservations(allObservations, userId, messageGlobalId,
                     observationType);
@@ -282,6 +289,18 @@ public class CollaborativeRankerComputer implements Computer {
 
     public Recommender getRecommender() {
         return recommender;
+    }
+
+    protected void incrementNegativePreferenceCount() {
+        this.negativePreferenceCount++;
+    }
+
+    protected void incrementPositivePreferenceCount() {
+        this.positivePreferenceCount++;
+    }
+
+    protected void incrementPreferenceCount() {
+        this.preferenceCount++;
     }
 
     public void init() throws InconsistentDataException, TasteException {
@@ -308,7 +327,7 @@ public class CollaborativeRankerComputer implements Computer {
         }
         this.messagesWithOberservations = Collections.unmodifiableCollection(messages);
 
-        createDataModel();
+        this.dataModel = createDataModel();
 
         // dataModel = new FileDataModel(getDataFile());
 
@@ -329,6 +348,10 @@ public class CollaborativeRankerComputer implements Computer {
                 recommender = new CachingRecommender(new SlopeOneRecommender(dataModel));
             }
         }
+    }
+
+    public boolean isOutPreferencesToFile() {
+        return outPreferencesToFile;
     }
 
     @Override
@@ -353,8 +376,7 @@ public class CollaborativeRankerComputer implements Computer {
             User user = this.persistence.getUserById(userId);
 
             for (Message message : needEstimation) {
-                final float estimate = recommender.estimatePreference(userId,
-                        message.getId());
+                final float estimate = estimate(user, message);
                 if (estimate != 0) {
                     nonZeroRanks++;
                 }
@@ -380,9 +402,9 @@ public class CollaborativeRankerComputer implements Computer {
 
     public String someStats() throws TasteException {
         String stats =
-                "prefs: " + prefCount
-                        + " pos prefs: " + pos
-                        + " neg prefs: " + neg;
+                "prefs: " + preferenceCount
+                        + " pos prefs: " + positivePreferenceCount
+                        + " neg prefs: " + negativePreferenceCount;
 
         if (dataModel != null) {
             stats += " dm.max: " + dataModel.getMaxPreference()
