@@ -33,6 +33,7 @@ import de.spektrumprojekt.datamodel.observation.Interest;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.user.User;
+import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.simple.SimplePersistence;
 import de.spektrumprojekt.persistence.simple.SimplePersistence.ObservationKey;
@@ -52,6 +53,7 @@ public abstract class CollaborativeScoreComputer implements Computer {
         public CollaborativeScoreComputer createComputer(
                 Persistence persistence,
                 ObservationType[] observationTypesToUseForDataModel,
+                TermVectorSimilarityComputer termVectorSimilarityComputer,
                 boolean useGenericRecommender) {
             CollaborativeScoreComputer collaborativeRankerComputer;
             switch (this) {
@@ -65,6 +67,7 @@ public abstract class CollaborativeScoreComputer implements Computer {
                 collaborativeRankerComputer = new UserToTermCollaborativeScoreComputer(
                         persistence,
                         observationTypesToUseForDataModel,
+                        termVectorSimilarityComputer,
                         useGenericRecommender);
                 break;
             default:

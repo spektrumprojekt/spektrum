@@ -25,11 +25,18 @@ import de.spektrumprojekt.persistence.simple.UserModelHolder;
 
 public class UserToTermCollaborativeScoreComputer extends CollaborativeScoreComputer {
 
-    private TermVectorSimilarityComputer termVectorSimilarityComputer;
+    private final TermVectorSimilarityComputer termVectorSimilarityComputer;
 
-    public UserToTermCollaborativeScoreComputer(Persistence persistence,
-            ObservationType[] observationTypesToUseForDataModel, boolean useGenericRecommender) {
+    public UserToTermCollaborativeScoreComputer(
+            Persistence persistence,
+            ObservationType[] observationTypesToUseForDataModel,
+            TermVectorSimilarityComputer termVectorSimilarityComputer,
+            boolean useGenericRecommender) {
         super(persistence, observationTypesToUseForDataModel, useGenericRecommender);
+        if (termVectorSimilarityComputer == null) {
+            throw new IllegalArgumentException("termVectorSimilarityComputer cannot be null.");
+        }
+        this.termVectorSimilarityComputer = termVectorSimilarityComputer;
     }
 
     @Override

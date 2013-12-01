@@ -33,10 +33,16 @@ public class CollaborativeIntelligenceFactory {
          * new CollLearnerCommand(persistence, collaborativeRankerComputer.getRecommender());
          */
 
+        if (CollaborativeScoreComputerType.USER2TERM.equals(collaborativeScoreComputerType)) {
+            throw new UnsupportedOperationException(
+                    "Cannot handle this way, must be working together with user model.");
+        }
+
         FullCollRelevanceScoreCommand fullCollabRankCommand = new FullCollRelevanceScoreCommand(
                 persistence,
                 observationTypesToUseForDataModel,
                 collaborativeScoreComputerType,
+                null,
                 useGenericRecommender);
 
         ranker = new SpecialRanker<FullCollRelevanceScoreCommand>(persistence,

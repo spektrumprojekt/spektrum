@@ -10,6 +10,7 @@ import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.i.collab.CollaborativeScoreComputer.CollaborativeScoreComputerType;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
+import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.simple.SimplePersistence;
 
@@ -27,10 +28,13 @@ public class FullCollRelevanceScoreCommand implements Command<UserSpecificMessag
 
     private final CollaborativeScoreComputerType collaborativeScoreComputerType;
 
+    private final TermVectorSimilarityComputer termVectorSimilarityComputer;
+
     public FullCollRelevanceScoreCommand(
             Persistence persistence,
             ObservationType[] observationTypesToUseForDataModel,
             CollaborativeScoreComputerType collaborativeScoreComputerType,
+            TermVectorSimilarityComputer termVectorSimilarityComputer,
             boolean useGenericRecommender) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
@@ -50,6 +54,7 @@ public class FullCollRelevanceScoreCommand implements Command<UserSpecificMessag
         this.observationTypesToUseForDataModel = observationTypesToUseForDataModel;
         this.useGenericRecommender = useGenericRecommender;
         this.collaborativeScoreComputerType = collaborativeScoreComputerType;
+        this.termVectorSimilarityComputer = termVectorSimilarityComputer;
     }
 
     @Override
@@ -57,7 +62,8 @@ public class FullCollRelevanceScoreCommand implements Command<UserSpecificMessag
         return getClass().getSimpleName()
                 + " observationTypesToUseForDataModel: " + observationTypesToUseForDataModel
                 + " useGenericRecommender: " + useGenericRecommender
-                + " collaborativeScoreComputerType: " + collaborativeScoreComputerType;
+                + " collaborativeScoreComputerType: " + collaborativeScoreComputerType
+                + " termVectorSimilarityComputer: " + termVectorSimilarityComputer;
     }
 
     private Recommender getRecommender() throws Exception {
@@ -66,7 +72,10 @@ public class FullCollRelevanceScoreCommand implements Command<UserSpecificMessag
         if (currentObs > lastObservationsSize) {
 
             collaborativeRankerComputer = this.collaborativeScoreComputerType.createComputer(
-                    persistence, observationTypesToUseForDataModel, useGenericRecommender);
+                    persistence,
+                    observationTypesToUseForDataModel,
+                    termVectorSimilarityComputer,
+                    useGenericRecommender);
             collaborativeRankerComputer.init();
 
             lastObservationsSize = currentObs;
