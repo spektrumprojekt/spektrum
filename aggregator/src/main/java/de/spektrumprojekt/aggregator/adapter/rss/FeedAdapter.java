@@ -209,7 +209,7 @@ public final class FeedAdapter extends XMLAdapter {
             int statusCode = httpResult.getStatusLine().getStatusCode();
             if (statusCode >= 400) {
                 throw new AdapterException("HTTP error code " + statusCode,
-                        StatusType.ERROR_NETWORK);
+                        mapHttpErrorCode(statusCode));
             }
             HttpEntity httpEntity = httpResult.getEntity();
             if (httpEntity != null) {
@@ -230,6 +230,25 @@ public final class FeedAdapter extends XMLAdapter {
     @Override
     public String getSourceType() {
         return SOURCE_TYPE;
+    }
+
+    /**
+     * Map a HTTP error Code to the appropriate StatusType
+     * 
+     * @param statusCode
+     *            the HTTP error code to map
+     * @return the status type
+     */
+    private StatusType mapHttpErrorCode(int statusCode) {
+        StatusType errorType;
+        switch (statusCode) {
+        case 401:
+            errorType = StatusType.ERROR_AUTHENTICATION;
+            break;
+        default:
+            errorType = StatusType.ERROR_NETWORK;
+        }
+        return errorType;
     }
 
     /**
