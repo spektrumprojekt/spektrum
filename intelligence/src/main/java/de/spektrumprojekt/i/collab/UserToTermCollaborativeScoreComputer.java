@@ -109,13 +109,14 @@ public class UserToTermCollaborativeScoreComputer extends CollaborativeScoreComp
             float tPref;
             try {
                 tPref = getRecommender().estimatePreference(userModel.getId(), t.getId());
+
+                ScoredTerm sT = new ScoredTerm(t, tPref);
+                UserModelEntry dummy = new UserModelEntry(userModel, sT);
+                entries.put(t, dummy);
             } catch (TasteException e) {
-                tPref = 0;
+                // ignore
             }
 
-            ScoredTerm sT = new ScoredTerm(t, tPref);
-            UserModelEntry dummy = new UserModelEntry(userModel, sT);
-            entries.put(t, dummy);
         }
 
         float estimate = this.termVectorSimilarityComputer.getSimilarity(
