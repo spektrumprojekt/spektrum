@@ -21,9 +21,9 @@ import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
 import de.spektrumprojekt.i.term.TermWeightStrategy;
 import de.spektrumprojekt.i.timebased.config.ShortTermMemoryConfiguration;
 
-public class RankerConfiguration implements ConfigurationDescriptable, Cloneable {
+public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable {
 
-    private Set<RankerConfigurationFlag> flags = new HashSet<RankerConfigurationFlag>();
+    private Set<ScorerConfigurationFlag> flags = new HashSet<ScorerConfigurationFlag>();
 
     // for adaption the message rank (not the user model): the minimum user similarity that must be
     // fullfilled to be eglible to take the score of
@@ -75,15 +75,15 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     private Map<Feature, Float> learningFeatureTresholds;
 
-    public RankerConfiguration(TermWeightStrategy strategy, TermVectorSimilarityStrategy aggregation) {
-        this(strategy, aggregation, null, null, (RankerConfigurationFlag[]) null);
+    public ScorerConfiguration(TermWeightStrategy strategy, TermVectorSimilarityStrategy aggregation) {
+        this(strategy, aggregation, null, null, (ScorerConfigurationFlag[]) null);
     }
 
-    private RankerConfiguration(TermWeightStrategy termWeightStrategy,
+    private ScorerConfiguration(TermWeightStrategy termWeightStrategy,
             TermVectorSimilarityStrategy termWeightAggregation,
             InformationExtractionCommand<MessageFeatureContext> informationExtractionCommand,
             InformationExtractionConfiguration informationExtractionConfiguration,
-            RankerConfigurationFlag... flags) {
+            ScorerConfigurationFlag... flags) {
         if (termWeightStrategy == null) {
             throw new IllegalStateException("termWeightStrategy cannot be null.");
         }
@@ -102,34 +102,34 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         this.informationExtractionCommand = informationExtractionCommand;
     }
 
-    public RankerConfiguration(TermWeightStrategy termWeightStrategy,
+    public ScorerConfiguration(TermWeightStrategy termWeightStrategy,
             TermVectorSimilarityStrategy termWeightAggregation,
             InformationExtractionCommand<MessageFeatureContext> informationExtractionCommand,
-            RankerConfigurationFlag... flags) {
+            ScorerConfigurationFlag... flags) {
         this(termWeightStrategy, termWeightAggregation, informationExtractionCommand,
                 informationExtractionCommand.getInformationExtractionConfiguration(), flags);
     }
 
-    public RankerConfiguration(TermWeightStrategy termWeightStrategy,
+    public ScorerConfiguration(TermWeightStrategy termWeightStrategy,
             TermVectorSimilarityStrategy termWeightAggregation,
             InformationExtractionConfiguration informationExtractionConfiguration,
-            RankerConfigurationFlag... flags) {
+            ScorerConfigurationFlag... flags) {
         this(termWeightStrategy, termWeightAggregation,
                 (InformationExtractionCommand<MessageFeatureContext>) null,
                 informationExtractionConfiguration, flags);
     }
 
-    public RankerConfiguration(TermWeightStrategy termWeightStrategy,
-            TermVectorSimilarityStrategy termWeightAggregation, RankerConfigurationFlag... flags) {
+    public ScorerConfiguration(TermWeightStrategy termWeightStrategy,
+            TermVectorSimilarityStrategy termWeightAggregation, ScorerConfigurationFlag... flags) {
         this(termWeightStrategy, termWeightAggregation, null, null, flags);
     }
 
-    public void addFlags(RankerConfigurationFlag... flags) {
+    public void addFlags(ScorerConfigurationFlag... flags) {
         assertCanSet();
         this.flags.addAll(Arrays.asList(flags));
 
         this.informationExtractionConfiguration.setBeMessageGroupSpecific(this
-                .hasFlag(RankerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL));
+                .hasFlag(ScorerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL));
     }
 
     public boolean addModelsToNotCreateUnknownTermsIn(String modelType) {
@@ -151,15 +151,15 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
     }
 
     @Deprecated
-    public RankerConfiguration cloneMe() {
-        RankerConfiguration clone;
+    public ScorerConfiguration cloneMe() {
+        ScorerConfiguration clone;
         try {
-            clone = (RankerConfiguration) this.clone();
+            clone = (ScorerConfiguration) this.clone();
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);
         }
         clone.immutable = false;
-        clone.flags = new HashSet<RankerConfigurationFlag>(this.getFlags());
+        clone.flags = new HashSet<ScorerConfigurationFlag>(this.getFlags());
         return clone;
     }
 
@@ -172,14 +172,14 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         if (useFixedDefaultFeatureWeights && this.featureWeights == null) {
             featureWeights = FixWeightFeatureAggregator
                     .getFixedDefaults4Scoring(this
-                            .hasFlag(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE_BUT_LEARN_FROM_FEATURES));
+                            .hasFlag(ScorerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE_BUT_LEARN_FROM_FEATURES));
         } else if (this.featureWeights == null) {
             featureWeights = new HashMap<Feature, Float>();
         }
         return featureWeights;
     }
 
-    public Collection<RankerConfigurationFlag> getFlags() {
+    public Collection<ScorerConfigurationFlag> getFlags() {
         return Collections.unmodifiableSet(flags);
     }
 
@@ -206,14 +206,14 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
         if (useFixedDefaultLearningFeatureWeights && this.learningFeatureWeights == null) {
             learningFeatureWeights = FixWeightFeatureAggregator
-                    .getFixedDefaults4Learning(hasFlag(RankerConfigurationFlag.LEARN_NEGATIVE));
+                    .getFixedDefaults4Learning(hasFlag(ScorerConfigurationFlag.LEARN_NEGATIVE));
         } else if (this.learningFeatureWeights == null) {
             learningFeatureWeights = new HashMap<Feature, Float>();
         }
         return learningFeatureWeights;
     }
 
-    public float getMessageRankThreshold() {
+    public float getMessageScoreThreshold() {
         return messageRankThreshold;
     }
 
@@ -235,7 +235,7 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     public float getScoreToLearnThreshold() {
         if (scoreToLearnThreshold == null) {
-            if (hasFlag(RankerConfigurationFlag.LEARN_NEGATIVE)) {
+            if (hasFlag(ScorerConfigurationFlag.LEARN_NEGATIVE)) {
                 scoreToLearnThreshold = Interest.VERY_LOW.getScore();
             } else {
                 scoreToLearnThreshold = Interest.NORMAL.getScore();
@@ -268,7 +268,7 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         return userModelTypes;
     }
 
-    public boolean hasFlag(RankerConfigurationFlag flag) {
+    public boolean hasFlag(ScorerConfigurationFlag flag) {
         return this.flags.contains(flag);
     }
 
@@ -332,14 +332,14 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         this.featureWeights.put(feature, weight);
     }
 
-    public void setFlags(RankerConfigurationFlag... flags) {
+    public void setFlags(ScorerConfigurationFlag... flags) {
         assertCanSet();
         this.flags.clear();
         if (flags != null) {
             addFlags(flags);
         }
         this.informationExtractionConfiguration.setBeMessageGroupSpecific(this
-                .hasFlag(RankerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL));
+                .hasFlag(ScorerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL));
 
     }
 

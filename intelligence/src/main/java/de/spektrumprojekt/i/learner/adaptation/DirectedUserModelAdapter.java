@@ -40,7 +40,7 @@ import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
-import de.spektrumprojekt.i.ranker.Ranker;
+import de.spektrumprojekt.i.ranker.Scorer;
 import de.spektrumprojekt.i.user.UserScore;
 import de.spektrumprojekt.i.user.UserToUserInterestSelector;
 import de.spektrumprojekt.persistence.Persistence;
@@ -57,7 +57,7 @@ public class DirectedUserModelAdapter implements
 
     private final Persistence persistence;
 
-    private final Ranker ranker;
+    private final Scorer scorer;
 
     private final UserToUserInterestSelector userToUserInterestRetriever;
 
@@ -67,13 +67,13 @@ public class DirectedUserModelAdapter implements
 
     private final String userModelType;
 
-    private final EventHandler<UserModelAdaptationReRankEvent> userModelAdaptationReRankEventHandler = new EventHandler<UserModelAdaptationReRankEvent>();
+    private final EventHandler<UserModelAdaptationReScoreEvent> userModelAdaptationReScoreEventHandler = new EventHandler<UserModelAdaptationReScoreEvent>();
 
     private final boolean adaptFromMessageGroups;
 
     public DirectedUserModelAdapter(
             Persistence persistence,
-            Ranker ranker,
+            Scorer scorer,
             String userModelType,
             UserToUserInterestSelector userToUserInterestRetriever,
             boolean adaptFromMessageGroups,
@@ -82,8 +82,8 @@ public class DirectedUserModelAdapter implements
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
         }
-        if (ranker == null) {
-            throw new IllegalArgumentException("ranker cannot be null.");
+        if (scorer == null) {
+            throw new IllegalArgumentException("scorer cannot be null.");
         }
         if (userToUserInterestRetriever == null) {
             throw new IllegalArgumentException("userToUserInterestRetriever cannot be null.");
@@ -92,7 +92,7 @@ public class DirectedUserModelAdapter implements
             throw new IllegalArgumentException("userModelType cannot be null.");
         }
         this.persistence = persistence;
-        this.ranker = ranker;
+        this.scorer = scorer;
         this.userToUserInterestRetriever = userToUserInterestRetriever;
 
         if (keepStatistics) {
@@ -107,12 +107,12 @@ public class DirectedUserModelAdapter implements
 
     public DirectedUserModelAdapter(
             Persistence persistence,
-            Ranker ranker,
+            Scorer scorer,
             UserToUserInterestSelector userToUserInterestRetriever,
             boolean adaptFromMessageGroups) {
         this(
                 persistence,
-                ranker,
+                scorer,
                 UserModel.DEFAULT_USER_MODEL_TYPE,
                 userToUserInterestRetriever,
                 adaptFromMessageGroups,
@@ -204,14 +204,14 @@ public class DirectedUserModelAdapter implements
 
             Message messageToRerate = this.persistence.getMessageByGlobalId(message.getMessageId());
 
-            MessageFeatureContext messageFeatureContextOfReRank = ranker.rerank(messageToRerate,
+            MessageFeatureContext messageFeatureContextOfReScore = scorer.rescore(messageToRerate,
                     message.getUserGlobalId());
 
-            if (this.userModelAdaptationReRankEventHandler.getEventListenersSize() > 0) {
-                UserModelAdaptationReRankEvent reRankEvent = new UserModelAdaptationReRankEvent();
-                reRankEvent.setMessageFeatureContextOfReRank(messageFeatureContextOfReRank);
-                reRankEvent.setAdaptationMessage(message);
-                this.userModelAdaptationReRankEventHandler.fire(reRankEvent);
+            if (this.userModelAdaptationReScoreEventHandler.getEventListenersSize() > 0) {
+                UserModelAdaptationReScoreEvent reScoreEvent = new UserModelAdaptationReScoreEvent();
+                reScoreEvent.setMessageFeatureContextOfReScore(messageFeatureContextOfReScore);
+                reScoreEvent.setAdaptationMessage(message);
+                this.userModelAdaptationReScoreEventHandler.fire(reScoreEvent);
             }
         }
 
@@ -335,8 +335,8 @@ public class DirectedUserModelAdapter implements
         return requestedAdaptedCount;
     }
 
-    public EventHandler<UserModelAdaptationReRankEvent> getUserModelAdaptationReRankEventHandler() {
-        return userModelAdaptationReRankEventHandler;
+    public EventHandler<UserModelAdaptationReScoreEvent> getUserModelAdaptationReScoreEventHandler() {
+        return userModelAdaptationReScoreEventHandler;
     }
 
     public ValueAggregator getValueAggegrator(

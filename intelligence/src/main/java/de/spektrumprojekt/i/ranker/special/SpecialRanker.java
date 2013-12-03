@@ -10,14 +10,14 @@ import de.spektrumprojekt.communication.Communicator;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
-import de.spektrumprojekt.i.ranker.Ranker;
-import de.spektrumprojekt.i.ranker.RankerConfiguration;
+import de.spektrumprojekt.i.ranker.Scorer;
+import de.spektrumprojekt.i.ranker.ScorerConfiguration;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 import de.spektrumprojekt.i.ranker.chain.DetermineInteractionLevelCommand;
 import de.spektrumprojekt.i.ranker.chain.UserFeatureCommand;
 import de.spektrumprojekt.persistence.Persistence;
 
-public class SpecialRanker<T extends Command<UserSpecificMessageFeatureContext>> extends Ranker {
+public class SpecialRanker<T extends Command<UserSpecificMessageFeatureContext>> extends Scorer {
 
     private final CommandChain<MessageFeatureContext> rankerChain;
     private final Persistence persistence;
@@ -28,7 +28,7 @@ public class SpecialRanker<T extends Command<UserSpecificMessageFeatureContext>>
             Persistence persistence,
             Communicator communicator,
             MessageGroupMemberRunner<MessageFeatureContext> memberRunner,
-            RankerConfiguration rankerConfiguration,
+            ScorerConfiguration rankerConfiguration,
             T specificCommand) {
         super(persistence, communicator, memberRunner, rankerConfiguration);
         this.persistence = persistence;
@@ -44,7 +44,7 @@ public class SpecialRanker<T extends Command<UserSpecificMessageFeatureContext>>
         userFeatureCommand.addCommand(this.specificCommand);
 
         userFeatureCommand.addCommand(getFeatureStatisticsCommand());
-        rankerChain.addCommand(getStoreMessageRankCommand());
+        rankerChain.addCommand(getStoreMessageScoreCommand());
     }
 
     @Override
@@ -54,12 +54,18 @@ public class SpecialRanker<T extends Command<UserSpecificMessageFeatureContext>>
     }
 
     @Override
-    public MessageFeatureContext rank(Message message, MessageRelation messageRelation,
+    public MessageFeatureContext rescore(Message message, String userGlobalId) {
+
+        throw new UnsupportedOperationException("not supported in special ranker.");
+    }
+
+    @Override
+    public MessageFeatureContext score(Message message, MessageRelation messageRelation,
             String[] userGlobalIdsToRankFor, boolean noRankingOnlyLearning) {
 
         MessageFeatureContext context = new MessageFeatureContext(this.persistence, message,
                 messageRelation);
-        context.setNoRankingOnlyLearning(noRankingOnlyLearning);
+        context.setNoScoreingOnlyLearning(noRankingOnlyLearning);
 
         if (userGlobalIdsToRankFor != null) {
             Collection<String> users = Arrays.asList(userGlobalIdsToRankFor);
@@ -69,12 +75,6 @@ public class SpecialRanker<T extends Command<UserSpecificMessageFeatureContext>>
         rankerChain.process(context);
 
         return context;
-    }
-
-    @Override
-    public MessageFeatureContext rerank(Message message, String userGlobalId) {
-
-        throw new UnsupportedOperationException("not supported in special ranker.");
     }
 
 }

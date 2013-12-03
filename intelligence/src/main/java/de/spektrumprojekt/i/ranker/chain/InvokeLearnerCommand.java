@@ -33,8 +33,8 @@ import de.spektrumprojekt.datamodel.observation.ObservationPriority;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.i.learner.LearningMessage;
-import de.spektrumprojekt.i.ranker.RankerConfiguration;
-import de.spektrumprojekt.i.ranker.RankerConfigurationFlag;
+import de.spektrumprojekt.i.ranker.ScorerConfiguration;
+import de.spektrumprojekt.i.ranker.ScorerConfigurationFlag;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 import de.spektrumprojekt.i.ranker.feature.Feature;
 import de.spektrumprojekt.i.ranker.feature.FixWeightFeatureAggregator;
@@ -94,18 +94,18 @@ public class InvokeLearnerCommand implements Command<UserSpecificMessageFeatureC
      *            the persistence to use
      */
     public InvokeLearnerCommand(Persistence persistence, Communicator communicator,
-            RankerConfiguration rankerConfiguration) {
+            ScorerConfiguration rankerConfiguration) {
         this(
                 persistence,
                 communicator,
                 rankerConfiguration.getLearningFeatureWeights(),
                 rankerConfiguration.getLearningFeatureTresholds(),
                 rankerConfiguration
-                        .hasFlag(RankerConfigurationFlag.DISCUSSION_PARTICIPATION_LEARN_FROM_PARENT_MESSAGE),
+                        .hasFlag(ScorerConfigurationFlag.DISCUSSION_PARTICIPATION_LEARN_FROM_PARENT_MESSAGE),
                 rankerConfiguration
-                        .hasFlag(RankerConfigurationFlag.DISCUSSION_PARTICIPATION_LEARN_FROM_ALL_PARENT_MESSAGES),
+                        .hasFlag(ScorerConfigurationFlag.DISCUSSION_PARTICIPATION_LEARN_FROM_ALL_PARENT_MESSAGES),
                 rankerConfiguration
-                        .hasFlag(RankerConfigurationFlag.LEARN_FROM_EVERY_MESSAGE),
+                        .hasFlag(ScorerConfigurationFlag.LEARN_FROM_EVERY_MESSAGE),
                 rankerConfiguration.getScoreToLearnThreshold());
     }
 

@@ -16,8 +16,9 @@ import org.slf4j.LoggerFactory;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
-import de.spektrumprojekt.i.ranker.RankerConfiguration;
+import de.spektrumprojekt.i.ranker.ScorerConfiguration;
 import de.spektrumprojekt.i.ranker.UserModelConfiguration;
+import de.spektrumprojekt.i.ranker.UserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.i.timebased.config.LongTermMemoryConfiguration;
 import de.spektrumprojekt.i.timebased.config.PermanentLongTermInterestDetector;
 import de.spektrumprojekt.i.timebased.config.ShortTermMemoryConfiguration;
@@ -35,7 +36,7 @@ public class ShortTermUserModelUpdater {
 
     private Date lastModelCalculationDate;
 
-    private final RankerConfiguration rankerConfiguration;
+    private final ScorerConfiguration rankerConfiguration;
 
     private Date firstBinStartTime;
 
@@ -63,7 +64,7 @@ public class ShortTermUserModelUpdater {
 
     private int calculatedLongTermPeriodsAgo;
 
-    public ShortTermUserModelUpdater(Persistence persistence, RankerConfiguration configuration) {
+    public ShortTermUserModelUpdater(Persistence persistence, ScorerConfiguration configuration) {
         super();
         this.rankerConfiguration = configuration;
         this.persistence = persistence;
@@ -217,7 +218,7 @@ public class ShortTermUserModelUpdater {
      */
     private boolean needsToBeCalculated(UserModelConfiguration userModelConfiguration) {
         return (userModelConfiguration.getUserModelEntryIntegrationStrategy()
-                .equals(UserModelConfiguration.UserModelEntryIntegrationStrategy.TIMEBINNED)) ? userModelConfiguration
+                .equals(UserModelEntryIntegrationStrategy.TIMEBINNED)) ? userModelConfiguration
                 .isCalculateLater() : false;
     }
 

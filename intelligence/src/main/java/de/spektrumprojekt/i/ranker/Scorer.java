@@ -32,22 +32,22 @@ import de.spektrumprojekt.commons.chain.CommandChain;
 import de.spektrumprojekt.communication.CommunicationMessage;
 import de.spektrumprojekt.communication.Communicator;
 import de.spektrumprojekt.communication.MessageHandler;
-import de.spektrumprojekt.communication.transfer.RankingCommunicationMessage;
+import de.spektrumprojekt.communication.transfer.ScorerCommunicationMessage;
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionConfiguration;
-import de.spektrumprojekt.i.ranker.chain.AdaptMessageRankByCMFOfSimilarUsersCommand;
+import de.spektrumprojekt.i.ranker.chain.AdaptMessageScoreByCMFOfSimilarUsersCommand;
 import de.spektrumprojekt.i.ranker.chain.ComputeMessageScoreCommand;
 import de.spektrumprojekt.i.ranker.chain.DetermineInteractionLevelCommand;
 import de.spektrumprojekt.i.ranker.chain.FeatureStatisticsCommand;
 import de.spektrumprojekt.i.ranker.chain.InvokeLearnerCommand;
 import de.spektrumprojekt.i.ranker.chain.StoreMessageCommand;
-import de.spektrumprojekt.i.ranker.chain.StoreMessageRankCommand;
+import de.spektrumprojekt.i.ranker.chain.StoreMessageScoreCommand;
 import de.spektrumprojekt.i.ranker.chain.TriggerUserModelAdaptationCommand;
-import de.spektrumprojekt.i.ranker.chain.UpdateInteractionLevelOfMessageRanksCommand;
+import de.spektrumprojekt.i.ranker.chain.UpdateInteractionLevelOfMessageScoresCommand;
 import de.spektrumprojekt.i.ranker.chain.UserFeatureCommand;
 import de.spektrumprojekt.i.ranker.chain.UserSimilarityIntegrationCommand;
 import de.spektrumprojekt.i.ranker.chain.features.AuthorFeatureCommand;
@@ -65,26 +65,26 @@ import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer.UserSimilarit
 import de.spektrumprojekt.persistence.Persistence;
 
 /**
- * The ranker takes an incoming message (hence the {@link MessageHandler} implementation and
+ * The scorer takes an incoming message (hence the {@link MessageHandler} implementation and
  * computes a message rank per user
  * 
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 
  */
-public class Ranker implements MessageHandler<RankingCommunicationMessage>,
+public class Scorer implements MessageHandler<ScorerCommunicationMessage>,
         ConfigurationDescriptable {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(Ranker.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(Scorer.class);
 
     private final Persistence persistence;
     private final Communicator communicator;
 
-    private final AdaptMessageRankByCMFOfSimilarUsersCommand adaptMessageRankByCMFOfSimilarUsersCommand;
+    private final AdaptMessageScoreByCMFOfSimilarUsersCommand adaptMessageScoreByCMFOfSimilarUsersCommand;
     private final FeatureStatisticsCommand featureStatisticsCommand;
 
-    private final CommandChain<MessageFeatureContext> rankerChain;
+    private final CommandChain<MessageFeatureContext> scorerChain;
 
-    private final CommandChain<MessageFeatureContext> rerankerChain;
+    private final CommandChain<MessageFeatureContext> reScoringChain;
     private final InformationExtractionCommand<MessageFeatureContext> informationExtractionChain;
 
     private final TermVectorSimilarityComputer termVectorSimilarityComputer;
@@ -92,9 +92,9 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
 
     private final UserSimilarityComputer userSimilarityComputer;
 
-    private final RankerConfiguration rankerConfiguration;
+    private final ScorerConfiguration scorerConfiguration;
 
-    private final ComputeMessageScoreCommand computeMessageRankCommand;
+    private final ComputeMessageScoreCommand computeMessageScoreCommand;
 
     private final InvokeLearnerCommand invokeLearnerCommand;
 
@@ -102,11 +102,11 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
 
     private final FeatureAggregateCommand featureAggregateCommand;
 
-    private final UpdateInteractionLevelOfMessageRanksCommand updateInteractionLevelOfMessageRanksCommand;
+    private final UpdateInteractionLevelOfMessageScoresCommand updateInteractionLevelOfMessageScoresCommand;
 
     private final DetermineInteractionLevelCommand determineInteractionLevelCommand;
 
-    private final StoreMessageRankCommand storeMessageRankCommand;
+    private final StoreMessageScoreCommand storeMessageScoreCommand;
 
     private final ContentMatchFeatureCommand termMatchFeatureCommand;
 
@@ -116,11 +116,11 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
 
     private final UserFeatureCommand userFeatureCommand;
 
-    private final UserFeatureCommand reRankUserFeatureCommand;
+    private final UserFeatureCommand reScoringUserFeatureCommand;
 
     private final UserSimilarityIntegrationCommand userSimilarityIntegrationCommand;
 
-    private int reRankCount;
+    private int reScoringCount;
 
     private final DiscussionMentionFeatureCommand discussionMentionFeatureCommand;
 
@@ -139,51 +139,51 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
      * @param memberRunner
      *            callback runner to get the groups for the user
      */
-    public Ranker(Persistence persistence, Communicator communicator,
+    public Scorer(Persistence persistence, Communicator communicator,
             MessageGroupMemberRunner<MessageFeatureContext> memberRunner,
-            RankerConfiguration rankerConfiguration) {
+            ScorerConfiguration scorerConfiguration) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
         }
         if (communicator == null) {
             throw new IllegalArgumentException("communicator cannot be null.");
         }
-        if (rankerConfiguration == null) {
-            throw new IllegalArgumentException("rankerConfiguration cannot be null.");
+        if (scorerConfiguration == null) {
+            throw new IllegalArgumentException("scroerConfiguration cannot be null.");
         }
-        if (rankerConfiguration.getInformationExtractionConfiguration() == null) {
+        if (scorerConfiguration.getInformationExtractionConfiguration() == null) {
             throw new IllegalArgumentException(
-                    "rankerConfiguration.informationExtractionConfiguration cannot be null.");
+                    "scorerConfiguration.informationExtractionConfiguration cannot be null.");
         }
-        this.rankerConfiguration = rankerConfiguration;
-        this.rankerConfiguration.immutable();
-        this.informationExtractionConfiguration = rankerConfiguration
+        this.scorerConfiguration = scorerConfiguration;
+        this.scorerConfiguration.immutable();
+        this.informationExtractionConfiguration = scorerConfiguration
                 .getInformationExtractionConfiguration();
 
         this.persistence = persistence;
         this.communicator = communicator;
         this.termFrequencyComputer = new TermFrequencyComputer(this.persistence,
-                this.rankerConfiguration
-                        .hasFlag(RankerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL));
-        if (this.rankerConfiguration.getTermUniquenessLogfile() != null) {
-            this.termFrequencyComputer.init(this.rankerConfiguration.getTermUniquenessLogfile());
+                this.scorerConfiguration
+                        .hasFlag(ScorerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL));
+        if (this.scorerConfiguration.getTermUniquenessLogfile() != null) {
+            this.termFrequencyComputer.init(this.scorerConfiguration.getTermUniquenessLogfile());
         }
         this.informationExtractionConfiguration.setTermFrequencyComputer(termFrequencyComputer);
 
         termVectorSimilarityComputer = TermSimilarityWeightComputerFactory.getInstance()
-                .createTermVectorSimilarityComputer(rankerConfiguration, termFrequencyComputer);
+                .createTermVectorSimilarityComputer(scorerConfiguration, termFrequencyComputer);
         // TODO register termfrequencycomputer in some timer
 
-        rankerChain = new CommandChain<MessageFeatureContext>();
-        rerankerChain = new CommandChain<MessageFeatureContext>();
+        scorerChain = new CommandChain<MessageFeatureContext>();
+        reScoringChain = new CommandChain<MessageFeatureContext>();
 
         userFeatureCommand = new UserFeatureCommand(memberRunner);
-        reRankUserFeatureCommand = new UserFeatureCommand(memberRunner);
+        reScoringUserFeatureCommand = new UserFeatureCommand(memberRunner);
 
         this.informationExtractionChain = InformationExtractionCommand.createDefaultGermanEnglish(
-                persistence, this.rankerConfiguration.getInformationExtractionConfiguration());
+                persistence, this.scorerConfiguration.getInformationExtractionConfiguration());
 
-        UserSimilaritySimType userSimilaritySimType = this.rankerConfiguration
+        UserSimilaritySimType userSimilaritySimType = this.scorerConfiguration
                 .getUserModelAdapterConfiguration().getUserSimilaritySimType();
         if (userSimilaritySimType == null) {
             userSimilaritySimType = UserSimilaritySimType.VOODOO;
@@ -200,88 +200,88 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         discussionMentionFeatureCommand = new DiscussionMentionFeatureCommand();
 
         termMatchFeatureCommand = new ContentMatchFeatureCommand(persistence,
-                termVectorSimilarityComputer, rankerConfiguration.getInterestTermTreshold(),
-                rankerConfiguration);
+                termVectorSimilarityComputer, scorerConfiguration.getInterestTermTreshold(),
+                scorerConfiguration);
         determineInteractionLevelCommand = new DetermineInteractionLevelCommand();
 
-        computeMessageRankCommand = new ComputeMessageScoreCommand(
-                this.rankerConfiguration.getFeatureWeights(),
-                this.rankerConfiguration.getNonParticipationFactor());
+        computeMessageScoreCommand = new ComputeMessageScoreCommand(
+                this.scorerConfiguration.getFeatureWeights(),
+                this.scorerConfiguration.getNonParticipationFactor());
         invokeLearnerCommand = new InvokeLearnerCommand(this.persistence, this.communicator,
-                this.rankerConfiguration);
+                this.scorerConfiguration);
         triggerUserModelAdaptationCommand = new TriggerUserModelAdaptationCommand(
                 this.communicator,
                 UserModel.DEFAULT_USER_MODEL_TYPE,
-                this.rankerConfiguration.getUserModelAdapterConfiguration()
+                this.scorerConfiguration.getUserModelAdapterConfiguration()
                         .getConfidenceThreshold(),
-                this.rankerConfiguration
+                this.scorerConfiguration
                         .getUserModelAdapterConfiguration().getScoreThreshold());
 
         // TODO where to take the configuration values from ?
-        adaptMessageRankByCMFOfSimilarUsersCommand = new AdaptMessageRankByCMFOfSimilarUsersCommand(
-                persistence, this.rankerConfiguration.getMessageRankThreshold(),
-                this.rankerConfiguration.getMinUserSimilarity(),
-                this.rankerConfiguration.getMinContentMessageScore());
-        updateInteractionLevelOfMessageRanksCommand = new UpdateInteractionLevelOfMessageRanksCommand(
+        adaptMessageScoreByCMFOfSimilarUsersCommand = new AdaptMessageScoreByCMFOfSimilarUsersCommand(
+                persistence, this.scorerConfiguration.getMessageScoreThreshold(),
+                this.scorerConfiguration.getMinUserSimilarity(),
+                this.scorerConfiguration.getMinContentMessageScore());
+        updateInteractionLevelOfMessageScoresCommand = new UpdateInteractionLevelOfMessageScoresCommand(
                 persistence);
-        storeMessageRankCommand = new StoreMessageRankCommand(persistence);
+        storeMessageScoreCommand = new StoreMessageScoreCommand(persistence);
         featureAggregateCommand = new FeatureAggregateCommand(this.persistence);
 
         // add the commands to the chain
-        if (!this.rankerConfiguration.hasFlag(RankerConfigurationFlag.NO_INFORMATION_EXTRACTION)) {
-            rankerChain.addCommand(this.informationExtractionChain);
+        if (!this.scorerConfiguration.hasFlag(ScorerConfigurationFlag.NO_INFORMATION_EXTRACTION)) {
+            scorerChain.addCommand(this.informationExtractionChain);
         }
 
         // store the message after the terms have been extracted
-        rankerChain.addCommand(storeMessageCommand);
+        scorerChain.addCommand(storeMessageCommand);
 
-        if (this.rankerConfiguration
-                .hasFlag(RankerConfigurationFlag.USE_CONTENT_MATCH_FEATURE_OF_SIMILAR_USERS)
-                || this.rankerConfiguration
-                        .hasFlag(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)) {
-            rankerChain.addCommand(userSimilarityIntegrationCommand);
+        if (this.scorerConfiguration
+                .hasFlag(ScorerConfigurationFlag.USE_CONTENT_MATCH_FEATURE_OF_SIMILAR_USERS)
+                || this.scorerConfiguration
+                        .hasFlag(ScorerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)) {
+            scorerChain.addCommand(userSimilarityIntegrationCommand);
         }
 
-        if (!this.rankerConfiguration
-                .hasFlag(RankerConfigurationFlag.DO_NOT_USE_DISCUSSION_FEATURES)) {
+        if (!this.scorerConfiguration
+                .hasFlag(ScorerConfigurationFlag.DO_NOT_USE_DISCUSSION_FEATURES)) {
 
-            rankerChain.addCommand(discussionRootFeatureCommand);
+            scorerChain.addCommand(discussionRootFeatureCommand);
         }
-        if (!this.rankerConfiguration.hasFlag(RankerConfigurationFlag.NO_USER_SPECIFIC_COMMANDS)) {
-            rankerChain.addCommand(userFeatureCommand);
+        if (!this.scorerConfiguration.hasFlag(ScorerConfigurationFlag.NO_USER_SPECIFIC_COMMANDS)) {
+            scorerChain.addCommand(userFeatureCommand);
         }
 
         userFeatureCommand.addCommand(authorFeatureCommand);
         userFeatureCommand.addCommand(mentionFeatureCommand);
 
-        if (!this.rankerConfiguration
-                .hasFlag(RankerConfigurationFlag.DO_NOT_USE_DISCUSSION_FEATURES)) {
+        if (!this.scorerConfiguration
+                .hasFlag(ScorerConfigurationFlag.DO_NOT_USE_DISCUSSION_FEATURES)) {
 
             userFeatureCommand.getUserSpecificCommandChain().addCommand(
                     discussionParticipationFeatureCommand);
             userFeatureCommand.addCommand(discussionMentionFeatureCommand);
         }
 
-        if (!this.rankerConfiguration
-                .hasFlag(RankerConfigurationFlag.DO_NOT_USE_CONTENT_MATCHER_FEATURE)) {
+        if (!this.scorerConfiguration
+                .hasFlag(ScorerConfigurationFlag.DO_NOT_USE_CONTENT_MATCHER_FEATURE)) {
             userFeatureCommand.addCommand(termMatchFeatureCommand);
         }
 
         userFeatureCommand.addCommand(determineInteractionLevelCommand);
         userFeatureCommand.addCommand(featureAggregateCommand);
-        userFeatureCommand.addCommand(updateInteractionLevelOfMessageRanksCommand);
-        userFeatureCommand.addCommand(computeMessageRankCommand);
+        userFeatureCommand.addCommand(updateInteractionLevelOfMessageScoresCommand);
+        userFeatureCommand.addCommand(computeMessageScoreCommand);
 
-        if (!this.rankerConfiguration.hasFlag(RankerConfigurationFlag.NO_LEARNING_ONLY_RANKING)) {
+        if (!this.scorerConfiguration.hasFlag(ScorerConfigurationFlag.NO_LEARNING_ONLY_SCORING)) {
             userFeatureCommand.addCommand(invokeLearnerCommand);
         }
 
-        if (!this.rankerConfiguration
-                .hasFlag(RankerConfigurationFlag.DO_NOT_USE_CONTENT_MATCHER_FEATURE)
-                && this.rankerConfiguration
-                        .hasFlag(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)
-                && !this.rankerConfiguration
-                        .hasFlag(RankerConfigurationFlag.NO_LEARNING_ONLY_RANKING)) {
+        if (!this.scorerConfiguration
+                .hasFlag(ScorerConfigurationFlag.DO_NOT_USE_CONTENT_MATCHER_FEATURE)
+                && this.scorerConfiguration
+                        .hasFlag(ScorerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)
+                && !this.scorerConfiguration
+                        .hasFlag(ScorerConfigurationFlag.NO_LEARNING_ONLY_SCORING)) {
 
             userFeatureCommand.addCommand(triggerUserModelAdaptationCommand);
         }
@@ -289,25 +289,25 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         featureStatisticsCommand = new FeatureStatisticsCommand();
         userFeatureCommand.addCommand(featureStatisticsCommand);
 
-        if (this.rankerConfiguration
-                .hasFlag(RankerConfigurationFlag.USE_CONTENT_MATCH_FEATURE_OF_SIMILAR_USERS)) {
-            rankerChain.addCommand(adaptMessageRankByCMFOfSimilarUsersCommand);
+        if (this.scorerConfiguration
+                .hasFlag(ScorerConfigurationFlag.USE_CONTENT_MATCH_FEATURE_OF_SIMILAR_USERS)) {
+            scorerChain.addCommand(adaptMessageScoreByCMFOfSimilarUsersCommand);
         }
 
-        rankerChain.addCommand(storeMessageRankCommand);
+        scorerChain.addCommand(storeMessageScoreCommand);
 
-        initReRankChain();
+        initReScoringChain();
 
     }
 
     /**
-     * Adds the command to the end of the ranker chain
+     * Adds the command to the end of the scorer chain
      * 
      * @param command
      *            the command
      */
     public void addCommand(Command<MessageFeatureContext> command) {
-        this.rankerChain.addCommand(command);
+        this.scorerChain.addCommand(command);
     }
 
     public void close() {
@@ -318,15 +318,15 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
      * {@inheritDoc}
      */
     @Override
-    public void deliverMessage(RankingCommunicationMessage message) throws Exception {
+    public void deliverMessage(ScorerCommunicationMessage message) throws Exception {
 
-        rank(message.getMessage(), message.getMessageRelation(),
-                message.getUserGlobalIdsToRankFor(), message.isNoRankingOnlyLearning());
+        score(message.getMessage(), message.getMessageRelation(),
+                message.getUserGlobalIdsToScoreFor(), message.isNoScoringOnlyLearning());
 
     }
 
-    public AdaptMessageRankByCMFOfSimilarUsersCommand getAdaptMessageRankByCMFOfSimilarUsersCommand() {
-        return adaptMessageRankByCMFOfSimilarUsersCommand;
+    public AdaptMessageScoreByCMFOfSimilarUsersCommand getAdaptMessageScoreByCMFOfSimilarUsersCommand() {
+        return adaptMessageScoreByCMFOfSimilarUsersCommand;
     }
 
     /**
@@ -336,13 +336,13 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
     public String getConfigurationDescription() {
         StringBuilder sb = new StringBuilder();
         sb.append(this.getClass().getSimpleName());
-        sb.append(" rankerConfiguration: " + this.rankerConfiguration.getConfigurationDescription());
+        sb.append(" scroerConfiguration: " + this.scorerConfiguration.getConfigurationDescription());
         sb.append(" termVectorSimilarityComputer: "
                 + this.termVectorSimilarityComputer.getConfigurationDescription());
         sb.append(" termFrequencyComputer: "
                 + this.termFrequencyComputer.getConfigurationDescription());
-        sb.append(" rankerCommandChain: " + this.rankerChain.getConfigurationDescription());
-        sb.append(" rerankerCommandChain: " + this.rerankerChain.getConfigurationDescription());
+        sb.append(" scorerCommandChain: " + this.scorerChain.getConfigurationDescription());
+        sb.append(" reScoringCommandChain: " + this.reScoringChain.getConfigurationDescription());
         sb.append(" userSimilarityComputer: "
                 + this.userSimilarityComputer.getConfigurationDescription());
 
@@ -365,24 +365,24 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
      * {@inheritDoc}
      */
     @Override
-    public Class<RankingCommunicationMessage> getMessageClass() {
-        return RankingCommunicationMessage.class;
+    public Class<ScorerCommunicationMessage> getMessageClass() {
+        return ScorerCommunicationMessage.class;
     }
 
-    public RankerConfiguration getRankerConfiguration() {
-        return rankerConfiguration;
+    public int getReScoringCount() {
+        return reScoringCount;
     }
 
-    public int getReRankCount() {
-        return reRankCount;
+    public ScorerConfiguration getScorerConfiguration() {
+        return scorerConfiguration;
     }
 
     public StoreMessageCommand getStoreMessageCommand() {
         return storeMessageCommand;
     }
 
-    public StoreMessageRankCommand getStoreMessageRankCommand() {
-        return storeMessageRankCommand;
+    public StoreMessageScoreCommand getStoreMessageScoreCommand() {
+        return storeMessageScoreCommand;
     }
 
     public TermFrequencyComputer getTermFrequencyComputer() {
@@ -398,60 +398,91 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
     }
 
     /**
-     * setup the reranker chain
+     * setup the re-scoring chain
      */
-    private void initReRankChain() {
+    private void initReScoringChain() {
 
-        if (!this.rankerConfiguration
-                .hasFlag(RankerConfigurationFlag.DO_NOT_USE_DISCUSSION_FEATURES)) {
+        if (!this.scorerConfiguration
+                .hasFlag(ScorerConfigurationFlag.DO_NOT_USE_DISCUSSION_FEATURES)) {
 
-            rerankerChain.addCommand(discussionRootFeatureCommand);
+            reScoringChain.addCommand(discussionRootFeatureCommand);
         }
 
-        rerankerChain.addCommand(reRankUserFeatureCommand);
+        reScoringChain.addCommand(reScoringUserFeatureCommand);
 
-        reRankUserFeatureCommand.addCommand(authorFeatureCommand);
-        reRankUserFeatureCommand.addCommand(mentionFeatureCommand);
+        reScoringUserFeatureCommand.addCommand(authorFeatureCommand);
+        reScoringUserFeatureCommand.addCommand(mentionFeatureCommand);
 
-        if (!this.rankerConfiguration
-                .hasFlag(RankerConfigurationFlag.DO_NOT_USE_DISCUSSION_FEATURES)) {
+        if (!this.scorerConfiguration
+                .hasFlag(ScorerConfigurationFlag.DO_NOT_USE_DISCUSSION_FEATURES)) {
 
-            reRankUserFeatureCommand.getUserSpecificCommandChain().addCommand(
+            reScoringUserFeatureCommand.getUserSpecificCommandChain().addCommand(
                     discussionParticipationFeatureCommand);
-            reRankUserFeatureCommand.addCommand(discussionMentionFeatureCommand);
+            reScoringUserFeatureCommand.addCommand(discussionMentionFeatureCommand);
         }
 
-        if (!this.rankerConfiguration
-                .hasFlag(RankerConfigurationFlag.DO_NOT_USE_CONTENT_MATCHER_FEATURE)) {
-            reRankUserFeatureCommand.addCommand(termMatchFeatureCommand);
+        if (!this.scorerConfiguration
+                .hasFlag(ScorerConfigurationFlag.DO_NOT_USE_CONTENT_MATCHER_FEATURE)) {
+            reScoringUserFeatureCommand.addCommand(termMatchFeatureCommand);
         }
 
-        reRankUserFeatureCommand.addCommand(determineInteractionLevelCommand);
-        reRankUserFeatureCommand.addCommand(featureAggregateCommand);
-        reRankUserFeatureCommand.addCommand(updateInteractionLevelOfMessageRanksCommand);
+        reScoringUserFeatureCommand.addCommand(determineInteractionLevelCommand);
+        reScoringUserFeatureCommand.addCommand(featureAggregateCommand);
+        reScoringUserFeatureCommand.addCommand(updateInteractionLevelOfMessageScoresCommand);
 
-        reRankUserFeatureCommand.addCommand(computeMessageRankCommand);
+        reScoringUserFeatureCommand.addCommand(computeMessageScoreCommand);
 
-        rerankerChain.addCommand(getStoreMessageRankCommand());
+        reScoringChain.addCommand(getStoreMessageScoreCommand());
     }
 
     /**
-     * Rank the message (not using the communicator)
+     * The re-scoreing only uses the term match feature and assumes that the message has been scored
+     * before for the user, and hence no information extraction or message storing will be executed.
+     * 
+     * @param message
+     * @param userGlobalId
+     * @return
+     */
+    public MessageFeatureContext rescore(Message message, String userGlobalId) {
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
+
+        reScoringCount++;
+
+        MessageFeatureContext context = new MessageFeatureContext(this.persistence, message, null);
+        context.setNoScoreingOnlyLearning(false);
+
+        if (userGlobalId != null) {
+            context.setUserGlobalIdsToProcess(Arrays.asList(userGlobalId));
+        }
+
+        reScoringChain.process(context);
+
+        stopWatch.stop();
+
+        LOGGER.debug("Scorer processed message {} in {} ms", message.getGlobalId(),
+                stopWatch.getTime());
+        return context;
+    }
+
+    /**
+     * Score the message (not using the communicator)
      * 
      * @param message
      *            the message
      * @param messageRelation
      *            the message relation
-     * @param noRankingOnlyLearning
-     * @param userGlobalIdsToRankFor
-     *            the global ids of users to rank for ( however they must be included in the member
+     * @param noScoringOnlyLearning
+     * @param userGlobalIdsToScoreFor
+     *            the global ids of users to score for ( however they must be included in the member
      *            runner provided in the constructor )
-     * @return the compute context including ranks
+     * @return the compute context including scores
      */
-    public MessageFeatureContext rank(Message message, MessageRelation messageRelation,
-            String[] userGlobalIdsToRankFor, boolean noRankingOnlyLearning) {
-        // TODO actually this message is needed in two case: 1. for ranking it, 2. for learning from
-        // it. Now should the ranker send a new message (could include the message features) or let
+    public MessageFeatureContext score(Message message, MessageRelation messageRelation,
+            String[] userGlobalIdsToScoreFor, boolean noScoringOnlyLearning) {
+        // TODO actually this message is needed in two case: 1. for scoreing it, 2. for learning
+        // from
+        // it. Now should the scorer send a new message (could include the message features) or let
         // the learner do it again, in a much simpler way ?
 
         StopWatch stopWatch = new StopWatch();
@@ -459,48 +490,18 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
 
         MessageFeatureContext context = new MessageFeatureContext(this.persistence, message,
                 messageRelation);
-        context.setNoRankingOnlyLearning(noRankingOnlyLearning);
+        context.setNoScoreingOnlyLearning(noScoringOnlyLearning);
 
-        if (userGlobalIdsToRankFor != null) {
-            Collection<String> users = Arrays.asList(userGlobalIdsToRankFor);
+        if (userGlobalIdsToScoreFor != null) {
+            Collection<String> users = Arrays.asList(userGlobalIdsToScoreFor);
             context.setUserGlobalIdsToProcess(users);
         }
 
-        rankerChain.process(context);
+        scorerChain.process(context);
 
         stopWatch.stop();
 
-        LOGGER.debug("Ranker processed message {} in {} ms", message.getGlobalId(),
-                stopWatch.getTime());
-        return context;
-    }
-
-    /**
-     * The reranking only uses the term match feature and assumes that the message has been ranked
-     * before for the user, and hence no information extraction or message storing will be executed.
-     * 
-     * @param message
-     * @param userGlobalId
-     * @return
-     */
-    public MessageFeatureContext rerank(Message message, String userGlobalId) {
-        StopWatch stopWatch = new StopWatch();
-        stopWatch.start();
-
-        reRankCount++;
-
-        MessageFeatureContext context = new MessageFeatureContext(this.persistence, message, null);
-        context.setNoRankingOnlyLearning(false);
-
-        if (userGlobalId != null) {
-            context.setUserGlobalIdsToProcess(Arrays.asList(userGlobalId));
-        }
-
-        rerankerChain.process(context);
-
-        stopWatch.stop();
-
-        LOGGER.debug("Ranker processed message {} in {} ms", message.getGlobalId(),
+        LOGGER.debug("Scorer processed message {} in {} ms", message.getGlobalId(),
                 stopWatch.getTime());
         return context;
     }
@@ -510,7 +511,7 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
      */
     @Override
     public boolean supports(CommunicationMessage message) {
-        return message instanceof RankingCommunicationMessage;
+        return message instanceof ScorerCommunicationMessage;
     }
 
 }

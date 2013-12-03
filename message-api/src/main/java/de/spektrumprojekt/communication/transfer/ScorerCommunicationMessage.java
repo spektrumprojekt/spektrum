@@ -27,7 +27,7 @@ import de.spektrumprojekt.datamodel.message.MessageRelation;
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 
  */
-public class RankingCommunicationMessage extends MessageCommunicationMessage {
+public class ScorerCommunicationMessage extends MessageCommunicationMessage {
 
     /**
      * 
@@ -43,11 +43,11 @@ public class RankingCommunicationMessage extends MessageCommunicationMessage {
     /**
      * // for json deserialization
      */
-    protected RankingCommunicationMessage() {
+    protected ScorerCommunicationMessage() {
         // for json deserialization
     }
 
-    public RankingCommunicationMessage(Message message) {
+    public ScorerCommunicationMessage(Message message) {
         super(message);
     }
 
@@ -55,11 +55,11 @@ public class RankingCommunicationMessage extends MessageCommunicationMessage {
         return messageRelation;
     }
 
-    public String[] getUserGlobalIdsToRankFor() {
+    public String[] getUserGlobalIdsToScoreFor() {
         return userGlobalIdsToRankFor;
     }
 
-    public boolean isNoRankingOnlyLearning() {
+    public boolean isNoScoringOnlyLearning() {
         return noRankingOnlyLearning;
     }
 

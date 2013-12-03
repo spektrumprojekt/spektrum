@@ -39,7 +39,7 @@ import de.spektrumprojekt.persistence.Persistence;
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 
  */
-public class UpdateInteractionLevelOfMessageRanksCommand implements
+public class UpdateInteractionLevelOfMessageScoresCommand implements
         Command<UserSpecificMessageFeatureContext> {
 
     private final Persistence persistence;
@@ -49,7 +49,7 @@ public class UpdateInteractionLevelOfMessageRanksCommand implements
      * @param persistence
      *            the persistence to use
      */
-    public UpdateInteractionLevelOfMessageRanksCommand(Persistence persistence) {
+    public UpdateInteractionLevelOfMessageScoresCommand(Persistence persistence) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null");
         }

@@ -35,9 +35,9 @@ import de.spektrumprojekt.i.learner.chain.StoreObservationCommand;
 import de.spektrumprojekt.i.learner.chain.UserModelLearnerCommand;
 import de.spektrumprojekt.i.learner.time.TimeBinnedUserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
-import de.spektrumprojekt.i.ranker.Ranker;
-import de.spektrumprojekt.i.ranker.RankerConfiguration;
-import de.spektrumprojekt.i.ranker.RankerConfigurationFlag;
+import de.spektrumprojekt.i.ranker.Scorer;
+import de.spektrumprojekt.i.ranker.ScorerConfiguration;
+import de.spektrumprojekt.i.ranker.ScorerConfigurationFlag;
 import de.spektrumprojekt.i.ranker.UserModelConfiguration;
 import de.spektrumprojekt.i.timebased.TermCounterCommand;
 import de.spektrumprojekt.persistence.Persistence;
@@ -53,11 +53,11 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
 
     private final Persistence persistence;
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(Ranker.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(Scorer.class);
 
     public Learner(
             Persistence persistence,
-            RankerConfiguration configuration,
+            ScorerConfiguration configuration,
             InformationExtractionCommand<MessageFeatureContext> ieChain) {
         this(persistence, configuration, ieChain, false);
     }
@@ -72,7 +72,7 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
      */
     public Learner(
             Persistence persistence,
-            RankerConfiguration configuration,
+            ScorerConfiguration configuration,
             InformationExtractionCommand<MessageFeatureContext> ieChain,
             boolean onlyDoObservations) {
         if (persistence == null) {
@@ -90,7 +90,7 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
 
         this.learnerChain = new CommandChain<LearnerMessageContext>();
         if (!onlyDoObservations
-                && !configuration.hasFlag(RankerConfigurationFlag.NO_INFORMATION_EXTRACTION)) {
+                && !configuration.hasFlag(ScorerConfigurationFlag.NO_INFORMATION_EXTRACTION)) {
             this.learnerChain
                     .addCommand(new ProxyCommand<MessageFeatureContext, LearnerMessageContext>(
                             ieChain));
@@ -104,8 +104,8 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
                         .get(
                                 userModelType);
                 switch (userModelConfiguration.getUserModelEntryIntegrationStrategy()) {
-                case PLAIN:
-                    userModelEntryIntegrationStrategy = new UserModelEntryIntegrationPlainStrategy();
+                case TERM_COUNT:
+                    userModelEntryIntegrationStrategy = new TermCountUserModelEntryIntegrationStrategy();
                     break;
                 default:
                     userModelEntryIntegrationStrategy = new TimeBinnedUserModelEntryIntegrationStrategy(

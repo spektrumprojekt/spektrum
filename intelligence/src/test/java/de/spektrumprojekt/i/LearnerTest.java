@@ -44,10 +44,10 @@ import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionConfiguration;
 import de.spektrumprojekt.i.learner.Learner;
 import de.spektrumprojekt.i.learner.LearningMessage;
-import de.spektrumprojekt.i.learner.UserModelEntryIntegrationPlainStrategy;
+import de.spektrumprojekt.i.learner.TermCountUserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.i.learner.UserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
-import de.spektrumprojekt.i.ranker.RankerConfiguration;
+import de.spektrumprojekt.i.ranker.ScorerConfiguration;
 import de.spektrumprojekt.i.ranker.UserModelConfiguration;
 import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
 import de.spektrumprojekt.i.term.TermWeightStrategy;
@@ -74,7 +74,7 @@ public class LearnerTest extends IntelligenceSpektrumTest {
     public void beforeTest() throws ConfigurationException {
         setupPersistence();
 
-        this.userModelEntryIntegrationStrategy = new UserModelEntryIntegrationPlainStrategy();
+        this.userModelEntryIntegrationStrategy = new TermCountUserModelEntryIntegrationStrategy();
     }
 
     private void checkObservations(String userGlobalId, Message message, int expectedSize) {
@@ -147,10 +147,10 @@ public class LearnerTest extends IntelligenceSpektrumTest {
 
         InformationExtractionConfiguration informationExtractionConfiguration = new InformationExtractionConfiguration();
 
-        RankerConfiguration rankerConfiguration = new RankerConfiguration(
+        ScorerConfiguration rankerConfiguration = new ScorerConfiguration(
                 TermWeightStrategy.TRIVIAL, TermVectorSimilarityStrategy.COSINUS);
         rankerConfiguration.put(UserModel.DEFAULT_USER_MODEL_TYPE,
-                UserModelConfiguration.getPlainModelConfiguration());
+                UserModelConfiguration.getUserModelConfigurationWithTermCountLearningStrategy());
 
         // extract the terms
         InformationExtractionCommand<MessageFeatureContext> ieCommand = InformationExtractionCommand

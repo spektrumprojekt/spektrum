@@ -50,9 +50,9 @@ import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.i.learner.Learner;
 import de.spektrumprojekt.i.learner.adaptation.DirectedUserModelAdapter;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
-import de.spektrumprojekt.i.ranker.Ranker;
-import de.spektrumprojekt.i.ranker.RankerConfiguration;
-import de.spektrumprojekt.i.ranker.RankerConfigurationFlag;
+import de.spektrumprojekt.i.ranker.Scorer;
+import de.spektrumprojekt.i.ranker.ScorerConfiguration;
+import de.spektrumprojekt.i.ranker.ScorerConfigurationFlag;
 import de.spektrumprojekt.i.ranker.UserModelConfiguration;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
@@ -63,12 +63,12 @@ import de.spektrumprojekt.i.user.similarity.UserSimilarityRetriever;
 import de.spektrumprojekt.persistence.Persistence.MatchMode;
 
 /**
- * Test the ranker
+ * Test the scorer
  * 
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 
  */
-public class RankerTest extends IntelligenceSpektrumTest {
+public class ScorerTest extends IntelligenceSpektrumTest {
 
     private MessageGroup messageGroup;
     private MessageRelation messageRelation;
@@ -138,7 +138,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
                 user1sim.getSimilarity() > 0.25);
     }
 
-    private Ranker setupScorer(RankerConfigurationFlag flag, boolean useAdaptionFromMGs,
+    private Scorer setupScorer(ScorerConfigurationFlag flag, boolean useAdaptionFromMGs,
             String... usersForRanking) {
 
         Collection<String> userForRanking = new HashSet<String>(Arrays.asList(usersForRanking));
@@ -154,19 +154,19 @@ public class RankerTest extends IntelligenceSpektrumTest {
 
         communicator = new VirtualMachineCommunicator(rankerQueue, rankerQueue);
 
-        RankerConfiguration rankerConfiguration = new RankerConfiguration(
+        ScorerConfiguration rankerConfiguration = new ScorerConfiguration(
                 TermWeightStrategy.TRIVIAL,
                 TermVectorSimilarityStrategy.AVG,
-                RankerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL
+                ScorerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL
                 );
         if (flag != null) {
             rankerConfiguration.addFlags(flag);
         }
 
         rankerConfiguration.put(UserModel.DEFAULT_USER_MODEL_TYPE,
-                UserModelConfiguration.getPlainModelConfiguration());
+                UserModelConfiguration.getUserModelConfigurationWithTermCountLearningStrategy());
 
-        Ranker ranker = new Ranker(getPersistence(), communicator,
+        Scorer ranker = new Scorer(getPersistence(), communicator,
                 new SimpleMessageGroupMemberRunner<MessageFeatureContext>(userForRanking),
                 rankerConfiguration);
 
@@ -176,7 +176,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
         communicator.registerMessageHandler(ranker);
         communicator.registerMessageHandler(learner);
 
-        if (rankerConfiguration.hasFlag(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)) {
+        if (rankerConfiguration.hasFlag(ScorerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)) {
 
             if (useAdaptionFromMGs) {
 
@@ -211,7 +211,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
      */
     @Test
     public void testRanker() throws Exception {
-        Ranker ranker = setupScorer(null, false, "user1", "user2", "user3");
+        Scorer ranker = setupScorer(null, false, "user1", "user2", "user3");
         String authorGlobalId = getPersistence().getOrCreateUser("user1").getGlobalId();
 
         Message message = createPlainTextMessage(
@@ -220,7 +220,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
 
         // first we rank only to get the stemmed tokens (and by the way its testing empty user
         // models
-        MessageFeatureContext context = ranker.rank(message, messageRelation, null, false);
+        MessageFeatureContext context = ranker.score(message, messageRelation, null, false);
         checkScoredTerms(context);
 
         MessagePart messagePart = context.getMessage().getMessageParts().iterator().next();
@@ -239,7 +239,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
             getPersistence().storeOrUpdateUserModelEntries(userModel, changedEntries);
         }
 
-        context = ranker.rank(message, messageRelation, null, false);
+        context = ranker.score(message, messageRelation, null, false);
         i = 0;
         for (UserModel userModel : userModels) {
 
@@ -274,7 +274,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
         UserModel userModel2 = getPersistence().getOrCreateUserModelByUser(user2.getGlobalId(),
                 UserModel.DEFAULT_USER_MODEL_TYPE);
 
-        Ranker ranker = setupScorer(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION,
+        Scorer ranker = setupScorer(ScorerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION,
                 true, "userMg1", "userMg2");
 
         // user1 write ins mg1
@@ -283,7 +283,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
                 user1.getGlobalId(), messageGroup1);
 
         // 1st rank
-        MessageFeatureContext context = ranker.rank(message, messageRelation, null, false);
+        MessageFeatureContext context = ranker.score(message, messageRelation, null, false);
 
         waitForCommunicatorToDelivierMessages();
 
@@ -297,7 +297,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
 
         // in the same moment the user model adaption should be triggered for user2, and the user
         // model should be adapted by the just learned items for user 1
-        context = ranker.rank(message, messageRelation, null, false);
+        context = ranker.score(message, messageRelation, null, false);
 
         waitForCommunicatorToDelivierMessages();
 
@@ -309,7 +309,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
                 user1.getGlobalId(), messageGroup2);
 
         // here again a rank should exist for user 2
-        context = ranker.rank(message, messageRelation, null, false);
+        context = ranker.score(message, messageRelation, null, false);
 
         waitForCommunicatorToDelivierMessages();
         checkUserModelTerms(context, userModel1);
@@ -345,7 +345,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
         UserModel userModel3 = getPersistence().getOrCreateUserModelByUser(user3.getGlobalId(),
                 UserModel.DEFAULT_USER_MODEL_TYPE);
 
-        Ranker ranker = setupScorer(RankerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION,
+        Scorer ranker = setupScorer(ScorerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION,
                 false, "user1", "user2", "user3");
 
         // user2 mentions user1
@@ -355,7 +355,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
         message.addProperty(MessageHelper.createMentionProperty(Arrays.asList(user1.getGlobalId())));
 
         // 1st rank just the mention
-        MessageFeatureContext context = ranker.rank(message, messageRelation, null, false);
+        MessageFeatureContext context = ranker.score(message, messageRelation, null, false);
 
         waitForCommunicatorToDelivierMessages();
 
@@ -371,7 +371,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
 
         // in the same moment the user model adaption should be triggered for user2, and the user
         // model should be adapted by the just learned items for user 1
-        context = ranker.rank(message, messageRelation, null, false);
+        context = ranker.score(message, messageRelation, null, false);
 
         waitForCommunicatorToDelivierMessages();
 
@@ -383,7 +383,7 @@ public class RankerTest extends IntelligenceSpektrumTest {
                 user1.getGlobalId(), messageGroup);
 
         // here again a rank should exist for user 2
-        context = ranker.rank(message, messageRelation, null, false);
+        context = ranker.score(message, messageRelation, null, false);
 
         waitForCommunicatorToDelivierMessages();
         checkUserModelTerms(context, userModel1);

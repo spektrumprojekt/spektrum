@@ -32,7 +32,7 @@ import de.spektrumprojekt.datamodel.user.UserModelEntry;
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 
  */
-public class UserModelEntryIntegrationPlainStrategy implements
+public class TermCountUserModelEntryIntegrationStrategy implements
         UserModelEntryIntegrationStrategy {
 
     // the score defines the minimum value of a scored term so that it counts
@@ -81,9 +81,6 @@ public class UserModelEntryIntegrationPlainStrategy implements
     /**
      * well isn't it weird, we don't even use the score of the term to compute the relevance
      * 
-     * TODO COP: configuration optimization point: use the score of term as well, or in case of
-     * another user model entry, use the term score as weight to increase / decrease the value
-     * 
      * {@inheritDoc}
      */
     @Override
@@ -102,7 +99,7 @@ public class UserModelEntryIntegrationPlainStrategy implements
         this.minScore = minScore;
     }
 
-    private boolean updateEntry(UserModelEntry entry, float interestScore, ScoredTerm scoredTerm) {
+    protected boolean updateEntry(UserModelEntry entry, float interestScore, ScoredTerm scoredTerm) {
         if (scoredTerm.getWeight() >= minScore) {
             // TODO must be synchronized on this entry, several updates would be problematic
 

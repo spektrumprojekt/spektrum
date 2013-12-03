@@ -247,7 +247,7 @@ public class MessageFeatureContext extends FeatureContext {
         }
     }
 
-    public void setNoRankingOnlyLearning(boolean noRankingOnlyLearning) {
+    public void setNoScoreingOnlyLearning(boolean noRankingOnlyLearning) {
         this.noRankingOnlyLearning = noRankingOnlyLearning;
     }
 

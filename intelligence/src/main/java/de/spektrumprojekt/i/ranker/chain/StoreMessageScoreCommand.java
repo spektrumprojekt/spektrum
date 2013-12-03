@@ -34,7 +34,7 @@ import de.spektrumprojekt.persistence.Persistence;
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 
  */
-public class StoreMessageRankCommand implements Command<MessageFeatureContext> {
+public class StoreMessageScoreCommand implements Command<MessageFeatureContext> {
 
     private final Persistence persistence;
 
@@ -43,7 +43,7 @@ public class StoreMessageRankCommand implements Command<MessageFeatureContext> {
      * @param persistence
      *            the persistence to use
      */
-    public StoreMessageRankCommand(Persistence persistence) {
+    public StoreMessageScoreCommand(Persistence persistence) {
         this.persistence = persistence;
     }
 

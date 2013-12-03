@@ -29,10 +29,10 @@ import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.observation.Interest;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserModelEntryTimeBin;
-import de.spektrumprojekt.i.learner.UserModelEntryIntegrationPlainStrategy;
+import de.spektrumprojekt.i.learner.TermCountUserModelEntryIntegrationStrategy;
 
 public class TimeBinnedUserModelEntryIntegrationStrategy extends
-        UserModelEntryIntegrationPlainStrategy {
+        TermCountUserModelEntryIntegrationStrategy {
 
     public static long DAY = DateUtils.MILLIS_PER_DAY;
     public static long WEEK = 7 * DateUtils.MILLIS_PER_DAY;

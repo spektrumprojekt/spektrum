@@ -1,6 +1,6 @@
 package de.spektrumprojekt.i.term;
 
-import de.spektrumprojekt.i.ranker.RankerConfiguration;
+import de.spektrumprojekt.i.ranker.ScorerConfiguration;
 import de.spektrumprojekt.i.term.frequency.TermFrequencyComputer;
 import de.spektrumprojekt.i.term.similarity.AverageTermVectorSimilarityComputer;
 import de.spektrumprojekt.i.term.similarity.CosinusTermVectorSimilarityComputer;
@@ -23,7 +23,7 @@ public class TermSimilarityWeightComputerFactory {
     }
 
     public TermVectorSimilarityComputer createTermVectorSimilarityComputer(
-            RankerConfiguration rankerConfiguration, TermFrequencyComputer termFrequencyComputer) {
+            ScorerConfiguration rankerConfiguration, TermFrequencyComputer termFrequencyComputer) {
         TermVectorSimilarityStrategy similarityStrategy = rankerConfiguration
                 .getTermVectorSimilarityStrategy();
         TermWeightStrategy termWeightStrategy = rankerConfiguration.getTermWeightStrategy();
@@ -59,7 +59,7 @@ public class TermSimilarityWeightComputerFactory {
         if (termWeightStrategy == null) {
             throw new IllegalArgumentException("termWeightStrategy cannot be null");
         }
-        RankerConfiguration rankerConfiguration = new RankerConfiguration(termWeightStrategy,
+        ScorerConfiguration rankerConfiguration = new ScorerConfiguration(termWeightStrategy,
                 similarityStrategy);
         rankerConfiguration
                 .setTreatMissingUserModelEntriesAsZero(treatMissingUserModelEntriesAsZero);

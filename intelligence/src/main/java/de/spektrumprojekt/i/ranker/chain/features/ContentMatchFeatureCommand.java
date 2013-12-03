@@ -31,7 +31,7 @@ import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.i.datamodel.MessageFeature;
-import de.spektrumprojekt.i.ranker.RankerConfiguration;
+import de.spektrumprojekt.i.ranker.ScorerConfiguration;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 import de.spektrumprojekt.i.ranker.feature.Feature;
 import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
@@ -51,7 +51,7 @@ public class ContentMatchFeatureCommand implements Command<UserSpecificMessageFe
     private final Persistence persistence;
     private final TermVectorSimilarityComputer termVectorSimilarityComputer;
     private final float interestTermTreshold;
-    private final RankerConfiguration rankerConfiguration;
+    private final ScorerConfiguration rankerConfiguration;
     private final MergeValuesStrategy valuesStrategy;
 
     /**
@@ -63,7 +63,7 @@ public class ContentMatchFeatureCommand implements Command<UserSpecificMessageFe
             Persistence persistence,
             TermVectorSimilarityComputer termVectorSimilarityComputer,
             float interestTermTreshold,
-            RankerConfiguration rankerConfiguration) {
+            ScorerConfiguration rankerConfiguration) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
         }

@@ -3,24 +3,24 @@ package de.spektrumprojekt.i.learner.adaptation;
 import de.spektrumprojekt.commons.event.Event;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 
-public class UserModelAdaptationReRankEvent implements Event {
+public class UserModelAdaptationReScoreEvent implements Event {
 
-    private MessageFeatureContext messageFeatureContextOfReRank;
+    private MessageFeatureContext messageFeatureContextOfReScore;
     private DirectedUserModelAdaptationMessage adaptationMessage;
 
     public DirectedUserModelAdaptationMessage getAdaptationMessage() {
         return adaptationMessage;
     }
 
-    public MessageFeatureContext getMessageFeatureContextOfReRank() {
-        return messageFeatureContextOfReRank;
+    public MessageFeatureContext getMessageFeatureContextOfReScore() {
+        return messageFeatureContextOfReScore;
     }
 
     public void setAdaptationMessage(DirectedUserModelAdaptationMessage adaptationMessage) {
         this.adaptationMessage = adaptationMessage;
     }
 
-    public void setMessageFeatureContextOfReRank(MessageFeatureContext messageFeatureContextOfReRank) {
-        this.messageFeatureContextOfReRank = messageFeatureContextOfReRank;
+    public void setMessageFeatureContextOfReScore(MessageFeatureContext messageFeatureContextOfReScore) {
+        this.messageFeatureContextOfReScore = messageFeatureContextOfReScore;
     }
 }

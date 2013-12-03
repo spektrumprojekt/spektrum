@@ -32,7 +32,7 @@ import de.spektrumprojekt.persistence.Persistence;
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 
  */
-public class AdaptMessageRankByCMFOfSimilarUsersCommand implements Command<MessageFeatureContext> {
+public class AdaptMessageScoreByCMFOfSimilarUsersCommand implements Command<MessageFeatureContext> {
 
     private final Persistence persistence;
 
@@ -57,7 +57,7 @@ public class AdaptMessageRankByCMFOfSimilarUsersCommand implements Command<Messa
      * @param minContentMessageScore
      * @param messageRankThreshold
      */
-    public AdaptMessageRankByCMFOfSimilarUsersCommand(Persistence persistence,
+    public AdaptMessageScoreByCMFOfSimilarUsersCommand(Persistence persistence,
             float messageRankThreshold, float minUserSimilarity, float minContentMessageScore) {
 
         this.persistence = persistence;

@@ -6,10 +6,6 @@ import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 
 public class UserModelConfiguration implements ConfigurationDescriptable, Cloneable {
 
-    public enum UserModelEntryIntegrationStrategy {
-        PLAIN, TIMEBINNED;
-    }
-
     public static long DAY = DateUtils.MILLIS_PER_DAY;
     public static long WEEK = 7 * DateUtils.MILLIS_PER_DAY;
     public static long MONTH = 4 * WEEK;
@@ -19,10 +15,6 @@ public class UserModelConfiguration implements ConfigurationDescriptable, Clonea
 
     public static final UserModelConfiguration MONTH_WEEK = new UserModelConfiguration(
             UserModelEntryIntegrationStrategy.TIMEBINNED, 0, DAY, MONTH, false);
-
-    public static UserModelConfiguration getPlainModelConfiguration() {
-        return new UserModelConfiguration(UserModelEntryIntegrationStrategy.PLAIN);
-    }
 
     public static UserModelConfiguration getShortTermModelConfiguration(long startTime,
             long precision, long binSize) {
@@ -36,15 +28,24 @@ public class UserModelConfiguration implements ConfigurationDescriptable, Clonea
                 precision, binSize, false);
     }
 
+    public static UserModelConfiguration getUserModelConfigurationWithIncrementalLearningStrategy() {
+        return new UserModelConfiguration(UserModelEntryIntegrationStrategy.INCREMENTAL);
+    }
+
+    public static UserModelConfiguration getUserModelConfigurationWithTermCountLearningStrategy() {
+        return new UserModelConfiguration(UserModelEntryIntegrationStrategy.TERM_COUNT);
+    }
+
     private UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy;
 
     private long startTime;
-
     private long precision;
-
     private long binSize;
-
     private boolean calculateLater;
+
+    private float incrementalLearningFactorAlpha = 0.25f;
+    private float incrementalLThresholdOfNeutral = 0.5f;
+    private boolean incrementalLUseCurrentUserModelEntryValueAsThreshold = true;
 
     public UserModelConfiguration(
             UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy) {
@@ -74,6 +75,14 @@ public class UserModelConfiguration implements ConfigurationDescriptable, Clonea
                 + precision + ", binSize=" + binSize + ", calculateLater=" + calculateLater + "]";
     }
 
+    public float getIncrementalLearningFactorAlpha() {
+        return incrementalLearningFactorAlpha;
+    }
+
+    public float getIncrementalLThresholdOfNeutral() {
+        return incrementalLThresholdOfNeutral;
+    }
+
     public long getPrecision() {
         return precision;
     }
@@ -90,12 +99,29 @@ public class UserModelConfiguration implements ConfigurationDescriptable, Clonea
         return calculateLater;
     }
 
+    public boolean isIncrementalLUseCurrentUserModelEntryValueAsThreshold() {
+        return incrementalLUseCurrentUserModelEntryValueAsThreshold;
+    }
+
     public void setBinSize(long binSize) {
         this.binSize = binSize;
     }
 
     public void setCalculateLater(boolean calculateLater) {
         this.calculateLater = calculateLater;
+    }
+
+    public void setIncrementalLearningFactorAlpha(float incrementalLearningFactorAlpha) {
+        this.incrementalLearningFactorAlpha = incrementalLearningFactorAlpha;
+    }
+
+    public void setIncrementalLThresholdOfNeutral(float incrementalLThresholdOfNeutral) {
+        this.incrementalLThresholdOfNeutral = incrementalLThresholdOfNeutral;
+    }
+
+    public void setIncrementalLUseCurrentUserModelEntryValueAsThreshold(
+            boolean incrementalLUseCurrentUserModelEntryValueAsThreshold) {
+        this.incrementalLUseCurrentUserModelEntryValueAsThreshold = incrementalLUseCurrentUserModelEntryValueAsThreshold;
     }
 
     public void setPrecision(long precision) {

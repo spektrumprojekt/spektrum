@@ -3,7 +3,7 @@ package de.spektrumprojekt.i.ranker;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public enum RankerConfigurationFlag {
+public enum ScorerConfigurationFlag {
 
     /**
      * @deprecated Use feature weights instead
@@ -33,7 +33,7 @@ public enum RankerConfigurationFlag {
     USE_CONTENT_MATCH_FEATURE_OF_SIMILAR_USERS("userSimCMF"),
 
     // will not infer observations from ratings
-    NO_LEARNING_ONLY_RANKING("noLearn"),
+    NO_LEARNING_ONLY_SCORING("noLearn"),
 
     NO_INFORMATION_EXTRACTION("noIE"),
 
@@ -43,16 +43,16 @@ public enum RankerConfigurationFlag {
     // learns from every message. usefull for validation evaluation purposes
     LEARN_FROM_EVERY_MESSAGE("learnFromAll");
 
-    private static RankerConfigurationFlag[] VALUES_WITH_NULL;
+    private static ScorerConfigurationFlag[] VALUES_WITH_NULL;
 
-    public static RankerConfigurationFlag[] valuesWithNull() {
+    public static ScorerConfigurationFlag[] valuesWithNull() {
         if (VALUES_WITH_NULL == null) {
-            synchronized (RankerConfigurationFlag.class) {
+            synchronized (ScorerConfigurationFlag.class) {
                 if (VALUES_WITH_NULL == null) {
-                    ArrayList<RankerConfigurationFlag> list = new ArrayList<RankerConfigurationFlag>();
+                    ArrayList<ScorerConfigurationFlag> list = new ArrayList<ScorerConfigurationFlag>();
                     list.add(null);
-                    list.addAll(Arrays.asList(RankerConfigurationFlag.values()));
-                    VALUES_WITH_NULL = list.toArray(new RankerConfigurationFlag[] { });
+                    list.addAll(Arrays.asList(ScorerConfigurationFlag.values()));
+                    VALUES_WITH_NULL = list.toArray(new ScorerConfigurationFlag[] { });
                 }
             }
         }
@@ -61,7 +61,7 @@ public enum RankerConfigurationFlag {
 
     private final String shortName;
 
-    private RankerConfigurationFlag(String shortName) {
+    private ScorerConfigurationFlag(String shortName) {
         this.shortName = shortName;
     }
 
