@@ -396,7 +396,12 @@ public abstract class XMLAdapter extends BasePollingAdapter {
             }
         }
         if (mostRecentTime != null) {
+            // TODO probably not the best idea to let every Adapter handle it. Should probably be
+            // done in addMessages but only if chain handled the message successfully, which is
+            // currently not possible since Chain does not provide an info if it was a success or
+            // not.
             sourceStatus.setLastContentTimestamp(mostRecentTime);
+            getAggregatorChain().getPersistence().updateSourceStatus(sourceStatus);
         }
 
         LOGGER.debug("# new items in subscription {}: {}", sourceStatus.getGlobalId(),
