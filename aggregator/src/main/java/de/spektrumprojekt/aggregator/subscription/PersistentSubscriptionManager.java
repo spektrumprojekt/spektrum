@@ -339,7 +339,7 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
         SourceStatus sourceStatus = persistence.getSourceStatusBySourceGlobalId(sourceGlobalId);
         sourceStatus.updateCheck(statusType);
         Integer errors = sourceStatus.getConsecutiveErrorCount();
-        if (errors > 0) {
+        if (errors > 0 && exception != null) {
             sourceStatus.setLastAccessMessage(exception.getMessage());
         }
         if (errors == aggregatorConfiguration.getErrorsForMessage()
