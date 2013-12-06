@@ -71,9 +71,7 @@ public class FeatureAggregateCommand implements Command<UserSpecificMessageFeatu
         context.addMessageFeature(Feature.USER_TO_SIM_FEATURE, to);
         context.addMessageFeature(Feature.USER_TO_SIM_FEATURE, from);
 
-        FeatureAggregate featureAggregate = new FeatureAggregate();
-
-        featureAggregate.features.putAll(context.getFeatures());
+        FeatureAggregate featureAggregate = new FeatureAggregate(context.getFeatures());
 
         featureAggregate.interactionLevel = context.getInteractionLevel();
         if (featureAggregate.interactionLevel == null) {

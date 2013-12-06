@@ -60,8 +60,11 @@ import de.spektrumprojekt.i.ranker.chain.features.MessageSpecificFeaturesCommand
 import de.spektrumprojekt.i.term.TermSimilarityWeightComputerFactory;
 import de.spektrumprojekt.i.term.frequency.TermFrequencyComputer;
 import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
+import de.spektrumprojekt.i.user.similarity.InteractionBasedUserSimilarityComputer;
+import de.spektrumprojekt.i.user.similarity.IterativeUserSimilarityComputer;
+import de.spektrumprojekt.i.user.similarity.UserModelBasedUserSimilarityComputer;
 import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer;
-import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer.UserSimilaritySimType;
+import de.spektrumprojekt.i.user.similarity.UserSimilaritySimType;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**
@@ -188,11 +191,23 @@ public class Scorer implements MessageHandler<ScorerCommunicationMessage>,
         if (userSimilaritySimType == null) {
             userSimilaritySimType = UserSimilaritySimType.VOODOO;
         }
-        userSimilarityComputer = new UserSimilarityComputer(this.persistence, userSimilaritySimType);
+        switch (userSimilaritySimType) {
+        case USER_MODEL:
+            userSimilarityComputer = new UserModelBasedUserSimilarityComputer(this.persistence,
+                    termVectorSimilarityComputer, false);
+            break;
+        default:
+            userSimilarityComputer = new InteractionBasedUserSimilarityComputer(this.persistence,
+                    userSimilaritySimType);
+        }
 
         storeMessageCommand = new StoreMessageCommand(persistence);
-        userSimilarityIntegrationCommand = new UserSimilarityIntegrationCommand(
-                userSimilarityComputer);
+        if (userSimilarityComputer instanceof IterativeUserSimilarityComputer) {
+            userSimilarityIntegrationCommand = new UserSimilarityIntegrationCommand(
+                    (IterativeUserSimilarityComputer) userSimilarityComputer);
+        } else {
+            userSimilarityIntegrationCommand = null;
+        }
         discussionRootFeatureCommand = new MessageSpecificFeaturesCommand();
         authorFeatureCommand = new AuthorFeatureCommand();
         mentionFeatureCommand = new MentionFeatureCommand();
@@ -235,10 +250,10 @@ public class Scorer implements MessageHandler<ScorerCommunicationMessage>,
         // store the message after the terms have been extracted
         scorerChain.addCommand(storeMessageCommand);
 
-        if (this.scorerConfiguration
+        if (userSimilarityIntegrationCommand != null && (this.scorerConfiguration
                 .hasFlag(ScorerConfigurationFlag.USE_CONTENT_MATCH_FEATURE_OF_SIMILAR_USERS)
                 || this.scorerConfiguration
-                        .hasFlag(ScorerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)) {
+                .hasFlag(ScorerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION))) {
             scorerChain.addCommand(userSimilarityIntegrationCommand);
         }
 

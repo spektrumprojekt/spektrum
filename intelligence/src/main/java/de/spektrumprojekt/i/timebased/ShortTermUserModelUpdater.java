@@ -16,9 +16,9 @@ import org.slf4j.LoggerFactory;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
+import de.spektrumprojekt.i.learner.contentbased.UserModelConfiguration;
+import de.spektrumprojekt.i.learner.contentbased.UserModelEntryIntegrationStrategyType;
 import de.spektrumprojekt.i.ranker.ScorerConfiguration;
-import de.spektrumprojekt.i.ranker.UserModelConfiguration;
-import de.spektrumprojekt.i.ranker.UserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.i.timebased.config.LongTermMemoryConfiguration;
 import de.spektrumprojekt.i.timebased.config.PermanentLongTermInterestDetector;
 import de.spektrumprojekt.i.timebased.config.ShortTermMemoryConfiguration;
@@ -180,8 +180,8 @@ public class ShortTermUserModelUpdater {
     }
 
     private boolean itsTimeToCalculateLongTermInterests() {
-        if ((longTermCalculationPeriodInBins != -1)
-                && (longTermCalculationPeriodInBins <= calculatedLongTermPeriodsAgo)) {
+        if (longTermCalculationPeriodInBins != -1
+                && longTermCalculationPeriodInBins <= calculatedLongTermPeriodsAgo) {
             return true;
         }
         return false;
@@ -217,9 +217,10 @@ public class ShortTermUserModelUpdater {
      * @return
      */
     private boolean needsToBeCalculated(UserModelConfiguration userModelConfiguration) {
-        return (userModelConfiguration.getUserModelEntryIntegrationStrategy()
-                .equals(UserModelEntryIntegrationStrategy.TIMEBINNED)) ? userModelConfiguration
-                .isCalculateLater() : false;
+        return userModelConfiguration.getUserModelEntryIntegrationStrategyType()
+                .equals(UserModelEntryIntegrationStrategyType.TIMEBINNED)
+                ? userModelConfiguration.isCalculateLater()
+                : false;
     }
 
     /**

@@ -1,4 +1,4 @@
-package de.spektrumprojekt.i.ranker;
+package de.spektrumprojekt.i.learner.contentbased;
 
 import org.apache.commons.lang.time.DateUtils;
 
@@ -11,32 +11,34 @@ public class UserModelConfiguration implements ConfigurationDescriptable, Clonea
     public static long MONTH = 4 * WEEK;
 
     public static final UserModelConfiguration MONTH_DAY = new UserModelConfiguration(
-            UserModelEntryIntegrationStrategy.TIMEBINNED, 0, WEEK, MONTH, false);
+            UserModelEntryIntegrationStrategyType.TIMEBINNED, 0, WEEK, MONTH, false);
 
     public static final UserModelConfiguration MONTH_WEEK = new UserModelConfiguration(
-            UserModelEntryIntegrationStrategy.TIMEBINNED, 0, DAY, MONTH, false);
+            UserModelEntryIntegrationStrategyType.TIMEBINNED, 0, DAY, MONTH, false);
 
     public static UserModelConfiguration getShortTermModelConfiguration(long startTime,
             long precision, long binSize) {
-        return new UserModelConfiguration(UserModelEntryIntegrationStrategy.TIMEBINNED, startTime,
+        return new UserModelConfiguration(UserModelEntryIntegrationStrategyType.TIMEBINNED,
+                startTime,
                 precision, binSize, true);
     }
 
     public static UserModelConfiguration getTimeBinnedModelConfiguration(long startTime,
             long precision, long binSize) {
-        return new UserModelConfiguration(UserModelEntryIntegrationStrategy.TIMEBINNED, startTime,
+        return new UserModelConfiguration(UserModelEntryIntegrationStrategyType.TIMEBINNED,
+                startTime,
                 precision, binSize, false);
     }
 
     public static UserModelConfiguration getUserModelConfigurationWithIncrementalLearningStrategy() {
-        return new UserModelConfiguration(UserModelEntryIntegrationStrategy.INCREMENTAL);
+        return new UserModelConfiguration(UserModelEntryIntegrationStrategyType.INCREMENTAL);
     }
 
     public static UserModelConfiguration getUserModelConfigurationWithTermCountLearningStrategy() {
-        return new UserModelConfiguration(UserModelEntryIntegrationStrategy.TERM_COUNT);
+        return new UserModelConfiguration(UserModelEntryIntegrationStrategyType.TERM_COUNT);
     }
 
-    private UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy;
+    private UserModelEntryIntegrationStrategyType userModelEntryIntegrationStrategyType;
 
     private long startTime;
     private long precision;
@@ -48,16 +50,18 @@ public class UserModelConfiguration implements ConfigurationDescriptable, Clonea
     private boolean incrementalLUseCurrentUserModelEntryValueAsThreshold = true;
 
     public UserModelConfiguration(
-            UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy) {
-        super();
-        this.userModelEntryIntegrationStrategy = userModelEntryIntegrationStrategy;
+            UserModelEntryIntegrationStrategyType userModelEntryIntegrationStrategyType) {
+        this.userModelEntryIntegrationStrategyType = userModelEntryIntegrationStrategyType;
     }
 
     public UserModelConfiguration(
-            UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy, long startTime,
-            long precision, long binSize, boolean calculateLater) {
-        super();
-        this.userModelEntryIntegrationStrategy = userModelEntryIntegrationStrategy;
+            UserModelEntryIntegrationStrategyType userModelEntryIntegrationStrategyType,
+            long startTime,
+            long precision,
+            long binSize,
+            boolean calculateLater) {
+
+        this.userModelEntryIntegrationStrategyType = userModelEntryIntegrationStrategyType;
         this.startTime = startTime;
         this.precision = precision;
         this.binSize = binSize;
@@ -70,8 +74,9 @@ public class UserModelConfiguration implements ConfigurationDescriptable, Clonea
 
     @Override
     public String getConfigurationDescription() {
-        return "UserModelConfiguration [userModelEntryIntegrationStrategy="
-                + userModelEntryIntegrationStrategy + ", startTime=" + startTime + ", precision="
+        return "UserModelConfiguration [userModelEntryIntegrationStrategyType="
+                + userModelEntryIntegrationStrategyType + ", startTime=" + startTime
+                + ", precision="
                 + precision + ", binSize=" + binSize + ", calculateLater=" + calculateLater + "]";
     }
 
@@ -91,8 +96,8 @@ public class UserModelConfiguration implements ConfigurationDescriptable, Clonea
         return startTime;
     }
 
-    public UserModelEntryIntegrationStrategy getUserModelEntryIntegrationStrategy() {
-        return userModelEntryIntegrationStrategy;
+    public UserModelEntryIntegrationStrategyType getUserModelEntryIntegrationStrategyType() {
+        return userModelEntryIntegrationStrategyType;
     }
 
     public boolean isCalculateLater() {
@@ -132,8 +137,8 @@ public class UserModelConfiguration implements ConfigurationDescriptable, Clonea
         this.startTime = startTime;
     }
 
-    public void setUserModelEntryIntegrationStrategy(
-            UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy) {
-        this.userModelEntryIntegrationStrategy = userModelEntryIntegrationStrategy;
+    public void setUserModelEntryIntegrationStrategyType(
+            UserModelEntryIntegrationStrategyType userModelEntryIntegrationStrategyType) {
+        this.userModelEntryIntegrationStrategyType = userModelEntryIntegrationStrategyType;
     }
 }

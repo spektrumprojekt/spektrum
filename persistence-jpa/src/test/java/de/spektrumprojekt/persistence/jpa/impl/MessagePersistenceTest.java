@@ -43,7 +43,6 @@ import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessagePart;
-import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.MessageRelation.MessageRelationType;
 import de.spektrumprojekt.datamodel.message.MessageType;
@@ -51,6 +50,7 @@ import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
 import de.spektrumprojekt.datamodel.message.TermFrequency;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.observation.Interest;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationPriority;
@@ -412,5 +412,28 @@ public class MessagePersistenceTest {
 
             Assert.assertEquals(i + 11, tf4.getMessageGroupMessageCounts().get("mg" + i).intValue());
         }
+    }
+
+    /**
+     * Test term with message group string
+     */
+    @Test
+    public void testTermMG() {
+        final String test = "test";
+        final MessageGroup mg = new MessageGroup();
+        mg.setId(13l);
+
+        String mgValue = Term.getMessageGroupSpecificTermValue(mg, test);
+        Term mgTerm = this.persistence.getOrCreateTerm(TermCategory.TERM, mgValue);
+        Term nonMgTerm = this.persistence.getOrCreateTerm(TermCategory.TERM, test);
+
+        Assert.assertEquals(mg.getId(), mgTerm.getMessageGroupId());
+        Assert.assertNull(nonMgTerm.getMessageGroupId());
+
+        mgTerm = this.persistence.getOrCreateTerm(TermCategory.TERM, mgValue);
+        nonMgTerm = this.persistence.getOrCreateTerm(TermCategory.TERM, test);
+
+        Assert.assertEquals(mg.getId(), mgTerm.getMessageGroupId());
+        Assert.assertNull(nonMgTerm.getMessageGroupId());
     }
 }

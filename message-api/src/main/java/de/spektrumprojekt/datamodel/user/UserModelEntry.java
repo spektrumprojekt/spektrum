@@ -20,7 +20,9 @@
 package de.spektrumprojekt.datamodel.user;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -33,6 +35,7 @@ import javax.persistence.UniqueConstraint;
 
 import de.spektrumprojekt.datamodel.identifiable.Identifiable;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
+import de.spektrumprojekt.datamodel.message.Term;
 
 /**
  * A user model entry with a term. The actual value to be used is stored in the {@link #scoredTerm}
@@ -52,6 +55,14 @@ public class UserModelEntry extends Identifiable {
      * 
      */
     private static final long serialVersionUID = 1L;
+
+    public static Map<Term, UserModelEntry> createTermToEntryMap(Collection<UserModelEntry> entries) {
+        Map<Term, UserModelEntry> map = new HashMap<Term, UserModelEntry>();
+        for (UserModelEntry entry : entries) {
+            map.put(entry.getScoredTerm().getTerm(), entry);
+        }
+        return map;
+    }
 
     @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
     private ScoredTerm scoredTerm;

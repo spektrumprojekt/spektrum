@@ -36,7 +36,7 @@ import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.i.learner.LearnerMessageContext;
-import de.spektrumprojekt.i.learner.UserModelEntryIntegrationStrategy;
+import de.spektrumprojekt.i.learner.contentbased.UserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**

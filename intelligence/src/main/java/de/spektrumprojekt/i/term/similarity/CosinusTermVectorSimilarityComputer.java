@@ -18,6 +18,34 @@ public class CosinusTermVectorSimilarityComputer extends TermWeightTermVectorSim
     }
 
     @Override
+    public float getSimilarity(Map<Term, UserModelEntry> relevantEntries1,
+            Map<Term, UserModelEntry> relevantEntries2) {
+        float sumTop = 0;
+        float squareSum1 = 0;
+        float squareSum2 = 0;
+
+        for (Term term : relevantEntries1.keySet()) {
+            UserModelEntry entry1 = relevantEntries1.get(term);
+            UserModelEntry entry2 = relevantEntries2.get(term);
+
+            if (entry2 == null) {
+                continue;
+            }
+            float entryScore1 = entry1.getScoredTerm().getWeight();
+            float entryScore2 = entry2.getScoredTerm().getWeight();
+
+            sumTop += entryScore1 * entryScore2;
+            squareSum1 += entryScore1 * entryScore1;
+            squareSum2 += entryScore2 * entryScore2;
+        }
+
+        if (squareSum1 * squareSum2 == 0) {
+            return 0;
+        }
+        return (float) (sumTop / Math.sqrt(squareSum1 * squareSum2));
+    }
+
+    @Override
     public Float getSimilarity(String messageGroupId,
             Map<String, Map<Term, UserModelEntry>> allEntries, MergeValuesStrategy strategy,
             Collection<Term> terms) {

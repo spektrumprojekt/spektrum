@@ -19,7 +19,7 @@ import de.spektrumprojekt.persistence.Persistence;
 
 public class SpecialRanker<T extends Command<UserSpecificMessageFeatureContext>> extends Scorer {
 
-    private final CommandChain<MessageFeatureContext> rankerChain;
+    private final CommandChain<MessageFeatureContext> scorerChain;
     private final Persistence persistence;
     private final UserFeatureCommand userFeatureCommand;
     private final T specificCommand;
@@ -34,23 +34,23 @@ public class SpecialRanker<T extends Command<UserSpecificMessageFeatureContext>>
         this.persistence = persistence;
         this.specificCommand = specificCommand;
 
-        rankerChain = new CommandChain<MessageFeatureContext>();
+        scorerChain = new CommandChain<MessageFeatureContext>();
         userFeatureCommand = new UserFeatureCommand(memberRunner);
 
-        rankerChain.addCommand(getStoreMessageCommand());
-        rankerChain.addCommand(userFeatureCommand);
+        scorerChain.addCommand(getStoreMessageCommand());
+        scorerChain.addCommand(userFeatureCommand);
 
         userFeatureCommand.addCommand(new DetermineInteractionLevelCommand());
         userFeatureCommand.addCommand(this.specificCommand);
 
         userFeatureCommand.addCommand(getFeatureStatisticsCommand());
-        rankerChain.addCommand(getStoreMessageScoreCommand());
+        scorerChain.addCommand(getStoreMessageScoreCommand());
     }
 
     @Override
     public String getConfigurationDescription() {
         return this.getClass().getSimpleName() + " rankerChain: "
-                + rankerChain.getConfigurationDescription();
+                + scorerChain.getConfigurationDescription();
     }
 
     @Override
@@ -72,7 +72,7 @@ public class SpecialRanker<T extends Command<UserSpecificMessageFeatureContext>>
             context.setUserGlobalIdsToProcess(users);
         }
 
-        rankerChain.process(context);
+        scorerChain.process(context);
 
         return context;
     }

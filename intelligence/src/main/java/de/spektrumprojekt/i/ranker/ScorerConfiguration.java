@@ -15,6 +15,7 @@ import de.spektrumprojekt.datamodel.observation.Interest;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionConfiguration;
 import de.spektrumprojekt.i.learner.adaptation.UserModelAdapterConfiguration;
+import de.spektrumprojekt.i.learner.contentbased.UserModelConfiguration;
 import de.spektrumprojekt.i.ranker.feature.Feature;
 import de.spektrumprojekt.i.ranker.feature.FixWeightFeatureAggregator;
 import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;

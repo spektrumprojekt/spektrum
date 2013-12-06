@@ -29,7 +29,7 @@ import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.observation.Interest;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserModelEntryTimeBin;
-import de.spektrumprojekt.i.learner.TermCountUserModelEntryIntegrationStrategy;
+import de.spektrumprojekt.i.learner.contentbased.TermCountUserModelEntryIntegrationStrategy;
 
 public class TimeBinnedUserModelEntryIntegrationStrategy extends
         TermCountUserModelEntryIntegrationStrategy {

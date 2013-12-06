@@ -33,12 +33,15 @@ import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
 import de.spektrumprojekt.i.learner.chain.LoadRelatedObservationsCommand;
 import de.spektrumprojekt.i.learner.chain.StoreObservationCommand;
 import de.spektrumprojekt.i.learner.chain.UserModelLearnerCommand;
+import de.spektrumprojekt.i.learner.contentbased.IncrementalUserModelIntegrationStrategy;
+import de.spektrumprojekt.i.learner.contentbased.TermCountUserModelEntryIntegrationStrategy;
+import de.spektrumprojekt.i.learner.contentbased.UserModelConfiguration;
+import de.spektrumprojekt.i.learner.contentbased.UserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.i.learner.time.TimeBinnedUserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.Scorer;
 import de.spektrumprojekt.i.ranker.ScorerConfiguration;
 import de.spektrumprojekt.i.ranker.ScorerConfigurationFlag;
-import de.spektrumprojekt.i.ranker.UserModelConfiguration;
 import de.spektrumprojekt.i.timebased.TermCounterCommand;
 import de.spektrumprojekt.persistence.Persistence;
 
@@ -103,20 +106,33 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
                 UserModelConfiguration userModelConfiguration = configuration.getUserModelTypes()
                         .get(
                                 userModelType);
-                switch (userModelConfiguration.getUserModelEntryIntegrationStrategy()) {
+                switch (userModelConfiguration.getUserModelEntryIntegrationStrategyType()) {
                 case TERM_COUNT:
                     userModelEntryIntegrationStrategy = new TermCountUserModelEntryIntegrationStrategy();
                     break;
-                default:
+                case INCREMENTAL:
+                    userModelEntryIntegrationStrategy = new IncrementalUserModelIntegrationStrategy(
+                            userModelConfiguration);
+
+                    break;
+                case TIMEBINNED:
+
                     userModelEntryIntegrationStrategy = new TimeBinnedUserModelEntryIntegrationStrategy(
                             userModelConfiguration.getStartTime(),
                             userModelConfiguration.getBinSize(),
                             userModelConfiguration.getPrecision(),
                             userModelConfiguration.isCalculateLater());
+                    break;
+                default:
+                    throw new IllegalArgumentException(
+                            userModelConfiguration.getUserModelEntryIntegrationStrategyType()
+                                    + " is not known and handled.");
                 }
-                this.learnerChain.addCommand(new UserModelLearnerCommand(this.persistence,
-                        userModelType, userModelEntryIntegrationStrategy, configuration
-                                .isCreateUnknownTermsInUsermodel(userModelType)));
+                this.learnerChain.addCommand(new UserModelLearnerCommand(
+                        this.persistence,
+                        userModelType,
+                        userModelEntryIntegrationStrategy,
+                        configuration.isCreateUnknownTermsInUsermodel(userModelType)));
             }
         }
         this.learnerChain.addCommand(new StoreObservationCommand(this.persistence));

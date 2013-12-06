@@ -593,19 +593,21 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
-    public Collection<UserSimilarity> getUserSimilarities(String userGlobalId,
-            Collection<String> users, String messageGroupGlobalId, double userSimilarityThreshold) {
+    public Collection<UserSimilarity> getUserSimilarities(
+            String userToGlobalId,
+            Collection<String> usersFromGlobalId,
+            String messageGroupGlobalId,
+            double userSimilarityThreshold) {
         Collection<UserSimilarity> sims = new HashSet<UserSimilarity>();
-        for (UserSimilarity similarity : this.userSimilarities.values()) {
-            if (similarity.getUserGlobalIdFrom().equals(userGlobalId)
-                    && users.contains(similarity.getUserGlobalIdTo())
-                    && (messageGroupGlobalId == null
-                            && similarity.getMessageGroupGlobalId() == null || similarity
-                            .getMessageGroupGlobalId().equals(messageGroupGlobalId))
-                    && similarity.getSimilarity() >= userSimilarityThreshold) {
-                sims.add(similarity);
+
+        for (String userTo : usersFromGlobalId) {
+            String simKey = UserSimilarity.getKey(userToGlobalId, userTo, messageGroupGlobalId);
+            UserSimilarity sim = this.userSimilarities.get(simKey);
+            if (sim != null && sim.getSimilarity() >= userSimilarityThreshold) {
+                sims.add(sim);
             }
         }
+
         return sims;
     }
 

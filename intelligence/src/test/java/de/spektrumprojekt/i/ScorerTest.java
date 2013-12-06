@@ -49,17 +49,17 @@ import de.spektrumprojekt.datamodel.user.UserSimilarity;
 import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.i.learner.Learner;
 import de.spektrumprojekt.i.learner.adaptation.DirectedUserModelAdapter;
+import de.spektrumprojekt.i.learner.contentbased.UserModelConfiguration;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.Scorer;
 import de.spektrumprojekt.i.ranker.ScorerConfiguration;
 import de.spektrumprojekt.i.ranker.ScorerConfigurationFlag;
-import de.spektrumprojekt.i.ranker.UserModelConfiguration;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
 import de.spektrumprojekt.i.term.TermWeightStrategy;
-import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer;
-import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer.UserSimilaritySimType;
+import de.spektrumprojekt.i.user.similarity.InteractionBasedUserSimilarityComputer;
 import de.spektrumprojekt.i.user.similarity.UserSimilarityRetriever;
+import de.spektrumprojekt.i.user.similarity.UserSimilaritySimType;
 import de.spektrumprojekt.persistence.Persistence.MatchMode;
 
 /**
@@ -116,7 +116,8 @@ public class ScorerTest extends IntelligenceSpektrumTest {
     }
 
     private void runSimilarityComputerAndCheck(User user1, User user2) {
-        UserSimilarityComputer computer = new UserSimilarityComputer(getPersistence(),
+        InteractionBasedUserSimilarityComputer computer = new InteractionBasedUserSimilarityComputer(
+                getPersistence(),
                 UserSimilaritySimType.VOODOO, true);
         computer.run();
         Collection<UserSimilarity> similarities = computer.getUserSimilarities();

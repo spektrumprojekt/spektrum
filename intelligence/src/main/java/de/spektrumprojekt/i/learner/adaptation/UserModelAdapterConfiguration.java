@@ -4,7 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 import de.spektrumprojekt.i.user.hits.HITSUserMentionComputer.ScoreToUse;
-import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer.UserSimilaritySimType;
+import de.spektrumprojekt.i.user.similarity.UserSimilaritySimType;
 
 public class UserModelAdapterConfiguration implements ConfigurationDescriptable {
 

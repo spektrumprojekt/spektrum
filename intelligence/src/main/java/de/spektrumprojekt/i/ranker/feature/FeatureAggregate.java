@@ -28,9 +28,13 @@ public class FeatureAggregate {
 
     public InteractionLevel interactionLevel;
 
-    public final Map<Feature, MessageFeature> features = new HashMap<Feature, MessageFeature>();
+    private final Map<Feature, MessageFeature> features = new HashMap<Feature, MessageFeature>();
 
     public FeatureAggregate() {
+    }
+
+    public FeatureAggregate(Map<Feature, MessageFeature> features) {
+        this.features.putAll(features);
     }
 
     public FeatureAggregate(String[] stats) {
@@ -54,6 +58,10 @@ public class FeatureAggregate {
             return 0;
         }
         return messageFeature.getValue();
+    }
+
+    public MessageFeature getMessageFeature(Feature feature) {
+        return this.features.get(feature);
     }
 
     private int parseFeatures(String[] stats) {

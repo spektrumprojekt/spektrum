@@ -44,11 +44,11 @@ import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionConfiguration;
 import de.spektrumprojekt.i.learner.Learner;
 import de.spektrumprojekt.i.learner.LearningMessage;
-import de.spektrumprojekt.i.learner.TermCountUserModelEntryIntegrationStrategy;
-import de.spektrumprojekt.i.learner.UserModelEntryIntegrationStrategy;
+import de.spektrumprojekt.i.learner.contentbased.TermCountUserModelEntryIntegrationStrategy;
+import de.spektrumprojekt.i.learner.contentbased.UserModelConfiguration;
+import de.spektrumprojekt.i.learner.contentbased.UserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.ScorerConfiguration;
-import de.spektrumprojekt.i.ranker.UserModelConfiguration;
 import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
 import de.spektrumprojekt.i.term.TermWeightStrategy;
 

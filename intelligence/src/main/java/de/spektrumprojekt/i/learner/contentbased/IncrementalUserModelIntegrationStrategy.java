@@ -1,8 +1,7 @@
-package de.spektrumprojekt.i.learner;
+package de.spektrumprojekt.i.learner.contentbased;
 
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
-import de.spektrumprojekt.i.ranker.UserModelConfiguration;
 
 public class IncrementalUserModelIntegrationStrategy extends
         TermCountUserModelEntryIntegrationStrategy {

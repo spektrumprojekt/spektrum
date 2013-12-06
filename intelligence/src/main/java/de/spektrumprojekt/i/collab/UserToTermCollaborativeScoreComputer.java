@@ -119,8 +119,10 @@ public class UserToTermCollaborativeScoreComputer extends CollaborativeScoreComp
 
         }
 
+        String messageGroupGlobalId = message.getMessageGroup() == null ? null : message
+                .getMessageGroup().getGlobalId();
         float estimate = this.termVectorSimilarityComputer.getSimilarity(
-                message.getMessageGroup().getGlobalId(),
+                messageGroupGlobalId,
                 entries,
                 messageTerms);
 

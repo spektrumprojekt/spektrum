@@ -105,7 +105,7 @@ public abstract class CollaborativeScoreComputer implements Computer {
 
     private UserNeighborhood userNeighborhood;
 
-    private Collection<UserMessageScore> messageRanks;
+    private Collection<UserMessageScore> messageScores;
 
     private int preferenceCount;
 
@@ -127,7 +127,7 @@ public abstract class CollaborativeScoreComputer implements Computer {
 
     private final ObservationType[] observationTypesToUseForDataModel;
 
-    private int nanRanks = 0;
+    private int nanScores = 0;
     private boolean emptyDataModel;
 
     public CollaborativeScoreComputer(Persistence persistence,
@@ -228,15 +228,15 @@ public abstract class CollaborativeScoreComputer implements Computer {
     }
 
     public Collection<UserMessageScore> getMessageScores() {
-        return messageRanks;
+        return messageScores;
     }
 
     public Collection<Message> getMessagesWithOberservations() {
         return messagesWithOberservations;
     }
 
-    public int getNanRanks() {
-        return nanRanks;
+    public int getNanScores() {
+        return nanScores;
     }
 
     public int getNeg() {
@@ -364,7 +364,7 @@ public abstract class CollaborativeScoreComputer implements Computer {
 
     public void run(Collection<Message> messagesToRun) throws TasteException {
 
-        messageRanks = new HashSet<UserMessageScore>();
+        messageScores = new HashSet<UserMessageScore>();
 
         if (emptyDataModel) {
             LOGGER.info("Empty datamodel. Skip run.");
@@ -391,16 +391,16 @@ public abstract class CollaborativeScoreComputer implements Computer {
 
                     messageRank.setScore(rank);
 
-                    messageRanks.add(messageRank);
+                    messageScores.add(messageRank);
                 } else {
-                    nanRanks++;
+                    nanScores++;
                 }
 
             }
 
         }
 
-        this.persistence.storeMessageRanks(messageRanks);
+        this.persistence.storeMessageRanks(messageScores);
     }
 
     public String someStats() throws TasteException {
