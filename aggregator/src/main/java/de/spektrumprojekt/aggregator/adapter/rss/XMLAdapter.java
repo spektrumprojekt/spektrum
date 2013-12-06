@@ -403,9 +403,10 @@ public abstract class XMLAdapter extends BasePollingAdapter {
             sourceStatus.setLastContentTimestamp(mostRecentTime);
             getAggregatorChain().getPersistence().updateSourceStatus(sourceStatus);
         }
-
-        LOGGER.debug("# new items in subscription {}: {}", sourceStatus.getGlobalId(),
-                messages.size());
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Number of new items in source {}: {}", sourceStatus.getSource()
+                    .getGlobalId(), messages.size());
+        }
         return messages;
     }
 }
