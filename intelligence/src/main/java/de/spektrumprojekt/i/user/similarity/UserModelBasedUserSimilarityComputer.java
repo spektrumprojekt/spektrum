@@ -34,6 +34,8 @@ import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
+import de.spektrumprojekt.i.similarity.JaccardSetSimialrity;
+import de.spektrumprojekt.i.similarity.SetSimilarity;
 import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.simple.SimplePersistence;
@@ -50,6 +52,8 @@ public class UserModelBasedUserSimilarityComputer implements UserSimilarityCompu
     private Collection<UserSimilarity> userSimilarities;
 
     private final TermVectorSimilarityComputer termVectorSimilarityComputer;
+
+    private final SetSimilarity setSimilarity = new JaccardSetSimialrity();
 
     public UserModelBasedUserSimilarityComputer(Persistence persistence,
             TermVectorSimilarityComputer termVectorSimilarityComputer) {
@@ -83,9 +87,11 @@ public class UserModelBasedUserSimilarityComputer implements UserSimilarityCompu
 
         Long mgId = mg == null ? null : mg.getId();
         for (Entry<Term, UserModelEntry> entry : entryMap.entrySet()) {
-            Long termMgId = entry.getKey().getMessageGroupId();
-            if (mgId == termMgId || mgId != null && mgId.equals(termMgId)) {
-                filtered.put(entry.getKey(), entry.getValue());
+            if (!entry.getValue().isAdapted()) {
+                Long termMgId = entry.getKey().getMessageGroupId();
+                if (mgId == termMgId || mgId != null && mgId.equals(termMgId)) {
+                    filtered.put(entry.getKey(), entry.getValue());
+                }
             }
         }
         return filtered;
@@ -93,7 +99,8 @@ public class UserModelBasedUserSimilarityComputer implements UserSimilarityCompu
 
     @Override
     public String getConfigurationDescription() {
-        return this.getClass().getSimpleName();
+        return this.getClass().getSimpleName() + " setSimilarity: " + setSimilarity == null ? "(null) "
+                : setSimilarity.getConfigurationDescription();
     }
 
     public Collection<UserSimilarity> getUserSimilarities() {
@@ -133,7 +140,10 @@ public class UserModelBasedUserSimilarityComputer implements UserSimilarityCompu
                     Map<Term, UserModelEntry> filtered1 = filterByMG(entryMap1, mg);
                     Map<Term, UserModelEntry> filtered2 = filterByMG(entryMap2, mg);
 
-                    float sim = termVectorSimilarityComputer.getSimilarity(filtered1, filtered2);
+                    float sim = setSimilarity.computeSimilarity(filtered1.keySet(),
+                            filtered2.keySet());
+
+                    // float sim = termVectorSimilarityComputer.getSimilarity(filtered1, filtered2);
                     sim = Math.min(1, sim);
                     sim = Math.max(0, sim);
 
