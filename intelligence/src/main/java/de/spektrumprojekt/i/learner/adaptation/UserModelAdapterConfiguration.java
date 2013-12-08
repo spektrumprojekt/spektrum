@@ -1,12 +1,46 @@
 package de.spektrumprojekt.i.learner.adaptation;
 
-import org.apache.commons.lang3.StringUtils;
-
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
+import de.spektrumprojekt.i.similarity.SetSimilarity;
 import de.spektrumprojekt.i.user.hits.HITSUserMentionComputer.ScoreToUse;
 import de.spektrumprojekt.i.user.similarity.UserSimilaritySimType;
 
 public class UserModelAdapterConfiguration implements ConfigurationDescriptable {
+
+    public static class UserModelBasedSimilarityConfiguration implements ConfigurationDescriptable {
+
+        private SetSimilarity setSimilarity;
+        private String precomputedUserSimilaritesFilename;
+
+        @Override
+        public String getConfigurationDescription() {
+            return toString();
+        }
+
+        public String getPrecomputedUserSimilaritesFilename() {
+            return precomputedUserSimilaritesFilename;
+        }
+
+        public SetSimilarity getSetSimilarity() {
+            return setSimilarity;
+        }
+
+        public void setPrecomputedUserSimilaritesFilename(String precomputedUserSimilaritesFilename) {
+            this.precomputedUserSimilaritesFilename = precomputedUserSimilaritesFilename;
+        }
+
+        public void setSetSimilarity(SetSimilarity setSimilarity) {
+            this.setSimilarity = setSimilarity;
+        }
+
+        @Override
+        public String toString() {
+            return "UserModelBasedSimilarityConfiguration [setSimilarity=" + setSimilarity
+                    + ", precomputedUserSimilaritesFilename=" + precomputedUserSimilaritesFilename
+                    + "]";
+        }
+
+    }
 
     private double userSimilarityThreshold;
 
@@ -26,25 +60,15 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
 
     private UserSimilaritySimType userSimilaritySimType;
 
+    private UserModelBasedSimilarityConfiguration userModelBasedSimilarityConfiguration;
+
     public float getConfidenceThreshold() {
         return confidenceThreshold;
     }
 
     @Override
     public String getConfigurationDescription() {
-        return this.getClass().getSimpleName()
-                + StringUtils.join(new String[] {
-                        "userSelectorUseHITS=" + userSelectorUseHITS,
-                        "userSelectorUseMentionsPercentage=" + userSelectorUseMentionsPercentage,
-                        "userSimilarityThreshold=" + userSimilarityThreshold,
-                        "hitsScoreToUse=" + hitsScoreToUse,
-                        "useWeightedAverageForAggregatingSimilarUsers="
-                                + useWeightedAverageForAggregatingSimilarUsers,
-                        "rankThreshold=" + scoreThreshold,
-                        "confidenceThreshold=" + confidenceThreshold,
-                        "userSimilaritySimType=" + userSimilaritySimType,
-                        "adaptFromMessageGroups=" + adaptFromMessageGroups
-                }, " ");
+        return this.toString();
     }
 
     public ScoreToUse getHitsScoreToUse() {
@@ -53,6 +77,10 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
 
     public float getScoreThreshold() {
         return scoreThreshold;
+    }
+
+    public UserModelBasedSimilarityConfiguration getUserModelBasedSimilarityConfiguration() {
+        return userModelBasedSimilarityConfiguration;
     }
 
     public UserSimilaritySimType getUserSimilaritySimType() {
@@ -111,6 +139,11 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
         this.scoreThreshold = scoreThreshold;
     }
 
+    public void setUserModelBasedSimilarityConfiguration(
+            UserModelBasedSimilarityConfiguration userModelBasedSimilarityConfiguration) {
+        this.userModelBasedSimilarityConfiguration = userModelBasedSimilarityConfiguration;
+    }
+
     public void setUserSelectorUseHITS(boolean userSelectorUseHITS) {
         this.userSelectorUseHITS = userSelectorUseHITS;
     }
@@ -141,7 +174,9 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
                 + adaptFromMessageGroups + ", useWeightedAverageForAggregatingSimilarUsers="
                 + useWeightedAverageForAggregatingSimilarUsers + ", scoreThreshold="
                 + scoreThreshold + ", confidenceThreshold=" + confidenceThreshold
-                + ", userSimilaritySimType=" + userSimilaritySimType + "]";
+                + ", userSimilaritySimType=" + userSimilaritySimType
+                + ", userModelBasedSimilarityConfiguration="
+                + userModelBasedSimilarityConfiguration + "]";
     }
 
 }

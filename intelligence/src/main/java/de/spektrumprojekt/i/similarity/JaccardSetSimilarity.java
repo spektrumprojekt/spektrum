@@ -11,7 +11,7 @@ import org.apache.commons.collections15.CollectionUtils;
  * @author Torsten
  * 
  */
-public class JaccardSetSimialrity implements SetSimilarity {
+public class JaccardSetSimilarity implements SetSimilarity {
 
     @Override
     public <E> float computeSimilarity(Collection<? extends E> a, Collection<? extends E> b) {

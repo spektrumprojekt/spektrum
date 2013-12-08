@@ -19,9 +19,11 @@
 
 package de.spektrumprojekt.i.user.similarity;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -34,7 +36,6 @@ import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
-import de.spektrumprojekt.i.similarity.JaccardSetSimialrity;
 import de.spektrumprojekt.i.similarity.SetSimilarity;
 import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
 import de.spektrumprojekt.persistence.Persistence;
@@ -53,67 +54,66 @@ public class UserModelBasedUserSimilarityComputer implements UserSimilarityCompu
 
     private final TermVectorSimilarityComputer termVectorSimilarityComputer;
 
-    private final SetSimilarity setSimilarity = new JaccardSetSimialrity();
+    private final SetSimilarity setSimilarity;
 
-    public UserModelBasedUserSimilarityComputer(Persistence persistence,
-            TermVectorSimilarityComputer termVectorSimilarityComputer) {
-        this(persistence, termVectorSimilarityComputer, false);
+    private final String precomputedUserSimilaritesFilename;
+
+    // String fname =
+    // "D:/work/spektrum/Thesis-Work/evaluations/precomputed/8235_fth-uma-j-3-noneI.userSim";
+
+    /**
+     * 
+     * @param persistence
+     * @param setSimilarity
+     * @param termVectorSimilarityComputer
+     * @param precomputedUserSimilaritesFilename
+     *            if not null it will be used to load the user similarities from
+     */
+    public UserModelBasedUserSimilarityComputer(
+            Persistence persistence,
+            SetSimilarity setSimilarity,
+            TermVectorSimilarityComputer termVectorSimilarityComputer,
+            String precomputedUserSimilaritesFilename) {
+        this(
+                persistence,
+                setSimilarity,
+                termVectorSimilarityComputer,
+                precomputedUserSimilaritesFilename,
+                false);
     }
 
     /**
      * 
      * @param persistence
+     * @param precomputedUserSimilaritesFilename
+     *            if not null it will be used to load the user similarities from
      * @param holdComputedSimilarites
      *            true to keep the user similarities in this class after computation
      */
     public UserModelBasedUserSimilarityComputer(
             Persistence persistence,
+            SetSimilarity setSimilarity,
             TermVectorSimilarityComputer termVectorSimilarityComputer,
+            String precomputedUserSimilaritesFilename,
             boolean holdComputedSimilarites) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
         }
-        if (termVectorSimilarityComputer == null) {
-            throw new IllegalArgumentException("termVectorSimilarityComputer cannot be null.");
+        if (setSimilarity == null && termVectorSimilarityComputer == null) {
+            throw new IllegalArgumentException(
+                    "either setSimilarity or termVectorSimilarityComputer must be set. setSimilarity="
+                            + setSimilarity + " termVectorSimilarityComputer="
+                            + termVectorSimilarityComputer);
         }
+
         this.persistence = (SimplePersistence) persistence;
         this.termVectorSimilarityComputer = termVectorSimilarityComputer;
+        this.precomputedUserSimilaritesFilename = precomputedUserSimilaritesFilename;
+        this.setSimilarity = setSimilarity;
         this.holdComputedSimilarites = holdComputedSimilarites;
     }
 
-    private Map<Term, UserModelEntry> filterByMG(Map<Term, UserModelEntry> entryMap,
-            MessageGroup mg) {
-        Map<Term, UserModelEntry> filtered = new HashMap<Term, UserModelEntry>();
-
-        Long mgId = mg == null ? null : mg.getId();
-        for (Entry<Term, UserModelEntry> entry : entryMap.entrySet()) {
-            if (!entry.getValue().isAdapted()) {
-                Long termMgId = entry.getKey().getMessageGroupId();
-                if (mgId == termMgId || mgId != null && mgId.equals(termMgId)) {
-                    filtered.put(entry.getKey(), entry.getValue());
-                }
-            }
-        }
-        return filtered;
-    }
-
-    @Override
-    public String getConfigurationDescription() {
-        return this.getClass().getSimpleName() + " setSimilarity: " + setSimilarity == null ? "(null) "
-                : setSimilarity.getConfigurationDescription();
-    }
-
-    public Collection<UserSimilarity> getUserSimilarities() {
-        if (!this.holdComputedSimilarites) {
-            throw new IllegalStateException(
-                    "holdComputedSimilarites is false, therefore similarities are not stored!");
-        }
-        return userSimilarities;
-    }
-
-    @Override
-    public void run() {
-
+    private Collection<UserSimilarity> computeUserSimilarities() {
         Collection<UserSimilarity> userSimilarities = new HashSet<UserSimilarity>();
 
         // get a list of all topics
@@ -140,10 +140,14 @@ public class UserModelBasedUserSimilarityComputer implements UserSimilarityCompu
                     Map<Term, UserModelEntry> filtered1 = filterByMG(entryMap1, mg);
                     Map<Term, UserModelEntry> filtered2 = filterByMG(entryMap2, mg);
 
-                    float sim = setSimilarity.computeSimilarity(filtered1.keySet(),
-                            filtered2.keySet());
+                    float sim;
 
-                    // float sim = termVectorSimilarityComputer.getSimilarity(filtered1, filtered2);
+                    if (setSimilarity != null) {
+                        sim = setSimilarity.computeSimilarity(filtered1.keySet(),
+                                filtered2.keySet());
+                    } else {
+                        sim = termVectorSimilarityComputer.getSimilarity(filtered1, filtered2);
+                    }
                     sim = Math.min(1, sim);
                     sim = Math.max(0, sim);
 
@@ -156,6 +160,57 @@ public class UserModelBasedUserSimilarityComputer implements UserSimilarityCompu
 
             }
         }
+        return userSimilarities;
+    }
+
+    private Map<Term, UserModelEntry> filterByMG(Map<Term, UserModelEntry> entryMap,
+            MessageGroup mg) {
+        Map<Term, UserModelEntry> filtered = new HashMap<Term, UserModelEntry>();
+
+        Long mgId = mg == null ? null : mg.getId();
+        for (Entry<Term, UserModelEntry> entry : entryMap.entrySet()) {
+            if (!entry.getValue().isAdapted()) {
+                Long termMgId = entry.getKey().getMessageGroupId();
+                if (mgId == termMgId || mgId != null && mgId.equals(termMgId)) {
+                    filtered.put(entry.getKey(), entry.getValue());
+                }
+            }
+        }
+        return filtered;
+    }
+
+    @Override
+    public String getConfigurationDescription() {
+        return this.toString();
+    }
+
+    public Collection<UserSimilarity> getUserSimilarities() {
+        if (!this.holdComputedSimilarites) {
+            throw new IllegalStateException(
+                    "holdComputedSimilarites is false, therefore similarities are not stored!");
+        }
+        return userSimilarities;
+    }
+
+    private List<UserSimilarity> readPrecomputedUserSimilarites() throws IOException {
+        UserSimilarityOutput userSimilarityOutput = new UserSimilarityOutput();
+        userSimilarityOutput.read(precomputedUserSimilaritesFilename);
+
+        LOGGER.info("Read {} userSims from {}", userSimilarityOutput.getElements().size(),
+                precomputedUserSimilaritesFilename);
+        return userSimilarityOutput.getElements();
+    }
+
+    @Override
+    public void run() throws IOException {
+
+        Collection<UserSimilarity> userSimilarities;
+
+        if (precomputedUserSimilaritesFilename != null) {
+            userSimilarities = readPrecomputedUserSimilarites();
+        } else {
+            userSimilarities = computeUserSimilarities();
+        }
 
         persistence.deleteAndCreateUserSimilarities(userSimilarities);
 
@@ -163,5 +218,14 @@ public class UserModelBasedUserSimilarityComputer implements UserSimilarityCompu
             this.userSimilarities = userSimilarities;
         }
 
+    }
+
+    @Override
+    public String toString() {
+        return "UserModelBasedUserSimilarityComputer [holdComputedSimilarites="
+                + holdComputedSimilarites + ", termVectorSimilarityComputer="
+                + termVectorSimilarityComputer + ", setSimilarity=" + setSimilarity
+                + ", precomputedUserSimilaritesFilename=" + precomputedUserSimilaritesFilename
+                + "]";
     }
 }

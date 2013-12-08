@@ -75,7 +75,7 @@ public class SetSimilarityTest {
     @Test
     public void testJaccard() {
         SetSimilarity setSimilarity;
-        setSimilarity = new JaccardSetSimialrity();
+        setSimilarity = new JaccardSetSimilarity();
 
         Assert.assertEquals(1f,
                 setSimilarity.computeSimilarity(Arrays.asList(t[0], t[1], t[2]),

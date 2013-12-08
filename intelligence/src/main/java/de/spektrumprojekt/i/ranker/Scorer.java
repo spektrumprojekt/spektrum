@@ -39,6 +39,7 @@ import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionConfiguration;
+import de.spektrumprojekt.i.learner.adaptation.UserModelAdapterConfiguration.UserModelBasedSimilarityConfiguration;
 import de.spektrumprojekt.i.ranker.chain.AdaptMessageScoreByCMFOfSimilarUsersCommand;
 import de.spektrumprojekt.i.ranker.chain.ComputeMessageScoreCommand;
 import de.spektrumprojekt.i.ranker.chain.DetermineInteractionLevelCommand;
@@ -142,7 +143,9 @@ public class Scorer implements MessageHandler<ScorerCommunicationMessage>,
      * @param memberRunner
      *            callback runner to get the groups for the user
      */
-    public Scorer(Persistence persistence, Communicator communicator,
+    public Scorer(
+            Persistence persistence,
+            Communicator communicator,
             MessageGroupMemberRunner<MessageFeatureContext> memberRunner,
             ScorerConfiguration scorerConfiguration) {
         if (persistence == null) {
@@ -193,8 +196,18 @@ public class Scorer implements MessageHandler<ScorerCommunicationMessage>,
         }
         switch (userSimilaritySimType) {
         case USER_MODEL:
-            userSimilarityComputer = new UserModelBasedUserSimilarityComputer(this.persistence,
-                    termVectorSimilarityComputer, false);
+            UserModelBasedSimilarityConfiguration userModelBasedSimilarityConfiguration = this.scorerConfiguration
+                    .getUserModelAdapterConfiguration().getUserModelBasedSimilarityConfiguration();
+            if (userModelBasedSimilarityConfiguration == null) {
+                throw new IllegalArgumentException(
+                        "userModelBasedSimilarityConfiguration must be set of userSimilaritySimType=USER_MODEL");
+            }
+            userSimilarityComputer = new UserModelBasedUserSimilarityComputer(
+                    this.persistence,
+                    userModelBasedSimilarityConfiguration.getSetSimilarity(),
+                    termVectorSimilarityComputer,
+                    userModelBasedSimilarityConfiguration.getPrecomputedUserSimilaritesFilename(),
+                    false);
             break;
         default:
             userSimilarityComputer = new InteractionBasedUserSimilarityComputer(this.persistence,

@@ -73,7 +73,6 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
 
     private Float scoreToLearnThreshold;
     private Map<Feature, Float> learningFeatureWeights;
-
     private Map<Feature, Float> learningFeatureTresholds;
 
     public ScorerConfiguration(TermWeightStrategy strategy, TermVectorSimilarityStrategy aggregation) {
