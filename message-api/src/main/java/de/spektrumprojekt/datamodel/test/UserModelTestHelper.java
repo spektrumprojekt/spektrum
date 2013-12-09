@@ -22,12 +22,11 @@ public final class UserModelTestHelper {
             UserModel userModel2,
             UserModel userModel3) {
 
-        Term term1 = persistence.getOrCreateTerm(TermCategory.TERM,
-                Term.getMessageGroupSpecificTermValue(mg, "term1"));
-        Term term2 = persistence.getOrCreateTerm(TermCategory.TERM,
-                Term.getMessageGroupSpecificTermValue(mg, "term2"));
-        Term term3 = persistence.getOrCreateTerm(TermCategory.TERM,
-                Term.getMessageGroupSpecificTermValue(mg, "term3"));
+        Term[] terms = getSomeTerms(persistence, mg);
+
+        Term term1 = terms[0];
+        Term term2 = terms[1];
+        Term term3 = terms[2];
 
         // create user model
         if (userModel1 != null) {
@@ -56,6 +55,17 @@ public final class UserModelTestHelper {
             persistence.storeOrUpdateUserModelEntries(userModel3,
                     Arrays.asList(ume3_1, ume3_2, ume3_3));
         }
+    }
+
+    public static Term[] getSomeTerms(Persistence persistence, MessageGroup mg) {
+        return new Term[] {
+                persistence.getOrCreateTerm(TermCategory.TERM,
+                        Term.getMessageGroupSpecificTermValue(mg, "term1")),
+                persistence.getOrCreateTerm(TermCategory.TERM,
+                        Term.getMessageGroupSpecificTermValue(mg, "term2")),
+                persistence.getOrCreateTerm(TermCategory.TERM,
+                        Term.getMessageGroupSpecificTermValue(mg, "term3")),
+        };
     }
 
     private UserModelTestHelper() {

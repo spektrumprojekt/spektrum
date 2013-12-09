@@ -108,7 +108,7 @@ public class UserToTermCollaborativeScoreComputer extends CollaborativeScoreComp
         for (Term t : messageTerms) {
             float tPref;
             try {
-                tPref = getRecommender().estimatePreference(userModel.getId(), t.getId());
+                tPref = getRecommender().estimatePreference(userModel.getUser().getId(), t.getId());
 
                 ScoredTerm sT = new ScoredTerm(t, tPref);
                 UserModelEntry dummy = new UserModelEntry(userModel, sT);
