@@ -34,6 +34,7 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.ContentEncodingHttpClient;
+import org.apache.http.params.HttpConnectionParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -202,6 +203,8 @@ public final class FeedAdapter extends XMLAdapter {
         HttpResponse httpResult = null;
         HttpClient httpClient = null;
         httpClient = new ContentEncodingHttpClient();
+        HttpConnectionParams.setConnectionTimeout(httpClient.getParams(), 60000);
+        HttpConnectionParams.setSoTimeout(httpClient.getParams(), 120000);
         get = createHttpGetRequest(uri, base64EncodedCredentials);
         context.put(CONTEXT_HTTTP_GET, get);
         try {
