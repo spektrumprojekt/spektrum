@@ -172,4 +172,11 @@ public class UserMessageScore implements SpektrumEntity {
         this.userGlobalId = userGlobalId;
     }
 
+    @Override
+    public String toString() {
+        return "UserMessageScore [score=" + score + ", messageGlobalId=" + messageGlobalId
+                + ", userGlobalId=" + userGlobalId + ", author=" + author + ", interactionLevel="
+                + interactionLevel + ", basedOnAdaptedTerms=" + basedOnAdaptedTerms + "]";
+    }
+
 }

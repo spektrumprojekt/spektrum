@@ -20,6 +20,7 @@
 package de.spektrumprojekt.i.ranker.chain.features;
 
 import de.spektrumprojekt.commons.chain.Command;
+import de.spektrumprojekt.datamodel.message.InteractionLevel;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 import de.spektrumprojekt.i.ranker.feature.Feature;
@@ -76,6 +77,11 @@ public class FeatureAggregateCommand implements Command<UserSpecificMessageFeatu
         featureAggregate.interactionLevel = context.getInteractionLevel();
         if (featureAggregate.interactionLevel == null) {
             throw new IllegalArgumentException("interactionLevel cannot be null! context="
+                    + context);
+        }
+        if (featureAggregate.getFeatureValue(Feature.AUTHOR_FEATURE) == 1f
+                && !featureAggregate.interactionLevel.equals(InteractionLevel.DIRECT)) {
+            throw new IllegalStateException("interactionLevel must be direct for authors! context="
                     + context);
         }
 
