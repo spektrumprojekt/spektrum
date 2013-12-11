@@ -106,14 +106,27 @@ public class UserToTermCollaborativeScoreComputer extends CollaborativeScoreComp
         UserModel userModel = getPersistence().getOrCreateUserModelByUser(user.getGlobalId(),
                 UserModel.DEFAULT_USER_MODEL_TYPE);
 
+        boolean allMustExist = false;
+        if (message.getAuthorGlobalId().equals(user.getGlobalId())) {
+            allMustExist = true;
+        }
+
         for (Term t : messageTerms) {
             float tPref;
             try {
                 tPref = getRecommender().estimatePreference(userModel.getUser().getId(), t.getId());
 
-                ScoredTerm sT = new ScoredTerm(t, tPref);
-                UserModelEntry dummy = new UserModelEntry(userModel, sT);
-                entries.put(t, dummy);
+                if (!Float.isNaN(tPref)) {
+                    float score = convertScoreFromMahoutValue(tPref, true);
+                    ScoredTerm sT = new ScoredTerm(t, score);
+                    UserModelEntry dummy = new UserModelEntry(userModel, sT);
+                    entries.put(t, dummy);
+                }
+                if (allMustExist && (tPref == -1 || Float.isNaN(tPref))) {
+                    throw new IllegalStateException("term " + t
+                            + " should exist as preference for user: " + user + " message: "
+                            + message);
+                }
             } catch (TasteException e) {
                 // ignore
             }
@@ -127,7 +140,7 @@ public class UserToTermCollaborativeScoreComputer extends CollaborativeScoreComp
                 entries,
                 messageTerms);
 
-        return estimate;
+        return convertScoreToMahoutValue(estimate);
     }
 
     protected Map<Term, UserModelEntry> filterEntriesForCreatingUserPreferences(User user,

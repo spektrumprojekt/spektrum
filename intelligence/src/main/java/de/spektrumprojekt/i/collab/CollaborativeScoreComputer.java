@@ -28,6 +28,7 @@ import de.spektrumprojekt.commons.computer.Computer;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.user.User;
+import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.simple.SimplePersistence;
 
@@ -137,7 +138,7 @@ public abstract class CollaborativeScoreComputer implements Computer {
     @Override
     public String getConfigurationDescription() {
         return this.getClass().getSimpleName()
-                + " useGenericRecommender: " + this.useGenericRecommender;
+                + " " + this.toString();
     }
 
     public DataModel getDataModel() {
@@ -178,6 +179,10 @@ public abstract class CollaborativeScoreComputer implements Computer {
 
     public int getPreferenceCount() {
         return preferenceCount;
+    }
+
+    public File getPreferencesDebugFile() {
+        return preferencesDebugFile;
     }
 
     public Recommender getRecommender() {
@@ -253,6 +258,9 @@ public abstract class CollaborativeScoreComputer implements Computer {
             User user = this.persistence.getUserById(userId);
 
             for (Message message : messagesToRun) {
+                if (!InformationExtractionCommand.isInformationExtractionExecuted(message)) {
+                    throw new IllegalStateException("IE should be run here. ");
+                }
                 final float estimate = estimate(user, message);
                 if (estimate != 0) {
                     nonZeroRanks++;
@@ -260,12 +268,17 @@ public abstract class CollaborativeScoreComputer implements Computer {
                 float rank = convertScoreFromMahoutValue(estimate, true);
 
                 if (!Float.isNaN(rank)) {
-                    UserMessageScore messageRank = new UserMessageScore(message.getGlobalId(),
-                            user.getGlobalId());
+                    UserMessageScore messageScore = this.persistence.getMessageRank(
+                            user.getGlobalId(), message.getGlobalId());
+                    if (messageScore == null) {
+                        throw new IllegalStateException(
+                                "This is actually a rescore, so the message score should be computed somehow including all the features.");
+                    }
 
-                    messageRank.setScore(rank);
+                    messageScore.setScore(rank);
 
-                    messageScores.add(messageRank);
+                    this.persistence.updateMessageRank(messageScore);
+                    messageScores.add(messageScore);
                 } else {
                     nanScores++;
                 }
@@ -274,7 +287,6 @@ public abstract class CollaborativeScoreComputer implements Computer {
 
         }
 
-        this.persistence.storeMessageRanks(messageScores);
     }
 
     protected void setMessageScores(Collection<UserMessageScore> messageScores) {
@@ -293,12 +305,20 @@ public abstract class CollaborativeScoreComputer implements Computer {
         this.nonZeroRanks = nonZeroRanks;
     }
 
+    public void setOutPreferencesToFile(boolean outPreferencesToFile) {
+        this.outPreferencesToFile = outPreferencesToFile;
+    }
+
     protected void setPositivePreferenceCount(int positivePreferenceCount) {
         this.positivePreferenceCount = positivePreferenceCount;
     }
 
     protected void setPreferenceCount(int preferenceCount) {
         this.preferenceCount = preferenceCount;
+    }
+
+    public void setPreferencesDebugFile(File preferencesDebugFile) {
+        this.preferencesDebugFile = preferencesDebugFile;
     }
 
     public String someStats() throws TasteException {
@@ -315,5 +335,26 @@ public abstract class CollaborativeScoreComputer implements Computer {
         }
         return stats;
 
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("CollaborativeScoreComputer [preferenceCount=");
+        builder.append(preferenceCount);
+        builder.append(", nonZeroRanks=");
+        builder.append(nonZeroRanks);
+        builder.append(", useGenericRecommender=");
+        builder.append(useGenericRecommender);
+        builder.append(", positivePreferenceCount=");
+        builder.append(positivePreferenceCount);
+        builder.append(", negativePreferenceCount=");
+        builder.append(negativePreferenceCount);
+        builder.append(", outPreferencesToFile=");
+        builder.append(outPreferencesToFile);
+        builder.append(", nanScores=");
+        builder.append(nanScores);
+        builder.append("]");
+        return builder.toString();
     }
 }
