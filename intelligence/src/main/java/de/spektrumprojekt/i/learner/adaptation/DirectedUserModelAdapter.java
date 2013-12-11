@@ -162,7 +162,7 @@ public class DirectedUserModelAdapter implements
         return entries;
     }
 
-    private boolean adaptTermsOfMG(String mgId) {
+    private boolean adaptTermsOfMG(Long mgId) {
         /*
          * MessageGroup messageGroup = this.persistence.getMessageGroupByGlobalId("communotedev");
          * return mgId.equals(messageGroup.getId() + "");
@@ -224,10 +224,10 @@ public class DirectedUserModelAdapter implements
                 userModelType);
         Collection<String> match = new HashSet<String>();
         for (Term t : termsToAdapt) {
-            String mg = getMessageGroup(t);
-            if (adaptTermsOfMG(mg)) {
+            Long mgId = t.getMessageGroupId();
+            if (adaptTermsOfMG(mgId)) {
 
-                String toMatch = getMessageGroupFreeTermValue(t);
+                String toMatch = t.extractMessageGroupFreeTermValue();
                 match.add(toMatch);
             }
         }
@@ -238,12 +238,13 @@ public class DirectedUserModelAdapter implements
         for (Term t : termsToAdapt) {
             for (UserModelEntry entry : userModelEntries) {
 
-                String mg = getMessageGroup(entry.getScoredTerm().getTerm());
-                if (useMGForAdapation(mg)) {
+                Long mgId = entry.getScoredTerm().getTerm().getMessageGroupId();
+                if (useMGForAdapation(mgId)) {
 
                     if (!entry.isAdapted()
-                            && MatchMode.EXACT.matches(getMessageGroupFreeTermValue(entry
-                                    .getScoredTerm().getTerm()), getMessageGroupFreeTermValue(t))) {
+                            && MatchMode.EXACT.matches(entry
+                                    .getScoredTerm().getTerm().extractMessageGroupFreeTermValue(),
+                                    t.extractMessageGroupFreeTermValue())) {
 
                         ValueAggregator aggregator = getValueAggegrator(statsForTermsToAdaptFrom, t);
 
@@ -256,7 +257,8 @@ public class DirectedUserModelAdapter implements
 
     private void determineTermsBySimilarUsers(DirectedUserModelAdaptationMessage message,
             Collection<Term> termsToAdapt, final Map<Term, ValueAggregator> statsForTermsToAdaptFrom) {
-        // 2. Find user models to adapt from that contain the missing user terms.
+
+        // User models to adapt from that contain at least one of terms in termsToAdapt
         Collection<UserModel> userModels = persistence.getUsersWithUserModel(termsToAdapt,
                 userModelType, MatchMode.EXACT);
         Map<String, UserModel> userToUserModels = new HashMap<String, UserModel>();
@@ -266,8 +268,7 @@ public class DirectedUserModelAdapter implements
             userToUserModels.put(userModel.getUser().getGlobalId(), userModel);
         }
 
-        // 3. Compute user similarity between the u and the users of the found user models.
-
+        // Compute user similarity between the user and the users of the found user models.
         Collection<UserScore> userToUserInterestScores = this.userToUserInterestRetriever
                 .getUserToUserInterest(message.getUserGlobalId(),
                         message.getMessageGroupGlobalId(), users);
@@ -287,9 +288,12 @@ public class DirectedUserModelAdapter implements
                     Map<Term, UserModelEntry> entries = persistence.getUserModelEntriesForTerms(
                             userModel, termsToAdapt);
                     for (Entry<Term, UserModelEntry> entry : entries.entrySet()) {
-                        Term t = entry.getKey();
-                        ValueAggregator aggregator = getValueAggegrator(statsForTermsToAdaptFrom, t);
-                        integrateStat(aggregator, userScore, entry.getValue());
+                        if (!entry.getValue().isAdapted()) {
+                            Term t = entry.getKey();
+                            ValueAggregator aggregator = getValueAggegrator(
+                                    statsForTermsToAdaptFrom, t);
+                            integrateStat(aggregator, userScore, entry.getValue());
+                        }
                     }
                 }
             }
@@ -317,18 +321,6 @@ public class DirectedUserModelAdapter implements
     @Override
     public Class<DirectedUserModelAdaptationMessage> getMessageClass() {
         return DirectedUserModelAdaptationMessage.class;
-    }
-
-    private String getMessageGroup(Term t) {
-        String[] vals = t.getValue().split("#");
-        String mg = vals[0];
-        return mg;
-    }
-
-    private String getMessageGroupFreeTermValue(Term t) {
-        String[] vals = t.getValue().split("#");
-        String toMatch = "#" + vals[1];
-        return toMatch;
     }
 
     public long getRequestAdaptedCount() {
@@ -359,7 +351,7 @@ public class DirectedUserModelAdapter implements
         return message instanceof DirectedUserModelAdaptationMessage;
     }
 
-    private boolean useMGForAdapation(String mgId) {
+    private boolean useMGForAdapation(Long mgId) {
         // MessageGroup messageGroup = this.persistence.getMessageGroupByGlobalId("communotedev");
         // return mgId.equals(messageGroup.getId() + "");
         return true;

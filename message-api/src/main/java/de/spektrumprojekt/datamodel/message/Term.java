@@ -50,17 +50,17 @@ public class Term extends Identifiable {
     /**
      * Split the name by the message group. if no message group is used the id will be null
      * 
-     * @param name
+     * @param termValue
      * @return left: id of the message group, right: name without message group
      */
-    public static Pair<Long, String> extractMessageGroupOfName(String name) {
-        int indexOfSplit = name.indexOf(TERM_MESSAGE_GROUP_ID_SEPERATOR);
+    public static Pair<Long, String> extractMessageGroupOfName(String termValue) {
+        int indexOfSplit = termValue.indexOf(TERM_MESSAGE_GROUP_ID_SEPERATOR);
 
         if (indexOfSplit <= 0) {
-            return new ImmutablePair<Long, String>(null, name);
+            return new ImmutablePair<Long, String>(null, termValue);
         }
-        String id = name.substring(0, indexOfSplit);
-        String n = name.substring(indexOfSplit + 1);
+        String id = termValue.substring(0, indexOfSplit);
+        String n = termValue.substring(indexOfSplit + 1);
         return new ImmutablePair<Long, String>(Long.parseLong(id), n);
 
     }
@@ -94,13 +94,21 @@ public class Term extends Identifiable {
     }
 
     public Term(TermCategory category, String value) {
+        if (value == null) {
+            throw new IllegalArgumentException("value cannot be null.");
+        }
         this.value = value;
         this.category = category;
 
-        // TODO better define message group id or relation per term
+        // TODO better define message group id or relation per term ?
         Pair<Long, String> mgNamePair = extractMessageGroupOfName(value);
 
         this.messageGroupId = mgNamePair.getLeft();
+    }
+
+    public String extractMessageGroupFreeTermValue() {
+        return this.getMessageGroupId() == null ? this.value
+                : extractMessageGroupOfName(this.value).getRight();
     }
 
     public TermCategory getCategory() {
