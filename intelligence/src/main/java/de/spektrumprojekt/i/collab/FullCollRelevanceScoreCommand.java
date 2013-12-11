@@ -8,7 +8,6 @@ import de.spektrumprojekt.commons.chain.CommandException;
 import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.user.User;
-import de.spektrumprojekt.i.collab.CollaborativeScoreComputer.CollaborativeScoreComputerType;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
 import de.spektrumprojekt.persistence.Persistence;

@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,9 +58,6 @@ public class UserModelBasedUserSimilarityComputer implements UserSimilarityCompu
     private final SetSimilarity setSimilarity;
 
     private final String precomputedUserSimilaritesFilename;
-
-    // String fname =
-    // "D:/work/spektrum/Thesis-Work/evaluations/precomputed/8235_fth-uma-j-3-noneI.userSim";
 
     /**
      * 
@@ -108,7 +106,8 @@ public class UserModelBasedUserSimilarityComputer implements UserSimilarityCompu
 
         this.persistence = (SimplePersistence) persistence;
         this.termVectorSimilarityComputer = termVectorSimilarityComputer;
-        this.precomputedUserSimilaritesFilename = precomputedUserSimilaritesFilename;
+        this.precomputedUserSimilaritesFilename = StringUtils
+                .trimToNull(precomputedUserSimilaritesFilename);
         this.setSimilarity = setSimilarity;
         this.holdComputedSimilarites = holdComputedSimilarites;
     }

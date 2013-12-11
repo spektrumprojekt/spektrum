@@ -12,6 +12,7 @@ import java.util.Set;
 
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 import de.spektrumprojekt.datamodel.observation.Interest;
+import de.spektrumprojekt.i.collab.CollaborativeScoreComputerType;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionConfiguration;
 import de.spektrumprojekt.i.learner.adaptation.UserModelAdapterConfiguration;
@@ -74,6 +75,8 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
     private Float scoreToLearnThreshold;
     private Map<Feature, Float> learningFeatureWeights;
     private Map<Feature, Float> learningFeatureTresholds;
+
+    private CollaborativeScoreComputerType collaborativeScoreComputerType;
 
     public ScorerConfiguration(TermWeightStrategy strategy, TermVectorSimilarityStrategy aggregation) {
         this(strategy, aggregation, null, null, (ScorerConfigurationFlag[]) null);
@@ -161,6 +164,10 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
         clone.immutable = false;
         clone.flags = new HashSet<ScorerConfigurationFlag>(this.getFlags());
         return clone;
+    }
+
+    public CollaborativeScoreComputerType getCollaborativeScoreComputerType() {
+        return collaborativeScoreComputerType;
     }
 
     @Override
@@ -304,6 +311,11 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
     public UserModelConfiguration put(String userModelType,
             UserModelConfiguration modelConfiguration) {
         return userModelTypes.put(userModelType, modelConfiguration);
+    }
+
+    public void setCollaborativeScoreComputerType(
+            CollaborativeScoreComputerType collaborativeScoreComputerType) {
+        this.collaborativeScoreComputerType = collaborativeScoreComputerType;
     }
 
     /**
@@ -458,7 +470,7 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
 
     @Override
     public String toString() {
-        return "RankerConfiguration [flags=" + flags + ", minUserSimilarity=" + minUserSimilarity
+        return "ScorerConfiguration [flags=" + flags + ", minUserSimilarity=" + minUserSimilarity
                 + ", minContentMessageScore=" + minContentMessageScore + ", messageRankThreshold="
                 + messageRankThreshold + ", nonParticipationFactor=" + nonParticipationFactor
                 + ", minimumCleanTextLengthForInvokingLearner="
@@ -479,7 +491,7 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
                 + useFixedDefaultLearningFeatureWeights + ", featureWeights=" + featureWeights
                 + ", scoreToLearnThreshold=" + scoreToLearnThreshold + ", learningFeatureWeights="
                 + learningFeatureWeights + ", learningFeatureTresholds=" + learningFeatureTresholds
-                + "]";
+                + ", collaborativeScoreComputerType=" + collaborativeScoreComputerType + "]";
     }
 
 }

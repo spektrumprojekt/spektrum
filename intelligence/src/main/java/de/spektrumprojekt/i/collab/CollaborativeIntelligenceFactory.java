@@ -3,7 +3,6 @@ package de.spektrumprojekt.i.collab;
 import de.spektrumprojekt.callbacks.MessageGroupMemberRunner;
 import de.spektrumprojekt.communication.Communicator;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
-import de.spektrumprojekt.i.collab.CollaborativeScoreComputer.CollaborativeScoreComputerType;
 import de.spektrumprojekt.i.learner.Learner;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.Scorer;
@@ -20,9 +19,8 @@ public class CollaborativeIntelligenceFactory {
             Persistence persistence,
             Communicator communicator,
             MessageGroupMemberRunner<MessageFeatureContext> memberRunner,
-            ScorerConfiguration rankerConfiguration,
+            ScorerConfiguration scorerConfiguration,
             ObservationType[] observationTypesToUseForDataModel,
-            CollaborativeScoreComputerType collaborativeScoreComputerType,
             boolean useGenericRecommender)
             throws Exception {
         // collaborativeRankerComputer.init();
@@ -33,21 +31,23 @@ public class CollaborativeIntelligenceFactory {
          * new CollLearnerCommand(persistence, collaborativeRankerComputer.getRecommender());
          */
 
-        if (CollaborativeScoreComputerType.USER2TERM.equals(collaborativeScoreComputerType)) {
+        if (!CollaborativeScoreComputerType.USER2MESSAGE.equals(scorerConfiguration
+                .getCollaborativeScoreComputerType())) {
             throw new UnsupportedOperationException(
-                    "Cannot handle this way, must be working together with user model.");
+                    "Cannot handle this " + scorerConfiguration.getCollaborativeScoreComputerType()
+                            + ".");
         }
 
         FullCollRelevanceScoreCommand fullCollabRankCommand = new FullCollRelevanceScoreCommand(
                 persistence,
                 observationTypesToUseForDataModel,
-                collaborativeScoreComputerType,
+                scorerConfiguration.getCollaborativeScoreComputerType(),
                 null,
                 useGenericRecommender);
 
         ranker = new SpecialRanker<FullCollRelevanceScoreCommand>(persistence,
-                communicator, memberRunner, rankerConfiguration, fullCollabRankCommand);
-        learner = new Learner(persistence, rankerConfiguration, null);
+                communicator, memberRunner, scorerConfiguration, fullCollabRankCommand);
+        learner = new Learner(persistence, scorerConfiguration, null);
         // learner.getLearnerChain().addCommand(collabLearnCommand);
     }
 

@@ -14,7 +14,6 @@ import org.apache.mahout.cf.taste.model.PreferenceArray;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
-import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
@@ -29,10 +28,9 @@ public class UserToTermCollaborativeScoreComputer extends CollaborativeScoreComp
 
     public UserToTermCollaborativeScoreComputer(
             Persistence persistence,
-            ObservationType[] observationTypesToUseForDataModel,
             TermVectorSimilarityComputer termVectorSimilarityComputer,
             boolean useGenericRecommender) {
-        super(persistence, observationTypesToUseForDataModel, useGenericRecommender);
+        super(persistence, useGenericRecommender);
         if (termVectorSimilarityComputer == null) {
             throw new IllegalArgumentException("termVectorSimilarityComputer cannot be null.");
         }
@@ -46,12 +44,15 @@ public class UserToTermCollaborativeScoreComputer extends CollaborativeScoreComp
                 UserModel.DEFAULT_USER_MODEL_TYPE, user);
         if (userModelHolder != null && userModelHolder.getUserModelEntries().size() > 0) {
 
+            Map<Term, UserModelEntry> entries = filterEntriesForCreatingUserPreferences(user,
+                    userModelHolder);
+
             GenericUserPreferenceArray genericUserPreferenceArray = new GenericUserPreferenceArray(
-                    userModelHolder.getUserModelEntries().size());
+                    entries.size());
             genericUserPreferenceArray.setUserID(0, user.getId());
 
             int index = 0;
-            for (UserModelEntry umEntry : userModelHolder.getUserModelEntries().values()) {
+            for (UserModelEntry umEntry : entries.values()) {
 
                 createUserTermPreferences(genericUserPreferenceArray, user,
                         umEntry.getScoredTerm(), fw,
@@ -127,6 +128,11 @@ public class UserToTermCollaborativeScoreComputer extends CollaborativeScoreComp
                 messageTerms);
 
         return estimate;
+    }
+
+    protected Map<Term, UserModelEntry> filterEntriesForCreatingUserPreferences(User user,
+            UserModelHolder userModelHolder) {
+        return userModelHolder.getUserModelEntries();
     }
 
     @Override

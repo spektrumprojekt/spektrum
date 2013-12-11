@@ -79,6 +79,7 @@ public class ComputeMessageScoreCommand implements Command<UserSpecificMessageFe
             score *= nonParticipationFactor;
         }
         messageScore.setScore(score);
+        messageScore.setBasedOnAdaptedTerms(context.isMatchingUserModelEntriesContainsAdapted());
 
     }
 }

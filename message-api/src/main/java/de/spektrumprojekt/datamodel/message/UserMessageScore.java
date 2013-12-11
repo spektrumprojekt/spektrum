@@ -61,6 +61,9 @@ public class UserMessageScore implements SpektrumEntity {
     @Transient
     private InteractionLevel interactionLevel = InteractionLevel.UNKNOWN;
 
+    @Transient
+    private boolean basedOnAdaptedTerms;
+
     /**
      * for jpa
      */
@@ -117,6 +120,10 @@ public class UserMessageScore implements SpektrumEntity {
         return author;
     }
 
+    public boolean isBasedOnAdaptedTerms() {
+        return basedOnAdaptedTerms;
+    }
+
     /**
      * is this still needed?
      * 
@@ -125,6 +132,10 @@ public class UserMessageScore implements SpektrumEntity {
     @Deprecated
     public void setAuthor(boolean author) {
         this.author = author;
+    }
+
+    public void setBasedOnAdaptedTerms(boolean basedOnAdaptedTerms) {
+        this.basedOnAdaptedTerms = basedOnAdaptedTerms;
     }
 
     public void setInteractionLevel(InteractionLevel interactionLevel) {

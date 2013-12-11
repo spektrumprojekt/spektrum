@@ -56,6 +56,8 @@ public class UserSpecificMessageFeatureContext extends FeatureContext {
     // first key is the user model type
     private Map<String, Map<Term, UserModelEntry>> matchingUserModelEntries;
 
+    private boolean matchingUserModelEntriesContainsAdapted;
+
     /**
      * 
      * @param persistence
@@ -123,16 +125,16 @@ public class UserSpecificMessageFeatureContext extends FeatureContext {
         return messageFeatureContext;
     }
 
+    public MessageRelation getMessageRelation() {
+        return this.messageFeatureContext.getMessageRelation();
+    }
+
     /**
      * 
      * @return the rank (null if not computed or uncomputeable)
      */
     public UserMessageScore getMessageScore() {
         return messageRank;
-    }
-
-    public MessageRelation getMessageRelation() {
-        return this.messageFeatureContext.getMessageRelation();
     }
 
     public Collection<UserMessageScore> getRanksToUpdate() {
@@ -147,6 +149,10 @@ public class UserSpecificMessageFeatureContext extends FeatureContext {
         return userGlobalId;
     }
 
+    public boolean isMatchingUserModelEntriesContainsAdapted() {
+        return matchingUserModelEntriesContainsAdapted;
+    }
+
     public void setFeatureAggregate(FeatureAggregate featureAggregate) {
         this.featureAggregate = featureAggregate;
     }
@@ -157,6 +163,11 @@ public class UserSpecificMessageFeatureContext extends FeatureContext {
 
     public void setMatchingUserModelEntries(Map<String, Map<Term, UserModelEntry>> entries) {
         this.matchingUserModelEntries = entries;
+    }
+
+    public void setMatchingUserModelEntriesContainsAdapted(
+            boolean matchingUserModelEntriesContainsAdapted) {
+        this.matchingUserModelEntriesContainsAdapted = matchingUserModelEntriesContainsAdapted;
     }
 
     /**

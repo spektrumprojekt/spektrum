@@ -22,6 +22,7 @@ package de.spektrumprojekt.helper;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -30,6 +31,7 @@ import org.apache.commons.lang3.Validate;
 
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
@@ -130,6 +132,23 @@ public final class MessageHelper {
         return terms;
     }
 
+    public static String getAuthor(Message message) {
+        Property property = message.getProperty(Property.PROPERTY_KEY_AUTHOR_NAME);
+        if (property != null) {
+            return property.getPropertyValue();
+        }
+        property = message.getProperty(Property.PROPERTY_KEY_DC_CREATOR);
+        if (property != null) {
+            return property.getPropertyValue();
+        }
+        return null;
+    }
+
+    public static String getLink(Message message) {
+        Property property = message.getProperty(Property.PROPERTY_KEY_LINK);
+        return property != null ? property.getPropertyValue() : null;
+    }
+
     private static Collection<String> getListProperty(Message message, String propertyKey,
             String seperationString) {
         Map<String, Property> properties = message.getPropertiesAsMap();
@@ -179,23 +198,6 @@ public final class MessageHelper {
         return property.getPropertyValue();
     }
 
-    public static String getLink(Message message) {
-        Property property = message.getProperty(Property.PROPERTY_KEY_LINK);
-        return property != null ? property.getPropertyValue() : null;
-    }
-
-    public static String getAuthor(Message message) {
-        Property property = message.getProperty(Property.PROPERTY_KEY_AUTHOR_NAME);
-        if (property != null) {
-            return property.getPropertyValue();
-        }
-        property = message.getProperty(Property.PROPERTY_KEY_DC_CREATOR);
-        if (property != null) {
-            return property.getPropertyValue();
-        }
-        return null;
-    }
-
     public static Collection<String> getUserLikes(Message message) {
         return getListProperty(message, PROPERTY_KEY_USERS_LIKE, USERS_LIKE_SEPERATOR_CHAR_STR);
     }
@@ -218,6 +220,22 @@ public final class MessageHelper {
     public static boolean isMentioned(Message message, String userGlobalId) {
         Collection<String> mentions = getMentions(message);
         return mentions.contains(userGlobalId);
+    }
+
+    public static Map<MessageGroup, Collection<Message>> splitByMessageGroup(
+            Collection<Message> messages) {
+        Map<MessageGroup, Collection<Message>> mg2messages = new HashMap<MessageGroup, Collection<Message>>();
+
+        for (Message message : messages) {
+            MessageGroup mg = message.getMessageGroup();
+            Collection<Message> mgMessages = mg2messages.get(mg);
+            if (mgMessages == null) {
+                mgMessages = new HashSet<Message>();
+                mg2messages.put(mg, mgMessages);
+            }
+            mgMessages.add(message);
+        }
+        return mg2messages;
     }
 
     /**

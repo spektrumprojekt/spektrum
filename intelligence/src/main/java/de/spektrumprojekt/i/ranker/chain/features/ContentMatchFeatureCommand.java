@@ -94,6 +94,17 @@ public class ContentMatchFeatureCommand implements Command<UserSpecificMessageFe
 
     }
 
+    private boolean containsAdaptedEntries(Map<String, Map<Term, UserModelEntry>> allEntries) {
+        for (Map<Term, UserModelEntry> entries : allEntries.values()) {
+            for (UserModelEntry entry : entries.values()) {
+                if (entry.isAdapted()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -166,6 +177,9 @@ public class ContentMatchFeatureCommand implements Command<UserSpecificMessageFe
         }
         context.setMatchingUserModelEntries(allEntries);
 
+        if (this.containsAdaptedEntries(allEntries)) {
+            context.setMatchingUserModelEntriesContainsAdapted(true);
+        }
         if (value != null) {
             MessageFeature feature = new MessageFeature(getFeatureId());
 
@@ -175,6 +189,7 @@ public class ContentMatchFeatureCommand implements Command<UserSpecificMessageFe
             feature.setValue(Math.max(0, feature.getValue()));
 
             context.addMessageFeature(feature);
+
         }
 
     }
