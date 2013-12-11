@@ -89,7 +89,7 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
                 statistics.setSubscriptionCount(getEntityCount(entityManager, Subscription.class));
 
                 statistics.setMessageCount(getEntityCount(entityManager, Message.class));
-                statistics.setMessageRankCount(getEntityCount(entityManager, UserMessageScore.class));
+                statistics.setMessageScoreCount(getEntityCount(entityManager, UserMessageScore.class));
 
                 statistics.setScoredTermCount(getEntityCount(entityManager, ScoredTerm.class));
                 statistics.setTermCount(getEntityCount(entityManager, Term.class));

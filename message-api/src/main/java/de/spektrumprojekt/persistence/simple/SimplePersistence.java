@@ -159,7 +159,7 @@ public class SimplePersistence implements Persistence {
     // key is global id of message group
     private final Map<String, MessageGroup> messageGroups = new HashMap<String, MessageGroup>();
 
-    private final Map<UserMessageIdentifier, UserMessageScore> messageRanks = new HashMap<UserMessageIdentifier, UserMessageScore>();
+    private final Map<UserMessageIdentifier, UserMessageScore> messageScores = new HashMap<UserMessageIdentifier, UserMessageScore>();
 
     private final Map<String, Term> termsTerms = new HashMap<String, Term>();
 
@@ -176,7 +176,7 @@ public class SimplePersistence implements Persistence {
     private TermFrequency termFrequency = new TermFrequency();
 
     public void clearMessageRanks() {
-        this.messageRanks.clear();
+        this.messageScores.clear();
     }
 
     public void clearMessages() {
@@ -193,7 +193,7 @@ public class SimplePersistence implements Persistence {
         Statistics statistics = new Statistics();
 
         statistics.setMessageCount(this.messages.size());
-        statistics.setMessageRankCount(this.messageRanks.size());
+        statistics.setMessageScoreCount(this.messageScores.size());
 
         statistics.setScoredTermCount(-1);
         statistics.setSubscriptionCount(0);
@@ -302,7 +302,7 @@ public class SimplePersistence implements Persistence {
     @Override
     public UserMessageScore getMessageRank(String userGlobalId, String messageGlobalId) {
 
-        return this.messageRanks.get(new UserMessageIdentifier(userGlobalId, messageGlobalId));
+        return this.messageScores.get(new UserMessageIdentifier(userGlobalId, messageGlobalId));
     }
 
     @Override
@@ -745,7 +745,7 @@ public class SimplePersistence implements Persistence {
     @Override
     public void storeMessageRanks(Collection<UserMessageScore> ranks) {
         for (UserMessageScore messageRank : ranks) {
-            this.messageRanks.put(new UserMessageIdentifier(messageRank.getUserGlobalId(),
+            this.messageScores.put(new UserMessageIdentifier(messageRank.getUserGlobalId(),
                     messageRank.getMessageGlobalId()), messageRank);
         }
     }
@@ -797,10 +797,10 @@ public class SimplePersistence implements Persistence {
     @Override
     public void updateMessageRank(UserMessageScore rankToUpdate) {
         UserMessageIdentifier userMessageIdentifier = new UserMessageIdentifier(rankToUpdate);
-        UserMessageScore existingRank = this.messageRanks.get(userMessageIdentifier);
+        UserMessageScore existingRank = this.messageScores.get(userMessageIdentifier);
 
         if (existingRank != rankToUpdate) {
-            this.messageRanks.put(userMessageIdentifier, rankToUpdate);
+            this.messageScores.put(userMessageIdentifier, rankToUpdate);
         }
     }
 
@@ -838,7 +838,7 @@ public class SimplePersistence implements Persistence {
     @Override
     public void visitAllMessageRanks(MessageRankVisitor visitor, Date startDate, Date endDate)
             throws Exception {
-        for (UserMessageScore messageRank : this.messageRanks.values()) {
+        for (UserMessageScore messageRank : this.messageScores.values()) {
             Message message = this.getMessageByGlobalId(messageRank.getMessageGlobalId());
             if (startDate.after(message.getPublicationDate())) {
                 continue;

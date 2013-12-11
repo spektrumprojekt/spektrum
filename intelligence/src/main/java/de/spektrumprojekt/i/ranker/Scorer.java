@@ -252,7 +252,9 @@ public class Scorer implements MessageHandler<ScorerCommunicationMessage>,
                 this.scorerConfiguration.getMinContentMessageScore());
         updateInteractionLevelOfMessageScoresCommand = new UpdateInteractionLevelOfMessageScoresCommand(
                 persistence);
+
         storeMessageScoreCommand = new StoreMessageScoreCommand(persistence);
+
         featureAggregateCommand = new FeatureAggregateCommand(this.persistence);
 
         // add the commands to the chain

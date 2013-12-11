@@ -38,8 +38,7 @@ public class UserToMessageGroupSpecificTermCollaborativeScoreComputer extends
                 user, userModelHolder);
         if (allEntries != null) {
             for (Entry<Term, UserModelEntry> entry : allEntries.entrySet()) {
-                if (entry.getKey().getMessageGroupId() != null
-                        && entry.getKey().getMessageGroupId().equals(this.messageGroup.getId())) {
+                if (entry.getKey().getMessageGroupId().equals(this.messageGroup.getId())) {
                     filtered.put(entry.getKey(), entry.getValue());
                 }
             }
