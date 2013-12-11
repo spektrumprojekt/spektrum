@@ -3,10 +3,14 @@ package de.spektrumprojekt.aggregator.adapter.rss;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +41,7 @@ import de.spektrumprojekt.datamodel.common.MimeType;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessagePart;
+import de.spektrumprojekt.datamodel.message.MessagePublicationDateComperator;
 import de.spektrumprojekt.datamodel.message.MessageType;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
@@ -326,6 +331,36 @@ public abstract class XMLAdapter extends BasePollingAdapter {
         return null;
     }
 
+    /**
+     * Filter the messages on the first poll by removing messages that exceed a certain amount and
+     * are older than 30 days. This mimics the behavior of a SubscriptionFilter which is used when a
+     * subscription to an existing source is added.
+     * 
+     * @param messages
+     *            the messages to filter
+     */
+    private void filterMessagesOnFirstPoll(List<Message> messages) {
+        // TODO limits should be configurable. Maybe store as source properties so that they are
+        // available during creation?
+        int lastXMessages = 25;
+        if (messages.size() > lastXMessages) {
+            Calendar cal = new GregorianCalendar();
+            cal.setTime(new Date());
+            cal.add(Calendar.DAY_OF_YEAR, -30);
+            Date lastMessageDate = cal.getTime();
+            Collections.sort(messages, MessagePublicationDateComperator.INSTANCE);
+            Iterator<Message> messageIterator = messages.iterator();
+            while (messageIterator.hasNext() && messages.size() > lastXMessages) {
+                Message message = messageIterator.next();
+                if (lastMessageDate.after(message.getPublicationDate())) {
+                    messageIterator.remove();
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+
     protected abstract InputStream getInputStream(Map<String, Object> context)
             throws AdapterException;
 
@@ -394,6 +429,9 @@ public abstract class XMLAdapter extends BasePollingAdapter {
             if (mostRecentTime == null || mostRecentTime.before(itemPublishDate)) {
                 mostRecentTime = itemPublishDate;
             }
+        }
+        if (lastContentTime == null) {
+            filterMessagesOnFirstPoll(messages);
         }
         if (mostRecentTime != null) {
             // TODO probably not the best idea to let every Adapter handle it. Should probably be
