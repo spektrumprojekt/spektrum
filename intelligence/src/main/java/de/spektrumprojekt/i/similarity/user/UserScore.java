@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package de.spektrumprojekt.i.user;
+package de.spektrumprojekt.i.similarity.user;
 
 public class UserScore {
     private final String userGlobalId;

@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package de.spektrumprojekt.i.user.similarity;
+package de.spektrumprojekt.i.similarity.user;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -37,7 +37,7 @@ import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
-import de.spektrumprojekt.i.similarity.SetSimilarity;
+import de.spektrumprojekt.i.similarity.set.SetSimilarity;
 import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.simple.SimplePersistence;

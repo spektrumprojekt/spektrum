@@ -332,6 +332,11 @@ public class SimplePersistence implements Persistence {
                             message.getMessageGroup().getGlobalId())) {
                 continue;
             }
+            if (messageFilter.getMessageGroupId() != null
+                    && !messageFilter.getMessageGroupId().equals(
+                            message.getMessageGroup().getId())) {
+                continue;
+            }
 
             if (messageFilter.getMinPublicationDate() == null
                     || message.getPublicationDate().after(messageFilter.getMinPublicationDate())) {

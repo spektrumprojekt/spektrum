@@ -1,4 +1,4 @@
-package de.spektrumprojekt.i.user.hits;
+package de.spektrumprojekt.i.similarity.user.hits;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,7 +12,7 @@ import org.apache.commons.collections15.Transformer;
 import de.spektrumprojekt.commons.computer.Computer;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
-import de.spektrumprojekt.i.user.UserScore;
+import de.spektrumprojekt.i.similarity.user.UserScore;
 import de.spektrumprojekt.persistence.Persistence;
 import edu.uci.ics.jung.algorithms.scoring.HITS;
 import edu.uci.ics.jung.algorithms.scoring.HITS.Scores;

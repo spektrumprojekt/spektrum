@@ -1,10 +1,10 @@
-package de.spektrumprojekt.i.user.hits;
+package de.spektrumprojekt.i.similarity.user.hits;
 
 import java.util.Collection;
 import java.util.List;
 
-import de.spektrumprojekt.i.user.UserScore;
-import de.spektrumprojekt.i.user.UserToUserInterestSelector;
+import de.spektrumprojekt.i.similarity.user.UserScore;
+import de.spektrumprojekt.i.similarity.user.UserToUserInterestSelector;
 
 public class HITSUserSelector implements UserToUserInterestSelector {
 

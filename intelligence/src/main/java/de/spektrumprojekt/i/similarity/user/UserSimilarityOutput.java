@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package de.spektrumprojekt.i.user.similarity;
+package de.spektrumprojekt.i.similarity.user;
 
 import java.util.ArrayList;
 import java.util.Collection;

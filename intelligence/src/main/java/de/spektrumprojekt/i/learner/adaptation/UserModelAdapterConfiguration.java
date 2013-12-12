@@ -1,9 +1,9 @@
 package de.spektrumprojekt.i.learner.adaptation;
 
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
-import de.spektrumprojekt.i.similarity.SetSimilarity;
-import de.spektrumprojekt.i.user.hits.HITSUserMentionComputer.ScoreToUse;
-import de.spektrumprojekt.i.user.similarity.UserSimilaritySimType;
+import de.spektrumprojekt.i.similarity.set.SetSimilarity;
+import de.spektrumprojekt.i.similarity.user.UserSimilaritySimType;
+import de.spektrumprojekt.i.similarity.user.hits.HITSUserMentionComputer.ScoreToUse;
 
 public class UserModelAdapterConfiguration implements ConfigurationDescriptable {
 
@@ -43,6 +43,7 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
     }
 
     private double userSimilarityThreshold;
+    private double messageGroupSimilarityThreshold;
 
     private boolean userSelectorUseHITS;
 
@@ -73,6 +74,10 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
 
     public ScoreToUse getHitsScoreToUse() {
         return hitsScoreToUse;
+    }
+
+    public double getMessageGroupSimilarityThreshold() {
+        return messageGroupSimilarityThreshold;
     }
 
     public float getScoreThreshold() {
@@ -114,13 +119,13 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
     }
 
     public boolean isValid() {
-        if (userSelectorUseHITS && this.hitsScoreToUse == null) {
+        if (!adaptFromMessageGroups && userSelectorUseHITS && this.hitsScoreToUse == null) {
             return false;
         }
         // one of both must be set
         return userSelectorUseHITS != userSelectorUseMentionsPercentage
                 && userSimilarityThreshold >= 0
-                && userSimilarityThreshold <= 1;
+                && userSimilarityThreshold <= 1 || adaptFromMessageGroups;
     }
 
     public void setAdaptFromMessageGroups(boolean adaptFromMessageGroups) {
@@ -133,6 +138,10 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
 
     public void setHitsScoreToUse(ScoreToUse hitsScoreToUse) {
         this.hitsScoreToUse = hitsScoreToUse;
+    }
+
+    public void setMessageGroupSimilarityThreshold(double messageGroupSimilarityThreshold) {
+        this.messageGroupSimilarityThreshold = messageGroupSimilarityThreshold;
     }
 
     public void setScoreThreshold(float scoreThreshold) {
@@ -168,6 +177,7 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
     @Override
     public String toString() {
         return "UserModelAdapterConfiguration [userSimilarityThreshold=" + userSimilarityThreshold
+                + ", messageGroupSimilarityThreshold=" + messageGroupSimilarityThreshold
                 + ", userSelectorUseHITS=" + userSelectorUseHITS
                 + ", userSelectorUseMentionsPercentage=" + userSelectorUseMentionsPercentage
                 + ", hitsScoreToUse=" + hitsScoreToUse + ", adaptFromMessageGroups="

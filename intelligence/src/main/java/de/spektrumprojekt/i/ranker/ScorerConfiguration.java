@@ -78,6 +78,8 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
 
     private CollaborativeScoreComputerType collaborativeScoreComputerType;
 
+    private double messageGroupSimilarityThreshold;
+
     public ScorerConfiguration(TermWeightStrategy strategy, TermVectorSimilarityStrategy aggregation) {
         this(strategy, aggregation, null, null, (ScorerConfigurationFlag[]) null);
     }
@@ -218,6 +220,10 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
             learningFeatureWeights = new HashMap<Feature, Float>();
         }
         return learningFeatureWeights;
+    }
+
+    public double getMessageGroupSimilarityThreshold() {
+        return messageGroupSimilarityThreshold;
     }
 
     public float getMessageScoreThreshold() {
@@ -385,6 +391,10 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
         this.useFixedDefaultLearningFeatureWeights = useFixedDefaultLearningFeatureWeights;
         getLearningFeatureWeights();
         this.learningFeatureWeights.put(feature, weight);
+    }
+
+    public void setMessageGroupSimilarityThreshold(double messageGroupSimilarityThreshold) {
+        this.messageGroupSimilarityThreshold = messageGroupSimilarityThreshold;
     }
 
     public void setMessageRankThreshold(float messageRankThreshold) {

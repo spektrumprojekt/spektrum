@@ -47,12 +47,12 @@ import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageFilter.OrderDirection;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessagePattern;
-import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
 import de.spektrumprojekt.datamodel.message.TermFrequency;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
@@ -72,7 +72,7 @@ import de.spektrumprojekt.persistence.jpa.transaction.Transaction;
  * @author Philipp Katz
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  */
-public final class MessagePersistence extends AbstractPersistenceLayer {
+public class MessagePersistence extends AbstractPersistenceLayer {
 
     public MessagePersistence(JPAConfiguration jpaConfiguration) {
         super(jpaConfiguration, null);
@@ -89,7 +89,8 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
                 statistics.setSubscriptionCount(getEntityCount(entityManager, Subscription.class));
 
                 statistics.setMessageCount(getEntityCount(entityManager, Message.class));
-                statistics.setMessageScoreCount(getEntityCount(entityManager, UserMessageScore.class));
+                statistics.setMessageScoreCount(getEntityCount(entityManager,
+                        UserMessageScore.class));
 
                 statistics.setScoredTermCount(getEntityCount(entityManager, ScoredTerm.class));
                 statistics.setTermCount(getEntityCount(entityManager, Term.class));
@@ -180,7 +181,8 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
             @Override
             protected UserMessageScore doTransaction(EntityManager entityManager) {
                 CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-                CriteriaQuery<UserMessageScore> query = criteriaBuilder.createQuery(UserMessageScore.class);
+                CriteriaQuery<UserMessageScore> query = criteriaBuilder
+                        .createQuery(UserMessageScore.class);
                 Root<UserMessageScore> entity = query.from(UserMessageScore.class);
 
                 ParameterExpression<String> userGlobalIdParameter = criteriaBuilder
@@ -269,13 +271,23 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
                 }
 
                 // filter for message group
-                if (messageFilter.getMessageGroupGlobalId() != null) {
+                if (messageFilter.getMessageGroupGlobalId() != null
+                        || messageFilter.getMessageGroupId() != null) {
                     Join<Message, MessageGroup> messageGroupEntity = messageEntity
                             .join("messageGroup");
-                    Predicate mgPred = cb.equal(messageGroupEntity.get("globalId"),
-                            messageFilter.getMessageGroupGlobalId());
 
-                    predicates.add(mgPred);
+                    if (messageFilter.getMessageGroupGlobalId() != null) {
+                        Predicate mgPred = cb.equal(messageGroupEntity.get("globalId"),
+                                messageFilter.getMessageGroupGlobalId());
+
+                        predicates.add(mgPred);
+                    }
+                    if (messageFilter.getMessageGroupId() != null) {
+                        Predicate mgPred = cb.equal(messageGroupEntity.get("id"),
+                                messageFilter.getMessageGroupId());
+
+                        predicates.add(mgPred);
+                    }
                 }
 
                 // filter for source id

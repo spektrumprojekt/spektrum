@@ -58,14 +58,14 @@ import de.spektrumprojekt.i.ranker.chain.features.DiscussionParticipationFeature
 import de.spektrumprojekt.i.ranker.chain.features.FeatureAggregateCommand;
 import de.spektrumprojekt.i.ranker.chain.features.MentionFeatureCommand;
 import de.spektrumprojekt.i.ranker.chain.features.MessageSpecificFeaturesCommand;
+import de.spektrumprojekt.i.similarity.user.InteractionBasedUserSimilarityComputer;
+import de.spektrumprojekt.i.similarity.user.IterativeUserSimilarityComputer;
+import de.spektrumprojekt.i.similarity.user.UserModelBasedUserSimilarityComputer;
+import de.spektrumprojekt.i.similarity.user.UserSimilarityComputer;
+import de.spektrumprojekt.i.similarity.user.UserSimilaritySimType;
 import de.spektrumprojekt.i.term.TermSimilarityWeightComputerFactory;
 import de.spektrumprojekt.i.term.frequency.TermFrequencyComputer;
 import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
-import de.spektrumprojekt.i.user.similarity.InteractionBasedUserSimilarityComputer;
-import de.spektrumprojekt.i.user.similarity.IterativeUserSimilarityComputer;
-import de.spektrumprojekt.i.user.similarity.UserModelBasedUserSimilarityComputer;
-import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer;
-import de.spektrumprojekt.i.user.similarity.UserSimilaritySimType;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**

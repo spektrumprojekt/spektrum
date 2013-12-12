@@ -18,14 +18,14 @@ import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
 import de.spektrumprojekt.helper.MessageHelper;
-import de.spektrumprojekt.i.similarity.JaccardSetSimilarity;
+import de.spektrumprojekt.i.similarity.set.JaccardSetSimilarity;
+import de.spektrumprojekt.i.similarity.user.InteractionBasedUserSimilarityComputer;
+import de.spektrumprojekt.i.similarity.user.UserModelBasedUserSimilarityComputer;
+import de.spektrumprojekt.i.similarity.user.UserSimilaritySimType;
 import de.spektrumprojekt.i.term.TermSimilarityWeightComputerFactory;
 import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
 import de.spektrumprojekt.i.term.TermWeightStrategy;
 import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
-import de.spektrumprojekt.i.user.similarity.InteractionBasedUserSimilarityComputer;
-import de.spektrumprojekt.i.user.similarity.UserModelBasedUserSimilarityComputer;
-import de.spektrumprojekt.i.user.similarity.UserSimilaritySimType;
 
 /**
  * Test the ranker

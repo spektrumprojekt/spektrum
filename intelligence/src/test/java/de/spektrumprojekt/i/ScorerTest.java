@@ -55,11 +55,13 @@ import de.spektrumprojekt.i.ranker.Scorer;
 import de.spektrumprojekt.i.ranker.ScorerConfiguration;
 import de.spektrumprojekt.i.ranker.ScorerConfigurationFlag;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
+import de.spektrumprojekt.i.similarity.messagegroup.TermBasedMessageGroupSimilarityComputer;
+import de.spektrumprojekt.i.similarity.set.JaccardSetSimilarity;
+import de.spektrumprojekt.i.similarity.user.InteractionBasedUserSimilarityComputer;
+import de.spektrumprojekt.i.similarity.user.UserSimilarityRetriever;
+import de.spektrumprojekt.i.similarity.user.UserSimilaritySimType;
 import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
 import de.spektrumprojekt.i.term.TermWeightStrategy;
-import de.spektrumprojekt.i.user.similarity.InteractionBasedUserSimilarityComputer;
-import de.spektrumprojekt.i.user.similarity.UserSimilarityRetriever;
-import de.spektrumprojekt.i.user.similarity.UserSimilaritySimType;
 import de.spektrumprojekt.persistence.Persistence.MatchMode;
 
 /**
@@ -155,37 +157,53 @@ public class ScorerTest extends IntelligenceSpektrumTest {
 
         communicator = new VirtualMachineCommunicator(rankerQueue, rankerQueue);
 
-        ScorerConfiguration rankerConfiguration = new ScorerConfiguration(
+        ScorerConfiguration scorerConfiguration = new ScorerConfiguration(
                 TermWeightStrategy.TRIVIAL,
                 TermVectorSimilarityStrategy.AVG,
                 ScorerConfigurationFlag.USE_MESSAGE_GROUP_SPECIFIC_USER_MODEL
                 );
         if (flag != null) {
-            rankerConfiguration.addFlags(flag);
+            scorerConfiguration.addFlags(flag);
         }
 
-        rankerConfiguration.put(UserModel.DEFAULT_USER_MODEL_TYPE,
+        scorerConfiguration.put(UserModel.DEFAULT_USER_MODEL_TYPE,
                 UserModelConfiguration.getUserModelConfigurationWithTermCountLearningStrategy());
 
-        Scorer ranker = new Scorer(getPersistence(), communicator,
+        Scorer scorer = new Scorer(getPersistence(), communicator,
                 new SimpleMessageGroupMemberRunner<MessageFeatureContext>(userForRanking),
-                rankerConfiguration);
+                scorerConfiguration);
 
-        Learner learner = new Learner(getPersistence(), rankerConfiguration,
-                ranker.getInformationExtractionChain());
+        Learner learner = new Learner(getPersistence(), scorerConfiguration,
+                scorer.getInformationExtractionChain());
 
-        communicator.registerMessageHandler(ranker);
+        communicator.registerMessageHandler(scorer);
         communicator.registerMessageHandler(learner);
 
-        if (rankerConfiguration.hasFlag(ScorerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)) {
+        if (scorerConfiguration.hasFlag(ScorerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)) {
+
+            scorerConfiguration.getUserModelAdapterConfiguration().setAdaptFromMessageGroups(
+                    useAdaptionFromMGs);
+            scorerConfiguration.getUserModelAdapterConfiguration()
+                    .setMessageGroupSimilarityThreshold(0.1d);
+            scorerConfiguration.getUserModelAdapterConfiguration()
+                    .setUseWeightedAverageForAggregatingSimilarUsers(true);
 
             if (useAdaptionFromMGs) {
 
-                adapter = new DirectedUserModelAdapter(getPersistence(),
-                        ranker, new UserSimilarityRetriever(getPersistence()), true);
+                adapter = new DirectedUserModelAdapter(
+                        getPersistence(),
+                        scorer,
+                        new UserSimilarityRetriever(getPersistence()),
+                        new TermBasedMessageGroupSimilarityComputer(getPersistence(),
+                                new JaccardSetSimilarity()),
+                        scorerConfiguration.getUserModelAdapterConfiguration());
             } else {
-                adapter = new DirectedUserModelAdapter(getPersistence(),
-                        ranker, new UserSimilarityRetriever(getPersistence()), false);
+                adapter = new DirectedUserModelAdapter(
+                        getPersistence(),
+                        scorer,
+                        new UserSimilarityRetriever(getPersistence()),
+                        null,
+                        scorerConfiguration.getUserModelAdapterConfiguration());
             }
 
             communicator.registerMessageHandler(adapter);
@@ -194,7 +212,7 @@ public class ScorerTest extends IntelligenceSpektrumTest {
 
         communicator.open();
 
-        return ranker;
+        return scorer;
 
     }
 

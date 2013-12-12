@@ -9,6 +9,9 @@ import org.junit.Test;
 
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
+import de.spektrumprojekt.i.similarity.set.DiceSetSimilarity;
+import de.spektrumprojekt.i.similarity.set.JaccardSetSimilarity;
+import de.spektrumprojekt.i.similarity.set.SetSimilarity;
 
 public class SetSimilarityTest {
 

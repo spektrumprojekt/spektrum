@@ -21,7 +21,7 @@ package de.spektrumprojekt.i.ranker.chain;
 
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
-import de.spektrumprojekt.i.user.similarity.IterativeUserSimilarityComputer;
+import de.spektrumprojekt.i.similarity.user.IterativeUserSimilarityComputer;
 
 /**
  * A command to invoke an {@link IterativeUserSimilarityComputer}

@@ -41,8 +41,9 @@ import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.Scorer;
-import de.spektrumprojekt.i.user.UserScore;
-import de.spektrumprojekt.i.user.UserToUserInterestSelector;
+import de.spektrumprojekt.i.similarity.messagegroup.MessageGroupSimilarityRetriever;
+import de.spektrumprojekt.i.similarity.user.UserScore;
+import de.spektrumprojekt.i.similarity.user.UserToUserInterestSelector;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.Persistence.MatchMode;
 
@@ -63,21 +64,21 @@ public class DirectedUserModelAdapter implements
 
     private final DescriptiveStatistics descriptiveStatistics;
 
-    private final boolean useWeightedAverage;
-
     private final String userModelType;
 
     private final EventHandler<UserModelAdaptationReScoreEvent> userModelAdaptationReScoreEventHandler = new EventHandler<UserModelAdaptationReScoreEvent>();
 
-    private final boolean adaptFromMessageGroups;
+    private final MessageGroupSimilarityRetriever messageGroupSimilarityRetriever;
+
+    private final UserModelAdapterConfiguration userModelAdapterConfiguration;
 
     public DirectedUserModelAdapter(
             Persistence persistence,
             Scorer scorer,
             String userModelType,
             UserToUserInterestSelector userToUserInterestRetriever,
-            boolean adaptFromMessageGroups,
-            boolean useWeightedAverage,
+            MessageGroupSimilarityRetriever messageGroupSimilarityRetriever,
+            UserModelAdapterConfiguration userModelAdapterConfiguration,
             boolean keepStatistics) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
@@ -85,11 +86,17 @@ public class DirectedUserModelAdapter implements
         if (scorer == null) {
             throw new IllegalArgumentException("scorer cannot be null.");
         }
-        if (userToUserInterestRetriever == null) {
+        if (!userModelAdapterConfiguration.isAdaptFromMessageGroups()
+                && userToUserInterestRetriever == null) {
             throw new IllegalArgumentException("userToUserInterestRetriever cannot be null.");
         }
         if (userModelType == null) {
             throw new IllegalArgumentException("userModelType cannot be null.");
+        }
+        if (messageGroupSimilarityRetriever == null
+                && userModelAdapterConfiguration.isAdaptFromMessageGroups()) {
+            throw new IllegalArgumentException(
+                    "messageGroupSimilarityRetriever cannot be null if adaptFromMessageGroups is true.");
         }
         this.persistence = persistence;
         this.scorer = scorer;
@@ -100,23 +107,26 @@ public class DirectedUserModelAdapter implements
         } else {
             descriptiveStatistics = null;
         }
-        this.useWeightedAverage = useWeightedAverage;
         this.userModelType = userModelType;
-        this.adaptFromMessageGroups = adaptFromMessageGroups;
+        this.messageGroupSimilarityRetriever = messageGroupSimilarityRetriever;
+
+        this.userModelAdapterConfiguration = userModelAdapterConfiguration;
+
     }
 
     public DirectedUserModelAdapter(
             Persistence persistence,
             Scorer scorer,
             UserToUserInterestSelector userToUserInterestRetriever,
-            boolean adaptFromMessageGroups) {
+            MessageGroupSimilarityRetriever messageGroupSimilarityRetriever,
+            UserModelAdapterConfiguration userModelAdapterConfiguration) {
         this(
                 persistence,
                 scorer,
                 UserModel.DEFAULT_USER_MODEL_TYPE,
                 userToUserInterestRetriever,
-                adaptFromMessageGroups,
-                true,
+                messageGroupSimilarityRetriever,
+                userModelAdapterConfiguration,
                 false);
     }
 
@@ -171,7 +181,8 @@ public class DirectedUserModelAdapter implements
     }
 
     private ValueAggregator createNewValueAggregator() {
-        return useWeightedAverage ? new IncrementalWeightedAverage() : new MaxValueAggregator();
+        return userModelAdapterConfiguration.isUseWeightedAverageForAggregatingSimilarUsers() ? new IncrementalWeightedAverage()
+                : new MaxValueAggregator();
     }
 
     /**
@@ -188,7 +199,7 @@ public class DirectedUserModelAdapter implements
 
         final Map<Term, ValueAggregator> statsForTermsToAdaptFrom = new HashMap<Term, ValueAggregator>();
 
-        if (adaptFromMessageGroups) {
+        if (userModelAdapterConfiguration.isAdaptFromMessageGroups()) {
             determineTermsBySimilarTopics(message, termsToAdapt, statsForTermsToAdaptFrom);
         } else {
             determineTermsBySimilarUsers(message, termsToAdapt, statsForTermsToAdaptFrom);
@@ -223,6 +234,7 @@ public class DirectedUserModelAdapter implements
         UserModel userModel = persistence.getOrCreateUserModelByUser(message.getUserGlobalId(),
                 userModelType);
         Collection<String> match = new HashSet<String>();
+        Long targetMessageGroupId = null;
         for (Term t : termsToAdapt) {
             Long mgId = t.getMessageGroupId();
             if (adaptTermsOfMG(mgId)) {
@@ -230,7 +242,17 @@ public class DirectedUserModelAdapter implements
                 String toMatch = t.extractMessageGroupFreeTermValue();
                 match.add(toMatch);
             }
+            if (targetMessageGroupId == null) {
+                targetMessageGroupId = t.getMessageGroupId();
+            } else if (!targetMessageGroupId.equals(t.getMessageGroupId())) {
+                throw new IllegalStateException(
+                        "Have different MG for term adaptation. But a single message of one message group. I give up. targetMessageGroupId: "
+                                + targetMessageGroupId
+                                + " t.getMessageGroupId(): "
+                                + t.getMessageGroupId() + " message: " + message);
+            }
         }
+        // user model entriesof other groups
         Collection<UserModelEntry> userModelEntries = persistence.getUserModelEntries(userModel,
                 match,
                 MatchMode.ENDS_WITH);
@@ -239,20 +261,31 @@ public class DirectedUserModelAdapter implements
             for (UserModelEntry entry : userModelEntries) {
 
                 Long mgId = entry.getScoredTerm().getTerm().getMessageGroupId();
-                if (useMGForAdapation(mgId)) {
 
-                    if (!entry.isAdapted()
-                            && MatchMode.EXACT.matches(entry
-                                    .getScoredTerm().getTerm().extractMessageGroupFreeTermValue(),
-                                    t.extractMessageGroupFreeTermValue())) {
+                // get topic sim between mgId and t.getMessageGroupId
+                double topicSim = messageGroupSimilarityRetriever.getMessageGroupSimilarity(
+                        targetMessageGroupId, mgId);
 
-                        ValueAggregator aggregator = getValueAggegrator(statsForTermsToAdaptFrom, t);
+                if (topicSim >= userModelAdapterConfiguration.getMessageGroupSimilarityThreshold()) {
+                    if (useMGForAdapation(mgId)) {
 
-                        aggregator.add(entry.getScoredTerm().getWeight(), entry.getScoreCount());
+                        if (!entry.isAdapted()
+                                && MatchMode.EXACT.matches(entry
+                                        .getScoredTerm().getTerm()
+                                        .extractMessageGroupFreeTermValue(),
+                                        t.extractMessageGroupFreeTermValue())) {
+
+                            ValueAggregator aggregator = getValueAggegrator(
+                                    statsForTermsToAdaptFrom, t);
+
+                            aggregator
+                                    .add(entry.getScoredTerm().getWeight(), entry.getScoreCount());
+                        }
                     }
                 }
             }
         }
+
     }
 
     private void determineTermsBySimilarUsers(DirectedUserModelAdaptationMessage message,
@@ -308,8 +341,13 @@ public class DirectedUserModelAdapter implements
     public String getConfigurationDescription() {
         return this.getClass().getSimpleName()
                 + " userToUserInterestRetriever: "
-                + this.userToUserInterestRetriever.getConfigurationDescription()
-                + " adaptFromMessageGroups: " + this.adaptFromMessageGroups;
+                + (userToUserInterestRetriever == null ? "null" : userToUserInterestRetriever
+                        .getConfigurationDescription())
+                + " userModelAdapterConfiguration: "
+                + this.userModelAdapterConfiguration.getConfigurationDescription()
+                + " messageGroupSimilarityRetriever: "
+                + (messageGroupSimilarityRetriever == null ? "null"
+                        : messageGroupSimilarityRetriever.getConfigurationDescription());
     }
 
     public String getDebugInformation() {

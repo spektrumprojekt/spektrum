@@ -16,15 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package de.spektrumprojekt.i.user.similarity;
+package de.spektrumprojekt.i.similarity.user;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
-import de.spektrumprojekt.i.user.UserScore;
-import de.spektrumprojekt.i.user.UserToUserInterestSelector;
 import de.spektrumprojekt.persistence.Persistence;
 
 public class UserSimilarityRetriever implements UserToUserInterestSelector {

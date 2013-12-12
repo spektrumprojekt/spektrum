@@ -1,4 +1,4 @@
-package de.spektrumprojekt.i.user.similarity;
+package de.spektrumprojekt.i.similarity.user;
 
 import java.util.Collection;
 import java.util.Date;

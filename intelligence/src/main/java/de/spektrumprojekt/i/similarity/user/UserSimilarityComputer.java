@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package de.spektrumprojekt.i.user.similarity;
+package de.spektrumprojekt.i.similarity.user;
 
 import de.spektrumprojekt.commons.computer.Computer;
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;

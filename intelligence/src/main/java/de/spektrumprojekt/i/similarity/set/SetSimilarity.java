@@ -1,4 +1,4 @@
-package de.spektrumprojekt.i.similarity;
+package de.spektrumprojekt.i.similarity.set;
 
 import java.util.Collection;
 
