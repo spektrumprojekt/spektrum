@@ -48,6 +48,21 @@ public class AccessParameterValidationException extends Exception {
     }
 
     /**
+     * create a new exception
+     * 
+     * @param parameterKey
+     *            the key of the parameter whose validation failed
+     * @param message
+     *            the detail message
+     * @param cause
+     *            the cause of the exception
+     */
+    public AccessParameterValidationException(String parameterKey, String message, Throwable cause) {
+        super(message, cause);
+        this.parameterKey = parameterKey;
+    }
+
+    /**
      * @return the key of the parameter whose validation failed
      */
     public String getParameterKey() {

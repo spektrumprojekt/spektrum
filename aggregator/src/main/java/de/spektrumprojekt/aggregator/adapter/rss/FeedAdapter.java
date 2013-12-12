@@ -22,6 +22,9 @@ package de.spektrumprojekt.aggregator.adapter.rss;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Map;
 
@@ -155,12 +158,39 @@ public final class FeedAdapter extends XMLAdapter {
         }
     }
 
-    private HttpGet createHttpGetRequest(String uri, String base64EncodedCredentials) {
+    private HttpGet createHttpGetRequest(String uriString, String base64EncodedCredentials)
+            throws MalformedURLException {
+        URI uri = createUri(uriString);
         HttpGet get = new HttpGet(uri);
         if (SpektrumUtils.notNullOrEmpty(base64EncodedCredentials)) {
             get.setHeader("Authorization", "Basic " + base64EncodedCredentials);
         }
         return get;
+    }
+
+    /**
+     * Create the URI from the string and do a minimal set of validations.
+     * 
+     * @param uriString
+     *            the String to process
+     * @return the URI
+     * @throws MalformedURLException
+     *             in case the URI is not valid
+     */
+    private URI createUri(String uriString) throws MalformedURLException {
+        URI uri;
+        try {
+            uri = new URI(uriString);
+        } catch (URISyntaxException e) {
+            throw new MalformedURLException(e.getMessage());
+        }
+        if (SpektrumUtils.nullOrEmpty(uri.getScheme())) {
+            throw new MalformedURLException("URL not valid: protocoll is missing");
+        }
+        if (SpektrumUtils.nullOrEmpty(uri.getHost())) {
+            throw new MalformedURLException("URL not valid: host is missing");
+        }
+        return uri;
     }
 
     @Override
@@ -205,9 +235,9 @@ public final class FeedAdapter extends XMLAdapter {
         httpClient = new ContentEncodingHttpClient();
         HttpConnectionParams.setConnectionTimeout(httpClient.getParams(), 60000);
         HttpConnectionParams.setSoTimeout(httpClient.getParams(), 120000);
-        get = createHttpGetRequest(uri, base64EncodedCredentials);
-        context.put(CONTEXT_HTTTP_GET, get);
         try {
+            get = createHttpGetRequest(uri, base64EncodedCredentials);
+            context.put(CONTEXT_HTTTP_GET, get);
             httpResult = httpClient.execute(get);
             int statusCode = httpResult.getStatusLine().getStatusCode();
             if (statusCode >= 400) {
@@ -223,6 +253,8 @@ public final class FeedAdapter extends XMLAdapter {
                     StatusType.ERROR_NETWORK);
         } catch (SSLException e) {
             throw new AdapterException("SSLException: " + e.getMessage(), e, StatusType.ERROR_SSL);
+        } catch (MalformedURLException e) {
+            throw new AdapterException(e.getMessage(), e, StatusType.ERROR_NETWORK);
         } catch (IOException e) {
             throw new AdapterException("IOException: " + e.getMessage(), e,
                     StatusType.ERROR_NETWORK);
@@ -321,8 +353,15 @@ public final class FeedAdapter extends XMLAdapter {
                 }
             }
         }
-        if (uri == null) {
+        if (uri == null || uri.getPropertyValue() == null) {
             throw new AccessParameterMissingException(ACCESS_PARAMETER_URI);
+        } else {
+            try {
+                createUri(uri.getPropertyValue());
+            } catch (MalformedURLException e) {
+                throw new AccessParameterValidationException(ACCESS_PARAMETER_URI, "URL not valid",
+                        e);
+            }
         }
         prepareCredentialAccessParameters(login, clearPassword, password, accessParameters);
     }
