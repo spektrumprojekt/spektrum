@@ -119,6 +119,8 @@ public abstract class BasePollingAdapter extends BaseAdapter {
                             e.getStatusType(), e);
                 } catch (Throwable t) {
                     LOGGER.error("encountered exception " + t + " for " + sourceStatus, t);
+                    triggerListener(sourceStatus.getSource(),
+                            StatusType.ERROR_UNSPECIFIED, null);
                 }
             }
         };
