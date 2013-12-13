@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -152,20 +151,7 @@ public class TermBasedMessageGroupSimilarityComputer implements MessageGroupSimi
                 mgs.add(mgSim);
             }
         }
-        Collections.sort(mgs, new Comparator<MessageGroupSimilarity>() {
-
-            @Override
-            public int compare(MessageGroupSimilarity o1, MessageGroupSimilarity o2) {
-
-                if (o1.getSim() - o2.getSim() > 0) {
-                    return 1;
-                }
-                if (o1.getSim() - o2.getSim() < 0) {
-                    return -1;
-                }
-                return 0;
-            }
-        });
+        Collections.sort(mgs, MessageGroupSimilarityComparator.INSTANCE);
 
         if (mgs.size() <= topN || topN == 0) {
             return mgs;

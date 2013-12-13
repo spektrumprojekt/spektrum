@@ -176,6 +176,15 @@ public class UserPersistence extends AbstractPersistenceLayer {
         return getEntityByGlobalId(User.class, userGlobalId);
     }
 
+    public Collection<UserModelEntry> getUserModelEntries(UserModel userModel,
+            Collection<String> termValuesToMatch, Collection<Long> messageGroupIdsToConsider,
+            MatchMode matchMode) {
+
+        throw new UnsupportedOperationException(
+                "To be implemented. Enhance getUserModelEntries with filtering for mgs");
+        // return this.getUserModelEntries(userModel, termValuesToMatch, matchMode);
+    }
+
     public Collection<UserModelEntry> getUserModelEntries(final UserModel userModel,
             final Collection<String> termValuesToMatch, final MatchMode matchMode) {
         if (termValuesToMatch == null || termValuesToMatch.isEmpty()) {

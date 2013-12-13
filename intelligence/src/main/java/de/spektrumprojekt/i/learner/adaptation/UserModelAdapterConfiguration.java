@@ -11,6 +11,8 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
 
     // use only the top mgs for adaptation, 0 for all
     private int topNMessageGroupsToUseForAdaptation;
+    // use only the top users for adaptation, 0 for all
+    private int topNUsersToUseForAdaptation;
 
     private boolean userSelectorUseHITS;
 
@@ -53,6 +55,10 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
 
     public int getTopNMessageGroupsToUseForAdaptation() {
         return topNMessageGroupsToUseForAdaptation;
+    }
+
+    public int getTopNUsersToUseForAdaptation() {
+        return topNUsersToUseForAdaptation;
     }
 
     public UserModelBasedSimilarityConfiguration getUserModelBasedSimilarityConfiguration() {
@@ -121,6 +127,10 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
 
     public void setTopNMessageGroupsToUseForAdaptation(int topNMessageGroupsToUseForAdaptation) {
         this.topNMessageGroupsToUseForAdaptation = topNMessageGroupsToUseForAdaptation;
+    }
+
+    public void setTopNUsersToUseForAdaptation(int topNUsersToUseForAdaptation) {
+        this.topNUsersToUseForAdaptation = topNUsersToUseForAdaptation;
     }
 
     public void setUserModelBasedSimilarityConfiguration(

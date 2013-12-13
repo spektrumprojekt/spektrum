@@ -90,6 +90,17 @@ public class MessageGroupSimilarity implements SpektrumParseableElement {
         return messageGroupId2;
     }
 
+    public Long getOtherMessageGroupId(Long targetMessageGroupId) {
+        if (this.messageGroupId1.equals(targetMessageGroupId)) {
+            return messageGroupId2;
+        }
+        if (this.messageGroupId2.equals(targetMessageGroupId)) {
+            return messageGroupId1;
+        }
+        throw new IllegalArgumentException(targetMessageGroupId + " is not part of this sim: "
+                + this);
+    }
+
     public float getSim() {
         return sim;
     }

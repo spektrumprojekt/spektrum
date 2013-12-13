@@ -19,8 +19,10 @@
 
 package de.spektrumprojekt.i.learner.adaptation;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -45,6 +47,7 @@ import de.spektrumprojekt.i.ranker.Scorer;
 import de.spektrumprojekt.i.similarity.messagegroup.MessageGroupSimilarity;
 import de.spektrumprojekt.i.similarity.messagegroup.MessageGroupSimilarityRetriever;
 import de.spektrumprojekt.i.similarity.user.UserScore;
+import de.spektrumprojekt.i.similarity.user.UserScoreComparator;
 import de.spektrumprojekt.i.similarity.user.UserToUserInterestSelector;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.Persistence.MatchMode;
@@ -227,12 +230,12 @@ public class DirectedUserModelAdapter implements
 
         UserModel userModel = persistence.getOrCreateUserModelByUser(message.getUserGlobalId(),
                 userModelType);
-        Collection<String> match = new HashSet<String>();
+        Collection<String> termMatch = new HashSet<String>();
         Long targetMessageGroupId = null;
         for (Term t : termsToAdapt) {
 
             String toMatch = t.extractMessageGroupFreeTermValue();
-            match.add(toMatch);
+            termMatch.add(toMatch);
 
             if (targetMessageGroupId == null) {
                 targetMessageGroupId = t.getMessageGroupId();
@@ -244,16 +247,23 @@ public class DirectedUserModelAdapter implements
                                 + t.getMessageGroupId() + " message: " + message);
             }
         }
-        // user model entries of other groups
-        Collection<UserModelEntry> userModelEntries = persistence.getUserModelEntries(userModel,
-                match,
-                MatchMode.ENDS_WITH);
 
         int topNMGsToUse = userModelAdapterConfiguration.getTopNMessageGroupsToUseForAdaptation();
 
         List<MessageGroupSimilarity> messageGroupSimilarities = topNMGsToUse == 0 ? null
                 : messageGroupSimilarityRetriever.getTopSimilarities(targetMessageGroupId,
                         topNMGsToUse);
+        Collection<Long> messageGroupIds = new HashSet<Long>();
+        for (MessageGroupSimilarity sim : messageGroupSimilarities) {
+            messageGroupIds.add(sim.getOtherMessageGroupId(targetMessageGroupId));
+        }
+
+        // user model entries of other groups
+        Collection<UserModelEntry> userModelEntries = persistence.getUserModelEntries(
+                userModel,
+                termMatch,
+                messageGroupIds.size() == 0 ? null : messageGroupIds,
+                MatchMode.ENDS_WITH);
 
         for (Term t : termsToAdapt) {
             userModelEntries: for (UserModelEntry entry : userModelEntries) {
@@ -306,9 +316,14 @@ public class DirectedUserModelAdapter implements
         }
 
         // Compute user similarity between the user and the users of the found user models.
-        Collection<UserScore> userToUserInterestScores = this.userToUserInterestRetriever
+        List<UserScore> userToUserInterestScores = this.userToUserInterestRetriever
                 .getUserToUserInterest(message.getUserGlobalId(),
                         message.getMessageGroupGlobalId(), users);
+
+        int topNUsers = this.userModelAdapterConfiguration.getTopNUsersToUseForAdaptation();
+        if (topNUsers > 0) {
+            userToUserInterestScores = getTopN(userToUserInterestScores, topNUsers);
+        }
 
         // 4. If the user similarity satisfies a threshold u take the weight of the term and apply
         // it to UMu. If there are more weights available use a weighted average of the term weights
@@ -367,6 +382,15 @@ public class DirectedUserModelAdapter implements
 
     public long getRequestAdaptedCount() {
         return requestedAdaptedCount;
+    }
+
+    private List<UserScore> getTopN(List<UserScore> userToUserInterestScores, int topN) {
+        if (userToUserInterestScores.size() <= topN) {
+            return userToUserInterestScores;
+        }
+        Collections.sort(userToUserInterestScores, UserScoreComparator.INSTANCE);
+
+        return new ArrayList<UserScore>(userToUserInterestScores.subList(0, topN - 1));
     }
 
     public EventHandler<UserModelAdaptationReScoreEvent> getUserModelAdaptationReScoreEventHandler() {

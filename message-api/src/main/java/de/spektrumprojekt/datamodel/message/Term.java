@@ -88,6 +88,7 @@ public class Term extends Identifiable {
     private int count;
 
     private transient Long messageGroupId;
+    private transient String mgFreeValue;
 
     protected Term() {
         // constructor only for ORM.
@@ -104,11 +105,11 @@ public class Term extends Identifiable {
         Pair<Long, String> mgNamePair = extractMessageGroupOfName(value);
 
         this.messageGroupId = mgNamePair.getLeft();
+        this.mgFreeValue = mgNamePair.getRight();
     }
 
     public String extractMessageGroupFreeTermValue() {
-        return this.getMessageGroupId() == null ? this.value
-                : extractMessageGroupOfName(this.value).getRight();
+        return this.mgFreeValue;
     }
 
     public TermCategory getCategory() {

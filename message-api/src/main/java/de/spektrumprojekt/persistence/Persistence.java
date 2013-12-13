@@ -31,11 +31,11 @@ import de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
-import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
 import de.spektrumprojekt.datamodel.message.TermFrequency;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.source.Source;
@@ -178,6 +178,10 @@ public interface Persistence {
     TermFrequency getTermFrequency();
 
     User getUserByGlobalId(String userGlobalId);
+
+    Collection<UserModelEntry> getUserModelEntries(UserModel userModel,
+            Collection<String> termsToMatch, Collection<Long> messageGroupIdsToConsider,
+            MatchMode matchMode);
 
     Collection<UserModelEntry> getUserModelEntries(UserModel userModel,
             Collection<String> termsToMatch, MatchMode matchMode);
