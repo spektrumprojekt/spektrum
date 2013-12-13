@@ -4,6 +4,7 @@ import de.spektrumprojekt.callbacks.MessageGroupMemberRunner;
 import de.spektrumprojekt.communication.Communicator;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.i.learner.Learner;
+import de.spektrumprojekt.i.ranker.CollaborativeConfiguration;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.Scorer;
 import de.spektrumprojekt.i.ranker.ScorerConfiguration;
@@ -31,19 +32,22 @@ public class CollaborativeIntelligenceFactory {
          * new CollLearnerCommand(persistence, collaborativeRankerComputer.getRecommender());
          */
 
-        if (!CollaborativeScoreComputerType.USER2MESSAGE.equals(scorerConfiguration
+        CollaborativeConfiguration collaborativeConfiguration = scorerConfiguration
+                .getCollaborativeConfiguration();
+
+        if (!CollaborativeScoreComputerType.USER2MESSAGE.equals(collaborativeConfiguration
                 .getCollaborativeScoreComputerType())) {
             throw new UnsupportedOperationException(
-                    "Cannot handle this " + scorerConfiguration.getCollaborativeScoreComputerType()
+                    "Cannot handle this "
+                            + collaborativeConfiguration.getCollaborativeScoreComputerType()
                             + ".");
         }
 
         FullCollRelevanceScoreCommand fullCollabRankCommand = new FullCollRelevanceScoreCommand(
                 persistence,
                 observationTypesToUseForDataModel,
-                scorerConfiguration.getCollaborativeScoreComputerType(),
-                null,
-                useGenericRecommender);
+                collaborativeConfiguration,
+                null);
 
         ranker = new SpecialRanker<FullCollRelevanceScoreCommand>(persistence,
                 communicator, memberRunner, scorerConfiguration, fullCollabRankCommand);

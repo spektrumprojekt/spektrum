@@ -76,7 +76,7 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
     private Map<Feature, Float> learningFeatureWeights;
     private Map<Feature, Float> learningFeatureTresholds;
 
-    private CollaborativeScoreComputerType collaborativeScoreComputerType;
+    private final CollaborativeConfiguration collaborativeConfiguration = new CollaborativeConfiguration();
 
     private double messageGroupSimilarityThreshold;
 
@@ -168,8 +168,8 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
         return clone;
     }
 
-    public CollaborativeScoreComputerType getCollaborativeScoreComputerType() {
-        return collaborativeScoreComputerType;
+    public CollaborativeConfiguration getCollaborativeConfiguration() {
+        return collaborativeConfiguration;
     }
 
     @Override
@@ -321,7 +321,8 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
 
     public void setCollaborativeScoreComputerType(
             CollaborativeScoreComputerType collaborativeScoreComputerType) {
-        this.collaborativeScoreComputerType = collaborativeScoreComputerType;
+        this.collaborativeConfiguration
+                .setCollaborativeScoreComputerType(collaborativeScoreComputerType);
     }
 
     /**
@@ -501,7 +502,8 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
                 + useFixedDefaultLearningFeatureWeights + ", featureWeights=" + featureWeights
                 + ", scoreToLearnThreshold=" + scoreToLearnThreshold + ", learningFeatureWeights="
                 + learningFeatureWeights + ", learningFeatureTresholds=" + learningFeatureTresholds
-                + ", collaborativeScoreComputerType=" + collaborativeScoreComputerType + "]";
+                + ", collaborativeConfiguration=" + collaborativeConfiguration
+                + ", messageGroupSimilarityThreshold=" + messageGroupSimilarityThreshold + "]";
     }
 
 }

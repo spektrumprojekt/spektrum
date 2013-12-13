@@ -1,46 +1,10 @@
 package de.spektrumprojekt.i.learner.adaptation;
 
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
-import de.spektrumprojekt.i.similarity.set.SetSimilarity;
 import de.spektrumprojekt.i.similarity.user.UserSimilaritySimType;
 import de.spektrumprojekt.i.similarity.user.hits.HITSUserMentionComputer.ScoreToUse;
 
 public class UserModelAdapterConfiguration implements ConfigurationDescriptable {
-
-    public static class UserModelBasedSimilarityConfiguration implements ConfigurationDescriptable {
-
-        private SetSimilarity setSimilarity;
-        private String precomputedUserSimilaritesFilename;
-
-        @Override
-        public String getConfigurationDescription() {
-            return toString();
-        }
-
-        public String getPrecomputedUserSimilaritesFilename() {
-            return precomputedUserSimilaritesFilename;
-        }
-
-        public SetSimilarity getSetSimilarity() {
-            return setSimilarity;
-        }
-
-        public void setPrecomputedUserSimilaritesFilename(String precomputedUserSimilaritesFilename) {
-            this.precomputedUserSimilaritesFilename = precomputedUserSimilaritesFilename;
-        }
-
-        public void setSetSimilarity(SetSimilarity setSimilarity) {
-            this.setSimilarity = setSimilarity;
-        }
-
-        @Override
-        public String toString() {
-            return "UserModelBasedSimilarityConfiguration [setSimilarity=" + setSimilarity
-                    + ", precomputedUserSimilaritesFilename=" + precomputedUserSimilaritesFilename
-                    + "]";
-        }
-
-    }
 
     private double userSimilarityThreshold;
     private double messageGroupSimilarityThreshold;

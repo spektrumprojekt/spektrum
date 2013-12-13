@@ -16,6 +16,7 @@ import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.helper.MessageHelper;
+import de.spektrumprojekt.i.ranker.CollaborativeConfiguration;
 import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
 import de.spektrumprojekt.persistence.Persistence;
 
@@ -32,9 +33,9 @@ public class CombiningUserToMessageGroupSpecificTermCollaborativeScoreComputer e
 
     public CombiningUserToMessageGroupSpecificTermCollaborativeScoreComputer(
             Persistence persistence,
-            TermVectorSimilarityComputer termVectorSimilarityComputer,
-            boolean useGenericRecommender) {
-        super(persistence, useGenericRecommender);
+            CollaborativeConfiguration collaborativeConfiguration,
+            TermVectorSimilarityComputer termVectorSimilarityComputer) {
+        super(persistence, collaborativeConfiguration);
 
         if (termVectorSimilarityComputer == null) {
             throw new IllegalArgumentException("termVectorSimilarityComputer cannot be null.");
@@ -70,8 +71,8 @@ public class CombiningUserToMessageGroupSpecificTermCollaborativeScoreComputer e
 
             UserToMessageGroupSpecificTermCollaborativeScoreComputer mgCollabComputer = new UserToMessageGroupSpecificTermCollaborativeScoreComputer(
                     getPersistence(),
+                    getCollaborativeConfiguration(),
                     termVectorSimilarityComputer,
-                    isUseGenericRecommender(),
                     mg2messageEntry.getKey());
 
             mgCollabComputer.init();

@@ -1,6 +1,7 @@
 package de.spektrumprojekt.i.collab;
 
 import de.spektrumprojekt.datamodel.observation.ObservationType;
+import de.spektrumprojekt.i.ranker.CollaborativeConfiguration;
 import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
 import de.spektrumprojekt.persistence.Persistence;
 
@@ -11,26 +12,28 @@ public enum CollaborativeScoreComputerType {
 
     public CollaborativeScoreComputer createComputer(
             Persistence persistence,
+            CollaborativeConfiguration collaborativeConfiguration,
             ObservationType[] observationTypesToUseForDataModel,
-            TermVectorSimilarityComputer termVectorSimilarityComputer,
-            boolean useGenericRecommender) {
+            TermVectorSimilarityComputer termVectorSimilarityComputer) {
         CollaborativeScoreComputer collaborativeRankerComputer;
         switch (this) {
         case USER2MESSAGE:
             collaborativeRankerComputer = new UserToMessageCollaborativeScoreComputer(
                     persistence,
-                    observationTypesToUseForDataModel,
-                    useGenericRecommender);
+                    collaborativeConfiguration,
+                    observationTypesToUseForDataModel);
             break;
         case USER2TERM:
             collaborativeRankerComputer = new UserToTermCollaborativeScoreComputer(
                     persistence,
-                    termVectorSimilarityComputer,
-                    useGenericRecommender);
+                    collaborativeConfiguration,
+                    termVectorSimilarityComputer);
             break;
         case USER2TERM_PER_MESSAGE_GROUP:
             collaborativeRankerComputer = new CombiningUserToMessageGroupSpecificTermCollaborativeScoreComputer(
-                    persistence, termVectorSimilarityComputer, useGenericRecommender);
+                    persistence,
+                    collaborativeConfiguration,
+                    termVectorSimilarityComputer);
             break;
         default:
             throw new IllegalArgumentException(this + " is unhandled.");

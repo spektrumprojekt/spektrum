@@ -1,6 +1,5 @@
 package de.spektrumprojekt.i.collab;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collection;
@@ -9,12 +8,14 @@ import java.util.HashSet;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.mahout.cf.taste.common.TasteException;
+import org.apache.mahout.cf.taste.common.Weighting;
 import org.apache.mahout.cf.taste.impl.common.FastByIDMap;
 import org.apache.mahout.cf.taste.impl.common.LongPrimitiveIterator;
 import org.apache.mahout.cf.taste.impl.model.GenericDataModel;
 import org.apache.mahout.cf.taste.impl.neighborhood.ThresholdUserNeighborhood;
 import org.apache.mahout.cf.taste.impl.recommender.CachingRecommender;
 import org.apache.mahout.cf.taste.impl.recommender.GenericUserBasedRecommender;
+import org.apache.mahout.cf.taste.impl.recommender.slopeone.MemoryDiffStorage;
 import org.apache.mahout.cf.taste.impl.recommender.slopeone.SlopeOneRecommender;
 import org.apache.mahout.cf.taste.model.DataModel;
 import org.apache.mahout.cf.taste.model.PreferenceArray;
@@ -29,6 +30,7 @@ import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
+import de.spektrumprojekt.i.ranker.CollaborativeConfiguration;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.simple.SimplePersistence;
 
@@ -68,13 +70,9 @@ public abstract class CollaborativeScoreComputer implements Computer {
 
     private int nonZeroRanks;
 
-    private final boolean useGenericRecommender;
+    private final CollaborativeConfiguration collaborativeConfiguration;
 
     private int positivePreferenceCount, negativePreferenceCount;
-
-    private File preferencesDebugFile = new File("preferences.txt");
-
-    private boolean outPreferencesToFile;
 
     private Recommender recommender;
 
@@ -84,20 +82,28 @@ public abstract class CollaborativeScoreComputer implements Computer {
 
     private Collection<User> users;
 
-    public CollaborativeScoreComputer(Persistence persistence, boolean useGenericRecommender) {
+    public CollaborativeScoreComputer(Persistence persistence,
+            CollaborativeConfiguration collaborativeConfiguration) {
         if (!(persistence instanceof SimplePersistence)) {
             throw new IllegalArgumentException("Can only handle SimplePersistence at the moment.");
         }
+        if (collaborativeConfiguration == null) {
+            throw new IllegalArgumentException("collaborativeConfiguration cannot be null");
+        }
+        if (collaborativeConfiguration.getCollaborativeScoreComputerType() == null) {
+            throw new IllegalArgumentException(
+                    "collaborativeConfiguration.collaborativeScoreComputerType cannot be null");
+        }
         this.persistence = (SimplePersistence) persistence;
-        this.useGenericRecommender = useGenericRecommender;
+        this.collaborativeConfiguration = collaborativeConfiguration;
     }
 
     private DataModel createDataModel() {
         DataModel dataModel = null;
         FileWriter fw = null;
         try {
-            if (outPreferencesToFile) {
-                fw = new FileWriter(preferencesDebugFile);
+            if (collaborativeConfiguration.isOutPreferencesToFile()) {
+                fw = new FileWriter(collaborativeConfiguration.getPreferencesDebugFile());
             }
 
             FastByIDMap<PreferenceArray> userData = new FastByIDMap<PreferenceArray>(users.size());
@@ -133,6 +139,10 @@ public abstract class CollaborativeScoreComputer implements Computer {
         }
 
         return users;
+    }
+
+    public CollaborativeConfiguration getCollaborativeConfiguration() {
+        return collaborativeConfiguration;
     }
 
     @Override
@@ -181,10 +191,6 @@ public abstract class CollaborativeScoreComputer implements Computer {
         return preferenceCount;
     }
 
-    public File getPreferencesDebugFile() {
-        return preferencesDebugFile;
-    }
-
     public Recommender getRecommender() {
         return recommender;
     }
@@ -216,23 +222,25 @@ public abstract class CollaborativeScoreComputer implements Computer {
         if (dataModel.getNumItems() == 0) {
             emptyDataModel = true;
         } else {
-            if (useGenericRecommender) {
-                recommender = new GenericUserBasedRecommender(
+            if (collaborativeConfiguration.isUseGenericRecommender()) {
+                recommender = new CachingRecommender(new GenericUserBasedRecommender(
                         dataModel,
                         userNeighborhood,
-                        userSimilarity);
+                        userSimilarity));
             } else {
-                recommender = new CachingRecommender(new SlopeOneRecommender(dataModel));
+
+                Weighting weighting = this.collaborativeConfiguration.isSlopeOneUseWeighted() ? Weighting.WEIGHTED
+                        : Weighting.UNWEIGHTED;
+                Weighting stdDevWeighting = this.collaborativeConfiguration
+                        .isSlopeOneUseStdDevWeighted() ? Weighting.WEIGHTED : Weighting.UNWEIGHTED;
+
+                recommender = new CachingRecommender(new SlopeOneRecommender(
+                        dataModel, weighting, stdDevWeighting, new MemoryDiffStorage(
+                                dataModel,
+                                stdDevWeighting,
+                                this.collaborativeConfiguration.getSlopeOneMaxEntries())));
             }
         }
-    }
-
-    public boolean isOutPreferencesToFile() {
-        return outPreferencesToFile;
-    }
-
-    public boolean isUseGenericRecommender() {
-        return useGenericRecommender;
     }
 
     @Override
@@ -305,20 +313,12 @@ public abstract class CollaborativeScoreComputer implements Computer {
         this.nonZeroRanks = nonZeroRanks;
     }
 
-    public void setOutPreferencesToFile(boolean outPreferencesToFile) {
-        this.outPreferencesToFile = outPreferencesToFile;
-    }
-
     protected void setPositivePreferenceCount(int positivePreferenceCount) {
         this.positivePreferenceCount = positivePreferenceCount;
     }
 
     protected void setPreferenceCount(int preferenceCount) {
         this.preferenceCount = preferenceCount;
-    }
-
-    public void setPreferencesDebugFile(File preferencesDebugFile) {
-        this.preferencesDebugFile = preferencesDebugFile;
     }
 
     public String someStats() throws TasteException {
@@ -339,22 +339,13 @@ public abstract class CollaborativeScoreComputer implements Computer {
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("CollaborativeScoreComputer [preferenceCount=");
-        builder.append(preferenceCount);
-        builder.append(", nonZeroRanks=");
-        builder.append(nonZeroRanks);
-        builder.append(", useGenericRecommender=");
-        builder.append(useGenericRecommender);
-        builder.append(", positivePreferenceCount=");
-        builder.append(positivePreferenceCount);
-        builder.append(", negativePreferenceCount=");
-        builder.append(negativePreferenceCount);
-        builder.append(", outPreferencesToFile=");
-        builder.append(outPreferencesToFile);
-        builder.append(", nanScores=");
-        builder.append(nanScores);
-        builder.append("]");
-        return builder.toString();
+        return "CollaborativeScoreComputer [dataModel=" + dataModel + ", userSimilarity="
+                + userSimilarity + ", userNeighborhood=" + userNeighborhood + ", messageScores="
+                + messageScores + ", preferenceCount=" + preferenceCount + ", nonZeroRanks="
+                + nonZeroRanks + ", collaborativeConfiguration=" + collaborativeConfiguration
+                + ", positivePreferenceCount=" + positivePreferenceCount
+                + ", negativePreferenceCount=" + negativePreferenceCount + ", recommender="
+                + recommender + ", nanScores=" + nanScores + ", emptyDataModel=" + emptyDataModel
+                + ", users=" + users + "]";
     }
 }

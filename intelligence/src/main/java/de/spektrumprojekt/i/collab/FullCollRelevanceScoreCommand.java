@@ -8,6 +8,7 @@ import de.spektrumprojekt.commons.chain.CommandException;
 import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.user.User;
+import de.spektrumprojekt.i.ranker.CollaborativeConfiguration;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
 import de.spektrumprojekt.persistence.Persistence;
@@ -19,26 +20,26 @@ public class FullCollRelevanceScoreCommand implements Command<UserSpecificMessag
 
     private CollaborativeScoreComputer collaborativeRankerComputer;
 
-    private final boolean useGenericRecommender;
-
     private int lastObservationsSize = 0;
 
     private final ObservationType[] observationTypesToUseForDataModel;
 
-    private final CollaborativeScoreComputerType collaborativeScoreComputerType;
+    private final CollaborativeConfiguration collaborativeConfiguration;
 
     private final TermVectorSimilarityComputer termVectorSimilarityComputer;
 
     public FullCollRelevanceScoreCommand(
             Persistence persistence,
             ObservationType[] observationTypesToUseForDataModel,
-            CollaborativeScoreComputerType collaborativeScoreComputerType,
-            TermVectorSimilarityComputer termVectorSimilarityComputer,
-            boolean useGenericRecommender) {
+            CollaborativeConfiguration collaborativeConfiguration,
+            TermVectorSimilarityComputer termVectorSimilarityComputer) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
         }
-        if (collaborativeScoreComputerType == null) {
+        if (collaborativeConfiguration == null) {
+            throw new IllegalArgumentException("collaborativeScoreComputerType cannot be null.");
+        }
+        if (collaborativeConfiguration.getCollaborativeScoreComputerType() == null) {
             throw new IllegalArgumentException("collaborativeScoreComputerType cannot be null.");
         }
         if (!(persistence instanceof SimplePersistence)) {
@@ -51,8 +52,7 @@ public class FullCollRelevanceScoreCommand implements Command<UserSpecificMessag
         }
         this.persistence = (SimplePersistence) persistence;
         this.observationTypesToUseForDataModel = observationTypesToUseForDataModel;
-        this.useGenericRecommender = useGenericRecommender;
-        this.collaborativeScoreComputerType = collaborativeScoreComputerType;
+        this.collaborativeConfiguration = collaborativeConfiguration;
         this.termVectorSimilarityComputer = termVectorSimilarityComputer;
     }
 
@@ -60,8 +60,8 @@ public class FullCollRelevanceScoreCommand implements Command<UserSpecificMessag
     public String getConfigurationDescription() {
         return getClass().getSimpleName()
                 + " observationTypesToUseForDataModel: " + observationTypesToUseForDataModel
-                + " useGenericRecommender: " + useGenericRecommender
-                + " collaborativeScoreComputerType: " + collaborativeScoreComputerType
+                + " collaborativeConfiguration: "
+                + collaborativeConfiguration.getConfigurationDescription()
                 + " termVectorSimilarityComputer: " + termVectorSimilarityComputer;
     }
 
@@ -70,11 +70,12 @@ public class FullCollRelevanceScoreCommand implements Command<UserSpecificMessag
         int currentObs = persistence.getObservations(ObservationType.RATING).size();
         if (currentObs > lastObservationsSize) {
 
-            collaborativeRankerComputer = this.collaborativeScoreComputerType.createComputer(
-                    persistence,
-                    observationTypesToUseForDataModel,
-                    termVectorSimilarityComputer,
-                    useGenericRecommender);
+            collaborativeRankerComputer = this.collaborativeConfiguration
+                    .getCollaborativeScoreComputerType().createComputer(
+                            persistence,
+                            collaborativeConfiguration,
+                            observationTypesToUseForDataModel,
+                            termVectorSimilarityComputer);
             collaborativeRankerComputer.init();
 
             lastObservationsSize = currentObs;

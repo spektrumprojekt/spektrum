@@ -18,6 +18,7 @@ import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.helper.MessageHelper;
+import de.spektrumprojekt.i.ranker.CollaborativeConfiguration;
 import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.simple.UserModelHolder;
@@ -28,9 +29,9 @@ public class UserToTermCollaborativeScoreComputer extends CollaborativeScoreComp
 
     public UserToTermCollaborativeScoreComputer(
             Persistence persistence,
-            TermVectorSimilarityComputer termVectorSimilarityComputer,
-            boolean useGenericRecommender) {
-        super(persistence, useGenericRecommender);
+            CollaborativeConfiguration collaborativeConfiguration,
+            TermVectorSimilarityComputer termVectorSimilarityComputer) {
+        super(persistence, collaborativeConfiguration);
         if (termVectorSimilarityComputer == null) {
             throw new IllegalArgumentException("termVectorSimilarityComputer cannot be null.");
         }
@@ -91,7 +92,7 @@ public class UserToTermCollaborativeScoreComputer extends CollaborativeScoreComp
         genericUserPreferenceArray.setItemID(index, scoredTerm.getTerm().getId());
         genericUserPreferenceArray.setValue(index, pref);
 
-        if (isOutPreferencesToFile()) {
+        if (getCollaborativeConfiguration().isOutPreferencesToFile()) {
             fw.write(index + " " + scoredTerm.getTerm().getValue() + " " + user.getId() + " "
                     + pref + "\n");
         }

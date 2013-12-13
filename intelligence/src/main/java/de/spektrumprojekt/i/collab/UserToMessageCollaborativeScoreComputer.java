@@ -20,6 +20,7 @@ import de.spektrumprojekt.datamodel.observation.Interest;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.user.User;
+import de.spektrumprojekt.i.ranker.CollaborativeConfiguration;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.simple.SimplePersistence;
 import de.spektrumprojekt.persistence.simple.SimplePersistence.ObservationKey;
@@ -44,9 +45,11 @@ public class UserToMessageCollaborativeScoreComputer extends CollaborativeScoreC
 
     private final ObservationType[] observationTypesToUseForDataModel;
 
-    public UserToMessageCollaborativeScoreComputer(Persistence persistence,
-            ObservationType[] observationTypesToUseForDataModel, boolean useGenericRecommender) {
-        super(persistence, useGenericRecommender);
+    public UserToMessageCollaborativeScoreComputer(
+            Persistence persistence,
+            CollaborativeConfiguration collaborativeConfiguration,
+            ObservationType[] observationTypesToUseForDataModel) {
+        super(persistence, collaborativeConfiguration);
 
         if (observationTypesToUseForDataModel == null
                 || observationTypesToUseForDataModel.length == 0) {
@@ -104,7 +107,7 @@ public class UserToMessageCollaborativeScoreComputer extends CollaborativeScoreC
 
             index++;
 
-            if (isOutPreferencesToFile()) {
+            if (getCollaborativeConfiguration().isOutPreferencesToFile()) {
                 fw.write(index + " " + message.getGlobalId() + " " + user.getId() + " "
                         + pref
                         + "\n");
