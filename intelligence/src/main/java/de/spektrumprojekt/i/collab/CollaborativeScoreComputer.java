@@ -44,6 +44,9 @@ public abstract class CollaborativeScoreComputer implements Computer {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(CollaborativeScoreComputer.class);
 
+    // that is a hack
+    public static boolean TEST_MODE = false;
+
     public static float convertScoreFromMahoutValue(float score, boolean minmax) {
         float val = (score + 1) / 2f;
         if (minmax) {
@@ -234,11 +237,13 @@ public abstract class CollaborativeScoreComputer implements Computer {
                 Weighting stdDevWeighting = this.collaborativeConfiguration
                         .isSlopeOneUseStdDevWeighted() ? Weighting.WEIGHTED : Weighting.UNWEIGHTED;
 
+                long maxEntries = this.collaborativeConfiguration.getSlopeOneMaxEntries() <= 0 ? Long.MAX_VALUE
+                        : this.collaborativeConfiguration.getSlopeOneMaxEntries();
                 recommender = new CachingRecommender(new SlopeOneRecommender(
                         dataModel, weighting, stdDevWeighting, new MemoryDiffStorage(
                                 dataModel,
                                 stdDevWeighting,
-                                this.collaborativeConfiguration.getSlopeOneMaxEntries())));
+                                maxEntries)));
             }
         }
     }
@@ -278,6 +283,11 @@ public abstract class CollaborativeScoreComputer implements Computer {
                 if (!Float.isNaN(rank)) {
                     UserMessageScore messageScore = this.persistence.getMessageRank(
                             user.getGlobalId(), message.getGlobalId());
+
+                    if (messageScore == null && TEST_MODE) {
+                        messageScore = new UserMessageScore(message.getGlobalId(),
+                                user.getGlobalId());
+                    }
                     if (messageScore == null) {
                         throw new IllegalStateException(
                                 "This is actually a rescore, so the message score should be computed somehow including all the features.");

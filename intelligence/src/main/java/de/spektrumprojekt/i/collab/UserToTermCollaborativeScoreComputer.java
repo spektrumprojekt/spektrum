@@ -108,7 +108,8 @@ public class UserToTermCollaborativeScoreComputer extends CollaborativeScoreComp
                 UserModel.DEFAULT_USER_MODEL_TYPE);
 
         boolean allMustExist = false;
-        if (message.getAuthorGlobalId().equals(user.getGlobalId())) {
+        if (message.getAuthorGlobalId() != null
+                && message.getAuthorGlobalId().equals(user.getGlobalId())) {
             allMustExist = true;
         }
 
