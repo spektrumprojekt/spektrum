@@ -44,34 +44,34 @@ public class SetSimilarityTest {
         // boundaries
         Assert.assertEquals(1f,
                 setSimilarity.computeSimilarity(Arrays.asList(t[0], t[1], t[2]),
-                        Arrays.asList(t[0], t[1], t[2])), E);
+                        Arrays.asList(t[0], t[1], t[2])).getSim(), E);
         Assert.assertEquals(0f,
                 setSimilarity.computeSimilarity(Arrays.asList(t[0], t[1], t[2]),
-                        Arrays.asList(t[3])), E);
+                        Arrays.asList(t[3])).getSim(), E);
         Assert.assertEquals(0f,
                 setSimilarity.computeSimilarity(Arrays.asList(t[0]),
-                        new ArrayList<Term>()), E);
+                        new ArrayList<Term>()).getSim(), E);
 
         // some vals
         Assert.assertEquals(2 / 5f,
                 setSimilarity.computeSimilarity(
                         Arrays.asList(t[0], t[1], t[2]),
-                        Arrays.asList(t[1], t[3])),
+                        Arrays.asList(t[1], t[3])).getSim(),
                 E);
         Assert.assertEquals(2 / 4f,
                 setSimilarity.computeSimilarity(
                         Arrays.asList(t[1], t[2]),
-                        Arrays.asList(t[1], t[3])),
+                        Arrays.asList(t[1], t[3])).getSim(),
                 E);
         Assert.assertEquals(0 / 4f,
                 setSimilarity.computeSimilarity(
                         Arrays.asList(t[2]),
-                        Arrays.asList(t[1], t[3], t[0])),
+                        Arrays.asList(t[1], t[3], t[0])).getSim(),
                 E);
         Assert.assertEquals(6 / 7f,
                 setSimilarity.computeSimilarity(
                         Arrays.asList(t[0], t[1], t[2], t[3]),
-                        Arrays.asList(t[0], t[1], t[3])),
+                        Arrays.asList(t[0], t[1], t[3])).getSim(),
                 E);
     }
 
@@ -82,29 +82,29 @@ public class SetSimilarityTest {
 
         Assert.assertEquals(1f,
                 setSimilarity.computeSimilarity(Arrays.asList(t[0], t[1], t[2]),
-                        Arrays.asList(t[0], t[1], t[2])), E);
+                        Arrays.asList(t[0], t[1], t[2])).getSim(), E);
         Assert.assertEquals(0f,
                 setSimilarity.computeSimilarity(Arrays.asList(t[0], t[1], t[2]),
-                        Arrays.asList(t[3])), E);
+                        Arrays.asList(t[3])).getSim(), E);
         Assert.assertEquals(0f,
                 setSimilarity.computeSimilarity(Arrays.asList(t[0]),
-                        new ArrayList<Term>()), E);
+                        new ArrayList<Term>()).getSim(), E);
 
         // some vals
         Assert.assertEquals(1 / 4f,
                 setSimilarity.computeSimilarity(
                         Arrays.asList(t[0], t[1], t[2]),
-                        Arrays.asList(t[1], t[3])),
+                        Arrays.asList(t[1], t[3])).getSim(),
                 E);
         Assert.assertEquals(1 / 3f,
                 setSimilarity.computeSimilarity(
                         Arrays.asList(t[1], t[2]),
-                        Arrays.asList(t[1], t[3])),
+                        Arrays.asList(t[1], t[3])).getSim(),
                 E);
         Assert.assertEquals(0f,
                 setSimilarity.computeSimilarity(
                         Arrays.asList(t[2]),
-                        Arrays.asList(t[1], t[3], t[0])),
+                        Arrays.asList(t[1], t[3], t[0])).getSim(),
                 E);
     }
 }

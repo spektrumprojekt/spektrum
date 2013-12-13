@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -41,6 +42,7 @@ import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.Scorer;
+import de.spektrumprojekt.i.similarity.messagegroup.MessageGroupSimilarity;
 import de.spektrumprojekt.i.similarity.messagegroup.MessageGroupSimilarityRetriever;
 import de.spektrumprojekt.i.similarity.user.UserScore;
 import de.spektrumprojekt.i.similarity.user.UserToUserInterestSelector;
@@ -172,14 +174,6 @@ public class DirectedUserModelAdapter implements
         return entries;
     }
 
-    private boolean adaptTermsOfMG(Long mgId) {
-        /*
-         * MessageGroup messageGroup = this.persistence.getMessageGroupByGlobalId("communotedev");
-         * return mgId.equals(messageGroup.getId() + "");
-         */
-        return true;
-    }
-
     private ValueAggregator createNewValueAggregator() {
         return userModelAdapterConfiguration.isUseWeightedAverageForAggregatingSimilarUsers() ? new IncrementalWeightedAverage()
                 : new MaxValueAggregator();
@@ -236,12 +230,10 @@ public class DirectedUserModelAdapter implements
         Collection<String> match = new HashSet<String>();
         Long targetMessageGroupId = null;
         for (Term t : termsToAdapt) {
-            Long mgId = t.getMessageGroupId();
-            if (adaptTermsOfMG(mgId)) {
 
-                String toMatch = t.extractMessageGroupFreeTermValue();
-                match.add(toMatch);
-            }
+            String toMatch = t.extractMessageGroupFreeTermValue();
+            match.add(toMatch);
+
             if (targetMessageGroupId == null) {
                 targetMessageGroupId = t.getMessageGroupId();
             } else if (!targetMessageGroupId.equals(t.getMessageGroupId())) {
@@ -252,36 +244,48 @@ public class DirectedUserModelAdapter implements
                                 + t.getMessageGroupId() + " message: " + message);
             }
         }
-        // user model entriesof other groups
+        // user model entries of other groups
         Collection<UserModelEntry> userModelEntries = persistence.getUserModelEntries(userModel,
                 match,
                 MatchMode.ENDS_WITH);
 
+        int topNMGsToUse = userModelAdapterConfiguration.getTopNMessageGroupsToUseForAdaptation();
+
+        List<MessageGroupSimilarity> messageGroupSimilarities = topNMGsToUse == 0 ? null
+                : messageGroupSimilarityRetriever.getTopSimilarities(targetMessageGroupId,
+                        topNMGsToUse);
+
         for (Term t : termsToAdapt) {
-            for (UserModelEntry entry : userModelEntries) {
+            userModelEntries: for (UserModelEntry entry : userModelEntries) {
+                if (entry.isAdapted() || !MatchMode.EXACT.matches(entry
+                        .getScoredTerm().getTerm()
+                        .extractMessageGroupFreeTermValue(),
+                        t.extractMessageGroupFreeTermValue())) {
+                    continue userModelEntries;
+                }
 
                 Long mgId = entry.getScoredTerm().getTerm().getMessageGroupId();
 
                 // get topic sim between mgId and t.getMessageGroupId
-                double topicSim = messageGroupSimilarityRetriever.getMessageGroupSimilarity(
-                        targetMessageGroupId, mgId);
+                double topicSim = -1;
 
-                if (topicSim >= userModelAdapterConfiguration.getMessageGroupSimilarityThreshold()) {
-                    if (useMGForAdapation(mgId)) {
-
-                        if (!entry.isAdapted()
-                                && MatchMode.EXACT.matches(entry
-                                        .getScoredTerm().getTerm()
-                                        .extractMessageGroupFreeTermValue(),
-                                        t.extractMessageGroupFreeTermValue())) {
-
-                            ValueAggregator aggregator = getValueAggegrator(
-                                    statsForTermsToAdaptFrom, t);
-
-                            aggregator
-                                    .add(entry.getScoredTerm().getWeight(), entry.getScoreCount());
+                if (messageGroupSimilarities == null) {
+                    topicSim = messageGroupSimilarityRetriever.getMessageGroupSimilarity(
+                            targetMessageGroupId, mgId);
+                } else {
+                    for (MessageGroupSimilarity mgSim : messageGroupSimilarities) {
+                        if (mgSim.matchesMessageGroupId(targetMessageGroupId, true)) {
+                            topicSim = mgSim.getSim();
                         }
                     }
+                }
+
+                if (topicSim >= userModelAdapterConfiguration.getMessageGroupSimilarityThreshold()) {
+                    ValueAggregator aggregator = getValueAggegrator(
+                            statsForTermsToAdaptFrom, t);
+
+                    aggregator
+                            .add(entry.getScoredTerm().getWeight(), entry.getScoreCount());
                 }
             }
         }
@@ -389,10 +393,12 @@ public class DirectedUserModelAdapter implements
         return message instanceof DirectedUserModelAdaptationMessage;
     }
 
-    private boolean useMGForAdapation(Long mgId) {
-        // MessageGroup messageGroup = this.persistence.getMessageGroupByGlobalId("communotedev");
-        // return mgId.equals(messageGroup.getId() + "");
-        return true;
+    @Override
+    public String toString() {
+        return "DirectedUserModelAdapter [adaptedCount=" + adaptedCount
+                + ", requestedAdaptedCount=" + requestedAdaptedCount + ", userModelType="
+                + userModelType + ", userModelAdapterConfiguration="
+                + userModelAdapterConfiguration + "]";
     }
 
 }

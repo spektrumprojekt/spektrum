@@ -10,6 +10,6 @@ import de.spektrumprojekt.configuration.ConfigurationDescriptable;
  */
 public interface SetSimilarity extends ConfigurationDescriptable {
 
-    public <E> float computeSimilarity(final Collection<? extends E> a,
+    public <E> SetSimilarityResult computeSimilarity(final Collection<? extends E> a,
             final Collection<? extends E> b);
 }

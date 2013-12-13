@@ -45,6 +45,9 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
     private double userSimilarityThreshold;
     private double messageGroupSimilarityThreshold;
 
+    // use only the top mgs for adaptation, 0 for all
+    private int topNMessageGroupsToUseForAdaptation;
+
     private boolean userSelectorUseHITS;
 
     private boolean userSelectorUseMentionsPercentage;
@@ -82,6 +85,10 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
 
     public float getScoreThreshold() {
         return scoreThreshold;
+    }
+
+    public int getTopNMessageGroupsToUseForAdaptation() {
+        return topNMessageGroupsToUseForAdaptation;
     }
 
     public UserModelBasedSimilarityConfiguration getUserModelBasedSimilarityConfiguration() {
@@ -148,6 +155,10 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
         this.scoreThreshold = scoreThreshold;
     }
 
+    public void setTopNMessageGroupsToUseForAdaptation(int topNMessageGroupsToUseForAdaptation) {
+        this.topNMessageGroupsToUseForAdaptation = topNMessageGroupsToUseForAdaptation;
+    }
+
     public void setUserModelBasedSimilarityConfiguration(
             UserModelBasedSimilarityConfiguration userModelBasedSimilarityConfiguration) {
         this.userModelBasedSimilarityConfiguration = userModelBasedSimilarityConfiguration;
@@ -178,6 +189,7 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
     public String toString() {
         return "UserModelAdapterConfiguration [userSimilarityThreshold=" + userSimilarityThreshold
                 + ", messageGroupSimilarityThreshold=" + messageGroupSimilarityThreshold
+                + ", topNMessageGroupsToUseForAdaptation=" + topNMessageGroupsToUseForAdaptation
                 + ", userSelectorUseHITS=" + userSelectorUseHITS
                 + ", userSelectorUseMentionsPercentage=" + userSelectorUseMentionsPercentage
                 + ", hitsScoreToUse=" + hitsScoreToUse + ", adaptFromMessageGroups="

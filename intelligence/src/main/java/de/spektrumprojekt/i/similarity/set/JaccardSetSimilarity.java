@@ -2,8 +2,6 @@ package de.spektrumprojekt.i.similarity.set;
 
 import java.util.Collection;
 
-import org.apache.commons.collections15.CollectionUtils;
-
 /**
  * 
  * see http://de.wikipedia.org/wiki/Jaccard-Koeffizient
@@ -14,20 +12,18 @@ import org.apache.commons.collections15.CollectionUtils;
 public class JaccardSetSimilarity implements SetSimilarity {
 
     @Override
-    public <E> float computeSimilarity(Collection<? extends E> a, Collection<? extends E> b) {
+    public <E> SetSimilarityResult computeSimilarity(Collection<? extends E> a,
+            Collection<? extends E> b) {
 
-        Collection<E> union = CollectionUtils.union(a, b);
+        SetSimilarityResult result = new SetSimilarityResult(a, b);
 
-        int bottom = union.size();
-        if (bottom == 0) {
-            return 0;
+        float top = result.getIntersectionSize();
+        int bottom = result.getUnionSize();
+
+        if (bottom > 0) {
+            result.setSim(top / bottom);
         }
-
-        Collection<E> intersection = CollectionUtils.intersection(a, b);
-
-        float top = intersection.size();
-
-        return top / bottom;
+        return result;
     }
 
     @Override

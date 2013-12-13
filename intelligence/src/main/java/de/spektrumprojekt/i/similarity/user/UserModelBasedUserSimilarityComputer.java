@@ -38,6 +38,7 @@ import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
 import de.spektrumprojekt.i.similarity.set.SetSimilarity;
+import de.spektrumprojekt.i.similarity.set.SetSimilarityResult;
 import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.simple.SimplePersistence;
@@ -142,8 +143,10 @@ public class UserModelBasedUserSimilarityComputer implements UserSimilarityCompu
                     float sim;
 
                     if (setSimilarity != null) {
-                        sim = setSimilarity.computeSimilarity(filtered1.keySet(),
+                        SetSimilarityResult result = setSimilarity.computeSimilarity(
+                                filtered1.keySet(),
                                 filtered2.keySet());
+                        sim = result.getSim();
                     } else {
                         sim = termVectorSimilarityComputer.getSimilarity(filtered1, filtered2);
                     }

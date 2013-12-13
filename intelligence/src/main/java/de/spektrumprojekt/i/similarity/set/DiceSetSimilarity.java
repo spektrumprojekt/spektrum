@@ -2,23 +2,22 @@ package de.spektrumprojekt.i.similarity.set;
 
 import java.util.Collection;
 
-import org.apache.commons.collections15.CollectionUtils;
-
 public class DiceSetSimilarity implements SetSimilarity {
 
     @Override
-    public <E> float computeSimilarity(Collection<? extends E> a, Collection<? extends E> b) {
+    public <E> SetSimilarityResult computeSimilarity(Collection<? extends E> a,
+            Collection<? extends E> b) {
 
-        int bottom = a.size() + b.size();
-        if (bottom == 0) {
-            return 0;
+        SetSimilarityResult result = new SetSimilarityResult(a, b);
+
+        int bottom = result.getSet1Size() + result.getSet2Size();
+        if (bottom > 0) {
+            float top = 2 * result.getIntersectionSize();
+
+            result.setSim(top / bottom);
         }
 
-        Collection<E> intersection = CollectionUtils.intersection(a, b);
-
-        float top = 2 * intersection.size();
-
-        return top / bottom;
+        return result;
     }
 
     @Override
