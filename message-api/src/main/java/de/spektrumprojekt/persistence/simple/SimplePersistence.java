@@ -674,7 +674,7 @@ public class SimplePersistence implements Persistence {
     public void removeUserModelEntry(UserModel userModel, UserModelEntry userModelEntry) {
         UserModelHolder userModelHolder = this.getOrCreateUserModelTypeHoldersByUserModelType(
                 userModel.getUserModelType()).get(userModel.getUser());
-        userModelHolder.getUserModelEntries().remove(userModelEntry.getScoredTerm().getTerm());
+        userModelHolder.removeUserModelEntry(userModelEntry);
     }
 
     @Override

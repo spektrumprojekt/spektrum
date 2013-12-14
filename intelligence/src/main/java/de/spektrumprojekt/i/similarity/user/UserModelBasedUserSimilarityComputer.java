@@ -42,6 +42,7 @@ import de.spektrumprojekt.i.similarity.set.SetSimilarityResult;
 import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.simple.SimplePersistence;
+import de.spektrumprojekt.persistence.simple.UserModelHolder;
 
 public class UserModelBasedUserSimilarityComputer implements UserSimilarityComputer {
 
@@ -119,26 +120,33 @@ public class UserModelBasedUserSimilarityComputer implements UserSimilarityCompu
         // get a list of all topics
         Collection<MessageGroup> messageGroups = persistence.getAllMessageGroups();
 
-        Map<UserModel, Collection<UserModelEntry>> userModelEntries = persistence
-                .getAllUserModelEntries(UserModel.DEFAULT_USER_MODEL_TYPE);
+        Map<User, UserModelHolder> userModelEntries = persistence
+                .getUserModelByTypeHolders(UserModel.DEFAULT_USER_MODEL_TYPE);
 
-        for (Entry<UserModel, Collection<UserModelEntry>> userModel1 : userModelEntries.entrySet()) {
-            User user1 = userModel1.getKey().getUser();
-            Map<Term, UserModelEntry> entryMap1 = UserModelEntry.createTermToEntryMap(userModel1
-                    .getValue());
-            userModel2: for (Entry<UserModel, Collection<UserModelEntry>> userModel2 : userModelEntries
+        user2Entries1: for (Entry<User, UserModelHolder> user2Entries1 : userModelEntries
+                .entrySet()) {
+            User user1 = user2Entries1.getKey();
+
+            user2Entries2: for (Entry<User, UserModelHolder> user2Entries2 : userModelEntries
                     .entrySet()) {
-                if (userModel1.equals(userModel2)) {
-                    continue userModel2;
+                if (user2Entries1.equals(user2Entries2)) {
+                    continue user2Entries2;
                 }
-                User user2 = userModel2.getKey().getUser();
-                Map<Term, UserModelEntry> entryMap2 = UserModelEntry
-                        .createTermToEntryMap(userModel2.getValue());
+                User user2 = user2Entries2.getKey();
 
-                for (MessageGroup mg : messageGroups) {
+                mg: for (MessageGroup mg : messageGroups) {
 
-                    Map<Term, UserModelEntry> filtered1 = filterByMG(entryMap1, mg);
-                    Map<Term, UserModelEntry> filtered2 = filterByMG(entryMap2, mg);
+                    Map<Term, UserModelEntry> entries1 = user2Entries1.getValue()
+                            .getUserModelEntriesByMessageGroupId(mg.getId());
+                    Map<Term, UserModelEntry> entries2 = user2Entries2.getValue()
+                            .getUserModelEntriesByMessageGroupId(mg.getId());
+
+                    if (entries1 == null || entries2 == null) {
+                        continue mg;
+                    }
+
+                    Map<Term, UserModelEntry> filtered1 = filter(entries1);
+                    Map<Term, UserModelEntry> filtered2 = filter(entries2);
 
                     float sim;
 
@@ -165,17 +173,13 @@ public class UserModelBasedUserSimilarityComputer implements UserSimilarityCompu
         return userSimilarities;
     }
 
-    private Map<Term, UserModelEntry> filterByMG(Map<Term, UserModelEntry> entryMap,
-            MessageGroup mg) {
+    private Map<Term, UserModelEntry> filter(Map<Term, UserModelEntry> entryMap) {
         Map<Term, UserModelEntry> filtered = new HashMap<Term, UserModelEntry>();
 
-        Long mgId = mg == null ? null : mg.getId();
         for (Entry<Term, UserModelEntry> entry : entryMap.entrySet()) {
             if (!entry.getValue().isAdapted()) {
-                Long termMgId = entry.getKey().getMessageGroupId();
-                if (mgId == termMgId || mgId != null && mgId.equals(termMgId)) {
-                    filtered.put(entry.getKey(), entry.getValue());
-                }
+                filtered.put(entry.getKey(), entry.getValue());
+
             }
         }
         return filtered;

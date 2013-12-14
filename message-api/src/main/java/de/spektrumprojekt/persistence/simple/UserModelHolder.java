@@ -46,6 +46,8 @@ public class UserModelHolder implements Serializable {
     private final UserModel userModel;
     private final Map<Term, UserModelEntry> userModelEntries = new HashMap<Term, UserModelEntry>();
 
+    private final Map<Long, Map<Term, UserModelEntry>> messageGroupdIdToUserModelEntries = new HashMap<Long, Map<Term, UserModelEntry>>();
+
     public UserModelHolder(UserModel userModel) {
         if (userModel == null) {
             throw new IllegalArgumentException("userModel cannot be null!");
@@ -67,6 +69,15 @@ public class UserModelHolder implements Serializable {
             throw new IllegalArgumentException("entry.scoredTerm.term.id cannot be null!");
         }
         this.userModelEntries.put(entry.getScoredTerm().getTerm(), entry);
+
+        Long mgId = entry.getScoredTerm().getTerm().getMessageGroupId();
+        Map<Term, UserModelEntry> mgEntries = messageGroupdIdToUserModelEntries.get(mgId);
+        if (mgEntries == null) {
+            mgEntries = new HashMap<Term, UserModelEntry>();
+            messageGroupdIdToUserModelEntries.put(mgId, mgEntries);
+
+        }
+        mgEntries.put(entry.getScoredTerm().getTerm(), entry);
     }
 
     public UserModel getUserModel() {
@@ -77,15 +88,22 @@ public class UserModelHolder implements Serializable {
         return userModelEntries;
     }
 
+    public Map<Term, UserModelEntry> getUserModelEntriesByMessageGroupId(
+            Long messageGroupId) {
+        return this.messageGroupdIdToUserModelEntries.get(messageGroupId);
+    }
+
     public Collection<UserModelEntry> getUserModelEntry(String termValue,
             Collection<Long> messageGroupIdsToConsider, MatchMode matchMode) {
         final Collection<UserModelEntry> matches = new HashSet<UserModelEntry>();
 
-        for (Entry<Term, UserModelEntry> entry : this.userModelEntries.entrySet()) {
-            if (messageGroupIdsToConsider == null
-                    || messageGroupIdsToConsider.contains(entry.getKey().getMessageGroupId())) {
-                if (matchMode.matches(entry.getKey().getValue(), termValue)) {
-                    matches.add(entry.getValue());
+        for (Long mgId : messageGroupIdsToConsider) {
+            Map<Term, UserModelEntry> mgEntries = this.messageGroupdIdToUserModelEntries.get(mgId);
+            if (mgEntries != null) {
+                for (Entry<Term, UserModelEntry> entry : mgEntries.entrySet()) {
+                    if (matchMode.matches(entry.getKey().getValue(), termValue)) {
+                        matches.add(entry.getValue());
+                    }
                 }
             }
         }
@@ -110,5 +128,14 @@ public class UserModelHolder implements Serializable {
             return Collections.singleton(entry);
         }
         return this.getUserModelEntry(term.getValue(), matchMode);
+    }
+
+    public void removeUserModelEntry(UserModelEntry userModelEntry) {
+        this.userModelEntries.remove(userModelEntry.getScoredTerm().getTerm());
+        Map<Term, UserModelEntry> mgEntries = getUserModelEntriesByMessageGroupId(userModelEntry
+                .getScoredTerm().getTerm().getId());
+        if (mgEntries != null) {
+            mgEntries.remove(userModelEntry.getScoredTerm().getTerm());
+        }
     }
 }

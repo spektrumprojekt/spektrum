@@ -169,10 +169,11 @@ public class UserModelLearnerCommand implements Command<LearnerMessageContext> {
         Map<Term, ScoredTerm> scoredTermsOfMessage = getScoredTermsOfMessage(message);
 
         Collection<Term> terms = new HashSet<Term>(scoredTermsOfMessage.keySet());
-        Map<Term, UserModelEntry> entries = context.getPersistence().getUserModelEntriesForTerms(
-                userModel, scoredTermsOfMessage.keySet());
+        final Map<Term, UserModelEntry> entries = context.getPersistence()
+                .getUserModelEntriesForTerms(
+                        userModel, scoredTermsOfMessage.keySet());
 
-        Collection<Term> entriesToRemove = new HashSet<Term>();
+        Collection<UserModelEntry> entriesToRemove = new HashSet<UserModelEntry>();
         for (Entry<Term, UserModelEntry> entry : entries.entrySet()) {
             if (entry.getValue() != null) {
                 if (observationForDisintegration != null) {
@@ -185,13 +186,14 @@ public class UserModelLearnerCommand implements Command<LearnerMessageContext> {
                         interest, scoredTermsOfMessage.get(entry.getKey()), context
                                 .getObservation().getObservationDate());
                 if (remove) {
-                    entriesToRemove.add(entry.getKey());
+                    entriesToRemove.add(entry.getValue());
                 }
                 terms.remove(entry.getKey());
             }
         }
-        for (Term t : entriesToRemove) {
-            entries.remove(t);
+        for (UserModelEntry entry : entriesToRemove) {
+            this.persistence.removeUserModelEntry(userModel, entry);
+            entries.remove(entry.getScoredTerm().getTerm());
         }
         // terms not known so far are left
         if (createUnknownTermsInUsermodel) {
