@@ -254,8 +254,10 @@ public class DirectedUserModelAdapter implements
                 : messageGroupSimilarityRetriever.getTopSimilarities(targetMessageGroupId,
                         topNMGsToUse);
         Collection<Long> messageGroupIds = new HashSet<Long>();
-        for (MessageGroupSimilarity sim : messageGroupSimilarities) {
-            messageGroupIds.add(sim.getOtherMessageGroupId(targetMessageGroupId));
+        if (messageGroupSimilarities != null) {
+            for (MessageGroupSimilarity sim : messageGroupSimilarities) {
+                messageGroupIds.add(sim.getOtherMessageGroupId(targetMessageGroupId));
+            }
         }
 
         // user model entries of other groups
