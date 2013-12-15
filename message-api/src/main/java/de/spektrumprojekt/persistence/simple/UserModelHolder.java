@@ -97,13 +97,22 @@ public class UserModelHolder implements Serializable {
             Collection<Long> messageGroupIdsToConsider, MatchMode matchMode) {
         final Collection<UserModelEntry> matches = new HashSet<UserModelEntry>();
 
-        for (Long mgId : messageGroupIdsToConsider) {
-            Map<Term, UserModelEntry> mgEntries = this.messageGroupdIdToUserModelEntries.get(mgId);
-            if (mgEntries != null) {
-                for (Entry<Term, UserModelEntry> entry : mgEntries.entrySet()) {
-                    if (matchMode.matches(entry.getKey().getValue(), termValue)) {
-                        matches.add(entry.getValue());
+        if (messageGroupIdsToConsider != null && !messageGroupIdsToConsider.isEmpty()) {
+            for (Long mgId : messageGroupIdsToConsider) {
+                Map<Term, UserModelEntry> mgEntries = this.messageGroupdIdToUserModelEntries
+                        .get(mgId);
+                if (mgEntries != null) {
+                    for (Entry<Term, UserModelEntry> entry : mgEntries.entrySet()) {
+                        if (matchMode.matches(entry.getKey().getValue(), termValue)) {
+                            matches.add(entry.getValue());
+                        }
                     }
+                }
+            }
+        } else {
+            for (Entry<Term, UserModelEntry> entry : this.userModelEntries.entrySet()) {
+                if (matchMode.matches(entry.getKey().getValue(), termValue)) {
+                    matches.add(entry.getValue());
                 }
             }
         }
