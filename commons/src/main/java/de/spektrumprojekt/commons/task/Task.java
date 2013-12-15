@@ -15,6 +15,7 @@ public class Task {
     private final Computer computer;
 
     private Date nextDate;
+
     private final long intervall;
     private final long delayOnFirstStart;
     private final boolean runExactIntervall;
@@ -73,5 +74,12 @@ public class Task {
             next += intervall;
         }
         this.nextDate = new Date(next);
+    }
+
+    @Override
+    public String toString() {
+        return "Task [computer=" + computer + ", nextDate=" + nextDate + ", intervall=" + intervall
+                + ", delayOnFirstStart=" + delayOnFirstStart + ", runExactIntervall="
+                + runExactIntervall + "]";
     }
 }

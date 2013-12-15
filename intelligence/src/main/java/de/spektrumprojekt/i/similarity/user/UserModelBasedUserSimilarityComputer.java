@@ -27,17 +27,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.spektrumprojekt.commons.time.TimeProviderHolder;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
-import de.spektrumprojekt.i.similarity.set.SetSimilarity;
+import de.spektrumprojekt.i.learner.adaptation.UserModelBasedSimilarityConfiguration;
 import de.spektrumprojekt.i.similarity.set.SetSimilarityResult;
 import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
 import de.spektrumprojekt.persistence.Persistence;
@@ -51,67 +51,44 @@ public class UserModelBasedUserSimilarityComputer implements UserSimilarityCompu
 
     private final SimplePersistence persistence;
 
-    private final boolean holdComputedSimilarites;
-
-    private Collection<UserSimilarity> userSimilarities;
-
     private final TermVectorSimilarityComputer termVectorSimilarityComputer;
 
-    private final SetSimilarity setSimilarity;
-
-    private final String precomputedUserSimilaritesFilename;
+    private UserModelBasedSimilarityConfiguration userModelBasedSimilarityConfiguration;
 
     /**
      * 
      * @param persistence
-     * @param setSimilarity
+     * @param userModelBasedSimilarityConfiguration
      * @param termVectorSimilarityComputer
-     * @param precomputedUserSimilaritesFilename
-     *            if not null it will be used to load the user similarities from
      */
     public UserModelBasedUserSimilarityComputer(
             Persistence persistence,
-            SetSimilarity setSimilarity,
-            TermVectorSimilarityComputer termVectorSimilarityComputer,
-            String precomputedUserSimilaritesFilename) {
-        this(
-                persistence,
-                setSimilarity,
-                termVectorSimilarityComputer,
-                precomputedUserSimilaritesFilename,
-                false);
-    }
-
-    /**
-     * 
-     * @param persistence
-     * @param precomputedUserSimilaritesFilename
-     *            if not null it will be used to load the user similarities from
-     * @param holdComputedSimilarites
-     *            true to keep the user similarities in this class after computation
-     */
-    public UserModelBasedUserSimilarityComputer(
-            Persistence persistence,
-            SetSimilarity setSimilarity,
-            TermVectorSimilarityComputer termVectorSimilarityComputer,
-            String precomputedUserSimilaritesFilename,
-            boolean holdComputedSimilarites) {
+            UserModelBasedSimilarityConfiguration userModelBasedSimilarityConfiguration,
+            TermVectorSimilarityComputer termVectorSimilarityComputer) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
         }
-        if (setSimilarity == null && termVectorSimilarityComputer == null) {
+        if (userModelBasedSimilarityConfiguration == null) {
+            throw new IllegalArgumentException(
+                    "userModelBasedSimilarityConfiguration cannot be null.");
+        }
+        if (userModelBasedSimilarityConfiguration.getSetSimilarity() == null
+                && termVectorSimilarityComputer == null) {
             throw new IllegalArgumentException(
                     "either setSimilarity or termVectorSimilarityComputer must be set. setSimilarity="
-                            + setSimilarity + " termVectorSimilarityComputer="
+                            + userModelBasedSimilarityConfiguration.getSetSimilarity()
+                            + " termVectorSimilarityComputer="
                             + termVectorSimilarityComputer);
+        }
+        if (userModelBasedSimilarityConfiguration.isReadUserSimilaritiesFromPrecomputedFile()
+                && userModelBasedSimilarityConfiguration.isWriteUserSimilaritiesToPrecomputedFile()) {
+            throw new IllegalArgumentException(
+                    "Cannot read from and write to precomputed file to the same time. Set write to false to use precomputed.");
         }
 
         this.persistence = (SimplePersistence) persistence;
+        this.userModelBasedSimilarityConfiguration = userModelBasedSimilarityConfiguration;
         this.termVectorSimilarityComputer = termVectorSimilarityComputer;
-        this.precomputedUserSimilaritesFilename = StringUtils
-                .trimToNull(precomputedUserSimilaritesFilename);
-        this.setSimilarity = setSimilarity;
-        this.holdComputedSimilarites = holdComputedSimilarites;
     }
 
     private Collection<UserSimilarity> computeUserSimilarities() {
@@ -150,10 +127,11 @@ public class UserModelBasedUserSimilarityComputer implements UserSimilarityCompu
 
                     float sim;
 
-                    if (setSimilarity != null) {
-                        SetSimilarityResult result = setSimilarity.computeSimilarity(
-                                filtered1.keySet(),
-                                filtered2.keySet());
+                    if (userModelBasedSimilarityConfiguration.getSetSimilarity() != null) {
+                        SetSimilarityResult result = userModelBasedSimilarityConfiguration
+                                .getSetSimilarity().computeSimilarity(
+                                        filtered1.keySet(),
+                                        filtered2.keySet());
                         sim = result.getSim();
                     } else {
                         sim = termVectorSimilarityComputer.getSimilarity(filtered1, filtered2);
@@ -190,20 +168,28 @@ public class UserModelBasedUserSimilarityComputer implements UserSimilarityCompu
         return this.toString();
     }
 
-    public Collection<UserSimilarity> getUserSimilarities() {
-        if (!this.holdComputedSimilarites) {
-            throw new IllegalStateException(
-                    "holdComputedSimilarites is false, therefore similarities are not stored!");
+    private String getUserSimilarityDumpFilename() {
+        String fname = userModelBasedSimilarityConfiguration
+                .getPrecomputedUserSimilaritesFilename();
+
+        if (userModelBasedSimilarityConfiguration.isPrecomputedIsWithDate()) {
+
+            fname = fname.replace("TIME", "" + TimeProviderHolder.DEFAULT.getCurrentTime());
         }
-        return userSimilarities;
+
+        return fname;
+
     }
 
     private List<UserSimilarity> readPrecomputedUserSimilarites() throws IOException {
+        String fname = getUserSimilarityDumpFilename();
+
         UserSimilarityOutput userSimilarityOutput = new UserSimilarityOutput();
-        userSimilarityOutput.read(precomputedUserSimilaritesFilename);
+
+        userSimilarityOutput.read(fname);
 
         LOGGER.info("Read {} userSims from {}", userSimilarityOutput.getElements().size(),
-                precomputedUserSimilaritesFilename);
+                fname);
         return userSimilarityOutput.getElements();
     }
 
@@ -212,7 +198,7 @@ public class UserModelBasedUserSimilarityComputer implements UserSimilarityCompu
 
         Collection<UserSimilarity> userSimilarities;
 
-        if (precomputedUserSimilaritesFilename != null) {
+        if (userModelBasedSimilarityConfiguration.isReadUserSimilaritiesFromPrecomputedFile()) {
             userSimilarities = readPrecomputedUserSimilarites();
         } else {
             userSimilarities = computeUserSimilarities();
@@ -220,18 +206,24 @@ public class UserModelBasedUserSimilarityComputer implements UserSimilarityCompu
 
         persistence.deleteAndCreateUserSimilarities(userSimilarities);
 
-        if (this.holdComputedSimilarites) {
-            this.userSimilarities = userSimilarities;
+        if (userModelBasedSimilarityConfiguration.isWriteUserSimilaritiesToPrecomputedFile()) {
+            String fname = getUserSimilarityDumpFilename();
+
+            UserSimilarityOutput userSimilarityOutput = new UserSimilarityOutput(this.persistence);
+            userSimilarityOutput.getElements().addAll(userSimilarities);
+            userSimilarityOutput.write(fname);
+
+            LOGGER.info("Wrote {} user sims to {}.", userSimilarityOutput.getElements().size(),
+                    getUserSimilarityDumpFilename());
         }
 
     }
 
     @Override
     public String toString() {
-        return "UserModelBasedUserSimilarityComputer [holdComputedSimilarites="
-                + holdComputedSimilarites + ", termVectorSimilarityComputer="
-                + termVectorSimilarityComputer + ", setSimilarity=" + setSimilarity
-                + ", precomputedUserSimilaritesFilename=" + precomputedUserSimilaritesFilename
-                + "]";
+        return "UserModelBasedUserSimilarityComputer [persistence=" + persistence
+                + ", termVectorSimilarityComputer=" + termVectorSimilarityComputer
+                + ", userModelBasedSimilarityConfiguration="
+                + userModelBasedSimilarityConfiguration + "]";
     }
 }

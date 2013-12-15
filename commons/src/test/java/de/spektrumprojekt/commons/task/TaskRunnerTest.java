@@ -63,7 +63,7 @@ public class TaskRunnerTest {
 
     @Before
     public void setup() {
-        this.taskRunner = new TaskRunner();
+        this.taskRunner = new TaskRunner(true);
         this.dummyComputer = new DummyComputer();
 
         this.manualTaskRunningTimeProvider = new ManualTaskRunningTimeProvider(this.taskRunner);

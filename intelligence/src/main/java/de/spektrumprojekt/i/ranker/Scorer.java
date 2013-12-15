@@ -204,10 +204,8 @@ public class Scorer implements MessageHandler<ScorerCommunicationMessage>,
             }
             userSimilarityComputer = new UserModelBasedUserSimilarityComputer(
                     this.persistence,
-                    userModelBasedSimilarityConfiguration.getSetSimilarity(),
-                    termVectorSimilarityComputer,
-                    userModelBasedSimilarityConfiguration.getPrecomputedUserSimilaritesFilename(),
-                    false);
+                    userModelBasedSimilarityConfiguration,
+                    termVectorSimilarityComputer);
             break;
         default:
             userSimilarityComputer = new InteractionBasedUserSimilarityComputer(this.persistence,

@@ -43,6 +43,12 @@ public class TaskRunner {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(TaskRunner.class);
 
+    private boolean exitOnError;
+
+    public TaskRunner(boolean exitOnError) {
+
+    }
+
     /**
      * Check the tasks that are due and run them if so
      */
@@ -61,6 +67,9 @@ public class TaskRunner {
                             + " ms. " + task.getComputer().getConfigurationDescription());
                 } catch (Exception e) {
                     LOGGER.error("Error running task=" + task + " " + e.getMessage(), e);
+                    if (exitOnError) {
+                        System.exit(1000);
+                    }
                 }
                 task.incrementNextDate();
             }

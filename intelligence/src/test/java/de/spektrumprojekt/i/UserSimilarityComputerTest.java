@@ -18,6 +18,7 @@ import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
 import de.spektrumprojekt.helper.MessageHelper;
+import de.spektrumprojekt.i.learner.adaptation.UserModelBasedSimilarityConfiguration;
 import de.spektrumprojekt.i.similarity.set.JaccardSetSimilarity;
 import de.spektrumprojekt.i.similarity.user.InteractionBasedUserSimilarityComputer;
 import de.spektrumprojekt.i.similarity.user.UserModelBasedUserSimilarityComputer;
@@ -100,11 +101,12 @@ public class UserSimilarityComputerTest extends IntelligenceSpektrumTest {
                         null,
                         false);
 
+        UserModelBasedSimilarityConfiguration conf = new UserModelBasedSimilarityConfiguration();
+        conf.setSetSimilarity(new JaccardSetSimilarity());
         UserModelBasedUserSimilarityComputer userSimilarityComputer = new UserModelBasedUserSimilarityComputer(
                 getPersistence(),
-                new JaccardSetSimilarity(),
-                termVectorSimilarityComputer,
-                null);
+                conf,
+                termVectorSimilarityComputer);
 
         // create some users
 
@@ -143,5 +145,4 @@ public class UserSimilarityComputerTest extends IntelligenceSpektrumTest {
             System.out.println("us: " + us);
         }
     }
-
 }
