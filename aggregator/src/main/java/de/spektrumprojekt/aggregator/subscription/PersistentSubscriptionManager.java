@@ -24,6 +24,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
@@ -72,6 +75,63 @@ import de.spektrumprojekt.persistence.Persistence;
  */
 public class PersistentSubscriptionManager implements SubscriptionManager, AdapterListener {
 
+    /**
+     * 
+     * Task for pushing messages of existing sources asynchronous to the subscription after adding a
+     * new subscription to that source.
+     */
+    private class PushMessagesTask implements Runnable {
+        final Subscription subscription;
+        final SubscriptionMessageFilter subscriptionMessageFilter;
+        final String sourceGlobalId;
+
+        PushMessagesTask(Subscription subscription,
+                SubscriptionMessageFilter subscriptionMessageFilter, String sourceGlobalId) {
+            this.subscription = subscription;
+            this.subscriptionMessageFilter = subscriptionMessageFilter;
+            this.sourceGlobalId = sourceGlobalId;
+        }
+
+        @Override
+        public void run() {
+            LOGGER.debug("Pushing messages of existing source async to new subscription");
+            MessageFilter messageFilter = new MessageFilter();
+            messageFilter.setSourceGlobalId(this.sourceGlobalId);
+            messageFilter.setMessageIdOrderDirection(OrderDirection.ASC);
+
+            List<Message> messages = Collections.emptyList();
+
+            if (subscriptionMessageFilter.getStartDate() != null) {
+                messageFilter.setMinPublicationDate(subscriptionMessageFilter.getStartDate());
+                if (subscription.getLastProcessedMessagePublicationDate() != null
+                        && subscription.getLastProcessedMessagePublicationDate().after(
+                                subscriptionMessageFilter.getStartDate())) {
+                    messageFilter.setMinPublicationDate(subscription
+                            .getLastProcessedMessagePublicationDate());
+                }
+                messages = persistence.getMessages(messageFilter);
+            }
+            if (messages.size() < subscriptionMessageFilter.getLastXMessages()) {
+
+                messageFilter.setMinPublicationDate(subscription
+                        .getLastProcessedMessagePublicationDate());
+                messageFilter.setLastMessagesCount(subscriptionMessageFilter.getLastXMessages());
+                messages = persistence.getMessages(messageFilter);
+            }
+
+            Collections.sort(messages, MessagePublicationDateComperator.INSTANCE);
+
+            for (Message message : messages) {
+
+                AggregatorMessageContext aggregatorMessageContext = new AggregatorMessageContext(
+                        aggregatorChain.getPersistence(), message, subscription.getGlobalId());
+                aggregatorChain.getAddMessageToSubscriptionChain().process(
+                        aggregatorMessageContext);
+            }
+
+        }
+    }
+
     /** The logger for this class. */
     private static final Logger LOGGER = LoggerFactory
             .getLogger(PersistentSubscriptionManager.class);
@@ -87,6 +147,9 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
     private final AggregatorConfiguration aggregatorConfiguration;
 
     private final AggregatorChain aggregatorChain;
+
+    private ExecutorService messagePushService;
+    private boolean messagePushServiceStopped;
 
     /**
      * <p>
@@ -274,6 +337,17 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
         return adapter;
     }
 
+    private ExecutorService getAsyncMessagePushService() {
+        if (this.messagePushService == null) {
+            synchronized (this) {
+                if (this.messagePushService == null && !this.messagePushServiceStopped) {
+                    this.messagePushService = Executors.newSingleThreadExecutor();
+                }
+            }
+        }
+        return this.messagePushService;
+    }
+
     public String getStatusReport() {
         StringBuilder status = new StringBuilder();
 
@@ -400,39 +474,10 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
      */
     private void pushMessages(Subscription subscription,
             SubscriptionMessageFilter subscriptionMessageFilter, Source existingSource) {
-        MessageFilter messageFilter = new MessageFilter();
-        messageFilter.setSourceGlobalId(existingSource.getGlobalId());
-        messageFilter.setMessageIdOrderDirection(OrderDirection.ASC);
-
-        List<Message> messages = Collections.emptyList();
-
-        if (subscriptionMessageFilter.getStartDate() != null) {
-            messageFilter.setMinPublicationDate(subscriptionMessageFilter.getStartDate());
-            if (subscription.getLastProcessedMessagePublicationDate() != null
-                    && subscription.getLastProcessedMessagePublicationDate().after(
-                            subscriptionMessageFilter.getStartDate())) {
-                messageFilter.setMinPublicationDate(subscription
-                        .getLastProcessedMessagePublicationDate());
-            }
-            messages = this.persistence.getMessages(messageFilter);
-        }
-        if (messages.size() < subscriptionMessageFilter.getLastXMessages()) {
-
-            messageFilter.setMinPublicationDate(subscription
-                    .getLastProcessedMessagePublicationDate());
-            messageFilter.setLastMessagesCount(subscriptionMessageFilter.getLastXMessages());
-            messages = this.persistence.getMessages(messageFilter);
-        }
-
-        Collections.sort(messages, MessagePublicationDateComperator.INSTANCE);
-
-        for (Message message : messages) {
-
-            AggregatorMessageContext aggregatorMessageContext = new AggregatorMessageContext(
-                    this.aggregatorChain.getPersistence(), message, subscription.getGlobalId());
-            this.aggregatorChain.getAddMessageToSubscriptionChain().process(
-                    aggregatorMessageContext);
-
+        ExecutorService messagePusher = getAsyncMessagePushService();
+        if (messagePusher != null) {
+            messagePusher.execute(new PushMessagesTask(subscription, subscriptionMessageFilter,
+                    existingSource.getGlobalId()));
         }
     }
 
@@ -441,7 +486,33 @@ public class PersistentSubscriptionManager implements SubscriptionManager, Adapt
      */
     @Override
     public void stop() {
+        stopAsyncMessagePushService();
         adapterManager.stop();
+    }
+
+    /**
+     * Stop the asynchronous message push service.
+     */
+    private synchronized void stopAsyncMessagePushService() {
+        this.messagePushServiceStopped = true;
+        if (this.messagePushService != null) {
+            LOGGER.info("Stopping async push service for existing messages");
+            this.messagePushService.shutdown();
+            try {
+                if (!this.messagePushService.awaitTermination(60, TimeUnit.SECONDS)) {
+                    this.messagePushService.shutdownNow(); // Cancel currently executing tasks
+                    // Wait a while for tasks to respond to being cancelled
+                    if (!this.messagePushService.awaitTermination(60, TimeUnit.SECONDS)) {
+                        LOGGER.error("AsyncMessagePushService did not terminate");
+                    }
+                }
+            } catch (InterruptedException e) {
+                this.messagePushService.shutdownNow();
+                // Preserve interrupt status
+                Thread.currentThread().interrupt();
+            }
+            this.messagePushService = null;
+        }
     }
 
     @Override
