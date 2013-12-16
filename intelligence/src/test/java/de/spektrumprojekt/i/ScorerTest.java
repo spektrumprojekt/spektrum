@@ -55,8 +55,8 @@ import de.spektrumprojekt.i.ranker.Scorer;
 import de.spektrumprojekt.i.ranker.ScorerConfiguration;
 import de.spektrumprojekt.i.ranker.ScorerConfigurationFlag;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
+import de.spektrumprojekt.i.similarity.messagegroup.MessageGroupSimilarityConfiguration;
 import de.spektrumprojekt.i.similarity.messagegroup.TermBasedMessageGroupSimilarityComputer;
-import de.spektrumprojekt.i.similarity.set.JaccardSetSimilarity;
 import de.spektrumprojekt.i.similarity.user.InteractionBasedUserSimilarityComputer;
 import de.spektrumprojekt.i.similarity.user.UserSimilarityRetriever;
 import de.spektrumprojekt.i.similarity.user.UserSimilaritySimType;
@@ -184,6 +184,9 @@ public class ScorerTest extends IntelligenceSpektrumTest {
             scorerConfiguration.getUserModelAdapterConfiguration().setAdaptFromMessageGroups(
                     useAdaptionFromMGs);
             scorerConfiguration.getUserModelAdapterConfiguration()
+                    .setMessageGroupSimilarityConfiguration(
+                            new MessageGroupSimilarityConfiguration());
+            scorerConfiguration.getUserModelAdapterConfiguration()
                     .setMessageGroupSimilarityThreshold(0.1d);
             scorerConfiguration.getUserModelAdapterConfiguration()
                     .setUseWeightedAverageForAggregatingSimilarUsers(true);
@@ -195,7 +198,8 @@ public class ScorerTest extends IntelligenceSpektrumTest {
                         scorer,
                         new UserSimilarityRetriever(getPersistence()),
                         new TermBasedMessageGroupSimilarityComputer(getPersistence(),
-                                new JaccardSetSimilarity()),
+                                scorerConfiguration.getUserModelAdapterConfiguration()
+                                        .getMessageGroupSimilarityConfiguration()),
                         scorerConfiguration.getUserModelAdapterConfiguration());
             } else {
                 adapter = new DirectedUserModelAdapter(

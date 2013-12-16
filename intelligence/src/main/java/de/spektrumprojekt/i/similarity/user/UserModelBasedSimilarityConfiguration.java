@@ -1,4 +1,4 @@
-package de.spektrumprojekt.i.learner.adaptation;
+package de.spektrumprojekt.i.similarity.user;
 
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 import de.spektrumprojekt.i.similarity.set.SetSimilarity;
@@ -9,15 +9,9 @@ public class UserModelBasedSimilarityConfiguration implements ConfigurationDescr
 
     private String precomputedUserSimilaritesFilename;
 
-    private String basicSimFilename = "H:/Files/Thesis-Work/evaluations/precomputed/test-usim-write";
-
     private boolean writeUserSimilaritiesToPrecomputedFile;
     private boolean readUserSimilaritiesFromPrecomputedFile;
     private boolean precomputedIsWithDate;
-
-    public String getBasicSimFilename() {
-        return basicSimFilename;
-    }
 
     @Override
     public String getConfigurationDescription() {
@@ -42,10 +36,6 @@ public class UserModelBasedSimilarityConfiguration implements ConfigurationDescr
 
     public boolean isWriteUserSimilaritiesToPrecomputedFile() {
         return writeUserSimilaritiesToPrecomputedFile;
-    }
-
-    public void setBasicSimFilename(String basicSimFilename) {
-        this.basicSimFilename = basicSimFilename;
     }
 
     public void setPrecomputedIsWithDate(boolean precomputedIsWithDate) {
@@ -74,7 +64,6 @@ public class UserModelBasedSimilarityConfiguration implements ConfigurationDescr
     public String toString() {
         return "UserModelBasedSimilarityConfiguration [setSimilarity=" + setSimilarity
                 + ", precomputedUserSimilaritesFilename=" + precomputedUserSimilaritesFilename
-                + ", basicSimFilename=" + basicSimFilename
                 + ", writeUserSimilaritiesToPrecomputedFile="
                 + writeUserSimilaritiesToPrecomputedFile
                 + ", readUserSimilaritiesFromPrecomputedFile="

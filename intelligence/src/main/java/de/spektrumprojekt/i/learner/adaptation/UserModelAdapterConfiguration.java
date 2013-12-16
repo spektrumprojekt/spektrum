@@ -1,6 +1,8 @@
 package de.spektrumprojekt.i.learner.adaptation;
 
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
+import de.spektrumprojekt.i.similarity.messagegroup.MessageGroupSimilarityConfiguration;
+import de.spektrumprojekt.i.similarity.user.UserModelBasedSimilarityConfiguration;
 import de.spektrumprojekt.i.similarity.user.UserSimilaritySimType;
 import de.spektrumprojekt.i.similarity.user.hits.HITSUserMentionComputer.ScoreToUse;
 
@@ -31,6 +33,10 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
     private UserSimilaritySimType userSimilaritySimType;
 
     private UserModelBasedSimilarityConfiguration userModelBasedSimilarityConfiguration;
+    private MessageGroupSimilarityConfiguration messageGroupSimilarityConfiguration;
+
+    private boolean adaptFromUsers;
+    private int intervallOfUserSimComputationInDays = 1;
 
     public float getConfidenceThreshold() {
         return confidenceThreshold;
@@ -43,6 +49,14 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
 
     public ScoreToUse getHitsScoreToUse() {
         return hitsScoreToUse;
+    }
+
+    public int getIntervallOfUserSimComputationInDays() {
+        return intervallOfUserSimComputationInDays;
+    }
+
+    public MessageGroupSimilarityConfiguration getMessageGroupSimilarityConfiguration() {
+        return messageGroupSimilarityConfiguration;
     }
 
     public double getMessageGroupSimilarityThreshold() {
@@ -83,6 +97,10 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
         return adaptFromMessageGroups;
     }
 
+    public boolean isAdaptFromUsers() {
+        return adaptFromUsers;
+    }
+
     public boolean isUserSelectorUseHITS() {
         return userSelectorUseHITS;
     }
@@ -109,12 +127,25 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
         this.adaptFromMessageGroups = adaptFromMessageGroups;
     }
 
+    public void setAdaptFromUsers(boolean adaptFromUsers) {
+        this.adaptFromUsers = adaptFromUsers;
+    }
+
     public void setConfidenceThreshold(float confidenceThreshold) {
         this.confidenceThreshold = confidenceThreshold;
     }
 
     public void setHitsScoreToUse(ScoreToUse hitsScoreToUse) {
         this.hitsScoreToUse = hitsScoreToUse;
+    }
+
+    public void setIntervallOfUserSimComputationInDays(int intervallOfUserSimComputationInDays) {
+        this.intervallOfUserSimComputationInDays = intervallOfUserSimComputationInDays;
+    }
+
+    public void setMessageGroupSimilarityConfiguration(
+            MessageGroupSimilarityConfiguration messageGroupSimilarityConfiguration) {
+        this.messageGroupSimilarityConfiguration = messageGroupSimilarityConfiguration;
     }
 
     public void setMessageGroupSimilarityThreshold(double messageGroupSimilarityThreshold) {
@@ -164,6 +195,7 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
         return "UserModelAdapterConfiguration [userSimilarityThreshold=" + userSimilarityThreshold
                 + ", messageGroupSimilarityThreshold=" + messageGroupSimilarityThreshold
                 + ", topNMessageGroupsToUseForAdaptation=" + topNMessageGroupsToUseForAdaptation
+                + ", topNUsersToUseForAdaptation=" + topNUsersToUseForAdaptation
                 + ", userSelectorUseHITS=" + userSelectorUseHITS
                 + ", userSelectorUseMentionsPercentage=" + userSelectorUseMentionsPercentage
                 + ", hitsScoreToUse=" + hitsScoreToUse + ", adaptFromMessageGroups="
@@ -172,7 +204,10 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
                 + scoreThreshold + ", confidenceThreshold=" + confidenceThreshold
                 + ", userSimilaritySimType=" + userSimilaritySimType
                 + ", userModelBasedSimilarityConfiguration="
-                + userModelBasedSimilarityConfiguration + "]";
+                + userModelBasedSimilarityConfiguration + ", messageGroupSimilarityConfiguration="
+                + messageGroupSimilarityConfiguration + ", adaptFromUsers=" + adaptFromUsers
+                + ", intervallOfUserSimComputationInDays=" + intervallOfUserSimComputationInDays
+                + "]";
     }
 
 }

@@ -1,4 +1,6 @@
-package de.spektrumprojekt.i.learner.adaptation;
+package de.spektrumprojekt.i.commons.valueaggregator;
+
+import de.spektrumprojekt.i.learner.adaptation.ValueAggregator;
 
 public class MaxValueAggregator implements ValueAggregator {
 

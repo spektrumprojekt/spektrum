@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -25,7 +24,6 @@ import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.helper.MessageHelper;
-import de.spektrumprojekt.i.similarity.set.SetSimilarity;
 import de.spektrumprojekt.i.similarity.set.SetSimilarityResult;
 import de.spektrumprojekt.persistence.Persistence;
 
@@ -36,42 +34,32 @@ public class TermBasedMessageGroupSimilarityComputer implements MessageGroupSimi
             .getLogger(TermBasedMessageGroupSimilarityComputer.class);
 
     private final Persistence persistence;
-    private final SetSimilarity setSimilarity;
-
-    private final long intervallOfMessagesToConsiderInMs = 30 * 24 * DateUtils.MILLIS_PER_HOUR;
-
-    private final long similarityTimeToLive = 7 * 24 * DateUtils.MILLIS_PER_HOUR;
+    private final MessageGroupSimilarityConfiguration messageGroupSimilarityConfiguration;
 
     private final Map<Pair<Long, Long>, MessageGroupSimilarity> cachedSimilarites = new HashMap<Pair<Long, Long>, MessageGroupSimilarity>();
 
-    private final boolean outputSimilarities;
-    private final String outputSimilaritiesFilename;
-
     public TermBasedMessageGroupSimilarityComputer(
             Persistence persistence,
-            SetSimilarity setSimilarity) {
-        this(persistence, setSimilarity, false, null);
-    }
-
-    public TermBasedMessageGroupSimilarityComputer(
-            Persistence persistence,
-            SetSimilarity setSimilarity,
-            boolean outputSimilarities,
-            String outputSimilaritiesFilename) {
+            MessageGroupSimilarityConfiguration messageGroupSimilarityConfiguration) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
         }
-        if (setSimilarity == null) {
-            throw new IllegalArgumentException("setSimilarity cannot be null.");
-        }
-        if (outputSimilarities && outputSimilaritiesFilename == null) {
+        if (messageGroupSimilarityConfiguration == null) {
             throw new IllegalArgumentException(
-                    "outputSimilaritiesFilename cannot be null if outputSimilarities=true.");
+                    "messageGroupSimilarityConfiguration cannot be null.");
+        }
+        if (messageGroupSimilarityConfiguration.getSetSimilarity() == null) {
+            throw new IllegalArgumentException(
+                    "messageGroupSimilarityConfiguration.getSetSimilarity() cannot be null if outputSimilarities=true.");
+        }
+        if (messageGroupSimilarityConfiguration.isReadMessageGroupSimilaritiesFromPrecomputedFile()
+                && messageGroupSimilarityConfiguration
+                        .isReadMessageGroupSimilaritiesFromPrecomputedFile()) {
+            throw new IllegalArgumentException(
+                    "Cannot read and write precomputed sims at the same time.");
         }
         this.persistence = persistence;
-        this.setSimilarity = setSimilarity;
-        this.outputSimilarities = outputSimilarities;
-        this.outputSimilaritiesFilename = outputSimilaritiesFilename;
+        this.messageGroupSimilarityConfiguration = messageGroupSimilarityConfiguration;
     }
 
     private SetSimilarityResult computeSimilarity(Long messageGroupId1, Long messageGroupId2) {
@@ -79,7 +67,8 @@ public class TermBasedMessageGroupSimilarityComputer implements MessageGroupSimi
         StopWatch time = new StopWatch();
         time.start();
         long currentTime = TimeProviderHolder.DEFAULT.getCurrentTime();
-        currentTime -= intervallOfMessagesToConsiderInMs;
+        currentTime -= this.messageGroupSimilarityConfiguration
+                .getIntervallOfMessagesToConsiderInMs();
         Date minPublicationDate = new Date(currentTime);
 
         Set<Term> termsOfMG1 = getTermsForMessageGroup(messageGroupId1, minPublicationDate);
@@ -90,8 +79,8 @@ public class TermBasedMessageGroupSimilarityComputer implements MessageGroupSimi
         Set<String> termValuesOfMG2 = getMGFreeTermValues(termsOfMG2);
         long timeToGetTerms2 = time.getTime();
 
-        SetSimilarityResult result = setSimilarity.computeSimilarity(termValuesOfMG1,
-                termValuesOfMG2);
+        SetSimilarityResult result = this.messageGroupSimilarityConfiguration.getSetSimilarity()
+                .computeSimilarity(termValuesOfMG1, termValuesOfMG2);
 
         time.stop();
         long timeForAll = time.getTime();
@@ -112,13 +101,26 @@ public class TermBasedMessageGroupSimilarityComputer implements MessageGroupSimi
 
     @Override
     public String getConfigurationDescription() {
-        return this.getClass().getSimpleName() + " intervallOfMessagesToConsiderInMs: "
-                + intervallOfMessagesToConsiderInMs;
+        return this.getClass().getSimpleName() + " messageGroupSimilarityConfiguration: "
+                + this.messageGroupSimilarityConfiguration.getConfigurationDescription();
     }
 
     @Override
     public float getMessageGroupSimilarity(Long messageGroupId1, Long messageGroupId2) {
         return internalGetMessageGroupSimilarity(messageGroupId1, messageGroupId2).getSim();
+    }
+
+    private String getMessageGroupSimilarityDumpFilename() {
+        String fname = this.messageGroupSimilarityConfiguration
+                .getPrecomputedMessageGroupSimilaritesFilename();
+
+        if (this.messageGroupSimilarityConfiguration.isPrecomputedIsWithDate()) {
+
+            fname = fname.replace("TIME", "" + TimeProviderHolder.DEFAULT.getCurrentTime());
+        }
+
+        return fname;
+
     }
 
     private Set<String> getMGFreeTermValues(Set<Term> termsOfMG1) {
@@ -168,6 +170,8 @@ public class TermBasedMessageGroupSimilarityComputer implements MessageGroupSimi
             messageGroupId2 = mg;
         }
 
+        long similarityTimeToLive = this.messageGroupSimilarityConfiguration
+                .getSimilarityTimeToLive();
         long currentTime = TimeProviderHolder.DEFAULT.getCurrentTime();
         Pair<Long, Long> mgPair = new ImmutablePair<Long, Long>(messageGroupId1, messageGroupId2);
 
@@ -196,34 +200,63 @@ public class TermBasedMessageGroupSimilarityComputer implements MessageGroupSimi
         return simValue;
     }
 
+    private List<MessageGroupSimilarity> readPrecomputedUserSimilarites() throws IOException {
+        String fname = getMessageGroupSimilarityDumpFilename();
+
+        MessageGroupSimilarityOutput mgSimilarityOutput = new MessageGroupSimilarityOutput();
+
+        mgSimilarityOutput.read(fname);
+
+        LOGGER.info("Read {} userSims from {}", mgSimilarityOutput.getElements().size(),
+                fname);
+        return mgSimilarityOutput.getElements();
+    }
+
     @Override
     public void run() throws IOException {
 
         StopWatch runTime = new StopWatch();
         runTime.start();
 
-        Collection<MessageGroup> messageGroups = persistence.getAllMessageGroups();
-
         this.cachedSimilarites.clear();
-        for (MessageGroup one : messageGroups) {
-            for (MessageGroup two : messageGroups) {
-                MessageGroupSimilarity similarity = internalGetMessageGroupSimilarity(one.getId(),
-                        two.getId());
-                similarity.setMessageGroupGlobalId1(one.getGlobalId());
-                similarity.setMessageGroupGlobalId2(two.getGlobalId());
 
+        if (this.messageGroupSimilarityConfiguration
+                .isReadMessageGroupSimilaritiesFromPrecomputedFile()) {
+            List<MessageGroupSimilarity> sims = readPrecomputedUserSimilarites();
+            for (MessageGroupSimilarity sim : sims) {
+                Pair<Long, Long> mgPair = new ImmutablePair<Long, Long>(sim.getMessageGroupId1(),
+                        sim.getMessageGroupId2());
+                this.cachedSimilarites.put(mgPair, sim);
+            }
+        } else {
+
+            Collection<MessageGroup> messageGroups = persistence.getAllMessageGroups();
+            for (MessageGroup one : messageGroups) {
+                for (MessageGroup two : messageGroups) {
+                    MessageGroupSimilarity similarity = internalGetMessageGroupSimilarity(
+                            one.getId(),
+                            two.getId());
+                    similarity.setMessageGroupGlobalId1(one.getGlobalId());
+                    similarity.setMessageGroupGlobalId2(two.getGlobalId());
+
+                }
             }
         }
-        runTime.stop();
 
-        LOGGER.info("Computing all message group similarities took {} ms.", runTime.getTime());
-
-        if (this.outputSimilarities) {
+        if (this.messageGroupSimilarityConfiguration
+                .isWriteMessageGroupSimilaritiesToPrecomputedFile()) {
 
             MessageGroupSimilarityOutput output = new MessageGroupSimilarityOutput();
             output.getElements().addAll(this.cachedSimilarites.values());
-            output.write(outputSimilaritiesFilename);
+            output.write(getMessageGroupSimilarityDumpFilename());
+
+            LOGGER.info("Wrote {} message group sims to {}.", output.getElements().size(),
+                    getMessageGroupSimilarityDumpFilename());
         }
+
+        runTime.stop();
+
+        LOGGER.info("Computing all message group similarities took {} ms.", runTime.getTime());
     }
 
 }

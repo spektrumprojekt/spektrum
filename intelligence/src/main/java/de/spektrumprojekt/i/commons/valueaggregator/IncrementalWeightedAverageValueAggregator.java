@@ -17,9 +17,11 @@
  * under the License.
  */
 
-package de.spektrumprojekt.i.learner.adaptation;
+package de.spektrumprojekt.i.commons.valueaggregator;
 
-public class IncrementalWeightedAverage implements ValueAggregator {
+import de.spektrumprojekt.i.learner.adaptation.ValueAggregator;
+
+public class IncrementalWeightedAverageValueAggregator implements ValueAggregator {
     private double sum;
     private double count;
 

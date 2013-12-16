@@ -37,7 +37,6 @@ import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
-import de.spektrumprojekt.i.learner.adaptation.UserModelBasedSimilarityConfiguration;
 import de.spektrumprojekt.i.similarity.set.SetSimilarityResult;
 import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
 import de.spektrumprojekt.persistence.Persistence;
@@ -100,8 +99,7 @@ public class UserModelBasedUserSimilarityComputer implements UserSimilarityCompu
         Map<User, UserModelHolder> userModelEntries = persistence
                 .getUserModelByTypeHolders(UserModel.DEFAULT_USER_MODEL_TYPE);
 
-        user2Entries1: for (Entry<User, UserModelHolder> user2Entries1 : userModelEntries
-                .entrySet()) {
+        for (Entry<User, UserModelHolder> user2Entries1 : userModelEntries.entrySet()) {
             User user1 = user2Entries1.getKey();
 
             user2Entries2: for (Entry<User, UserModelHolder> user2Entries2 : userModelEntries

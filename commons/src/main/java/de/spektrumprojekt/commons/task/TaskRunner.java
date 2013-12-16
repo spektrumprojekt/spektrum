@@ -64,7 +64,7 @@ public class TaskRunner {
                     task.getComputer().run();
                     stopWatch.stop();
                     LOGGER.info("Finished computer in success in  " + stopWatch.getTime()
-                            + " ms. " + task.getComputer().getConfigurationDescription());
+                            + " ms. " + task.getComputer().getClass().getName());
                 } catch (Exception e) {
                     LOGGER.error("Error running task=" + task + " " + e.getMessage(), e);
                     if (exitOnError) {

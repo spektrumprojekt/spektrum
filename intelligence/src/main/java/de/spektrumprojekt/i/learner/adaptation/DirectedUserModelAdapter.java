@@ -42,6 +42,9 @@ import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
+import de.spektrumprojekt.i.commons.valueaggregator.IncrementalWeightedAverageValueAggregator;
+import de.spektrumprojekt.i.commons.valueaggregator.MaxValueAggregator;
+import de.spektrumprojekt.i.commons.valueaggregator.VotingValueAggregator;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.Scorer;
 import de.spektrumprojekt.i.similarity.messagegroup.MessageGroupSimilarity;
@@ -103,6 +106,12 @@ public class DirectedUserModelAdapter implements
             throw new IllegalArgumentException(
                     "messageGroupSimilarityRetriever cannot be null if adaptFromMessageGroups is true.");
         }
+
+        if (!userModelAdapterConfiguration.isAdaptFromMessageGroups()
+                && !userModelAdapterConfiguration.isAdaptFromUsers()) {
+            throw new IllegalArgumentException(
+                    "must adapt frome either message groups or users, or both.");
+        }
         this.persistence = persistence;
         this.scorer = scorer;
         this.userToUserInterestRetriever = userToUserInterestRetriever;
@@ -135,7 +144,7 @@ public class DirectedUserModelAdapter implements
                 false);
     }
 
-    public Map<Term, UserModelEntry> adaptTerms(
+    private Map<Term, UserModelEntry> adaptTerms(
             UserModel userModelToAdapt, Collection<Term> termsToAdapt,
             Map<Term, ValueAggregator> statsForTermsToAdaptFrom) {
         Map<Term, UserModelEntry> entries = persistence.getUserModelEntriesForTerms(
@@ -178,8 +187,14 @@ public class DirectedUserModelAdapter implements
     }
 
     private ValueAggregator createNewValueAggregator() {
-        return userModelAdapterConfiguration.isUseWeightedAverageForAggregatingSimilarUsers() ? new IncrementalWeightedAverage()
-                : new MaxValueAggregator();
+        if (userModelAdapterConfiguration.isAdaptFromMessageGroups()
+                && userModelAdapterConfiguration.isAdaptFromUsers()) {
+            return new VotingValueAggregator(3);
+        } else {
+
+            return userModelAdapterConfiguration.isUseWeightedAverageForAggregatingSimilarUsers() ?
+                    new IncrementalWeightedAverageValueAggregator() : new MaxValueAggregator();
+        }
     }
 
     /**
@@ -198,7 +213,8 @@ public class DirectedUserModelAdapter implements
 
         if (userModelAdapterConfiguration.isAdaptFromMessageGroups()) {
             determineTermsBySimilarTopics(message, termsToAdapt, statsForTermsToAdaptFrom);
-        } else {
+        }
+        if (userModelAdapterConfiguration.isAdaptFromUsers()) {
             determineTermsBySimilarUsers(message, termsToAdapt, statsForTermsToAdaptFrom);
         }
 
