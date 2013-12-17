@@ -1,5 +1,6 @@
 package de.spektrumprojekt.i.commons.valueaggregator;
 
+import de.spektrumprojekt.i.learner.adaptation.UserModelAdapterConfiguration;
 import de.spektrumprojekt.i.learner.adaptation.ValueAggregator;
 
 public class VotingValueAggregator implements ValueAggregator {
@@ -25,6 +26,12 @@ public class VotingValueAggregator implements ValueAggregator {
         this.strict = strict;
         this.necassaryVotes = necassaryVotes;
         this.strictTreshold = strictTreshold;
+    }
+
+    public VotingValueAggregator(UserModelAdapterConfiguration userModelAdapterConfiguration) {
+        this(userModelAdapterConfiguration.getVotingAggregatorNecassaryVotes(),
+                userModelAdapterConfiguration.isVotingAggregatorStrict(),
+                userModelAdapterConfiguration.getVotingAggregatorStrictThreshold());
     }
 
     @Override

@@ -38,6 +38,10 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
     private boolean adaptFromUsers;
     private int intervallOfUserSimComputationInDays = 1;
 
+    private int votingAggregatorNecassaryVotes = 3;
+    private boolean votingAggregatorStrict = false;
+    private double votingAggregatorStrictThreshold = 0.5d;
+
     public float getConfidenceThreshold() {
         return confidenceThreshold;
     }
@@ -87,6 +91,14 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
         return userSimilarityThreshold;
     }
 
+    public int getVotingAggregatorNecassaryVotes() {
+        return votingAggregatorNecassaryVotes;
+    }
+
+    public double getVotingAggregatorStrictThreshold() {
+        return votingAggregatorStrictThreshold;
+    }
+
     /**
      * If true the DUMA will adapt from the same user user model but from different message groups.
      * only works if a message group specific model is maintained.
@@ -121,6 +133,10 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
         return userSelectorUseHITS != userSelectorUseMentionsPercentage
                 && userSimilarityThreshold >= 0
                 && userSimilarityThreshold <= 1 || adaptFromMessageGroups;
+    }
+
+    public boolean isVotingAggregatorStrict() {
+        return votingAggregatorStrict;
     }
 
     public void setAdaptFromMessageGroups(boolean adaptFromMessageGroups) {
@@ -190,6 +206,18 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
         this.useWeightedAverageForAggregatingSimilarUsers = useWeightedAverageForAggregatingSimilarUsers;
     }
 
+    public void setVotingAggregatorNecassaryVotes(int votingAggregatorNecassaryVotes) {
+        this.votingAggregatorNecassaryVotes = votingAggregatorNecassaryVotes;
+    }
+
+    public void setVotingAggregatorStrict(boolean votingAggregatorStrict) {
+        this.votingAggregatorStrict = votingAggregatorStrict;
+    }
+
+    public void setVotingAggregatorStrictThreshold(double votingAggregatorStrictThreshold) {
+        this.votingAggregatorStrictThreshold = votingAggregatorStrictThreshold;
+    }
+
     @Override
     public String toString() {
         return "UserModelAdapterConfiguration [userSimilarityThreshold=" + userSimilarityThreshold
@@ -207,7 +235,9 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
                 + userModelBasedSimilarityConfiguration + ", messageGroupSimilarityConfiguration="
                 + messageGroupSimilarityConfiguration + ", adaptFromUsers=" + adaptFromUsers
                 + ", intervallOfUserSimComputationInDays=" + intervallOfUserSimComputationInDays
-                + "]";
+                + ", votingAggregatorNecassaryVotes=" + votingAggregatorNecassaryVotes
+                + ", votingAggregatorStrict=" + votingAggregatorStrict
+                + ", votingAggregatorStrictThreshold=" + votingAggregatorStrictThreshold + "]";
     }
 
 }

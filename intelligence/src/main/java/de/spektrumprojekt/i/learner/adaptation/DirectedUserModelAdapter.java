@@ -189,7 +189,7 @@ public class DirectedUserModelAdapter implements
     private ValueAggregator createNewValueAggregator() {
         if (userModelAdapterConfiguration.isAdaptFromMessageGroups()
                 && userModelAdapterConfiguration.isAdaptFromUsers()) {
-            return new VotingValueAggregator(3);
+            return new VotingValueAggregator(userModelAdapterConfiguration);
         } else {
 
             return userModelAdapterConfiguration.isUseWeightedAverageForAggregatingSimilarUsers() ?

@@ -54,7 +54,7 @@ public class TermBasedMessageGroupSimilarityComputer implements MessageGroupSimi
         }
         if (messageGroupSimilarityConfiguration.isReadMessageGroupSimilaritiesFromPrecomputedFile()
                 && messageGroupSimilarityConfiguration
-                        .isReadMessageGroupSimilaritiesFromPrecomputedFile()) {
+                        .isWriteMessageGroupSimilaritiesToPrecomputedFile()) {
             throw new IllegalArgumentException(
                     "Cannot read and write precomputed sims at the same time.");
         }
