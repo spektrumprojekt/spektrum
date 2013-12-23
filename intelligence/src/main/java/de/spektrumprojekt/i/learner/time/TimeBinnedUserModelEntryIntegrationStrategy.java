@@ -48,38 +48,40 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
 
     private final long startTime;
 
-    private final long binSizeInMs;
+    private final long lengthOfAllBinsInMs;
 
-    private final long binPrecisionInMs;
+    private final long lengthOfSingleBinInMs;
 
     private final boolean calculateLater;
 
-    public TimeBinnedUserModelEntryIntegrationStrategy(long startTime, long binSizeInMs,
-            long binPrecisionInMs) {
-        this(startTime, binSizeInMs, binPrecisionInMs, false);
+    public TimeBinnedUserModelEntryIntegrationStrategy(long startTime, long lengthOfAllBinsInMs,
+            long lengthOfSingleBinInMs) {
+        this(startTime, lengthOfAllBinsInMs, lengthOfSingleBinInMs, false);
 
     }
 
-    public TimeBinnedUserModelEntryIntegrationStrategy(long startTime, long binSizeInMs,
-            long binPrecisionInMs, boolean calculateLater) {
-        if (binPrecisionInMs <= 0) {
+    public TimeBinnedUserModelEntryIntegrationStrategy(
+            long startTime,
+            long lengthOfAllBinsInMs,
+            long lengthOfSingleBinInMs, boolean calculateLater) {
+        if (lengthOfSingleBinInMs <= 0) {
             throw new IllegalArgumentException("binPrecisionInMs must be > 0 but is "
-                    + binPrecisionInMs);
+                    + lengthOfSingleBinInMs);
         }
         this.startTime = startTime;
-        this.binSizeInMs = binSizeInMs;
-        this.binPrecisionInMs = binPrecisionInMs;
+        this.lengthOfAllBinsInMs = lengthOfAllBinsInMs;
+        this.lengthOfSingleBinInMs = lengthOfSingleBinInMs;
         this.calculateLater = calculateLater;
     }
 
     private long determineTimeBinPrecisionStart(long time) {
-        long index = (time - startTime) / binPrecisionInMs;
-        return index * binPrecisionInMs;
+        long index = (time - startTime) / lengthOfSingleBinInMs;
+        return index * lengthOfSingleBinInMs;
     }
 
     private long determineTimeBinSizeStart(long time) {
-        long index = (time - startTime) / binSizeInMs;
-        return index * binSizeInMs;
+        long index = (time - startTime) / lengthOfAllBinsInMs;
+        return index * lengthOfAllBinsInMs;
     }
 
     @Override
@@ -91,21 +93,20 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
         return updateEntry(entry, -1 * interest.getScore(), scoredTerm, observationDate);
     }
 
-    public long getBinPrecisionInMs() {
-        return binPrecisionInMs;
-    }
-
-    public long getBinSizeInMs() {
-        return binSizeInMs;
-    }
-
     /**
      * {@inheritDoc}
      */
     @Override
     public String getConfigurationDescription() {
-        return getClass().getSimpleName() + " binSizeInMs=" + binSizeInMs + " binPrecisionInMs="
-                + binPrecisionInMs + " startTime=" + startTime;
+        return toString();
+    }
+
+    public long getLengthOfAllBinsInMs() {
+        return lengthOfAllBinsInMs;
+    }
+
+    public long getLengthOfSingleBinInMs() {
+        return lengthOfSingleBinInMs;
     }
 
     public long getStartTime() {
@@ -124,6 +125,13 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
 
     public boolean isCalculateLater() {
         return calculateLater;
+    }
+
+    @Override
+    public String toString() {
+        return "TimeBinnedUserModelEntryIntegrationStrategy [startTime=" + startTime
+                + ", lengthOfAllBinsInMs=" + lengthOfAllBinsInMs + ", lengthOfSingleBinInMs="
+                + lengthOfSingleBinInMs + ", calculateLater=" + calculateLater + "]";
     }
 
     private boolean updateEntry(UserModelEntry entry, float interestScore, ScoredTerm scoredTerm,
@@ -163,9 +171,13 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
                 entry.addToTimeBinEntriesHistory(timeBin);
 
                 int size = entry.getTimeBinEntries() == null ? 0 : entry.getTimeBinEntries().size();
-                assert size <= this.binSizeInMs / this.binPrecisionInMs : "timeBinEntries.size="
-                        + size + " is greater than this.binSizeInMs / this.binPrecisionInMs = "
-                        + this.binSizeInMs / this.binPrecisionInMs + ".";
+                if (size > this.lengthOfAllBinsInMs / this.lengthOfSingleBinInMs) {
+                    throw new IllegalArgumentException(
+                            "timeBinEntries.size="
+                                    + size
+                                    + " is greater than this.lengthOfAllBinsInMs / this.lengthOfSingleBinInMs = "
+                                    + this.lengthOfAllBinsInMs / this.lengthOfSingleBinInMs + ".");
+                }
             }
         }
         return entry.getTimeBinEntries() == null || entry.getTimeBinEntries().size() == 0;

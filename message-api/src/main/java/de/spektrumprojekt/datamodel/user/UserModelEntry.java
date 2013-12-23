@@ -20,9 +20,11 @@
 package de.spektrumprojekt.datamodel.user;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -64,6 +66,23 @@ public class UserModelEntry extends Identifiable {
         return map;
     }
 
+    /**
+     * Filter the map to only return term to {@link UserModelEntry} pairs that are NOT adapted.
+     * 
+     * @param entries
+     * @return
+     */
+    public static Map<Term, UserModelEntry> filteredForNonAdaptedEntries(
+            Map<Term, UserModelEntry> entries) {
+        final Map<Term, UserModelEntry> filteredEntries = new HashMap<Term, UserModelEntry>();
+        for (Entry<Term, UserModelEntry> entry : entries.entrySet()) {
+            if (!entry.getValue().isAdapted()) {
+                filteredEntries.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return filteredEntries;
+    }
+
     @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
     private ScoredTerm scoredTerm;
 
@@ -81,6 +100,8 @@ public class UserModelEntry extends Identifiable {
     private float scoreSum;
 
     private transient boolean adapted;
+
+    private transient Date lastChange;
 
     /**
      * for the jpa
@@ -133,6 +154,10 @@ public class UserModelEntry extends Identifiable {
         consolidate();
     }
 
+    public Date getLastChange() {
+        return lastChange;
+    }
+
     public float getScoreCount() {
         return scoreCount;
     }
@@ -179,6 +204,10 @@ public class UserModelEntry extends Identifiable {
 
     public void setAdapted(boolean adapted) {
         this.adapted = adapted;
+    }
+
+    public void setLastChange(Date lastChange) {
+        this.lastChange = lastChange;
     }
 
     public void setScoreCount(float scoreCount) {

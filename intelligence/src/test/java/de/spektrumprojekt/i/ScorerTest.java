@@ -166,7 +166,7 @@ public class ScorerTest extends IntelligenceSpektrumTest {
             scorerConfiguration.addFlags(flag);
         }
 
-        scorerConfiguration.put(UserModel.DEFAULT_USER_MODEL_TYPE,
+        scorerConfiguration.putUserModelConfiguration(UserModel.DEFAULT_USER_MODEL_TYPE,
                 UserModelConfiguration.getUserModelConfigurationWithTermCountLearningStrategy());
 
         Scorer scorer = new Scorer(getPersistence(), communicator,

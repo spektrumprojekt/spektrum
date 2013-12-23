@@ -314,7 +314,7 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
         return useFixedDefaultLearningFeatureWeights;
     }
 
-    public UserModelConfiguration put(String userModelType,
+    public UserModelConfiguration putUserModelConfiguration(String userModelType,
             UserModelConfiguration modelConfiguration) {
         return userModelTypes.put(userModelType, modelConfiguration);
     }

@@ -149,7 +149,7 @@ public class LearnerTest extends IntelligenceSpektrumTest {
 
         ScorerConfiguration rankerConfiguration = new ScorerConfiguration(
                 TermWeightStrategy.TRIVIAL, TermVectorSimilarityStrategy.COSINUS);
-        rankerConfiguration.put(UserModel.DEFAULT_USER_MODEL_TYPE,
+        rankerConfiguration.putUserModelConfiguration(UserModel.DEFAULT_USER_MODEL_TYPE,
                 UserModelConfiguration.getUserModelConfigurationWithTermCountLearningStrategy());
 
         // extract the terms

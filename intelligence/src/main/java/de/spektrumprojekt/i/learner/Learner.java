@@ -119,8 +119,8 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
 
                     userModelEntryIntegrationStrategy = new TimeBinnedUserModelEntryIntegrationStrategy(
                             userModelConfiguration.getStartTime(),
-                            userModelConfiguration.getBinSize(),
-                            userModelConfiguration.getPrecision(),
+                            userModelConfiguration.getLengthOfAllBinsInMs(),
+                            userModelConfiguration.getLengthOfSingleBinInMs(),
                             userModelConfiguration.isCalculateLater());
                     break;
                 default:

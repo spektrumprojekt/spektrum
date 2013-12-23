@@ -42,6 +42,8 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
     private boolean votingAggregatorStrict = false;
     private double votingAggregatorStrictThreshold = 0.5d;
 
+    private boolean onlyUseAdaptedTermsForRescoring;
+
     public float getConfidenceThreshold() {
         return confidenceThreshold;
     }
@@ -113,6 +115,10 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
         return adaptFromUsers;
     }
 
+    public boolean isOnlyUseAdaptedTermsForRescoring() {
+        return onlyUseAdaptedTermsForRescoring;
+    }
+
     public boolean isUserSelectorUseHITS() {
         return userSelectorUseHITS;
     }
@@ -166,6 +172,10 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
 
     public void setMessageGroupSimilarityThreshold(double messageGroupSimilarityThreshold) {
         this.messageGroupSimilarityThreshold = messageGroupSimilarityThreshold;
+    }
+
+    public void setOnlyUseAdaptedTermsForRescoring(boolean onlyUseAdaptedTermsForRescoring) {
+        this.onlyUseAdaptedTermsForRescoring = onlyUseAdaptedTermsForRescoring;
     }
 
     public void setScoreThreshold(float scoreThreshold) {
@@ -237,7 +247,8 @@ public class UserModelAdapterConfiguration implements ConfigurationDescriptable 
                 + ", intervallOfUserSimComputationInDays=" + intervallOfUserSimComputationInDays
                 + ", votingAggregatorNecassaryVotes=" + votingAggregatorNecassaryVotes
                 + ", votingAggregatorStrict=" + votingAggregatorStrict
-                + ", votingAggregatorStrictThreshold=" + votingAggregatorStrictThreshold + "]";
+                + ", votingAggregatorStrictThreshold=" + votingAggregatorStrictThreshold
+                + ", onlyUseAdaptedTermsForRescoring=" + onlyUseAdaptedTermsForRescoring + "]";
     }
 
 }

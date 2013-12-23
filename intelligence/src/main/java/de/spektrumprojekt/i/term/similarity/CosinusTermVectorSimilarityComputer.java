@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
+import de.spektrumprojekt.commons.time.TimeProviderHolder;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.i.term.weight.TermWeightComputer;
@@ -12,9 +13,27 @@ import de.spektrumprojekt.i.timebased.MergeValuesStrategy;
 
 public class CosinusTermVectorSimilarityComputer extends TermWeightTermVectorSimilarityComputer {
 
+    private final TimeDecayFunction timeDecayFunction = null; // TimeDecayFunction.createWithDayCutOff();
+
     public CosinusTermVectorSimilarityComputer(TermWeightComputer termWeightComputer,
             boolean treatMissingUserModelEntriesAsZero) {
         super(termWeightComputer, treatMissingUserModelEntriesAsZero);
+    }
+
+    @Override
+    public String getConfigurationDescription() {
+        return super.getConfigurationDescription() + " " + this.toString();
+    }
+
+    private float getEntryWeight(UserModelEntry entry) {
+        if (timeDecayFunction == null) {
+            return entry.getScoredTerm().getWeight();
+        }
+
+        double decay = timeDecayFunction.getDecay(entry.getLastChange().getTime(),
+                TimeProviderHolder.DEFAULT.getCurrentTime());
+        float sum = entry.getScoreSum() == 0 ? 1 : entry.getScoreSum();
+        return Math.max(0, Math.min(1, (float) decay * sum * entry.getScoredTerm().getWeight()));
     }
 
     @Override
@@ -31,8 +50,8 @@ public class CosinusTermVectorSimilarityComputer extends TermWeightTermVectorSim
             if (entry2 == null) {
                 continue;
             }
-            float entryScore1 = entry1.getScoredTerm().getWeight();
-            float entryScore2 = entry2.getScoredTerm().getWeight();
+            float entryScore1 = getEntryWeight(entry1);
+            float entryScore2 = getEntryWeight(entry2);
 
             sumTop += entryScore1 * entryScore2;
             squareSum1 += entryScore1 * entryScore1;
@@ -66,7 +85,7 @@ public class CosinusTermVectorSimilarityComputer extends TermWeightTermVectorSim
             for (String userModelType : allEntries.keySet()) {
                 UserModelEntry entry = allEntries.get(userModelType).get(term);
                 if (entry != null) {
-                    entryScores.put(userModelType, entry.getScoredTerm().getWeight());
+                    entryScores.put(userModelType, getEntryWeight(entry));
                 } else if (isTreatMissingUserModelEntriesAsZero()) {
                     entryScores.put(userModelType, 0f);
                 }
@@ -106,7 +125,7 @@ public class CosinusTermVectorSimilarityComputer extends TermWeightTermVectorSim
             UserModelEntry entry = relevantEntries.get(term);
             float entryScore = 0;
             if (entry != null) {
-                entryScore = entry.getScoredTerm().getWeight();
+                entryScore = getEntryWeight(entry);
             }
             float termWeight = getTermWeightComputer().determineTermWeight(messageGroupId, term);
 
@@ -119,6 +138,11 @@ public class CosinusTermVectorSimilarityComputer extends TermWeightTermVectorSim
             return 0;
         }
         return (float) (sumTop / Math.sqrt(squareSum1 * squareSum2));
+    }
+
+    @Override
+    public String toString() {
+        return "CosinusTermVectorSimilarityComputer [timeDecayFunction=" + timeDecayFunction + "]";
     }
 
 }

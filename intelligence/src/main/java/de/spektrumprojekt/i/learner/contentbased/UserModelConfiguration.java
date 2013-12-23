@@ -17,17 +17,21 @@ public class UserModelConfiguration implements ConfigurationDescriptable, Clonea
             UserModelEntryIntegrationStrategyType.TIMEBINNED, 0, DAY, MONTH, false);
 
     public static UserModelConfiguration getShortTermModelConfiguration(long startTime,
-            long precision, long binSize) {
+            long lengthOfAllBinsInMs,
+            long lengthOfSingleBinInMs) {
         return new UserModelConfiguration(UserModelEntryIntegrationStrategyType.TIMEBINNED,
-                startTime,
-                precision, binSize, true);
+                startTime, lengthOfAllBinsInMs,
+                lengthOfSingleBinInMs, true);
     }
 
     public static UserModelConfiguration getTimeBinnedModelConfiguration(long startTime,
-            long precision, long binSize) {
-        return new UserModelConfiguration(UserModelEntryIntegrationStrategyType.TIMEBINNED,
+            long lengthOfAllBinsInMs, long lengthOfSingleBinInMs) {
+        return new UserModelConfiguration(
+                UserModelEntryIntegrationStrategyType.TIMEBINNED,
                 startTime,
-                precision, binSize, false);
+                lengthOfAllBinsInMs,
+                lengthOfSingleBinInMs,
+                false);
     }
 
     public static UserModelConfiguration getUserModelConfigurationWithIncrementalLearningStrategy() {
@@ -41,8 +45,8 @@ public class UserModelConfiguration implements ConfigurationDescriptable, Clonea
     private UserModelEntryIntegrationStrategyType userModelEntryIntegrationStrategyType;
 
     private long startTime;
-    private long precision;
-    private long binSize;
+    private long lengthOfSingleBinInMs;
+    private long lengthOfAllBinsInMs;
     private boolean calculateLater;
 
     private float incrementalLearningFactorAlpha = 0.25f;
@@ -57,19 +61,15 @@ public class UserModelConfiguration implements ConfigurationDescriptable, Clonea
     public UserModelConfiguration(
             UserModelEntryIntegrationStrategyType userModelEntryIntegrationStrategyType,
             long startTime,
-            long precision,
-            long binSize,
+            long lengthOfAllBinsInMs,
+            long lengthOfSingleBinInMs,
             boolean calculateLater) {
 
         this.userModelEntryIntegrationStrategyType = userModelEntryIntegrationStrategyType;
         this.startTime = startTime;
-        this.precision = precision;
-        this.binSize = binSize;
+        this.lengthOfSingleBinInMs = lengthOfSingleBinInMs;
+        this.lengthOfAllBinsInMs = lengthOfAllBinsInMs;
         this.calculateLater = calculateLater;
-    }
-
-    public long getBinSize() {
-        return binSize;
     }
 
     @Override
@@ -77,7 +77,8 @@ public class UserModelConfiguration implements ConfigurationDescriptable, Clonea
         return "UserModelConfiguration [userModelEntryIntegrationStrategyType="
                 + userModelEntryIntegrationStrategyType + ", startTime=" + startTime
                 + ", precision="
-                + precision + ", binSize=" + binSize + ", calculateLater=" + calculateLater + "]";
+                + lengthOfSingleBinInMs + ", binSize=" + lengthOfAllBinsInMs + ", calculateLater="
+                + calculateLater + "]";
     }
 
     public float getIncrementalLearningFactorAlpha() {
@@ -88,8 +89,12 @@ public class UserModelConfiguration implements ConfigurationDescriptable, Clonea
         return incrementalLThresholdOfNeutral;
     }
 
-    public long getPrecision() {
-        return precision;
+    public long getLengthOfAllBinsInMs() {
+        return lengthOfAllBinsInMs;
+    }
+
+    public long getLengthOfSingleBinInMs() {
+        return lengthOfSingleBinInMs;
     }
 
     public long getStartTime() {
@@ -106,10 +111,6 @@ public class UserModelConfiguration implements ConfigurationDescriptable, Clonea
 
     public boolean isIncrementalLUseCurrentUserModelEntryValueAsThreshold() {
         return incrementalLUseCurrentUserModelEntryValueAsThreshold;
-    }
-
-    public void setBinSize(long binSize) {
-        this.binSize = binSize;
     }
 
     public void setCalculateLater(boolean calculateLater) {
@@ -129,8 +130,12 @@ public class UserModelConfiguration implements ConfigurationDescriptable, Clonea
         this.incrementalLUseCurrentUserModelEntryValueAsThreshold = incrementalLUseCurrentUserModelEntryValueAsThreshold;
     }
 
-    public void setPrecision(long precision) {
-        this.precision = precision;
+    public void setLengthOfAllBinsInMs(long lengthOfAllBinsInMs) {
+        this.lengthOfAllBinsInMs = lengthOfAllBinsInMs;
+    }
+
+    public void setLengthOfSingleBinInMs(long lengthOfSingleBinInMs) {
+        this.lengthOfSingleBinInMs = lengthOfSingleBinInMs;
     }
 
     public void setStartTime(long startTime) {
@@ -140,5 +145,17 @@ public class UserModelConfiguration implements ConfigurationDescriptable, Clonea
     public void setUserModelEntryIntegrationStrategyType(
             UserModelEntryIntegrationStrategyType userModelEntryIntegrationStrategyType) {
         this.userModelEntryIntegrationStrategyType = userModelEntryIntegrationStrategyType;
+    }
+
+    @Override
+    public String toString() {
+        return "UserModelConfiguration [userModelEntryIntegrationStrategyType="
+                + userModelEntryIntegrationStrategyType + ", startTime=" + startTime
+                + ", lengthOfSingleBinInMs=" + lengthOfSingleBinInMs + ", lengthOfAllBinsInMs="
+                + lengthOfAllBinsInMs + ", calculateLater=" + calculateLater
+                + ", incrementalLearningFactorAlpha=" + incrementalLearningFactorAlpha
+                + ", incrementalLThresholdOfNeutral=" + incrementalLThresholdOfNeutral
+                + ", incrementalLUseCurrentUserModelEntryValueAsThreshold="
+                + incrementalLUseCurrentUserModelEntryValueAsThreshold + "]";
     }
 }

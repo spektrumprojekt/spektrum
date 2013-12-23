@@ -21,6 +21,7 @@ package de.spektrumprojekt.i.learner.contentbased;
 
 import java.util.Date;
 
+import de.spektrumprojekt.commons.time.TimeProviderHolder;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.observation.Interest;
@@ -111,6 +112,7 @@ public class TermCountUserModelEntryIntegrationStrategy implements
             }
             entry.setScoreSum(entry.getScoreSum() + interestScore);
 
+            entry.setLastChange(new Date(TimeProviderHolder.DEFAULT.getCurrentTime()));
             entry.consolidate();
         }
         return !(entry.getScoreCount() > 0);

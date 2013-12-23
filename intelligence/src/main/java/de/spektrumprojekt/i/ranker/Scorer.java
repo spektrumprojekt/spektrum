@@ -112,7 +112,8 @@ public class Scorer implements MessageHandler<ScorerCommunicationMessage>,
 
     private final StoreMessageScoreCommand storeMessageScoreCommand;
 
-    private final ContentMatchFeatureCommand termMatchFeatureCommand;
+    private final ContentMatchFeatureCommand contentMatchFeatureCommand;
+    private final ContentMatchFeatureCommand reScoreContentMatchFeatureCommand;
 
     private final StoreMessageCommand storeMessageCommand;
 
@@ -225,9 +226,15 @@ public class Scorer implements MessageHandler<ScorerCommunicationMessage>,
         discussionParticipationFeatureCommand = new DiscussionParticipationFeatureCommand();
         discussionMentionFeatureCommand = new DiscussionMentionFeatureCommand();
 
-        termMatchFeatureCommand = new ContentMatchFeatureCommand(persistence,
-                termVectorSimilarityComputer, scorerConfiguration.getInterestTermTreshold(),
+        contentMatchFeatureCommand = new ContentMatchFeatureCommand(
+                persistence,
+                termVectorSimilarityComputer,
                 scorerConfiguration);
+        reScoreContentMatchFeatureCommand = new ContentMatchFeatureCommand(
+                persistence,
+                termVectorSimilarityComputer,
+                scorerConfiguration,
+                true);
         determineInteractionLevelCommand = new DetermineInteractionLevelCommand();
 
         computeMessageScoreCommand = new ComputeMessageScoreCommand(
@@ -292,7 +299,7 @@ public class Scorer implements MessageHandler<ScorerCommunicationMessage>,
 
         if (!this.scorerConfiguration
                 .hasFlag(ScorerConfigurationFlag.DO_NOT_USE_CONTENT_MATCHER_FEATURE)) {
-            userFeatureCommand.addCommand(termMatchFeatureCommand);
+            userFeatureCommand.addCommand(contentMatchFeatureCommand);
         }
 
         userFeatureCommand.addCommand(determineInteractionLevelCommand);
@@ -451,7 +458,7 @@ public class Scorer implements MessageHandler<ScorerCommunicationMessage>,
 
         if (!this.scorerConfiguration
                 .hasFlag(ScorerConfigurationFlag.DO_NOT_USE_CONTENT_MATCHER_FEATURE)) {
-            reScoringUserFeatureCommand.addCommand(termMatchFeatureCommand);
+            reScoringUserFeatureCommand.addCommand(reScoreContentMatchFeatureCommand);
         }
 
         reScoringUserFeatureCommand.addCommand(determineInteractionLevelCommand);
