@@ -107,7 +107,23 @@ public class TermBasedMessageGroupSimilarityComputer implements MessageGroupSimi
 
     @Override
     public float getMessageGroupSimilarity(Long messageGroupId1, Long messageGroupId2) {
-        return internalGetMessageGroupSimilarity(messageGroupId1, messageGroupId2).getSim();
+        MessageGroupSimilarity messageGroupSimilarity = internalGetMessageGroupSimilarity(
+                messageGroupId1, messageGroupId2);
+
+        float sim;
+
+        if (messageGroupSimilarity == null) {
+            sim = 0f;
+            LOGGER.warn(
+                    "No messagegroup similarity for {} {} (iterative={})", new Object[] {
+                            messageGroupId1,
+                            messageGroupId2,
+                            new Boolean(this.messageGroupSimilarityConfiguration
+                                    .isAllowIterativeRecomputation()) });
+        } else {
+            sim = messageGroupSimilarity.getSim();
+        }
+        return sim;
     }
 
     private String getMessageGroupSimilarityDumpFilename() {
@@ -162,39 +178,57 @@ public class TermBasedMessageGroupSimilarityComputer implements MessageGroupSimi
         return new ArrayList<MessageGroupSimilarity>(mgs.subList(0, topN));
     }
 
-    private MessageGroupSimilarity internalGetMessageGroupSimilarity(Long messageGroupId1,
+    private MessageGroupSimilarity internalComputeAndCacheSimilarity(Long messageGroupId1,
+            Long messageGroupId2) {
+
+        MessageGroupSimilarity simValue;
+        SetSimilarityResult result;
+        if (messageGroupId1.equals(messageGroupId2)) {
+            result = new SetSimilarityResult();
+            result.setSim(1);
+        } else {
+            result = computeSimilarity(messageGroupId1, messageGroupId2);
+        }
+
+        simValue = new MessageGroupSimilarity(messageGroupId1, messageGroupId2);
+        simValue.setSim(result.getSim());
+        simValue.setIntersectedTermCount(result.getIntersectionSize());
+        simValue.setUnionTermsCount(result.getUnionSize());
+        simValue.setTermsMG1Count(result.getSet1Size());
+        simValue.setTermsMG2Count(result.getSet2Size());
+        simValue.setComputationDate(TimeProviderHolder.DEFAULT.getCurrentTime());
+
+        Pair<Long, Long> mgPair = internalGetMessageGroupIdPair(messageGroupId1, messageGroupId2);
+        cachedSimilarites.put(mgPair, simValue);
+        return simValue;
+    }
+
+    private Pair<Long, Long> internalGetMessageGroupIdPair(Long messageGroupId1,
             Long messageGroupId2) {
         if (messageGroupId1 > messageGroupId2) {
             Long mg = messageGroupId1;
             messageGroupId1 = messageGroupId2;
             messageGroupId2 = mg;
         }
+        Pair<Long, Long> mgPair = new ImmutablePair<Long, Long>(messageGroupId1, messageGroupId2);
+        return mgPair;
+    }
+
+    private MessageGroupSimilarity internalGetMessageGroupSimilarity(Long messageGroupId1,
+            Long messageGroupId2) {
+        Pair<Long, Long> mgPair = internalGetMessageGroupIdPair(messageGroupId1, messageGroupId2);
 
         long similarityTimeToLive = this.messageGroupSimilarityConfiguration
                 .getSimilarityTimeToLive();
         long currentTime = TimeProviderHolder.DEFAULT.getCurrentTime();
-        Pair<Long, Long> mgPair = new ImmutablePair<Long, Long>(messageGroupId1, messageGroupId2);
 
         MessageGroupSimilarity simValue = cachedSimilarites.get(mgPair);
-        if (simValue == null || simValue.getComputationDate() + similarityTimeToLive < currentTime) {
+        if (this.messageGroupSimilarityConfiguration.isAllowIterativeRecomputation()) {
+            if (simValue == null
+                    || simValue.getComputationDate() + similarityTimeToLive < currentTime) {
 
-            SetSimilarityResult result;
-            if (messageGroupId1.equals(messageGroupId2)) {
-                result = new SetSimilarityResult();
-                result.setSim(1);
-            } else {
-                result = computeSimilarity(messageGroupId1, messageGroupId2);
+                simValue = internalComputeAndCacheSimilarity(messageGroupId1, messageGroupId2);
             }
-
-            simValue = new MessageGroupSimilarity(messageGroupId1, messageGroupId2);
-            simValue.setSim(result.getSim());
-            simValue.setIntersectedTermCount(result.getIntersectionSize());
-            simValue.setUnionTermsCount(result.getUnionSize());
-            simValue.setTermsMG1Count(result.getSet1Size());
-            simValue.setTermsMG2Count(result.getSet2Size());
-            simValue.setComputationDate(TimeProviderHolder.DEFAULT.getCurrentTime());
-
-            cachedSimilarites.put(mgPair, simValue);
         }
 
         return simValue;
@@ -233,7 +267,7 @@ public class TermBasedMessageGroupSimilarityComputer implements MessageGroupSimi
             Collection<MessageGroup> messageGroups = persistence.getAllMessageGroups();
             for (MessageGroup one : messageGroups) {
                 for (MessageGroup two : messageGroups) {
-                    MessageGroupSimilarity similarity = internalGetMessageGroupSimilarity(
+                    MessageGroupSimilarity similarity = internalComputeAndCacheSimilarity(
                             one.getId(),
                             two.getId());
                     similarity.setMessageGroupGlobalId1(one.getGlobalId());

@@ -19,6 +19,7 @@ public class MessageGroupSimilarityConfiguration implements ConfigurationDescrip
     private long intervallOfMessagesToConsiderInMs = 30 * 24 * DateUtils.MILLIS_PER_HOUR;
 
     private long similarityTimeToLive = Long.MAX_VALUE;
+    private boolean allowIterativeRecomputation;
 
     @Override
     public String getConfigurationDescription() {
@@ -45,6 +46,10 @@ public class MessageGroupSimilarityConfiguration implements ConfigurationDescrip
         return similarityTimeToLive;
     }
 
+    public boolean isAllowIterativeRecomputation() {
+        return allowIterativeRecomputation;
+    }
+
     public boolean isPrecomputedIsWithDate() {
         return precomputedIsWithDate;
     }
@@ -55,6 +60,10 @@ public class MessageGroupSimilarityConfiguration implements ConfigurationDescrip
 
     public boolean isWriteMessageGroupSimilaritiesToPrecomputedFile() {
         return writeMessageGroupSimilaritiesToPrecomputedFile;
+    }
+
+    public void setAllowIterativeRecomputation(boolean allowIterativeRecomputation) {
+        this.allowIterativeRecomputation = allowIterativeRecomputation;
     }
 
     public void setIntervallOfMessagesToConsiderInMs(long intervallOfMessagesToConsiderInMs) {
@@ -104,7 +113,8 @@ public class MessageGroupSimilarityConfiguration implements ConfigurationDescrip
                 + precomputedIsWithDate + ", intervallOfMGSimComputationInDays="
                 + intervallOfMGSimComputationInDays + ", intervallOfMessagesToConsiderInMs="
                 + intervallOfMessagesToConsiderInMs + ", similarityTimeToLive="
-                + similarityTimeToLive + "]";
+                + similarityTimeToLive + ", allowIterativeRecomputation="
+                + allowIterativeRecomputation + "]";
     }
 
 }
