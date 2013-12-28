@@ -176,9 +176,12 @@ public class UserPersistence extends AbstractPersistenceLayer {
         return getEntityByGlobalId(User.class, userGlobalId);
     }
 
-    public Collection<UserModelEntry> getUserModelEntries(UserModel userModel,
-            Collection<String> termValuesToMatch, Collection<Long> messageGroupIdsToConsider,
-            MatchMode matchMode) {
+    public Collection<UserModelEntry> getUserModelEntries(
+            UserModel userModel,
+            Collection<String> termValuesToMatch,
+            Collection<Long> messageGroupIdsToConsider,
+            MatchMode matchMode,
+            boolean useMGFreeTermValue) {
 
         throw new UnsupportedOperationException(
                 "To be implemented. Enhance getUserModelEntries with filtering for mgs");

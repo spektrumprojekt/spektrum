@@ -64,12 +64,13 @@ public interface Persistence {
 
         public boolean matches(String base, String toMatch) {
             switch (this) {
+            case EXACT:
+                return StringUtils.equals(base, toMatch);
             case ENDS_WITH:
                 return base.endsWith(toMatch);
             case STARTS_WITH:
                 return base.startsWith(toMatch);
             default:
-            case EXACT:
                 return StringUtils.equals(base, toMatch);
             }
         }
@@ -179,9 +180,12 @@ public interface Persistence {
 
     User getUserByGlobalId(String userGlobalId);
 
-    Collection<UserModelEntry> getUserModelEntries(UserModel userModel,
-            Collection<String> termsToMatch, Collection<Long> messageGroupIdsToConsider,
-            MatchMode matchMode);
+    Collection<UserModelEntry> getUserModelEntries(
+            UserModel userModel,
+            Collection<String> termsToMatch,
+            Collection<Long> messageGroupIdsToConsider,
+            MatchMode matchMode,
+            boolean useMGFreeTermValue);
 
     Collection<UserModelEntry> getUserModelEntries(UserModel userModel,
             Collection<String> termsToMatch, MatchMode matchMode);
@@ -293,4 +297,5 @@ public interface Persistence {
 
     void visitAllMessageRanks(MessageRankVisitor visitor, Date startDate, Date endDate)
             throws Exception;
+
 }

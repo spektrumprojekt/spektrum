@@ -265,10 +265,10 @@ public class JPAPersistence implements Persistence {
     @Override
     public Collection<UserModelEntry> getUserModelEntries(UserModel userModel,
             Collection<String> termValuesToMatch, Collection<Long> messageGroupIdsToConsider,
-            MatchMode matchMode) {
+            MatchMode matchMode, boolean useMGFreeTermValue) {
 
         return this.userPersistence.getUserModelEntries(userModel, termValuesToMatch,
-                messageGroupIdsToConsider, matchMode);
+                messageGroupIdsToConsider, matchMode, useMGFreeTermValue);
     }
 
     @Override

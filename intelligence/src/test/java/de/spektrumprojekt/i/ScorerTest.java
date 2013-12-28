@@ -57,6 +57,7 @@ import de.spektrumprojekt.i.ranker.ScorerConfigurationFlag;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 import de.spektrumprojekt.i.similarity.messagegroup.MessageGroupSimilarityConfiguration;
 import de.spektrumprojekt.i.similarity.messagegroup.TermBasedMessageGroupSimilarityComputer;
+import de.spektrumprojekt.i.similarity.set.JaccardSetSimilarity;
 import de.spektrumprojekt.i.similarity.user.InteractionBasedUserSimilarityComputer;
 import de.spektrumprojekt.i.similarity.user.UserSimilarityRetriever;
 import de.spektrumprojekt.i.similarity.user.UserSimilaritySimType;
@@ -168,6 +169,10 @@ public class ScorerTest extends IntelligenceSpektrumTest {
 
         scorerConfiguration.putUserModelConfiguration(UserModel.DEFAULT_USER_MODEL_TYPE,
                 UserModelConfiguration.getUserModelConfigurationWithTermCountLearningStrategy());
+        scorerConfiguration.getUserModelAdapterConfiguration().setAdaptFromUsers(
+                !useAdaptionFromMGs);
+        scorerConfiguration.getUserModelAdapterConfiguration().setAdaptFromMessageGroups(
+                !useAdaptionFromMGs);
 
         Scorer scorer = new Scorer(getPersistence(), communicator,
                 new SimpleMessageGroupMemberRunner<MessageFeatureContext>(userForRanking),
@@ -181,11 +186,17 @@ public class ScorerTest extends IntelligenceSpektrumTest {
 
         if (scorerConfiguration.hasFlag(ScorerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION)) {
 
-            scorerConfiguration.getUserModelAdapterConfiguration().setAdaptFromMessageGroups(
-                    useAdaptionFromMGs);
             scorerConfiguration.getUserModelAdapterConfiguration()
                     .setMessageGroupSimilarityConfiguration(
                             new MessageGroupSimilarityConfiguration());
+            scorerConfiguration.getUserModelAdapterConfiguration().setAdaptFromMessageGroups(
+                    useAdaptionFromMGs);
+            scorerConfiguration.getUserModelAdapterConfiguration()
+                    .getMessageGroupSimilarityConfiguration()
+                    .setSetSimilarity(new JaccardSetSimilarity());
+            scorerConfiguration.getUserModelAdapterConfiguration()
+                    .getMessageGroupSimilarityConfiguration()
+                    .setAllowIterativeRecomputation(true);
             scorerConfiguration.getUserModelAdapterConfiguration()
                     .setMessageGroupSimilarityThreshold(0.1d);
             scorerConfiguration.getUserModelAdapterConfiguration()

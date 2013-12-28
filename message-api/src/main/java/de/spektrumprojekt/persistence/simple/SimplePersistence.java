@@ -502,7 +502,8 @@ public class SimplePersistence implements Persistence {
     @Override
     public Collection<UserModelEntry> getUserModelEntries(UserModel userModel,
             Collection<String> termsToMatch, Collection<Long> messageGroupIdsToConsider,
-            MatchMode matchMode) {
+            MatchMode matchMode,
+            boolean useMGFreeTermValue) {
         Map<User, UserModelHolder> entries = this.userModelByTypeHolders.get(userModel
                 .getUserModelType());
         Collection<UserModelEntry> umEntries = new HashSet<UserModelEntry>();
@@ -511,7 +512,7 @@ public class SimplePersistence implements Persistence {
             if (holder != null) {
                 for (String t : termsToMatch) {
                     umEntries.addAll(holder.getUserModelEntry(t, messageGroupIdsToConsider,
-                            matchMode));
+                            matchMode, useMGFreeTermValue));
                 }
             }
         }
@@ -523,7 +524,12 @@ public class SimplePersistence implements Persistence {
             UserModel userModel,
             Collection<String> termsToMatch,
             MatchMode matchMode) {
-        return this.getUserModelEntries(userModel, termsToMatch, null, matchMode);
+        return this.getUserModelEntries(
+                userModel,
+                termsToMatch,
+                null,
+                matchMode,
+                false);
     }
 
     /**

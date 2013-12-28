@@ -290,7 +290,8 @@ public class TermBasedMessageGroupSimilarityComputer implements MessageGroupSimi
 
         runTime.stop();
 
-        LOGGER.info("Computing all message group similarities took {} ms.", runTime.getTime());
+        LOGGER.info("Computing/Reading all message group similarities took {} ms.",
+                runTime.getTime());
     }
 
 }

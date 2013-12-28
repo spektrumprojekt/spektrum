@@ -215,7 +215,7 @@ public class PersistenceMock implements Persistence {
     @Override
     public Collection<UserModelEntry> getUserModelEntries(UserModel userModel,
             Collection<String> termsToMatch, Collection<Long> messageGroupIdsToConsider,
-            MatchMode matchMode) {
+            MatchMode matchMode, boolean useMGFreeTermValue) {
         return null;
     }
 

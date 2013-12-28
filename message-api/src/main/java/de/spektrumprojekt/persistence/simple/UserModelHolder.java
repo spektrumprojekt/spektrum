@@ -93,8 +93,11 @@ public class UserModelHolder implements Serializable {
         return this.messageGroupdIdToUserModelEntries.get(messageGroupId);
     }
 
-    public Collection<UserModelEntry> getUserModelEntry(String termValue,
-            Collection<Long> messageGroupIdsToConsider, MatchMode matchMode) {
+    public Collection<UserModelEntry> getUserModelEntry(
+            String termValue,
+            Collection<Long> messageGroupIdsToConsider,
+            MatchMode matchMode,
+            boolean useMGFreeTermValue) {
         final Collection<UserModelEntry> matches = new HashSet<UserModelEntry>();
 
         if (messageGroupIdsToConsider != null && !messageGroupIdsToConsider.isEmpty()) {
@@ -103,7 +106,9 @@ public class UserModelHolder implements Serializable {
                         .get(mgId);
                 if (mgEntries != null) {
                     for (Entry<Term, UserModelEntry> entry : mgEntries.entrySet()) {
-                        if (matchMode.matches(entry.getKey().getValue(), termValue)) {
+                        final String valueToMatch = internalGetTermValueToMatch(entry.getKey(),
+                                useMGFreeTermValue);
+                        if (matchMode.matches(valueToMatch, termValue)) {
                             matches.add(entry.getValue());
                         }
                     }
@@ -111,7 +116,9 @@ public class UserModelHolder implements Serializable {
             }
         } else {
             for (Entry<Term, UserModelEntry> entry : this.userModelEntries.entrySet()) {
-                if (matchMode.matches(entry.getKey().getValue(), termValue)) {
+                final String valueToMatch = internalGetTermValueToMatch(entry.getKey(),
+                        useMGFreeTermValue);
+                if (matchMode.matches(valueToMatch, termValue)) {
                     matches.add(entry.getValue());
                 }
             }
@@ -121,7 +128,7 @@ public class UserModelHolder implements Serializable {
     }
 
     public Collection<UserModelEntry> getUserModelEntry(String termValue, MatchMode matchMode) {
-        return this.getUserModelEntry(termValue, null, matchMode);
+        return this.getUserModelEntry(termValue, null, matchMode, false);
     }
 
     public UserModelEntry getUserModelEntry(Term term) {
@@ -137,6 +144,10 @@ public class UserModelHolder implements Serializable {
             return Collections.singleton(entry);
         }
         return this.getUserModelEntry(term.getValue(), matchMode);
+    }
+
+    private String internalGetTermValueToMatch(Term t, boolean useMGFreeTermValue) {
+        return useMGFreeTermValue ? t.extractMessageGroupFreeTermValue() : t.getValue();
     }
 
     public void removeUserModelEntry(UserModelEntry userModelEntry) {

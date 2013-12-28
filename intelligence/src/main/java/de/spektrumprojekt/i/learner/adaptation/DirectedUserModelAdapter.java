@@ -265,23 +265,37 @@ public class DirectedUserModelAdapter implements
         }
 
         int topNMGsToUse = userModelAdapterConfiguration.getTopNMessageGroupsToUseForAdaptation();
-
-        List<MessageGroupSimilarity> messageGroupSimilarities = topNMGsToUse == 0 ? null
-                : messageGroupSimilarityRetriever.getTopSimilarities(targetMessageGroupId,
-                        topNMGsToUse);
-        Collection<Long> messageGroupIds = new HashSet<Long>();
-        if (messageGroupSimilarities != null) {
-            for (MessageGroupSimilarity sim : messageGroupSimilarities) {
-                messageGroupIds.add(sim.getOtherMessageGroupId(targetMessageGroupId));
-            }
-        }
-
+        boolean usingOnlyTopMGs = topNMGsToUse > 0;
         // user model entries of other groups
-        Collection<UserModelEntry> userModelEntries = persistence.getUserModelEntries(
-                userModel,
-                termMatch,
-                messageGroupIds.size() == 0 ? null : messageGroupIds,
-                MatchMode.ENDS_WITH);
+        Collection<UserModelEntry> userModelEntries;
+        List<MessageGroupSimilarity> messageGroupSimilarities;
+        if (!usingOnlyTopMGs) {
+            messageGroupSimilarities = null;
+            userModelEntries = persistence.getUserModelEntries(
+                    userModel,
+                    termMatch,
+                    null,
+                    MatchMode.EXACT,
+                    true);
+
+        } else {
+            messageGroupSimilarities = messageGroupSimilarityRetriever.getTopSimilarities(
+                    targetMessageGroupId,
+                    topNMGsToUse);
+            Collection<Long> messageGroupIds = new HashSet<Long>();
+            if (messageGroupSimilarities != null) {
+                for (MessageGroupSimilarity sim : messageGroupSimilarities) {
+                    messageGroupIds.add(sim.getOtherMessageGroupId(targetMessageGroupId));
+                }
+            }
+
+            userModelEntries = persistence.getUserModelEntries(
+                    userModel,
+                    termMatch,
+                    messageGroupIds,
+                    MatchMode.EXACT,
+                    true);
+        }
 
         for (Term t : termsToAdapt) {
             userModelEntries: for (UserModelEntry entry : userModelEntries) {
@@ -297,7 +311,7 @@ public class DirectedUserModelAdapter implements
                 // get topic sim between mgId and t.getMessageGroupId
                 double topicSim = -1;
 
-                if (messageGroupSimilarities == null) {
+                if (!usingOnlyTopMGs) {
                     topicSim = messageGroupSimilarityRetriever.getMessageGroupSimilarity(
                             targetMessageGroupId, mgId);
                 } else {
