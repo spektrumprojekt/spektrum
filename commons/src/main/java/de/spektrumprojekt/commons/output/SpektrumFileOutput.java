@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -86,16 +87,26 @@ public abstract class SpektrumFileOutput<T extends SpektrumParseableElement> imp
         return vals;
     }
 
+    private String getDescriptionWithComment(String description) {
+        if (!description.startsWith(this.commentPrefix)) {
+            description = this.commentPrefix + " " + description.trim();
+        }
+        return description;
+    }
+
+    @Override
     public List<T> getElements() {
         return elements;
     }
 
+    @Override
     public Class<T> getHandlingClass() {
         return this.clazz;
     }
 
     protected abstract String getHeader();
 
+    @Override
     public void read(String filename) throws IOException {
         FileInputStream fstream = null;
         // we use buffered reader for performance
@@ -158,21 +169,24 @@ public abstract class SpektrumFileOutput<T extends SpektrumParseableElement> imp
 
     protected abstract String toString(T element);
 
+    @Override
     public void write(String filename) throws IOException {
         List<String> lines = new ArrayList<String>();
 
         lines.add(this.commentPrefix + " " + getHeader());
         for (String description : this.descriptions) {
-            if (!description.startsWith(this.commentPrefix)) {
-                description = this.commentPrefix + " " + description.trim();
-            }
+            description = getDescriptionWithComment(description);
             lines.add(description);
         }
         for (T element : elements) {
             lines.add(toString(element));
         }
 
+        lines.add(getDescriptionWithComment("Written by: " + this.getClass().getSimpleName()));
+        lines.add(getDescriptionWithComment("Written element class: "
+                + this.getHandlingClass().getSimpleName()));
+        lines.add(getDescriptionWithComment("Written at: " + new Date()));
+
         FileUtils.writeLines(new File(filename), lines);
     }
-
 }

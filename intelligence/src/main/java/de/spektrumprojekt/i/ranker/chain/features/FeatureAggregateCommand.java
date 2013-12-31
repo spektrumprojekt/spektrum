@@ -74,13 +74,13 @@ public class FeatureAggregateCommand implements Command<UserSpecificMessageFeatu
 
         FeatureAggregate featureAggregate = new FeatureAggregate(context.getFeatures());
 
-        featureAggregate.interactionLevel = context.getInteractionLevel();
-        if (featureAggregate.interactionLevel == null) {
+        featureAggregate.setInteractionLevel(context.getInteractionLevel());
+        if (featureAggregate.getInteractionLevel() == null) {
             throw new IllegalArgumentException("interactionLevel cannot be null! context="
                     + context);
         }
         if (featureAggregate.getFeatureValue(Feature.AUTHOR_FEATURE) == 1f
-                && !featureAggregate.interactionLevel.equals(InteractionLevel.DIRECT)) {
+                && !featureAggregate.getInteractionLevel().equals(InteractionLevel.DIRECT)) {
             throw new IllegalStateException("interactionLevel must be direct for authors! context="
                     + context);
         }

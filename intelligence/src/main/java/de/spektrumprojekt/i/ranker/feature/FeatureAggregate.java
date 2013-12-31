@@ -26,7 +26,7 @@ public class FeatureAggregate {
         }, " ");
     }
 
-    public InteractionLevel interactionLevel;
+    private InteractionLevel interactionLevel;
 
     private final Map<Feature, MessageFeature> features = new HashMap<Feature, MessageFeature>();
 
@@ -60,6 +60,10 @@ public class FeatureAggregate {
         return messageFeature.getValue();
     }
 
+    public InteractionLevel getInteractionLevel() {
+        return interactionLevel;
+    }
+
     public MessageFeature getMessageFeature(Feature feature) {
         return this.features.get(feature);
     }
@@ -74,6 +78,10 @@ public class FeatureAggregate {
 
         }
         return index;
+    }
+
+    public void setInteractionLevel(InteractionLevel interactionLevel) {
+        this.interactionLevel = interactionLevel;
     }
 
     public String toParseableString() {
