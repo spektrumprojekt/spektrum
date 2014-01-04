@@ -21,6 +21,7 @@ import de.spektrumprojekt.i.ranker.feature.Feature;
 import de.spektrumprojekt.i.ranker.feature.FixWeightFeatureAggregator;
 import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
 import de.spektrumprojekt.i.term.TermWeightStrategy;
+import de.spektrumprojekt.i.term.similarity.TimeDecayFunction;
 import de.spektrumprojekt.i.timebased.config.ShortTermMemoryConfiguration;
 
 public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable {
@@ -43,12 +44,13 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
     private int minimumCleanTextLengthForInvokingLearner;
 
     private TermWeightStrategy termWeightStrategy;
+    private TimeDecayFunction userModelEntryTimeDecayFunction;
 
     private TermVectorSimilarityStrategy termVectorSimilarityStrategy;
+
     private boolean immutable;
 
     private float interestTermTreshold = 0.75f;
-
     private boolean treatMissingUserModelEntriesAsZero;
 
     private String termUniquenessLogfile;
@@ -68,16 +70,16 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
     private final List<String> modelsToNotCreateUnknownTermsIn = new ArrayList<String>();
 
     private boolean useFixedDefaultFeatureWeights = true;
+
     private boolean useFixedDefaultLearningFeatureWeights = true;
 
     private Map<Feature, Float> featureWeights;
-
     private Float scoreToLearnThreshold;
+
     private Map<Feature, Float> learningFeatureWeights;
+
     private Map<Feature, Float> learningFeatureTresholds;
-
     private final CollaborativeConfiguration collaborativeConfiguration = new CollaborativeConfiguration();
-
     private double messageGroupSimilarityThreshold;
 
     public ScorerConfiguration(TermWeightStrategy strategy, TermVectorSimilarityStrategy aggregation) {
@@ -277,6 +279,10 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
         return userModelAdapterConfiguration;
     }
 
+    public TimeDecayFunction getUserModelEntryTimeDecayFunction() {
+        return userModelEntryTimeDecayFunction;
+    }
+
     public Map<String, UserModelConfiguration> getUserModelTypes() {
         return userModelTypes;
     }
@@ -471,6 +477,10 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
         this.useFixedDefaultLearningFeatureWeights = useFixedDefaultLearningFeatureWeights;
     }
 
+    public void setUserModelEntryTimeDecayFunction(TimeDecayFunction userModelEntryTimeDecayFunction) {
+        this.userModelEntryTimeDecayFunction = userModelEntryTimeDecayFunction;
+    }
+
     public void setUserModelType(Map<String, UserModelConfiguration> userModelTypes) {
         if (userModelTypes == null) {
             throw new IllegalArgumentException("userModelType cannot be null.");
@@ -486,7 +496,8 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
                 + messageRankThreshold + ", nonParticipationFactor=" + nonParticipationFactor
                 + ", minimumCleanTextLengthForInvokingLearner="
                 + minimumCleanTextLengthForInvokingLearner + ", termWeightStrategy="
-                + termWeightStrategy + ", termVectorSimilarityStrategy="
+                + termWeightStrategy + ", userModelEntryTimeDecayFunction="
+                + userModelEntryTimeDecayFunction + ", termVectorSimilarityStrategy="
                 + termVectorSimilarityStrategy + ", immutable=" + immutable
                 + ", interestTermTreshold=" + interestTermTreshold
                 + ", treatMissingUserModelEntriesAsZero=" + treatMissingUserModelEntriesAsZero

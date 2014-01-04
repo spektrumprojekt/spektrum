@@ -23,11 +23,11 @@ public class TermSimilarityWeightComputerFactory {
     }
 
     public TermVectorSimilarityComputer createTermVectorSimilarityComputer(
-            ScorerConfiguration rankerConfiguration, TermFrequencyComputer termFrequencyComputer) {
-        TermVectorSimilarityStrategy similarityStrategy = rankerConfiguration
+            ScorerConfiguration scorerConfiguration, TermFrequencyComputer termFrequencyComputer) {
+        TermVectorSimilarityStrategy similarityStrategy = scorerConfiguration
                 .getTermVectorSimilarityStrategy();
-        TermWeightStrategy termWeightStrategy = rankerConfiguration.getTermWeightStrategy();
-        boolean treatMissingUserModelEntriesAsZero = rankerConfiguration
+        TermWeightStrategy termWeightStrategy = scorerConfiguration.getTermWeightStrategy();
+        boolean treatMissingUserModelEntriesAsZero = scorerConfiguration
                 .isTreatMissingUserModelEntriesAsZero();
 
         TermWeightComputer termWeightComputer = this.createTermWeightComputer(termWeightStrategy,
@@ -44,7 +44,8 @@ public class TermSimilarityWeightComputerFactory {
             break;
         case COSINUS:
             termVectorSimilarityComputer = new CosinusTermVectorSimilarityComputer(
-                    termWeightComputer, treatMissingUserModelEntriesAsZero);
+                    termWeightComputer, scorerConfiguration.getUserModelEntryTimeDecayFunction(),
+                    treatMissingUserModelEntriesAsZero);
             break;
         }
         return termVectorSimilarityComputer;

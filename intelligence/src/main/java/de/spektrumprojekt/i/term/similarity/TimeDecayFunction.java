@@ -7,11 +7,11 @@ import org.apache.commons.lang3.time.DateUtils;
 public class TimeDecayFunction {
 
     public static TimeDecayFunction createWithDayCutOff() {
-        return new TimeDecayFunction(DateUtils.MILLIS_PER_DAY);
+        return new TimeDecayFunction(DateUtils.MILLIS_PER_DAY, "decayDay");
     }
 
     public static TimeDecayFunction createWithWeekCutOff() {
-        return new TimeDecayFunction(7 * DateUtils.MILLIS_PER_DAY);
+        return new TimeDecayFunction(7 * DateUtils.MILLIS_PER_DAY, "decayWeek");
     }
 
     // time intervall when the decay should be 0.9
@@ -19,7 +19,13 @@ public class TimeDecayFunction {
 
     private final double alpha;
 
+    private final String shortName;
+
     public TimeDecayFunction(long zeroPointNineCutOffInMs) {
+        this(zeroPointNineCutOffInMs, null);
+    }
+
+    public TimeDecayFunction(long zeroPointNineCutOffInMs, String shortName) {
         if (zeroPointNineCutOffInMs <= 0) {
             throw new IllegalArgumentException("zeroPointNineCutOffInMs ("
                     + zeroPointNineCutOffInMs + ") must be > 0)");
@@ -27,6 +33,11 @@ public class TimeDecayFunction {
         this.zeroPointNineCutOffInMs = zeroPointNineCutOffInMs;
 
         alpha = -(Math.log(0.9d) / zeroPointNineCutOffInMs);
+
+        if (shortName == null) {
+            shortName = "tdf" + zeroPointNineCutOffInMs / 1000;
+        }
+        this.shortName = shortName;
     }
 
     public double getDecay(Date dateForDecay, Date now) {
@@ -52,9 +63,13 @@ public class TimeDecayFunction {
         return getDecay(intervall);
     }
 
+    public String getShortName() {
+        return shortName;
+    }
+
     @Override
     public String toString() {
-        return "TimeDecayFunction [zeroPointNineCutOffInMs=" + zeroPointNineCutOffInMs
-                + ", alpha=" + alpha + "]";
+        return "TimeDecayFunction [zeroPointNineCutOffInMs=" + zeroPointNineCutOffInMs + ", alpha="
+                + alpha + ", shortName=" + shortName + "]";
     }
 }

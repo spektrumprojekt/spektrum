@@ -6,9 +6,15 @@ import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
 import de.spektrumprojekt.persistence.Persistence;
 
 public enum CollaborativeScoreComputerType {
-    USER2MESSAGE,
-    USER2TERM,
-    USER2TERM_PER_MESSAGE_GROUP;
+    USER2MESSAGE("U2M"),
+    USER2TERM("U2T"),
+    USER2TERM_PER_MESSAGE_GROUP("U2TMG");
+
+    private final String shortName;
+
+    private CollaborativeScoreComputerType(String shortName) {
+        this.shortName = shortName;
+    }
 
     public CollaborativeScoreComputer createComputer(
             Persistence persistence,
@@ -40,5 +46,9 @@ public enum CollaborativeScoreComputerType {
 
         }
         return collaborativeRankerComputer;
+    }
+
+    public String getShortName() {
+        return shortName;
     }
 }

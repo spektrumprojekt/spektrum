@@ -13,11 +13,19 @@ import de.spektrumprojekt.i.timebased.MergeValuesStrategy;
 
 public class CosinusTermVectorSimilarityComputer extends TermWeightTermVectorSimilarityComputer {
 
-    private final TimeDecayFunction timeDecayFunction = null; // TimeDecayFunction.createWithDayCutOff();
+    private TimeDecayFunction timeDecayFunction = null; // TimeDecayFunction.createWithDayCutOff();
 
     public CosinusTermVectorSimilarityComputer(TermWeightComputer termWeightComputer,
             boolean treatMissingUserModelEntriesAsZero) {
+        this(termWeightComputer, null, treatMissingUserModelEntriesAsZero);
+    }
+
+    public CosinusTermVectorSimilarityComputer(
+            TermWeightComputer termWeightComputer,
+            TimeDecayFunction timeDecayFunction,
+            boolean treatMissingUserModelEntriesAsZero) {
         super(termWeightComputer, treatMissingUserModelEntriesAsZero);
+        this.timeDecayFunction = timeDecayFunction;
     }
 
     @Override

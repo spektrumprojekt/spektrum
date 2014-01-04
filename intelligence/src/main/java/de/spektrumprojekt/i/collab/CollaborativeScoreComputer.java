@@ -271,7 +271,10 @@ public abstract class CollaborativeScoreComputer implements Computer {
             User user = this.persistence.getUserById(userId);
 
             for (Message message : messagesToRun) {
-                if (!InformationExtractionCommand.isInformationExtractionExecuted(message)) {
+                if (!InformationExtractionCommand.isInformationExtractionExecuted(message)
+                        && !CollaborativeScoreComputerType.USER2MESSAGE
+                                .equals(this.collaborativeConfiguration
+                                        .getCollaborativeScoreComputerType())) {
                     throw new IllegalStateException("IE should be run here. ");
                 }
                 final float estimate = estimate(user, message);
