@@ -1,5 +1,8 @@
 package de.spektrumprojekt.i.learner.contentbased;
 
+import java.util.Date;
+
+import de.spektrumprojekt.commons.time.TimeProviderHolder;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 
@@ -77,6 +80,7 @@ public class IncrementalUserModelIntegrationStrategy extends
                 newValue = this.decrement(currentValue, interestWeight);
             }
 
+            entry.setLastChange(new Date(TimeProviderHolder.DEFAULT.getCurrentTime()));
             entry.getScoredTerm().setWeight(newValue);
 
         }
