@@ -130,7 +130,7 @@ public class ContentMatchFeatureCommand implements Command<UserSpecificMessageFe
                 .get(userModel.getUserModelType());
         if (userModelEntryIntegrationStrategy == null) {
             throw new IllegalStateException("No userModelEntryIntegrationStrategy for "
-                    + userModel.getUserModelType());
+                    + userModel.getUserModelType() + " Did you call scorer.configLearner?");
         }
         if (!useAdaptedEntries) {
             entries = UserModelEntry.filteredForNonAdaptedEntries(entries);

@@ -180,6 +180,7 @@ public class ScorerTest extends IntelligenceSpektrumTest {
 
         Learner learner = new Learner(getPersistence(), scorerConfiguration,
                 scorer.getInformationExtractionChain());
+        scorer.configLearner(learner);
 
         communicator.registerMessageHandler(scorer);
         communicator.registerMessageHandler(learner);
@@ -244,8 +245,8 @@ public class ScorerTest extends IntelligenceSpektrumTest {
      *             in case of an error
      */
     @Test
-    public void testRanker() throws Exception {
-        Scorer ranker = setupScorer(null, false, "user1", "user2", "user3");
+    public void testScorer() throws Exception {
+        Scorer scorer = setupScorer(null, false, "user1", "user2", "user3");
         String authorGlobalId = getPersistence().getOrCreateUser("user1").getGlobalId();
 
         Message message = createPlainTextMessage(
@@ -254,7 +255,7 @@ public class ScorerTest extends IntelligenceSpektrumTest {
 
         // first we rank only to get the stemmed tokens (and by the way its testing empty user
         // models
-        MessageFeatureContext context = ranker.score(message, messageRelation, null, false);
+        MessageFeatureContext context = scorer.score(message, messageRelation, null, false);
         checkScoredTerms(context);
 
         MessagePart messagePart = context.getMessage().getMessageParts().iterator().next();
@@ -273,7 +274,7 @@ public class ScorerTest extends IntelligenceSpektrumTest {
             getPersistence().storeOrUpdateUserModelEntries(userModel, changedEntries);
         }
 
-        context = ranker.score(message, messageRelation, null, false);
+        context = scorer.score(message, messageRelation, null, false);
         i = 0;
         for (UserModel userModel : userModels) {
 
@@ -295,7 +296,7 @@ public class ScorerTest extends IntelligenceSpektrumTest {
      *             in case of an error
      */
     @Test
-    public void testRankerWithDirectedAdaptationByMGs() throws Exception {
+    public void testScorerWithDirectedAdaptationByMGs() throws Exception {
 
         User user1 = getPersistence().getOrCreateUser("userMg1");
         User user2 = getPersistence().getOrCreateUser("userMg2");
@@ -308,7 +309,7 @@ public class ScorerTest extends IntelligenceSpektrumTest {
         UserModel userModel2 = getPersistence().getOrCreateUserModelByUser(user2.getGlobalId(),
                 UserModel.DEFAULT_USER_MODEL_TYPE);
 
-        Scorer ranker = setupScorer(ScorerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION,
+        Scorer scorer = setupScorer(ScorerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION,
                 true, "userMg1", "userMg2");
 
         // user1 write ins mg1
@@ -317,7 +318,7 @@ public class ScorerTest extends IntelligenceSpektrumTest {
                 user1.getGlobalId(), messageGroup1);
 
         // 1st rank
-        MessageFeatureContext context = ranker.score(message, messageRelation, null, false);
+        MessageFeatureContext context = scorer.score(message, messageRelation, null, false);
 
         waitForCommunicatorToDelivierMessages();
 
@@ -331,7 +332,7 @@ public class ScorerTest extends IntelligenceSpektrumTest {
 
         // in the same moment the user model adaption should be triggered for user2, and the user
         // model should be adapted by the just learned items for user 1
-        context = ranker.score(message, messageRelation, null, false);
+        context = scorer.score(message, messageRelation, null, false);
 
         waitForCommunicatorToDelivierMessages();
 
@@ -343,7 +344,7 @@ public class ScorerTest extends IntelligenceSpektrumTest {
                 user1.getGlobalId(), messageGroup2);
 
         // here again a rank should exist for user 2
-        context = ranker.score(message, messageRelation, null, false);
+        context = scorer.score(message, messageRelation, null, false);
 
         waitForCommunicatorToDelivierMessages();
         checkUserModelTerms(context, userModel1);
@@ -366,7 +367,7 @@ public class ScorerTest extends IntelligenceSpektrumTest {
      *             in case of an error
      */
     @Test
-    public void testRankerWithDirectedAdaptationBySimilarUsers() throws Exception {
+    public void testScorerWithDirectedAdaptationBySimilarUsers() throws Exception {
 
         User user1 = getPersistence().getOrCreateUser("user1");
         User user2 = getPersistence().getOrCreateUser("user2");
@@ -379,7 +380,7 @@ public class ScorerTest extends IntelligenceSpektrumTest {
         UserModel userModel3 = getPersistence().getOrCreateUserModelByUser(user3.getGlobalId(),
                 UserModel.DEFAULT_USER_MODEL_TYPE);
 
-        Scorer ranker = setupScorer(ScorerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION,
+        Scorer scorer = setupScorer(ScorerConfigurationFlag.USE_DIRECTED_USER_MODEL_ADAPTATION,
                 false, "user1", "user2", "user3");
 
         // user2 mentions user1
@@ -389,7 +390,7 @@ public class ScorerTest extends IntelligenceSpektrumTest {
         message.addProperty(MessageHelper.createMentionProperty(Arrays.asList(user1.getGlobalId())));
 
         // 1st rank just the mention
-        MessageFeatureContext context = ranker.score(message, messageRelation, null, false);
+        MessageFeatureContext context = scorer.score(message, messageRelation, null, false);
 
         waitForCommunicatorToDelivierMessages();
 
@@ -405,7 +406,7 @@ public class ScorerTest extends IntelligenceSpektrumTest {
 
         // in the same moment the user model adaption should be triggered for user2, and the user
         // model should be adapted by the just learned items for user 1
-        context = ranker.score(message, messageRelation, null, false);
+        context = scorer.score(message, messageRelation, null, false);
 
         waitForCommunicatorToDelivierMessages();
 
@@ -417,7 +418,7 @@ public class ScorerTest extends IntelligenceSpektrumTest {
                 user1.getGlobalId(), messageGroup);
 
         // here again a rank should exist for user 2
-        context = ranker.score(message, messageRelation, null, false);
+        context = scorer.score(message, messageRelation, null, false);
 
         waitForCommunicatorToDelivierMessages();
         checkUserModelTerms(context, userModel1);
