@@ -4,6 +4,7 @@ import java.io.File;
 
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 import de.spektrumprojekt.i.collab.CollaborativeScoreComputerType;
+import de.spektrumprojekt.i.ranker.feature.Feature;
 
 public class CollaborativeConfiguration implements ConfigurationDescriptable {
 
@@ -19,7 +20,11 @@ public class CollaborativeConfiguration implements ConfigurationDescriptable {
     private boolean slopeOneUseStdDevWeighted = true;
     private long slopeOneMaxEntries = Long.MAX_VALUE;
 
-    public CollaborativeConfiguration() {
+    // it is needed for backreference for the scoring feature weight. not perfect.
+    private final ScorerConfiguration scorerConfiguration;
+
+    public CollaborativeConfiguration(ScorerConfiguration scorerConfiguration) {
+        this.scorerConfiguration = scorerConfiguration;
     }
 
     public CollaborativeScoreComputerType getCollaborativeScoreComputerType() {
@@ -33,6 +38,16 @@ public class CollaborativeConfiguration implements ConfigurationDescriptable {
 
     public File getPreferencesDebugFile() {
         return preferencesDebugFile;
+    }
+
+    public float getScoringFeatureWeight() {
+        Float weight = scorerConfiguration.getFeatureWeights().get(
+                Feature.COLLABORATION_MATCH_FEATURE);
+        if (weight == null) {
+            throw new IllegalStateException(
+                    "no collab feature weight defined. set it on scorerConfiguration.getFeatureWeights()");
+        }
+        return weight.floatValue();
     }
 
     public long getSlopeOneMaxEntries() {
@@ -91,7 +106,9 @@ public class CollaborativeConfiguration implements ConfigurationDescriptable {
                 + useGenericRecommender + ", outPreferencesToFile=" + outPreferencesToFile
                 + ", preferencesDebugFile=" + preferencesDebugFile + ", slopeOneUseWeighted="
                 + slopeOneUseWeighted + ", slopeOneUseStdDevWeighted=" + slopeOneUseStdDevWeighted
-                + ", slopeOneMaxEntries=" + slopeOneMaxEntries + "]";
+                + ", slopeOneMaxEntries=" + slopeOneMaxEntries + ", getScoringFeatureWeight()="
+                + getScoringFeatureWeight()
+                + "]";
     }
 
 }

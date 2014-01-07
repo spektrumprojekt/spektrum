@@ -87,6 +87,9 @@ public class Feature {
     public final static Feature CONTENT_MATCH_FEATURE = new Feature("ContentMatch",
             FeatureType.NUMERIC);
 
+    public final static Feature COLLABORATION_MATCH_FEATURE = new Feature("CollaborationMatch",
+            FeatureType.NUMERIC);
+
     public final static Feature MESSAGE_TEXT_LENGTH_FEATURE = new Feature("messageTextLength",
             FeatureType.NUMERIC);
     public final static Feature CLEANED_TEXT_LENGTH_FEATURE = new Feature("cleanedTextLength",

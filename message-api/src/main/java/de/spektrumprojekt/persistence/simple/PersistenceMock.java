@@ -134,7 +134,7 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
-    public UserMessageScore getMessageRank(String userGlobalId, String messageGlobalId) {
+    public UserMessageScore getMessageScore(String userGlobalId, String messageGlobalId) {
         return null;
     }
 

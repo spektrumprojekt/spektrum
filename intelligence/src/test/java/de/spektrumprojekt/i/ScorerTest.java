@@ -348,7 +348,7 @@ public class ScorerTest extends IntelligenceSpektrumTest {
         waitForCommunicatorToDelivierMessages();
         checkUserModelTerms(context, userModel1);
 
-        UserMessageScore rankForUser2 = getPersistence().getMessageRank(user2.getGlobalId(),
+        UserMessageScore rankForUser2 = getPersistence().getMessageScore(user2.getGlobalId(),
                 message.getGlobalId());
         Assert.assertNotNull(rankForUser2);
         Assert.assertTrue("RequestAdaptedCount should be > 0",
@@ -422,7 +422,7 @@ public class ScorerTest extends IntelligenceSpektrumTest {
         waitForCommunicatorToDelivierMessages();
         checkUserModelTerms(context, userModel1);
 
-        UserMessageScore rankForUser2 = getPersistence().getMessageRank(user2.getGlobalId(),
+        UserMessageScore rankForUser2 = getPersistence().getMessageScore(user2.getGlobalId(),
                 message.getGlobalId());
         Assert.assertNotNull(rankForUser2);
         Assert.assertTrue("RequestAdaptedCount should be > 0",

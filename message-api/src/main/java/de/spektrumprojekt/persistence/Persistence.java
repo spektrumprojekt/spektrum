@@ -132,7 +132,7 @@ public interface Persistence {
      */
     MessageGroup getMessageGroupByGlobalId(String globalIdString);
 
-    UserMessageScore getMessageRank(String userGlobalId, String messageGlobalId);
+    UserMessageScore getMessageScore(String userGlobalId, String messageGlobalId);
 
     MessageRelation getMessageRelation(Message message);
 

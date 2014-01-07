@@ -324,9 +324,9 @@ public class MessagePersistenceTest {
         ranks.add(rank2);
         persistence.storeMessageRanks(ranks);
 
-        UserMessageScore rank1return = persistence.getMessageRank(user.getGlobalId(),
+        UserMessageScore rank1return = persistence.getMessageScore(user.getGlobalId(),
                 message1.getGlobalId());
-        UserMessageScore rank2return = persistence.getMessageRank(user.getGlobalId(),
+        UserMessageScore rank2return = persistence.getMessageScore(user.getGlobalId(),
                 message2.getGlobalId());
 
         Assert.assertNotNull(rank1return);

@@ -41,7 +41,6 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
     private float messageRankThreshold = 0.5f;
 
     private float nonParticipationFactor = 1f;
-    private int minimumCleanTextLengthForInvokingLearner;
 
     private TermWeightStrategy termWeightStrategy;
     private TimeDecayFunction userModelEntryTimeDecayFunction;
@@ -79,7 +78,7 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
     private Map<Feature, Float> learningFeatureWeights;
 
     private Map<Feature, Float> learningFeatureTresholds;
-    private final CollaborativeConfiguration collaborativeConfiguration = new CollaborativeConfiguration();
+    private final CollaborativeConfiguration collaborativeConfiguration;
     private double messageGroupSimilarityThreshold;
 
     public ScorerConfiguration(TermWeightStrategy strategy, TermVectorSimilarityStrategy aggregation) {
@@ -107,6 +106,8 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
         }
         this.informationExtractionConfiguration = informationExtractionConfiguration;
         this.informationExtractionCommand = informationExtractionCommand;
+
+        this.collaborativeConfiguration = new CollaborativeConfiguration(this);
     }
 
     public ScorerConfiguration(TermWeightStrategy termWeightStrategy,
@@ -234,10 +235,6 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
 
     public float getMinContentMessageScore() {
         return minContentMessageScore;
-    }
-
-    public int getMinimumCleanTextLengthForInvokingLearner() {
-        return minimumCleanTextLengthForInvokingLearner;
     }
 
     public float getMinUserSimilarity() {
@@ -414,11 +411,6 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
         this.minContentMessageScore = minContentMessageScore;
     }
 
-    public void setMinimumCleanTextLengthForInvokingLearner(
-            int minimumCleanTextLengthForInvokingLearner) {
-        this.minimumCleanTextLengthForInvokingLearner = minimumCleanTextLengthForInvokingLearner;
-    }
-
     public void setMinUserSimilarity(float minUserSimilarity) {
         assert01(minUserSimilarity, "minUserSimilarity");
         this.minUserSimilarity = minUserSimilarity;
@@ -494,8 +486,7 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
         return "ScorerConfiguration [flags=" + flags + ", minUserSimilarity=" + minUserSimilarity
                 + ", minContentMessageScore=" + minContentMessageScore + ", messageRankThreshold="
                 + messageRankThreshold + ", nonParticipationFactor=" + nonParticipationFactor
-                + ", minimumCleanTextLengthForInvokingLearner="
-                + minimumCleanTextLengthForInvokingLearner + ", termWeightStrategy="
+                + ", termWeightStrategy="
                 + termWeightStrategy + ", userModelEntryTimeDecayFunction="
                 + userModelEntryTimeDecayFunction + ", termVectorSimilarityStrategy="
                 + termVectorSimilarityStrategy + ", immutable=" + immutable

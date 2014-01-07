@@ -108,7 +108,7 @@ public class UpdateInteractionLevelOfMessageScoresCommand implements
         if (context.check(Feature.AUTHOR_FEATURE, 1)) {
 
             for (Message message : parentMessages) {
-                UserMessageScore parentRank = this.persistence.getMessageRank(
+                UserMessageScore parentRank = this.persistence.getMessageScore(
                         context.getUserGlobalId(), message.getGlobalId());
                 if (parentRank != null) {
                     parentRank.setInteractionLevel(InteractionLevel.DIRECT);

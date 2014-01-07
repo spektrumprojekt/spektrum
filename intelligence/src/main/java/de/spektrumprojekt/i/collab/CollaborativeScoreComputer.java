@@ -211,6 +211,12 @@ public abstract class CollaborativeScoreComputer implements Computer {
     }
 
     public void init() throws InconsistentDataException, TasteException {
+        final float weight = this.collaborativeConfiguration.getScoringFeatureWeight();
+        if (weight <= 0) {
+            emptyDataModel = true;
+            return;
+        }
+
         getAllUsers();
 
         this.dataModel = createDataModel();
@@ -254,6 +260,7 @@ public abstract class CollaborativeScoreComputer implements Computer {
     }
 
     public void run(Collection<Message> messagesToRun) throws TasteException {
+        final float weight = this.collaborativeConfiguration.getScoringFeatureWeight();
 
         messageScores = new HashSet<UserMessageScore>();
 
@@ -284,7 +291,7 @@ public abstract class CollaborativeScoreComputer implements Computer {
                 float rank = convertScoreFromMahoutValue(estimate, true);
 
                 if (!Float.isNaN(rank)) {
-                    UserMessageScore messageScore = this.persistence.getMessageRank(
+                    UserMessageScore messageScore = this.persistence.getMessageScore(
                             user.getGlobalId(), message.getGlobalId());
 
                     if (messageScore == null && TEST_MODE) {
@@ -296,9 +303,11 @@ public abstract class CollaborativeScoreComputer implements Computer {
                                 "This is actually a rescore, so the message score should be computed somehow including all the features.");
                     }
 
-                    messageScore.setScore(rank);
-
-                    this.persistence.updateMessageRank(messageScore);
+                    rank = rank * weight;
+                    if (messageScore.getScore() < rank) {
+                        messageScore.setScore(rank);
+                        this.persistence.updateMessageRank(messageScore);
+                    }
                     messageScores.add(messageScore);
                 } else {
                     nanScores++;

@@ -300,7 +300,7 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
-    public UserMessageScore getMessageRank(String userGlobalId, String messageGlobalId) {
+    public UserMessageScore getMessageScore(String userGlobalId, String messageGlobalId) {
 
         return this.messageScores.get(new UserMessageIdentifier(userGlobalId, messageGlobalId));
     }

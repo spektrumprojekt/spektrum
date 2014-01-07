@@ -184,7 +184,7 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public UserMessageScore getMessageRank(String userGlobalId, String messageGlobalId) {
+    public UserMessageScore getMessageScore(String userGlobalId, String messageGlobalId) {
         return this.messagePersistence.getMessageRank(userGlobalId, messageGlobalId);
     }
 
