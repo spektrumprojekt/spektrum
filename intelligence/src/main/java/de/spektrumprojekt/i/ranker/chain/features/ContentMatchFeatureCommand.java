@@ -133,7 +133,7 @@ public class ContentMatchFeatureCommand implements Command<UserSpecificMessageFe
     @Override
     public String getConfigurationDescription() {
         return this.getClass().getSimpleName() + "userModelType="
-                + scorerConfiguration.getUserModelTypes().keySet()
+                + scorerConfiguration.getUserModelConfigurations().keySet()
                 + " valuesStrategy=" + valuesStrategy
                 + " termVectorSimilarityComputer="
                 + termVectorSimilarityComputer.getConfigurationDescription()
@@ -159,7 +159,7 @@ public class ContentMatchFeatureCommand implements Command<UserSpecificMessageFe
     public void process(UserSpecificMessageFeatureContext context) {
 
         List<UserModel> userModels = new LinkedList<UserModel>();
-        for (String userModelType : scorerConfiguration.getUserModelTypes().keySet()) {
+        for (String userModelType : scorerConfiguration.getUserModelConfigurations().keySet()) {
             userModels.add(persistence.getOrCreateUserModelByUser(context.getUserGlobalId(),
                     userModelType));
         }

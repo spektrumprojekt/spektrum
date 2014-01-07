@@ -84,8 +84,8 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
         if (configuration == null) {
             throw new IllegalArgumentException("configuration cannot be null!");
         }
-        if (!onlyDoObservations && (configuration.getUserModelTypes() == null
-                || configuration.getUserModelTypes().size() == 0)) {
+        if (!onlyDoObservations && (configuration.getUserModelConfigurations() == null
+                || configuration.getUserModelConfigurations().size() == 0)) {
             throw new IllegalArgumentException(
                     "configuration.getUserModelTypes() cannot be null or empty !");
         }
@@ -101,9 +101,9 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
         this.learnerChain.addCommand(new LoadRelatedObservationsCommand(this.persistence));
 
         if (!onlyDoObservations) {
-            for (String userModelType : configuration.getUserModelTypes().keySet()) {
+            for (String userModelType : configuration.getUserModelConfigurations().keySet()) {
                 UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy;
-                UserModelConfiguration userModelConfiguration = configuration.getUserModelTypes()
+                UserModelConfiguration userModelConfiguration = configuration.getUserModelConfigurations()
                         .get(
                                 userModelType);
                 switch (userModelConfiguration.getUserModelEntryIntegrationStrategyType()) {

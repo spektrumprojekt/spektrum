@@ -77,6 +77,11 @@ public class LongTermMemoryConfiguration implements ConfigurationDescriptable {
         return permanentInterestScoreThreshold;
     }
 
+    /**
+     * after how many days should the update models be computed
+     * 
+     * @param longTermCalculationPeriodInBins
+     */
     public void setLongTermCalculationPeriodInBins(int longTermCalculationPeriodInBins) {
         this.longTermCalculationPeriodInBins = longTermCalculationPeriodInBins;
     }

@@ -56,9 +56,9 @@ public class ShortTermUserModelUpdater {
 
     private final List<String> modelsToTransferTermsFrom = new ArrayList<String>();
 
-    private final List<LongTermInterestDetector> longTermInterestDetectors = new ArrayList<LongTermInterestDetector>();;
+    private final List<LongTermInterestDetector> longTermInterestDetectors = new ArrayList<LongTermInterestDetector>();
 
-    private final NutritionCalculationStrategy nutritionConverter = new AbsoluteNutritionCalculationStrategy();
+    private final NutritionCalculationStrategy nutritionConverter = new AbsoluteNutritionCalculationStrategy();;
 
     private final int longTermCalculationPeriodInBins;
 
@@ -69,7 +69,8 @@ public class ShortTermUserModelUpdater {
         this.rankerConfiguration = configuration;
         this.persistence = persistence;
         this.userModelTypes = new HashMap<String, UserModelConfiguration>();
-        for (Entry<String, UserModelConfiguration> entry : configuration.getUserModelTypes()
+        for (Entry<String, UserModelConfiguration> entry : configuration
+                .getUserModelConfigurations()
                 .entrySet()) {
             if (needsToBeCalculated(entry.getValue())) {
                 userModelTypes.put(entry.getKey(), entry.getValue());
@@ -87,7 +88,7 @@ public class ShortTermUserModelUpdater {
                     new BinAggregatedUserModelEntryDecorator(shortTermMemoryConfiguration
                             .getEnergyCalculationConfiguration().getBinAggregationCount()));
             break;
-        // case ABSOLUTE:
+        case ABSOLUTE:
         default:
             strategy = new AbsoluteNutritionCalculationStrategy();
             break;
@@ -95,7 +96,7 @@ public class ShortTermUserModelUpdater {
         aggregatedCount = shortTermMemoryConfiguration.getEnergyCalculationConfiguration()
                 .getBinAggregationCount();
         entryDecorator = new BinAggregatedUserModelEntryDecorator(aggregatedCount);
-        for (String userModel : configuration.getUserModelTypes().keySet()) {
+        for (String userModel : configuration.getUserModelConfigurations().keySet()) {
             // no new terms are created in the user model, this indicates this model is a long term
             // model
             if (rankerConfiguration.isCreateUnknownTermsInUsermodel(userModel)) {
@@ -110,7 +111,8 @@ public class ShortTermUserModelUpdater {
                 .getLongTermCalculationPeriodInBins();
         // if in all user models the unknown terms are created no separated long term user model
         // exists
-        if (!(modelsToTransferTermsFrom.size() == rankerConfiguration.getUserModelTypes().size())) {
+        if (!(modelsToTransferTermsFrom.size() == rankerConfiguration.getUserModelConfigurations()
+                .size())) {
             longTermInterestDetectors.add(new PeriodicLongTermInterestDetector(
                     longTermMemoryConfiguration.getPeriodicInterestScoreThreshold(),
                     longTermMemoryConfiguration.getPeriodicInterestDistanceInBins(),
@@ -234,6 +236,22 @@ public class ShortTermUserModelUpdater {
                 1);
         entryDecorator.setEntry(entry);
         return entryDecorator;
+    }
+
+    @Override
+    public String toString() {
+        return "ShortTermUserModelUpdater [shortTermMemoryConfiguration="
+                + shortTermMemoryConfiguration + ", persistence=" + persistence
+                + ", userModelTypes=" + userModelTypes + ", lastModelCalculationDate="
+                + lastModelCalculationDate + ", rankerConfiguration=" + rankerConfiguration
+                + ", firstBinStartTime=" + firstBinStartTime + ", d=" + d + ", k=" + k + ", G=" + G
+                + ", nutritionHistoryLength=" + nutritionHistoryLength + ", entryDecorator="
+                + entryDecorator + ", strategy=" + strategy + ", aggregatedCount="
+                + aggregatedCount + ", modelsToTransferTermsFrom=" + modelsToTransferTermsFrom
+                + ", longTermInterestDetectors=" + longTermInterestDetectors
+                + ", nutritionConverter=" + nutritionConverter
+                + ", longTermCalculationPeriodInBins=" + longTermCalculationPeriodInBins
+                + ", calculatedLongTermPeriodsAgo=" + calculatedLongTermPeriodsAgo + "]";
     }
 
     private void transferTermsToLongTermModelIfNecessary(UserModelEntry entry, String userGlobalId) {

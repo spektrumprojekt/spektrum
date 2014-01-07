@@ -54,7 +54,7 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
 
     private String termUniquenessLogfile;
 
-    private Map<String, UserModelConfiguration> userModelTypes = new HashMap<String, UserModelConfiguration>();// UserModel.DEFAULT_USER_MODEL_TYPE;
+    private Map<String, UserModelConfiguration> userModelConfigurations = new HashMap<String, UserModelConfiguration>();// UserModel.DEFAULT_USER_MODEL_TYPE;
 
     private final InformationExtractionConfiguration informationExtractionConfiguration;
 
@@ -280,8 +280,8 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
         return userModelEntryTimeDecayFunction;
     }
 
-    public Map<String, UserModelConfiguration> getUserModelTypes() {
-        return userModelTypes;
+    public Map<String, UserModelConfiguration> getUserModelConfigurations() {
+        return userModelConfigurations;
     }
 
     public boolean hasFlag(ScorerConfigurationFlag flag) {
@@ -319,7 +319,7 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
 
     public UserModelConfiguration putUserModelConfiguration(String userModelType,
             UserModelConfiguration modelConfiguration) {
-        return userModelTypes.put(userModelType, modelConfiguration);
+        return userModelConfigurations.put(userModelType, modelConfiguration);
     }
 
     public void setCollaborativeScoreComputerType(
@@ -478,7 +478,7 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
             throw new IllegalArgumentException("userModelType cannot be null.");
         }
         assertCanSet();
-        this.userModelTypes = userModelTypes;
+        this.userModelConfigurations = userModelTypes;
     }
 
     @Override
@@ -493,7 +493,7 @@ public class ScorerConfiguration implements ConfigurationDescriptable, Cloneable
                 + ", interestTermTreshold=" + interestTermTreshold
                 + ", treatMissingUserModelEntriesAsZero=" + treatMissingUserModelEntriesAsZero
                 + ", termUniquenessLogfile=" + termUniquenessLogfile + ", userModelTypes="
-                + userModelTypes + ", informationExtractionConfiguration="
+                + userModelConfigurations + ", informationExtractionConfiguration="
                 + informationExtractionConfiguration + ", informationExtractionCommand="
                 + informationExtractionCommand + ", userModelAdapterConfiguration="
                 + userModelAdapterConfiguration + ", mixMemoriesForRating=" + mixMemoriesForRating
