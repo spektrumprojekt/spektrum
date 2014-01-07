@@ -41,8 +41,7 @@ public class CollaborativeConfiguration implements ConfigurationDescriptable {
     }
 
     public float getScoringFeatureWeight() {
-        Float weight = scorerConfiguration.getFeatureWeights().get(
-                Feature.COLLABORATION_MATCH_FEATURE);
+        Float weight = internalGetScoringFeatureWeight();
         if (weight == null) {
             throw new IllegalStateException(
                     "no collab feature weight defined. set it on scorerConfiguration.getFeatureWeights()");
@@ -52,6 +51,12 @@ public class CollaborativeConfiguration implements ConfigurationDescriptable {
 
     public long getSlopeOneMaxEntries() {
         return slopeOneMaxEntries;
+    }
+
+    private Float internalGetScoringFeatureWeight() {
+        Float weight = scorerConfiguration.getFeatureWeights().get(
+                Feature.COLLABORATION_MATCH_FEATURE);
+        return weight;
     }
 
     public boolean isOutPreferencesToFile() {
@@ -106,8 +111,9 @@ public class CollaborativeConfiguration implements ConfigurationDescriptable {
                 + useGenericRecommender + ", outPreferencesToFile=" + outPreferencesToFile
                 + ", preferencesDebugFile=" + preferencesDebugFile + ", slopeOneUseWeighted="
                 + slopeOneUseWeighted + ", slopeOneUseStdDevWeighted=" + slopeOneUseStdDevWeighted
-                + ", slopeOneMaxEntries=" + slopeOneMaxEntries + ", getScoringFeatureWeight()="
-                + getScoringFeatureWeight()
+                + ", slopeOneMaxEntries=" + slopeOneMaxEntries
+                + ", internalGetScoringFeatureWeight()="
+                + internalGetScoringFeatureWeight()
                 + "]";
     }
 
