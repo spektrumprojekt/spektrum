@@ -31,6 +31,7 @@ import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.i.datamodel.MessageFeature;
+import de.spektrumprojekt.i.learner.contentbased.UserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.i.ranker.ScorerConfiguration;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 import de.spektrumprojekt.i.ranker.feature.Feature;
@@ -53,6 +54,8 @@ public class ContentMatchFeatureCommand implements Command<UserSpecificMessageFe
     private final ScorerConfiguration scorerConfiguration;
     private final MergeValuesStrategy valuesStrategy;
     private boolean useAdaptedEntries;
+
+    private Map<String, UserModelEntryIntegrationStrategy> userModelEntryIntegrationStrategies;
 
     public ContentMatchFeatureCommand(
             Persistence persistence,
@@ -117,13 +120,23 @@ public class ContentMatchFeatureCommand implements Command<UserSpecificMessageFe
         return false;
     }
 
-    private Map<Term, UserModelEntry> getAndFilterUserModelEntries(Collection<Term> messageTerms,
+    private Map<Term, UserModelEntry> getAndFilterUserModelEntries(
+            Collection<Term> messageTerms,
             UserModel userModel) {
+
         Map<Term, UserModelEntry> entries = persistence.getUserModelEntriesForTerms(userModel,
                 messageTerms);
+        UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy = userModelEntryIntegrationStrategies
+                .get(userModel.getUserModelType());
+        if (userModelEntryIntegrationStrategy == null) {
+            throw new IllegalStateException("No userModelEntryIntegrationStrategy for "
+                    + userModel.getUserModelType());
+        }
         if (!useAdaptedEntries) {
             entries = UserModelEntry.filteredForNonAdaptedEntries(entries);
         }
+        entries = userModelEntryIntegrationStrategy.cleanUpEntries(entries);
+
         return entries;
     }
 
@@ -216,5 +229,10 @@ public class ContentMatchFeatureCommand implements Command<UserSpecificMessageFe
 
         }
 
+    }
+
+    public void setUserModelEntryIntegrationStrategies(
+            Map<String, UserModelEntryIntegrationStrategy> userModelEntryIntegrationStrategies) {
+        this.userModelEntryIntegrationStrategies = userModelEntryIntegrationStrategies;
     }
 }

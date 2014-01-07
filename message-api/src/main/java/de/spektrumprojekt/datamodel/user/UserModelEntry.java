@@ -135,6 +135,15 @@ public class UserModelEntry extends Identifiable {
         return timeBinEntriesHistory.add(e);
     }
 
+    public void cleanUpTimeBins(long minimumTimeBinSizeStart) {
+        for (UserModelEntryTimeBin entryTimeBin : new HashSet<UserModelEntryTimeBin>(
+                this.timeBinEntries)) {
+            if (entryTimeBin.getTimeBinStart() < minimumTimeBinSizeStart) {
+                this.timeBinEntries.remove(entryTimeBin);
+            }
+        }
+    }
+
     public void consolidate() {
         if (!this.adapted) {
             this.scoredTerm.setWeight(this.scoreSum / this.scoreCount);

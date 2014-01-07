@@ -218,8 +218,8 @@ public class BinAggregatedUserModelEntryDecorator extends UserModelEntry {
 
     @Override
     public String toString() {
-        return "BinAggregatedUserModelEntryDecorator[binAggragationCount=" + binAggragationCount
-                + ", entry=" + entry.toString() + "]";
+        return "BinAggregatedUserModelEntryDecorator [entry=" + entry + ", binAggragationCount="
+                + binAggragationCount + "]";
     }
 
 }

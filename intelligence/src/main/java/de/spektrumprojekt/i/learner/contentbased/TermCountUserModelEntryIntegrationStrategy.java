@@ -20,6 +20,7 @@
 package de.spektrumprojekt.i.learner.contentbased;
 
 import java.util.Date;
+import java.util.Map;
 
 import de.spektrumprojekt.commons.time.TimeProviderHolder;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
@@ -38,6 +39,11 @@ public class TermCountUserModelEntryIntegrationStrategy implements
 
     // the score defines the minimum value of a scored term so that it counts
     private float minScore = 0;
+
+    @Override
+    public Map<Term, UserModelEntry> cleanUpEntries(Map<Term, UserModelEntry> entries) {
+        return entries;
+    }
 
     /**
      * {@inheritDoc}

@@ -19,6 +19,9 @@
 
 package de.spektrumprojekt.i.learner;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +60,8 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
     private final Persistence persistence;
 
     private final static Logger LOGGER = LoggerFactory.getLogger(Scorer.class);
+
+    private final Map<String, UserModelEntryIntegrationStrategy> userModelEntryIntegrationStrategies = new HashMap<String, UserModelEntryIntegrationStrategy>();
 
     public Learner(
             Persistence persistence,
@@ -103,7 +108,8 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
         if (!onlyDoObservations) {
             for (String userModelType : configuration.getUserModelConfigurations().keySet()) {
                 UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy;
-                UserModelConfiguration userModelConfiguration = configuration.getUserModelConfigurations()
+                UserModelConfiguration userModelConfiguration = configuration
+                        .getUserModelConfigurations()
                         .get(
                                 userModelType);
                 switch (userModelConfiguration.getUserModelEntryIntegrationStrategyType()) {
@@ -128,6 +134,9 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
                             userModelConfiguration.getUserModelEntryIntegrationStrategyType()
                                     + " is not known and handled.");
                 }
+                userModelEntryIntegrationStrategies.put(userModelType,
+                        userModelEntryIntegrationStrategy);
+
                 this.learnerChain.addCommand(new UserModelLearnerCommand(
                         this.persistence,
                         userModelType,
@@ -191,6 +200,10 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
     @Override
     public Class<LearningMessage> getMessageClass() {
         return LearningMessage.class;
+    }
+
+    public Map<String, UserModelEntryIntegrationStrategy> getUserModelEntryIntegrationStrategies() {
+        return userModelEntryIntegrationStrategies;
     }
 
     /**

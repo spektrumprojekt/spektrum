@@ -39,6 +39,7 @@ import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionConfiguration;
+import de.spektrumprojekt.i.learner.Learner;
 import de.spektrumprojekt.i.ranker.chain.AdaptMessageScoreByCMFOfSimilarUsersCommand;
 import de.spektrumprojekt.i.ranker.chain.ComputeMessageScoreCommand;
 import de.spektrumprojekt.i.ranker.chain.DetermineInteractionLevelCommand;
@@ -347,6 +348,13 @@ public class Scorer implements MessageHandler<ScorerCommunicationMessage>,
 
     public void close() {
         this.termFrequencyComputer.stop();
+    }
+
+    public void configLearner(Learner learner) {
+        this.contentMatchFeatureCommand.setUserModelEntryIntegrationStrategies(learner
+                .getUserModelEntryIntegrationStrategies());
+        this.reScoreContentMatchFeatureCommand.setUserModelEntryIntegrationStrategies(learner
+                .getUserModelEntryIntegrationStrategies());
     }
 
     /**

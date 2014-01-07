@@ -20,9 +20,11 @@
 package de.spektrumprojekt.i.learner.contentbased;
 
 import java.util.Date;
+import java.util.Map;
 
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
+import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.observation.Interest;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
@@ -34,6 +36,8 @@ import de.spektrumprojekt.datamodel.user.UserModelEntry;
  * 
  */
 public interface UserModelEntryIntegrationStrategy extends ConfigurationDescriptable {
+
+    public Map<Term, UserModelEntry> cleanUpEntries(Map<Term, UserModelEntry> entries);
 
     /**
      * Create a new user model entry. New means the user model does not contain it.

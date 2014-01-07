@@ -10,7 +10,7 @@ public class EnergyCalculationConfiguration implements ConfigurationDescriptable
     private int energyHistoryLength;
     private int nutritionHistLength;
 
-    private final int binAggregationCount;
+    private int binAggregationCount;
 
     public EnergyCalculationConfiguration(
             float k,
@@ -59,6 +59,10 @@ public class EnergyCalculationConfiguration implements ConfigurationDescriptable
 
     public NutritionCalculationStrategy getStrategy() {
         return strategy;
+    }
+
+    public void setBinAggregationCount(int binAggregationCount) {
+        this.binAggregationCount = binAggregationCount;
     }
 
     public void setD(double d) {

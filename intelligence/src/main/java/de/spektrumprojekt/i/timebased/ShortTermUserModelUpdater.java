@@ -245,11 +245,10 @@ public class ShortTermUserModelUpdater {
                 + ", userModelTypes=" + userModelTypes + ", lastModelCalculationDate="
                 + lastModelCalculationDate + ", rankerConfiguration=" + rankerConfiguration
                 + ", firstBinStartTime=" + firstBinStartTime + ", d=" + d + ", k=" + k + ", G=" + G
-                + ", nutritionHistoryLength=" + nutritionHistoryLength + ", entryDecorator="
-                + entryDecorator + ", strategy=" + strategy + ", aggregatedCount="
-                + aggregatedCount + ", modelsToTransferTermsFrom=" + modelsToTransferTermsFrom
-                + ", longTermInterestDetectors=" + longTermInterestDetectors
-                + ", nutritionConverter=" + nutritionConverter
+                + ", nutritionHistoryLength=" + nutritionHistoryLength + ", strategy=" + strategy
+                + ", aggregatedCount=" + aggregatedCount + ", modelsToTransferTermsFrom="
+                + modelsToTransferTermsFrom + ", longTermInterestDetectors="
+                + longTermInterestDetectors + ", nutritionConverter=" + nutritionConverter
                 + ", longTermCalculationPeriodInBins=" + longTermCalculationPeriodInBins
                 + ", calculatedLongTermPeriodsAgo=" + calculatedLongTermPeriodsAgo + "]";
     }
