@@ -13,9 +13,15 @@ public class UserModelBasedSimilarityConfiguration implements ConfigurationDescr
     private boolean readUserSimilaritiesFromPrecomputedFile;
     private boolean precomputedIsWithDate;
 
+    private float interestTermThreshold;
+
     @Override
     public String getConfigurationDescription() {
         return toString();
+    }
+
+    public float getInterestTermThreshold() {
+        return interestTermThreshold;
     }
 
     public String getPrecomputedUserSimilaritesFilename() {
@@ -36,6 +42,10 @@ public class UserModelBasedSimilarityConfiguration implements ConfigurationDescr
 
     public boolean isWriteUserSimilaritiesToPrecomputedFile() {
         return writeUserSimilaritiesToPrecomputedFile;
+    }
+
+    public void setInterestTermThreshold(float interestTermThreshold) {
+        this.interestTermThreshold = interestTermThreshold;
     }
 
     public void setPrecomputedIsWithDate(boolean precomputedIsWithDate) {
@@ -68,7 +78,7 @@ public class UserModelBasedSimilarityConfiguration implements ConfigurationDescr
                 + writeUserSimilaritiesToPrecomputedFile
                 + ", readUserSimilaritiesFromPrecomputedFile="
                 + readUserSimilaritiesFromPrecomputedFile + ", precomputedIsWithDate="
-                + precomputedIsWithDate + "]";
+                + precomputedIsWithDate + ", interestTermThreshold=" + interestTermThreshold + "]";
     }
 
 }

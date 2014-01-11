@@ -145,8 +145,10 @@ public class DirectedUserModelAdapter implements
     }
 
     private Map<Term, UserModelEntry> adaptTerms(
-            UserModel userModelToAdapt, Collection<Term> termsToAdapt,
+            UserModel userModelToAdapt,
+            Collection<Term> termsToAdapt,
             Map<Term, ValueAggregator> statsForTermsToAdaptFrom) {
+
         Map<Term, UserModelEntry> entries = persistence.getUserModelEntriesForTerms(
                 userModelToAdapt, termsToAdapt);
 
@@ -160,6 +162,8 @@ public class DirectedUserModelAdapter implements
                     entryToAdapt = new UserModelEntry(userModelToAdapt, scoredTerm);
                     entries.put(scoredTerm.getTerm(), entryToAdapt);
                 }
+                // adapt only if the current user model entry weight is smaller than the one to
+                // adapt from
                 if (entryToAdapt.getScoredTerm().getWeight() < statEntryToAdaptFrom.getValue()
                         .getValue()) {
                     entryToAdapt.getScoredTerm().setWeight(

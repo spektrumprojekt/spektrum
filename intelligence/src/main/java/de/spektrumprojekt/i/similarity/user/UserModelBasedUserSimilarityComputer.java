@@ -91,24 +91,33 @@ public class UserModelBasedUserSimilarityComputer implements UserSimilarityCompu
     }
 
     private Collection<UserSimilarity> computeUserSimilarities() {
-        Collection<UserSimilarity> userSimilarities = new HashSet<UserSimilarity>();
+        final Collection<UserSimilarity> userSimilarities = new HashSet<UserSimilarity>();
+        final Collection<String> userGlobalIdsAlreadyComputed = new HashSet<String>();
 
         // get a list of all topics
-        Collection<MessageGroup> messageGroups = persistence.getAllMessageGroups();
+        final Collection<MessageGroup> messageGroups = persistence.getAllMessageGroups();
 
+        // get all user models of the given type
         Map<User, UserModelHolder> userModelEntries = persistence
                 .getUserModelByTypeHolders(UserModel.DEFAULT_USER_MODEL_TYPE);
 
+        // for each user
         for (Entry<User, UserModelHolder> user2Entries1 : userModelEntries.entrySet()) {
             User user1 = user2Entries1.getKey();
 
+            // for each user
             user2Entries2: for (Entry<User, UserModelHolder> user2Entries2 : userModelEntries
                     .entrySet()) {
+                final User user2 = user2Entries2.getKey();
+
                 if (user2Entries1.equals(user2Entries2)) {
                     continue user2Entries2;
                 }
-                User user2 = user2Entries2.getKey();
-
+                // if user2 is already computed, no need to do it again, since similarity is
+                // bidirectional
+                if (userGlobalIdsAlreadyComputed.contains(user2.getGlobalId())) {
+                    continue user2Entries2;
+                }
                 mg: for (MessageGroup mg : messageGroups) {
 
                     Map<Term, UserModelEntry> entries1 = user2Entries1.getValue()
@@ -142,9 +151,17 @@ public class UserModelBasedUserSimilarityComputer implements UserSimilarityCompu
                     userSimilarity.setSimilarity(sim);
 
                     userSimilarities.add(userSimilarity);
+
+                    // similarity is bidirectional, so also add user2 to user1
+                    userSimilarity = new UserSimilarity(user2.getGlobalId(),
+                            user1.getGlobalId(), mg.getGlobalId());
+                    userSimilarity.setSimilarity(sim);
+
+                    userSimilarities.add(userSimilarity);
                 }
 
             }
+            userGlobalIdsAlreadyComputed.add(user1.getGlobalId());
         }
         return userSimilarities;
     }
@@ -152,11 +169,19 @@ public class UserModelBasedUserSimilarityComputer implements UserSimilarityCompu
     private Map<Term, UserModelEntry> filter(Map<Term, UserModelEntry> entryMap) {
         Map<Term, UserModelEntry> filtered = new HashMap<Term, UserModelEntry>();
 
-        for (Entry<Term, UserModelEntry> entry : entryMap.entrySet()) {
-            if (!entry.getValue().isAdapted()) {
-                filtered.put(entry.getKey(), entry.getValue());
-
+        entries: for (Entry<Term, UserModelEntry> entry : entryMap.entrySet()) {
+            if (entry.getValue().isAdapted()) {
+                continue entries;
             }
+
+            // if the term weight is lower thant the threshold dont use it
+            if (entry.getValue().getScoredTerm().getWeight() < userModelBasedSimilarityConfiguration
+                    .getInterestTermThreshold()) {
+                continue entries;
+            }
+
+            filtered.put(entry.getKey(), entry.getValue());
+
         }
         return filtered;
     }
