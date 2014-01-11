@@ -145,7 +145,9 @@ public class BinAggregatedUserModelEntryDecorator extends UserModelEntry {
     @Override
     public UserModelEntryTimeBin getUserModelEntryTimeBinByStartTime(long timeBinStartTime) {
         LinkedList<UserModelEntryTimeBin> entries = new LinkedList<UserModelEntryTimeBin>();
-        entries.addAll(entry.getTimeBinEntries());
+        if (entry.getTimeBinEntries() != null) {
+            entries.addAll(entry.getTimeBinEntries());
+        }
         // order newest last
         Collections.sort(entries, new Comparator<UserModelEntryTimeBin>() {
             @Override
