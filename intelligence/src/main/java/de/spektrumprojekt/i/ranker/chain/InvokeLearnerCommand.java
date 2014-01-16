@@ -94,19 +94,19 @@ public class InvokeLearnerCommand implements Command<UserSpecificMessageFeatureC
      *            the persistence to use
      */
     public InvokeLearnerCommand(Persistence persistence, Communicator communicator,
-            ScorerConfiguration rankerConfiguration) {
+            ScorerConfiguration scorerConfiguration) {
         this(
                 persistence,
                 communicator,
-                rankerConfiguration.getLearningFeatureWeights(),
-                rankerConfiguration.getLearningFeatureTresholds(),
-                rankerConfiguration
+                scorerConfiguration.getLearningFeatureWeights(),
+                scorerConfiguration.getLearningFeatureTresholds(),
+                scorerConfiguration
                         .hasFlag(ScorerConfigurationFlag.DISCUSSION_PARTICIPATION_LEARN_FROM_PARENT_MESSAGE),
-                rankerConfiguration
+                scorerConfiguration
                         .hasFlag(ScorerConfigurationFlag.DISCUSSION_PARTICIPATION_LEARN_FROM_ALL_PARENT_MESSAGES),
-                rankerConfiguration
+                scorerConfiguration
                         .hasFlag(ScorerConfigurationFlag.LEARN_FROM_EVERY_MESSAGE),
-                rankerConfiguration.getScoreToLearnThreshold());
+                scorerConfiguration.getScoreToLearnThreshold());
     }
 
     private Interest generateInterest(UserSpecificMessageFeatureContext context) {

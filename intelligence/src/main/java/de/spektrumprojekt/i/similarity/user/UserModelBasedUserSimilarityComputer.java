@@ -174,7 +174,7 @@ public class UserModelBasedUserSimilarityComputer implements UserSimilarityCompu
                 continue entries;
             }
 
-            // if the term weight is lower thant the threshold dont use it
+            // if the term weight is lower than the threshold dont use it
             if (entry.getValue().getScoredTerm().getWeight() < userModelBasedSimilarityConfiguration
                     .getInterestTermThreshold()) {
                 continue entries;
