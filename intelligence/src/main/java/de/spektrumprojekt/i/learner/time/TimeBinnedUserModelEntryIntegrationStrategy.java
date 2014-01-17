@@ -96,7 +96,7 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
         Map<Term, UserModelEntry> cleanedEntries = new HashMap<Term, UserModelEntry>();
 
         long minimumTimeBinSizeStart = this
-                .determineTimeBinPrecisionStart(TimeProviderHolder.DEFAULT.getCurrentTime());
+                .determineCurrentTimeBinStart(TimeProviderHolder.DEFAULT.getCurrentTime());
         for (Entry<Term, UserModelEntry> entry : entries.entrySet()) {
 
             entry.getValue().cleanUpTimeBins(minimumTimeBinSizeStart);
@@ -112,6 +112,13 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
         return cleanedEntries;
     }
 
+    public int determineBinIndex(long time) {
+        long first = determineFirstTimeBinStart(time);
+        long current = determineCurrentTimeBinStart(time);
+        int index = (int) ((current - first) / this.lengthOfSingleBinInMs);
+        return index;
+    }
+
     /**
      * Example: <br>
      * lengthOfSingleBinInMs is the time interval for a day<br>
@@ -120,9 +127,9 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
      * than the return will be 2011-12-12 0:00<br>
      * 
      * @param time
-     * @return the time the bin for the given time started
+     * @return the time the current bin started for the given time
      */
-    private long determineTimeBinPrecisionStart(long time) {
+    public long determineCurrentTimeBinStart(long time) {
         long index = (time - startTime) / lengthOfSingleBinInMs;
         return index * lengthOfSingleBinInMs;
     }
@@ -137,7 +144,7 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
      * @param time
      * @return the time the first bin started
      */
-    private long determineTimeBinSizeStart(long time) {
+    public long determineFirstTimeBinStart(long time) {
         long index = (time - startTime) / lengthOfAllBinsInMs;
         return index * lengthOfAllBinsInMs;
     }
@@ -186,8 +193,8 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
     }
 
     public boolean isTimeBinChanged(Date lastTimeBinChecked) {
-        long lastStart = determineTimeBinSizeStart(lastTimeBinChecked.getTime());
-        long currentStart = determineTimeBinSizeStart(TimeProviderHolder.DEFAULT.getCurrentTime());
+        long lastStart = determineFirstTimeBinStart(lastTimeBinChecked.getTime());
+        long currentStart = determineFirstTimeBinStart(TimeProviderHolder.DEFAULT.getCurrentTime());
 
         return lastStart < currentStart;
     }
@@ -205,8 +212,8 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
 
             long currentTime = TimeProviderHolder.DEFAULT.getCurrentTime();
 
-            long timeBinPrecisionStart = determineTimeBinPrecisionStart(observationDate.getTime());
-            long currentTimeBinSizeStart = determineTimeBinSizeStart(currentTime);
+            long timeBinPrecisionStart = determineCurrentTimeBinStart(observationDate.getTime());
+            long currentTimeBinSizeStart = determineFirstTimeBinStart(currentTime);
 
             // time is out of the bin
             if (timeBinPrecisionStart >= currentTimeBinSizeStart) {

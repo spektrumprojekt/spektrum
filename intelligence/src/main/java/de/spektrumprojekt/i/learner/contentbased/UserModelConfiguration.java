@@ -33,7 +33,8 @@ public class UserModelConfiguration implements ConfigurationDescriptable, Clonea
             long startTime,
             long lengthOfSingleBinInMs,
             int numberOfBins) {
-        return new UserModelConfiguration(UserModelEntryIntegrationStrategyType.TIMEBINNED,
+        return new UserModelConfiguration(
+                UserModelEntryIntegrationStrategyType.TIMEBINNED,
                 startTime, lengthOfSingleBinInMs, numberOfBins, true);
     }
 
@@ -43,8 +44,21 @@ public class UserModelConfiguration implements ConfigurationDescriptable, Clonea
             long lengthOfAllBinsInMs,
             long lengthOfSingleBinInMs) {
         int numberOfBins = getNumberOfBins(lengthOfSingleBinInMs, lengthOfAllBinsInMs);
-        return new UserModelConfiguration(UserModelEntryIntegrationStrategyType.TIMEBINNED,
+        return new UserModelConfiguration(
+                UserModelEntryIntegrationStrategyType.TIMEBINNED,
                 startTime, lengthOfSingleBinInMs, numberOfBins, true);
+    }
+
+    public static UserModelConfiguration getSimpleLongTermModelConfiguration(
+            long startTime,
+            long lengthOfSingleBinInMs,
+            int numberOfBins) {
+        return new UserModelConfiguration(
+                UserModelEntryIntegrationStrategyType.TIMEBINNED,
+                startTime,
+                lengthOfSingleBinInMs,
+                numberOfBins,
+                false);
     }
 
     public static UserModelConfiguration getTimeBinnedModelConfiguration(long startTime,
@@ -172,16 +186,6 @@ public class UserModelConfiguration implements ConfigurationDescriptable, Clonea
 
     public void setNumberOfBins(int numberOfBins) {
         this.numberOfBins = numberOfBins;
-    }
-
-    /**
-     * 
-     * @param lengthOfAllBinsInMs
-     */
-    private void setNumberOfBinsByLengthOfAllBins(long lengthOfAllBinsInMs) {
-
-        this.numberOfBins = getNumberOfBins(this.lengthOfSingleBinInMs, lengthOfAllBinsInMs);
-
     }
 
     public void setStartTime(long startTime) {

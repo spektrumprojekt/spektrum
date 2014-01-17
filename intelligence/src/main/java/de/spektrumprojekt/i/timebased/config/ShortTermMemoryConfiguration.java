@@ -16,6 +16,8 @@ public class ShortTermMemoryConfiguration implements ConfigurationDescriptable {
 
     private boolean balanceMisingUserModelWeights;
 
+    private boolean useSimpleLongTermUpdater;
+
     private final Map<String, Float> raitingWeights = new HashMap<String, Float>();
 
     private LongTermMemoryConfiguration longTermMemoryConfiguration;
@@ -115,6 +117,10 @@ public class ShortTermMemoryConfiguration implements ConfigurationDescriptable {
         return balanceMisingUserModelWeights;
     }
 
+    public boolean isUseSimpleLongTermUpdater() {
+        return useSimpleLongTermUpdater;
+    }
+
     public Float putRatingWeight(String key, Float value) {
         return raitingWeights.put(key, value);
     }
@@ -141,9 +147,18 @@ public class ShortTermMemoryConfiguration implements ConfigurationDescriptable {
         this.precision = precision;
     }
 
+    public void setUseSimpleLongTermUpdater(boolean useSimpleLongTermUpdater) {
+        this.useSimpleLongTermUpdater = useSimpleLongTermUpdater;
+    }
+
     @Override
     public String toString() {
-        return getConfigurationDescription();
+        return "ShortTermMemoryConfiguration [energyCalculationConfiguration="
+                + energyCalculationConfiguration + ", mergeValuesStrategy=" + mergeValuesStrategy
+                + ", precision=" + precision + ", balanceMisingUserModelWeights="
+                + balanceMisingUserModelWeights + ", useSimpleLongTermUpdater="
+                + useSimpleLongTermUpdater + ", raitingWeights=" + raitingWeights
+                + ", longTermMemoryConfiguration=" + longTermMemoryConfiguration + "]";
     }
 
 }

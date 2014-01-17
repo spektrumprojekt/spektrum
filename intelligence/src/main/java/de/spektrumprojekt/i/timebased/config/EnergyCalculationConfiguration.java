@@ -5,7 +5,7 @@ import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 public class EnergyCalculationConfiguration implements ConfigurationDescriptable {
 
     private float k;
-    private double d;
+    private float d;
     private NutritionCalculationStrategy strategy;
     private int energyHistoryLength;
     private int nutritionHistLength;
@@ -14,7 +14,7 @@ public class EnergyCalculationConfiguration implements ConfigurationDescriptable
 
     public EnergyCalculationConfiguration(
             float k,
-            double d,
+            float d,
             int energyHistoryLength,
             int nutritionHistLength,
             NutritionCalculationStrategy strategy,
@@ -37,7 +37,7 @@ public class EnergyCalculationConfiguration implements ConfigurationDescriptable
         return toString();
     }
 
-    public double getD() {
+    public float getD() {
         return d;
     }
 
@@ -49,7 +49,7 @@ public class EnergyCalculationConfiguration implements ConfigurationDescriptable
         return 1;
     }
 
-    public double getK() {
+    public float getK() {
         return k;
     }
 
@@ -65,7 +65,7 @@ public class EnergyCalculationConfiguration implements ConfigurationDescriptable
         this.binAggregationCount = binAggregationCount;
     }
 
-    public void setD(double d) {
+    public void setD(float d) {
         this.d = d;
     }
 
