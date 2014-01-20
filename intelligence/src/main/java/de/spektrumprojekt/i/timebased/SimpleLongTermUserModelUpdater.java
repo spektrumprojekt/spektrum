@@ -146,7 +146,7 @@ public class SimpleLongTermUserModelUpdater implements UserModelUpdater {
 
         int maxIndex = this.shortTermEntryIntegrationStrategy
                 .determineBinIndex(TimeProviderHolder.DEFAULT.getCurrentTime());
-        final float[] result = new float[maxIndex];
+        final float[] result = new float[maxIndex + 1];
         for (UserModelEntryTimeBin timeBin : timeBinEntries) {
             int index = this.shortTermEntryIntegrationStrategy.determineBinIndex(timeBin
                     .getTimeBinStart());

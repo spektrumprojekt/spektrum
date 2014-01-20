@@ -21,6 +21,7 @@ package de.spektrumprojekt.i.learner;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
@@ -106,34 +107,13 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
         this.learnerChain.addCommand(new LoadRelatedObservationsCommand(this.persistence));
 
         if (!onlyDoObservations) {
-            for (String userModelType : configuration.getUserModelConfigurations().keySet()) {
-                UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy;
-                UserModelConfiguration userModelConfiguration = configuration
-                        .getUserModelConfigurations()
-                        .get(
-                                userModelType);
-                switch (userModelConfiguration.getUserModelEntryIntegrationStrategyType()) {
-                case TERM_COUNT:
-                    userModelEntryIntegrationStrategy = new TermCountUserModelEntryIntegrationStrategy();
-                    break;
-                case INCREMENTAL:
-                    userModelEntryIntegrationStrategy = new IncrementalUserModelIntegrationStrategy(
-                            userModelConfiguration);
+            for (Entry<String, UserModelConfiguration> userModelConfigEntry : configuration
+                    .getUserModelConfigurations().entrySet()) {
+                final UserModelConfiguration userModelConfiguration = userModelConfigEntry
+                        .getValue();
+                final String userModelType = userModelConfigEntry.getKey();
 
-                    break;
-                case TIMEBINNED:
-
-                    userModelEntryIntegrationStrategy = new TimeBinnedUserModelEntryIntegrationStrategy(
-                            userModelConfiguration.getStartTime(),
-                            userModelConfiguration.getLengthOfAllBinsInMs(),
-                            userModelConfiguration.getLengthOfSingleBinInMs(),
-                            userModelConfiguration.isCalculateLater());
-                    break;
-                default:
-                    throw new IllegalArgumentException(
-                            userModelConfiguration.getUserModelEntryIntegrationStrategyType()
-                                    + " is not known and handled.");
-                }
+                final UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy = createUserModelEntryIntegrationStrategy(userModelConfiguration);
                 userModelEntryIntegrationStrategies.put(userModelType,
                         userModelEntryIntegrationStrategy);
 
@@ -151,6 +131,34 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
                         .getEnergyCalculationConfiguration() != null) {
             this.learnerChain.addCommand(new TermCounterCommand(configuration, this.persistence));
         }
+    }
+
+    private UserModelEntryIntegrationStrategy createUserModelEntryIntegrationStrategy(
+            final UserModelConfiguration userModelConfiguration) {
+        UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy;
+        switch (userModelConfiguration.getUserModelEntryIntegrationStrategyType()) {
+        case TERM_COUNT:
+            userModelEntryIntegrationStrategy = new TermCountUserModelEntryIntegrationStrategy();
+            break;
+        case INCREMENTAL:
+            userModelEntryIntegrationStrategy = new IncrementalUserModelIntegrationStrategy(
+                    userModelConfiguration);
+
+            break;
+        case TIMEBINNED:
+
+            userModelEntryIntegrationStrategy = new TimeBinnedUserModelEntryIntegrationStrategy(
+                    userModelConfiguration.getStartTime(),
+                    userModelConfiguration.getLengthOfAllBinsInMs(),
+                    userModelConfiguration.getLengthOfSingleBinInMs(),
+                    userModelConfiguration.isCalculateLater());
+            break;
+        default:
+            throw new IllegalArgumentException(
+                    userModelConfiguration.getUserModelEntryIntegrationStrategyType()
+                            + " is not known and handled.");
+        }
+        return userModelEntryIntegrationStrategy;
     }
 
     /**
