@@ -10,32 +10,36 @@ public class TimeDecayFunction {
         return new TimeDecayFunction(DateUtils.MILLIS_PER_DAY, "decayDay");
     }
 
+    public static TimeDecayFunction createWithMonthCutOff() {
+        return new TimeDecayFunction(30 * DateUtils.MILLIS_PER_DAY, "decayMonth");
+    }
+
     public static TimeDecayFunction createWithWeekCutOff() {
         return new TimeDecayFunction(7 * DateUtils.MILLIS_PER_DAY, "decayWeek");
     }
 
-    // time intervall when the decay should be 0.9
-    private final long zeroPointNineCutOffInMs;
+    // time intervall when the decay should be 0.5
+    private final long halfCutOffInMs;
 
     private final double alpha;
 
     private final String shortName;
 
-    public TimeDecayFunction(long zeroPointNineCutOffInMs) {
-        this(zeroPointNineCutOffInMs, null);
+    public TimeDecayFunction(long halfCutOffInMs) {
+        this(halfCutOffInMs, null);
     }
 
-    public TimeDecayFunction(long zeroPointNineCutOffInMs, String shortName) {
-        if (zeroPointNineCutOffInMs <= 0) {
+    public TimeDecayFunction(long halfCutOffInMs, String shortName) {
+        if (halfCutOffInMs <= 0) {
             throw new IllegalArgumentException("zeroPointNineCutOffInMs ("
-                    + zeroPointNineCutOffInMs + ") must be > 0)");
+                    + halfCutOffInMs + ") must be > 0)");
         }
-        this.zeroPointNineCutOffInMs = zeroPointNineCutOffInMs;
+        this.halfCutOffInMs = halfCutOffInMs;
 
-        alpha = -(Math.log(0.9d) / zeroPointNineCutOffInMs);
+        alpha = -(Math.log(2d) / halfCutOffInMs);
 
         if (shortName == null) {
-            shortName = "tdf" + zeroPointNineCutOffInMs / 1000;
+            shortName = "tdf" + halfCutOffInMs / 1000;
         }
         this.shortName = shortName;
     }
@@ -69,7 +73,7 @@ public class TimeDecayFunction {
 
     @Override
     public String toString() {
-        return "TimeDecayFunction [zeroPointNineCutOffInMs=" + zeroPointNineCutOffInMs + ", alpha="
+        return "TimeDecayFunction [halfCutOffInMs=" + halfCutOffInMs + ", alpha="
                 + alpha + ", shortName=" + shortName + "]";
     }
 }

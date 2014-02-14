@@ -7,6 +7,7 @@ import de.spektrumprojekt.persistence.Persistence;
 
 public enum CollaborativeScoreComputerType {
     USER2MESSAGE("U2M"),
+    USER2MESSAGE_PER_MESSAGE_GROUP("U2MGM"),
     USER2TERM("U2T"),
     USER2TERM_PER_MESSAGE_GROUP("U2TMG");
 
@@ -40,6 +41,12 @@ public enum CollaborativeScoreComputerType {
                     persistence,
                     collaborativeConfiguration,
                     termVectorSimilarityComputer);
+            break;
+        case USER2MESSAGE_PER_MESSAGE_GROUP:
+            collaborativeRankerComputer = new CombiningUserToMessageGroupSpecificMessageCollaborativeScoreComputer(
+                    persistence,
+                    collaborativeConfiguration,
+                    observationTypesToUseForDataModel);
             break;
         default:
             throw new IllegalArgumentException(this + " is unhandled.");

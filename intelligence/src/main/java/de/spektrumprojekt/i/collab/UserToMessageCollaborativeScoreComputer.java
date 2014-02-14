@@ -59,6 +59,16 @@ public class UserToMessageCollaborativeScoreComputer extends CollaborativeScoreC
         this.observationTypesToUseForDataModel = observationTypesToUseForDataModel;
     }
 
+    /**
+     * 
+     * @param message
+     * @param collection
+     * @return true to add the message
+     */
+    protected boolean addMessage(Message message, Collection<Observation> collection) {
+        return true;
+    }
+
     @Override
     protected void createUserPreference(FastByIDMap<PreferenceArray> userData, User user,
             FileWriter fw) throws IOException {
@@ -229,7 +239,9 @@ public class UserToMessageCollaborativeScoreComputer extends CollaborativeScoreC
                 throw new InconsistentDataException("message.id cannot be null for globalId="
                         + key.getMessageGlobalId() + " message=" + message);
             }
-            messages.add(message);
+            if (addMessage(message, observations.get(key))) {
+                messages.add(message);
+            }
         }
         this.messagesWithOberservations = Collections.unmodifiableCollection(messages);
 

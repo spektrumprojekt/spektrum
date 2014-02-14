@@ -110,4 +110,17 @@ public class LongTermMemoryConfiguration implements ConfigurationDescriptable {
     public void setPermanentInterestScoreThreshold(float permanentInterestScoreThreshold) {
         this.permanentInterestScoreThreshold = permanentInterestScoreThreshold;
     }
+
+    @Override
+    public String toString() {
+        return "LongTermMemoryConfiguration [periodicInterestOccuranceCount="
+                + periodicInterestOccuranceCount + ", periodicInterestDistanceInBins="
+                + periodicInterestDistanceInBins + ", periodicInterestScoreThreshold="
+                + periodicInterestScoreThreshold + ", permanentInterestScoreThreshold="
+                + permanentInterestScoreThreshold + ", permanentInterestOccurenceMinLengthInBins="
+                + permanentInterestOccurenceMinLengthInBins
+                + ", permanentInterestBinsFilledPercentage="
+                + permanentInterestBinsFilledPercentage + ", longTermCalculationPeriodInBins="
+                + longTermCalculationPeriodInBins + "]";
+    }
 }

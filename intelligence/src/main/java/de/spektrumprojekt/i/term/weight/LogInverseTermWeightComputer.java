@@ -24,20 +24,20 @@ public class LogInverseTermWeightComputer implements TermWeightComputer {
     @Override
     public float determineTermWeight(String messageGroupId, Term term) {
 
-        float numMessageWithTerm2 = termFrequencyComputer.getMessageCount(messageGroupId);
+        float numMessageInGroup = termFrequencyComputer.getMessageCount(messageGroupId);
 
         if (failOnZeroTermCounts) {
             if (term.getCount() == 0) {
                 LOGGER.warn("term.count is 0. term: " + term);
                 return 0;
             }
-            if (numMessageWithTerm2 == 0) {
+            if (numMessageInGroup == 0) {
                 LOGGER.warn("numMessageWithTerm2 is 0. term: " + term);
                 return 0;
             }
         }
 
-        float log = term.getCount() == 0 ? 0 : numMessageWithTerm2 / term.getCount();
+        float log = term.getCount() == 0 ? 0 : numMessageInGroup / term.getCount();
         float weight = log == 0 ? 0 : (float) Math.log(log);
         return weight;
     }

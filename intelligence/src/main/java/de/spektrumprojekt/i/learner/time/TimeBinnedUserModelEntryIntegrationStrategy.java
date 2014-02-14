@@ -96,7 +96,7 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
         Map<Term, UserModelEntry> cleanedEntries = new HashMap<Term, UserModelEntry>();
 
         long minimumTimeBinSizeStart = this
-                .determineCurrentTimeBinStart(TimeProviderHolder.DEFAULT.getCurrentTime());
+                .determineFirstTimeBinStart(TimeProviderHolder.DEFAULT.getCurrentTime());
         for (Entry<Term, UserModelEntry> entry : entries.entrySet()) {
 
             entry.getValue().cleanUpTimeBins(minimumTimeBinSizeStart);

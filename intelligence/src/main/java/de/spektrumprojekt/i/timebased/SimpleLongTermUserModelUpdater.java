@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.spektrumprojekt.commons.time.TimeProviderHolder;
+import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
@@ -244,8 +245,13 @@ public class SimpleLongTermUserModelUpdater implements UserModelUpdater {
     }
 
     private void transferTermToLongTermUsermodel(UserModel longTermUserModel, UserModelEntry entry) {
+        ScoredTerm scoredTerm = new ScoredTerm(entry.getScoredTerm().getTerm(), 0f);
         UserModelEntry longTermUserEntry = new UserModelEntry(longTermUserModel,
-                entry.getScoredTerm());
+                scoredTerm);
+        longTermUserEntry.setScoreCount(entry.getScoreCount());
+        longTermUserEntry.setScoreSum(entry.getScoreSum());
+        longTermUserEntry.consolidate();
+
         Collection<UserModelEntry> modelEntries = new HashSet<UserModelEntry>();
         modelEntries.add(longTermUserEntry);
         persistence.storeOrUpdateUserModelEntries(longTermUserModel, modelEntries);
