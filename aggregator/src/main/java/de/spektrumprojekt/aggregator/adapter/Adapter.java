@@ -21,6 +21,7 @@ package de.spektrumprojekt.aggregator.adapter;
 
 import java.util.Collection;
 
+import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 
 /**
@@ -74,6 +75,18 @@ public interface Adapter {
      * @return The source type.
      */
     String getSourceType();
+
+    /**
+     * Called before subscribing to a source to let the adapter evaluate and modify the access
+     * parameters.
+     * 
+     * @param accessParameters
+     *            the access parameters
+     * @throws AccessParameterValidationException
+     *             in case a parameter is not valid
+     */
+    void processAccessParametersBeforeSubscribing(Collection<Property> accessParameters)
+            throws AccessParameterValidationException;
 
     /**
      * <p>

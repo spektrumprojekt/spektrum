@@ -28,6 +28,7 @@ import org.apache.commons.lang3.Validate;
 import de.spektrumprojekt.aggregator.chain.AggregatorChain;
 import de.spektrumprojekt.aggregator.chain.AggregatorMessageContext;
 import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
+import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessagePublicationDateComperator;
 import de.spektrumprojekt.datamodel.source.Source;
@@ -118,6 +119,11 @@ public abstract class BaseAdapter implements Adapter {
 
     public AggregatorConfiguration getAggregatorConfiguration() {
         return this.aggregatorConfiguration;
+    }
+
+    @Override
+    public void processAccessParametersBeforeSubscribing(Collection<Property> accessParameters)
+            throws AccessParameterValidationException {
     }
 
     @Override

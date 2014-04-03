@@ -28,6 +28,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.NoResultException;
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
 import org.slf4j.Logger;
@@ -35,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionSourceStatus;
 import de.spektrumprojekt.exceptions.SubscriptionNotFoundException;
 import de.spektrumprojekt.persistence.jpa.JPAConfiguration;
 import de.spektrumprojekt.persistence.jpa.transaction.Transaction;
@@ -183,28 +185,11 @@ public final class SubscriptionPersistence extends AbstractPersistenceLayer {
 
                 String wherePrefix = "";
 
-                if (subscriptionFilter.getSourceGlobalId() != null) {
+                if (renderSourceGlobalIdCondition(subscriptionFilter, where, wherePrefix, params)) {
                     from.append("left join subscription.source source ");
-                    where.append(wherePrefix);
                     wherePrefix = " AND ";
-                    where.append("source.globalId = :sourceGlobalId ");
-                    params.put("sourceGlobalId", subscriptionFilter.getSourceGlobalId());
-
                 }
-                if (subscriptionFilter.getSubscriptionProperty() != null) {
-                    from.append("left join subscription.subscriptionParameters params ");
-                    where.append(wherePrefix);
-                    wherePrefix = " AND ";
-                    where.append("params.propertyKey = :propertyKey ");
-                    where.append(wherePrefix);
-                    where.append("params.propertyValue = :propertyValue ");
-
-                    params.put("propertyKey", subscriptionFilter.getSubscriptionProperty()
-                            .getPropertyKey());
-                    params.put("propertyValue", subscriptionFilter
-                            .getSubscriptionProperty().getPropertyValue());
-
-                }
+                renderSubscriptionPropertyCondition(subscriptionFilter, from, where, wherePrefix, params);
 
                 StringBuilder q = new StringBuilder();
                 q.append("SELECT ");
@@ -230,6 +215,68 @@ public final class SubscriptionPersistence extends AbstractPersistenceLayer {
         List<Subscription> result = transaction.executeTransaction(getEntityManager());
 
         return result;
+    }
+    
+    public List<SubscriptionSourceStatus> getSubscriptionsWithSourceStatus(final SubscriptionFilter subscriptionFilter) {
+        Transaction<List<SubscriptionSourceStatus>> transaction = new Transaction<List<SubscriptionSourceStatus>>() {
+
+            @Override
+            protected List<SubscriptionSourceStatus> doTransaction(EntityManager entityManager) {
+                Map<String, Object> params = new HashMap<String, Object>();
+                StringBuilder from = new StringBuilder();
+                StringBuilder where = new StringBuilder();
+                
+                from.append("FROM SourceStatus sourceStatus left join sourceStatus.source source, ");
+                from.append("Subscription subscription ");
+                where.append("subscription.source.id = source.id");
+                String wherePrefix = " AND ";
+
+                renderSourceGlobalIdCondition(subscriptionFilter, where, wherePrefix, params);
+                renderSubscriptionPropertyCondition(subscriptionFilter, from, where, wherePrefix, params);
+                
+                StringBuilder q = new StringBuilder();
+                q.append("SELECT new ");
+                q.append(SubscriptionSourceStatus.class.getName());
+                q.append("(subscription, sourceStatus) ");
+                q.append(from);
+                q.append("WHERE ");
+                q.append(where);
+                q.append(" ORDER BY subscription.id desc");
+                Query query = entityManager.createQuery(q.toString());
+                for (Entry<String, Object> param : params.entrySet()) {
+                    query.setParameter(param.getKey(), param.getValue());
+                }
+
+                return (List<SubscriptionSourceStatus>)query.getResultList();
+            }
+        };
+        return transaction.executeTransaction(getEntityManager());
+    }
+    
+    private boolean renderSourceGlobalIdCondition(SubscriptionFilter subscriptionFilter,  
+        StringBuilder wherePart, String wherePrefix, Map<String, Object> queryParams) {
+        if (subscriptionFilter.getSourceGlobalId() != null) {
+            wherePart.append(wherePrefix);
+            wherePart.append("source.globalId = :sourceGlobalId ");
+            queryParams.put("sourceGlobalId", subscriptionFilter.getSourceGlobalId());
+            return true;
+        }
+        return false;
+    }
+    
+    private boolean renderSubscriptionPropertyCondition(SubscriptionFilter subscriptionFilter,  
+        StringBuilder fromPart, StringBuilder wherePart, String wherePrefix, 
+        Map<String, Object> queryParams) {
+        if (subscriptionFilter.getSubscriptionProperty() != null) {
+            fromPart.append("left join subscription.subscriptionParameters params ");
+            wherePart.append(wherePrefix);
+            wherePart.append("params.propertyKey = :propertyKey AND params.propertyValue = :propertyValue ");
+
+            queryParams.put("propertyKey", subscriptionFilter.getSubscriptionProperty().getPropertyKey());
+            queryParams.put("propertyValue", subscriptionFilter.getSubscriptionProperty().getPropertyValue());
+            return true;
+        }
+        return false;
     }
 
     public Subscription storeSubscription(Subscription subscription) {

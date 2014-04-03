@@ -202,6 +202,12 @@ public class SourceStatus extends Identifiable {
      * @return the last date when tried to access the subscription
      */
     public Date getLatestCheckDate() {
+        if (lastSuccessfulCheck == null) {
+            return lastError;
+        }
+        if (lastError == null) {
+            return lastSuccessfulCheck;
+        }
         return lastSuccessfulCheck.after(lastError) ? lastSuccessfulCheck : lastError;
     }
 

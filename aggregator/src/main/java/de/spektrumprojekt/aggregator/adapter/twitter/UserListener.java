@@ -68,6 +68,8 @@ final class UserListener extends UserStreamAdapter {
             message.addProperty(new Property("replyToStatusId",
                     replyToStatusId));
             this.twitterAdapter.addTwitterMessage(message);
+            // TODO shouldn't the listener be triggered with an OK StatusType to clear a previous
+            // error state?
         }
     }
 }

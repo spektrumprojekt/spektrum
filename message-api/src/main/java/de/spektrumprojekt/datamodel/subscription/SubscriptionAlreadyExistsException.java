@@ -12,24 +12,25 @@ public class SubscriptionAlreadyExistsException extends Exception {
      */
     private static final long serialVersionUID = 1L;
 
-    private final String globalId;
+    private final String subscriptionGlobalId;
     private final Subscription subscription;
 
-    public SubscriptionAlreadyExistsException(String globalId, Subscription subscription) {
-        this.globalId = globalId;
+    public SubscriptionAlreadyExistsException(String subscriptionGlobalId, Subscription subscription) {
+        this.subscriptionGlobalId = subscriptionGlobalId;
         this.subscription = subscription;
     }
 
     @Override
     public String getMessage() {
-        return globalId + " " + subscription;
+        return subscriptionGlobalId + " " + subscription;
     }
+
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("SubscriptionAlreadyExistsException [globalId=");
-        builder.append(globalId);
+        builder.append("SubscriptionAlreadyExistsException [subscriptionGlobalId=");
+        builder.append(subscriptionGlobalId);
         builder.append(", subscription=");
         builder.append(subscription);
         builder.append(", getMessage()=");
@@ -37,5 +38,10 @@ public class SubscriptionAlreadyExistsException extends Exception {
         builder.append("]");
         return builder.toString();
     }
-
+    /**
+     * @return the global ID of the existing subscription
+     */
+    public String getSubscriptionGlobalId() {
+        return subscriptionGlobalId;
+    }
 }

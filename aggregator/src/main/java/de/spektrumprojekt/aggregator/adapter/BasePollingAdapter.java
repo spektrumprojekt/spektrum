@@ -107,6 +107,8 @@ public abstract class BasePollingAdapter extends BaseAdapter {
                 try {
                     List<Message> messages = poll(sourceStatus);
                     addMessages(messages);
+                    // TODO this should probably be done in addMessages so that not every subclass
+                    // has to worry about it
                     triggerListener(sourceStatus.getSource(), StatusType.OK);
                 } catch (AdapterException e) {
                     LOGGER.warn("encountered AdapterException {} sourceStatus={}",
@@ -117,6 +119,8 @@ public abstract class BasePollingAdapter extends BaseAdapter {
                             e.getStatusType(), e);
                 } catch (Throwable t) {
                     LOGGER.error("encountered exception " + t + " for " + sourceStatus, t);
+                    triggerListener(sourceStatus.getSource(),
+                            StatusType.ERROR_UNSPECIFIED, null);
                 }
             }
         };
