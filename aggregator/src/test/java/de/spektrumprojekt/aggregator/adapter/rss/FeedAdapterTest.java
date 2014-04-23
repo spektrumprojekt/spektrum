@@ -175,9 +175,9 @@ public class FeedAdapterTest {
     @Test
     public void testManuellFeed() throws AdapterException, EncryptionException {
         String url = "";
-        String login = "r";
+        String login = "";
         String realPassword = "";
-        String encryptedPassword = null;
+        String encryptedPassword = "";
 
         if (StringUtils.isBlank(url)) {
             return;

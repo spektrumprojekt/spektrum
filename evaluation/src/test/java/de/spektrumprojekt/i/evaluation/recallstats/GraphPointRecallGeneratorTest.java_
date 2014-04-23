@@ -1,0 +1,194 @@
+package com.communote.plugins.mystream.evaluation.recallstats;
+
+import java.util.Collection;
+import java.util.HashSet;
+
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import com.communote.plugins.mystream.evaluation.measure.EvaluatorDataPoint;
+import com.communote.plugins.mystream.evaluation.measure.MeasureComputer;
+import com.communote.plugins.mystream.evaluation.measure.PrecisionRecallMeasure;
+
+public class GraphPointRecallGeneratorTest {
+
+    private final double epsilon = 0.000001d;
+
+    private final double epsilon2 = 0.0001d;
+
+    @Test
+    public void testPrecisionRecall() {
+        PrecisionRecallMeasure precisionRecall = new PrecisionRecallMeasure();
+        precisionRecall.tp = 25;
+        precisionRecall.tn = 25;
+        precisionRecall.fp = 25;
+        precisionRecall.fn = 25;
+
+        Assert.assertEquals(precisionRecall.positiveReferences(), 50);
+        Assert.assertEquals(precisionRecall.positiveResponses(), 50);
+        Assert.assertEquals(precisionRecall.correct(), 50);
+        Assert.assertEquals(precisionRecall.total(), 100);
+        Assert.assertEquals(precisionRecall.accuracy(), 0.5, epsilon2);
+        Assert.assertEquals(precisionRecall.precision(), 0.5, epsilon2);
+        Assert.assertEquals(precisionRecall.recall(), 0.5, epsilon2);
+
+        Assert.assertEquals(precisionRecall.f1Score(), 2 * precisionRecall.tp
+                / ((double) 2 * precisionRecall.tp + precisionRecall.fp + precisionRecall.fn),
+                epsilon2);
+        Assert.assertEquals(precisionRecall.f1Score(), 0.5,
+                epsilon2);
+        Assert.assertEquals(precisionRecall.fScore(2), 0.5, epsilon2);
+
+        // examples taken from
+        // http://alias-i.com/lingpipe/docs/api/com/aliasi/classify/PrecisionRecallEvaluation.html
+        precisionRecall = new PrecisionRecallMeasure();
+        precisionRecall.tp = 9;
+        precisionRecall.fp = 4;
+        precisionRecall.tn = 11;
+        precisionRecall.fn = 3;
+
+        Assert.assertEquals(precisionRecall.positiveReferences(), 12);
+        Assert.assertEquals(precisionRecall.positiveResponses(), 13);
+        Assert.assertEquals(precisionRecall.total(), 27);
+        Assert.assertEquals(precisionRecall.accuracy(), 0.7407, epsilon2);
+        Assert.assertEquals(precisionRecall.precision(), 0.6923, epsilon2);
+        Assert.assertEquals(precisionRecall.recall(), 0.75, epsilon2);
+
+        Assert.assertEquals(precisionRecall.f1Score(), 2 * precisionRecall.tp
+                / ((double) 2 * precisionRecall.tp + precisionRecall.fp + precisionRecall.fn),
+                epsilon2);
+        Assert.assertEquals(precisionRecall.f1Score(), 0.72,
+                epsilon2);
+        Assert.assertEquals(precisionRecall.fScore(2), 0.7377, epsilon2);
+
+        precisionRecall = new PrecisionRecallMeasure();
+        precisionRecall.tp = 5;
+        precisionRecall.fp = 4;
+        precisionRecall.tn = 14;
+        precisionRecall.fn = 4;
+
+        Assert.assertEquals(precisionRecall.positiveReferences(), 9);
+        Assert.assertEquals(precisionRecall.positiveResponses(), 9);
+        Assert.assertEquals(precisionRecall.total(), 27);
+        Assert.assertEquals(precisionRecall.accuracy(), 0.7037, epsilon2);
+        Assert.assertEquals(precisionRecall.precision(), 0.5555, epsilon2);
+        Assert.assertEquals(precisionRecall.recall(), 0.5555, epsilon2);
+
+        Assert.assertEquals(precisionRecall.f1Score(), 2 * precisionRecall.tp
+                / ((double) 2 * precisionRecall.tp + precisionRecall.fp + precisionRecall.fn),
+                epsilon2);
+        Assert.assertEquals(precisionRecall.f1Score(), 0.5555,
+                epsilon2);
+        Assert.assertEquals(precisionRecall.fScore(2), 0.5555, epsilon2);
+
+        precisionRecall = new PrecisionRecallMeasure();
+        precisionRecall.tp = 4;
+        precisionRecall.fp = 1;
+        precisionRecall.tn = 20;
+        precisionRecall.fn = 2;
+
+        Assert.assertEquals(precisionRecall.positiveReferences(), 6);
+        Assert.assertEquals(precisionRecall.positiveResponses(), 5);
+        Assert.assertEquals(precisionRecall.correct(), 24);
+        Assert.assertEquals(precisionRecall.total(), 27);
+        Assert.assertEquals(precisionRecall.accuracy(), 0.8889, epsilon2);
+        Assert.assertEquals(precisionRecall.precision(), 0.8, epsilon2);
+        Assert.assertEquals(precisionRecall.recall(), 0.6666, epsilon2);
+
+        Assert.assertEquals(precisionRecall.f1Score(), 2 * precisionRecall.tp
+                / ((double) 2 * precisionRecall.tp + precisionRecall.fp + precisionRecall.fn),
+                epsilon2);
+        Assert.assertEquals(precisionRecall.f1Score(), 0.7272,
+                epsilon2);
+        Assert.assertEquals(precisionRecall.fScore(2), 0.6896, epsilon2);
+
+    }
+
+    @Test
+    public void testRecallGenerator() throws Exception {
+        MeasureComputer gen = new MeasureComputer("test", 0.75f);
+        Collection<EvaluatorDataPoint> points = new HashSet<EvaluatorDataPoint>();
+
+        // 10 data points
+        points.add(new EvaluatorDataPoint(0.1, 0.8));
+        points.add(new EvaluatorDataPoint(0.2, 1.0));
+        points.add(new EvaluatorDataPoint(0.3, 0.9));
+        points.add(new EvaluatorDataPoint(0.4, 0.4));
+        points.add(new EvaluatorDataPoint(0.5, 0.2));
+        points.add(new EvaluatorDataPoint(0.6, 0.1));
+        points.add(new EvaluatorDataPoint(0.7, 0.8));
+        points.add(new EvaluatorDataPoint(0.8, 0.6));
+        points.add(new EvaluatorDataPoint(0.9, 0.5));
+        points.add(new EvaluatorDataPoint(1.0, 0.75));
+
+        gen.prepare(points);
+        gen.run();
+
+        double relevant = 5;
+
+        for (PrecisionRecallMeasure pr : gen.getPrecisionRecalls()) {
+
+            Assert.assertEquals(pr.positiveReferences(), 5, pr.toString());
+
+            Assert.assertEquals(pr.total(), 10);
+            double relevantAndRetrieved;
+            if (pr.limit > 1.0d) {
+                relevantAndRetrieved = 0;
+                Assert.assertEquals(pr.positiveResponses(), 0, "" + pr.limit);
+                Assert.assertEquals(pr.correct(), 5, "" + pr.limit);
+            } else if (pr.limit > 0.9d) {
+                relevantAndRetrieved = 1;
+                Assert.assertEquals(pr.positiveResponses(), 1, "" + pr.limit);
+                Assert.assertEquals(pr.correct(), 6, "" + pr.limit);
+
+            } else if (pr.limit > 0.8d) {
+                relevantAndRetrieved = 1;
+                Assert.assertEquals(pr.positiveResponses(), 2, "" + pr.limit);
+                Assert.assertEquals(pr.correct(), 5, "" + pr.limit);
+            } else if (pr.limit > 0.7d) {
+                relevantAndRetrieved = 1;
+                Assert.assertEquals(pr.positiveResponses(), 3, "" + pr.limit);
+                Assert.assertEquals(pr.correct(), 4, "" + pr.limit);
+            } else if (pr.limit > 0.6d) {
+                relevantAndRetrieved = 2;
+                Assert.assertEquals(pr.positiveResponses(), 4, "" + pr.limit);
+                Assert.assertEquals(pr.correct(), 5, "" + pr.limit);
+            } else if (pr.limit > 0.5d) {
+                relevantAndRetrieved = 2;
+                Assert.assertEquals(pr.positiveResponses(), 5, "" + pr.limit);
+                Assert.assertEquals(pr.correct(), 4, "" + pr.limit);
+            } else if (pr.limit > 0.4d) {
+                relevantAndRetrieved = 2;
+                Assert.assertEquals(pr.positiveResponses(), 6, "" + pr.limit);
+                Assert.assertEquals(pr.correct(), 3, "" + pr.limit);
+            } else if (pr.limit > 0.3d) {
+                relevantAndRetrieved = 2;
+                Assert.assertEquals(pr.positiveResponses(), 7, "" + pr.limit);
+                Assert.assertEquals(pr.correct(), 2, "" + pr.limit);
+            } else if (pr.limit > 0.2d) {
+                relevantAndRetrieved = 3;
+                Assert.assertEquals(pr.positiveResponses(), 8, "" + pr.limit);
+                Assert.assertEquals(pr.correct(), 3, "" + pr.limit);
+            } else if (pr.limit > 0.1d) {
+                relevantAndRetrieved = 4;
+                Assert.assertEquals(pr.positiveResponses(), 9, "" + pr.limit);
+                Assert.assertEquals(pr.correct(), 4, "" + pr.limit);
+            } else {
+                relevantAndRetrieved = 5;
+                Assert.assertEquals(pr.positiveResponses(), 10, "" + pr.limit);
+                Assert.assertEquals(pr.correct(), 5, "" + pr.limit);
+            }
+
+            double expectedPrecision = pr.positiveResponses() == 0 ? 0 : relevantAndRetrieved
+                    / pr.positiveResponses();
+            Assert.assertEquals(pr.precision(), expectedPrecision,
+                    epsilon, "" + pr.limit);
+            Assert.assertEquals(pr.recall(), relevantAndRetrieved / relevant, epsilon, ""
+                    + pr.limit);
+            Assert.assertEquals(pr.f1Score(), (double) 2 * pr.tp / (2 * pr.tp + pr.fp + pr.fn),
+                    epsilon, ""
+                            + pr.limit);
+        }
+
+    }
+}
