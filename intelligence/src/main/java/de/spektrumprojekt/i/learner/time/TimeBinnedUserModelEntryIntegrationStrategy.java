@@ -40,11 +40,11 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
 
     public final static TimeBinnedUserModelEntryIntegrationStrategy MONTH_WEEK = new TimeBinnedUserModelEntryIntegrationStrategy(
             0, TimeBinnedUserModelEntryIntegrationStrategy.MONTH,
-            TimeBinnedUserModelEntryIntegrationStrategy.WEEK);
+            TimeBinnedUserModelEntryIntegrationStrategy.WEEK, false);
 
     public final static TimeBinnedUserModelEntryIntegrationStrategy MONTH_DAY = new TimeBinnedUserModelEntryIntegrationStrategy(
             0, TimeBinnedUserModelEntryIntegrationStrategy.MONTH,
-            TimeBinnedUserModelEntryIntegrationStrategy.DAY);
+            TimeBinnedUserModelEntryIntegrationStrategy.DAY, false);
 
     private final long startTime;
 
@@ -52,11 +52,24 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
 
     private final long binPrecisionInMs;
 
+    private final boolean calculateLater;
+
     public TimeBinnedUserModelEntryIntegrationStrategy(long startTime, long binSizeInMs,
             long binPrecisionInMs) {
+        this(startTime, binSizeInMs, binPrecisionInMs, false);
+
+    }
+
+    public TimeBinnedUserModelEntryIntegrationStrategy(long startTime, long binSizeInMs,
+            long binPrecisionInMs, boolean calculateLater) {
+        if (binPrecisionInMs <= 0) {
+            throw new IllegalArgumentException("binPrecisionInMs must be > 0 but is "
+                    + binPrecisionInMs);
+        }
         this.startTime = startTime;
         this.binSizeInMs = binSizeInMs;
         this.binPrecisionInMs = binPrecisionInMs;
+        this.calculateLater = calculateLater;
     }
 
     private long determineTimeBinPrecisionStart(long time) {
@@ -109,6 +122,10 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
 
     }
 
+    public boolean isCalculateLater() {
+        return calculateLater;
+    }
+
     private boolean updateEntry(UserModelEntry entry, float interestScore, ScoredTerm scoredTerm,
             Date observationDate) {
         if (scoredTerm.getWeight() >= getMinScore()) {
@@ -140,8 +157,9 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
                         entry.getTimeBinEntries().remove(entryTimeBin);
                     }
                 }
-
-                entry.consolidateByTimeBins();
+                if (!calculateLater) {
+                    entry.consolidateByTimeBins();
+                }
                 entry.addToTimeBinEntriesHistory(timeBin);
 
                 int size = entry.getTimeBinEntries() == null ? 0 : entry.getTimeBinEntries().size();

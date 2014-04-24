@@ -49,6 +49,7 @@ public class DirectedUserModelAdapter implements
         MessageHandler<DirectedUserModelAdaptationMessage>, ConfigurationDescriptable {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(DirectedUserModelAdapter.class);
+
     private long adaptedCount = 0;
 
     private long requestedAdaptedCount = 0;
@@ -63,18 +64,14 @@ public class DirectedUserModelAdapter implements
 
     private final boolean useWeightedAverage;
 
+    private final String userModelType;
+
     private final EventHandler<UserModelAdaptationReRankEvent> userModelAdaptationReRankEventHandler = new EventHandler<UserModelAdaptationReRankEvent>();
 
     public DirectedUserModelAdapter(
             Persistence persistence,
             Ranker ranker,
-            UserToUserInterestSelector userToUserInterestRetriever) {
-        this(persistence, ranker, userToUserInterestRetriever, true, false);
-    }
-
-    public DirectedUserModelAdapter(
-            Persistence persistence,
-            Ranker ranker,
+            String userModelType,
             UserToUserInterestSelector userToUserInterestRetriever,
             boolean useWeightedAverage,
             boolean keepStatistics) {
@@ -87,6 +84,9 @@ public class DirectedUserModelAdapter implements
         if (userToUserInterestRetriever == null) {
             throw new IllegalArgumentException("userToUserInterestRetriever cannot be null.");
         }
+        if (userModelType == null) {
+            throw new IllegalArgumentException("userModelType cannot be null.");
+        }
         this.persistence = persistence;
         this.ranker = ranker;
         this.userToUserInterestRetriever = userToUserInterestRetriever;
@@ -97,6 +97,21 @@ public class DirectedUserModelAdapter implements
             descriptiveStatistics = null;
         }
         this.useWeightedAverage = useWeightedAverage;
+        this.userModelType = userModelType;
+
+    }
+
+    public DirectedUserModelAdapter(
+            Persistence persistence,
+            Ranker ranker,
+            UserToUserInterestSelector userToUserInterestRetriever) {
+        this(
+                persistence,
+                ranker,
+                UserModel.DEFAULT_USER_MODEL_TYPE,
+                userToUserInterestRetriever,
+                true,
+                false);
     }
 
     private ValueAggregator createNewValueAggregator() {
@@ -109,7 +124,7 @@ public class DirectedUserModelAdapter implements
     @Override
     public void deliverMessage(DirectedUserModelAdaptationMessage message) throws Exception {
         UserModel userModelToAdapt = this.persistence.getOrCreateUserModelByUser(message
-                .getUserGlobalId());
+                .getUserGlobalId(), userModelType);
         requestedAdaptedCount++;
 
         // 1. Identify the terms of the messages that are not contained in the user model UMu.
@@ -117,7 +132,7 @@ public class DirectedUserModelAdapter implements
 
         // 2. Find user models to adapt from that contain the missing user terms.
         Collection<UserModel> userModels = persistence
-                .getUsersWithUserModel(termsToAdapt);
+                .getUsersWithUserModel(termsToAdapt, userModelType);
         Map<String, UserModel> userToUserModels = new HashMap<String, UserModel>();
         Collection<String> users = new HashSet<String>();
         for (UserModel userModel : userModels) {

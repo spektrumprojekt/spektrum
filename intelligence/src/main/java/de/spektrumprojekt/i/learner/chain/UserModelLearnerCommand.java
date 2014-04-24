@@ -46,10 +46,13 @@ import de.spektrumprojekt.persistence.Persistence;
  */
 public class UserModelLearnerCommand implements Command<LearnerMessageContext> {
 
-    private final UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy;
     private final Persistence persistence;
+    private final String userModelType;
+    private final UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy;
 
-    public UserModelLearnerCommand(Persistence persistence,
+    public UserModelLearnerCommand(
+            Persistence persistence,
+            String userModelType,
             UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
@@ -58,15 +61,21 @@ public class UserModelLearnerCommand implements Command<LearnerMessageContext> {
             throw new IllegalArgumentException(
                     "userModelEntryIntegrationStrategy cannot be null.");
         }
+        if (userModelType == null) {
+            throw new IllegalArgumentException("userModelType cannot be null.");
+        }
 
         this.persistence = persistence;
+        this.userModelType = userModelType;
         this.userModelEntryIntegrationStrategy = userModelEntryIntegrationStrategy;
     }
 
     @Override
     public String getConfigurationDescription() {
-        return this.getClass().getSimpleName() + ": userModelEntryIntegrationStrategy="
-                + userModelEntryIntegrationStrategy.getConfigurationDescription();
+        return this.getClass().getSimpleName() + ": "
+                + "userModelEntryIntegrationStrategy="
+                + userModelEntryIntegrationStrategy.getConfigurationDescription()
+                + "userModelType=" + userModelType;
     }
 
     private Observation getObservationForDisintegration(LearnerMessageContext context,
@@ -147,7 +156,7 @@ public class UserModelLearnerCommand implements Command<LearnerMessageContext> {
                     "Not yet implemented: 'generate a interest if not yet available' ");
         }
         UserModel userModel = persistence.getOrCreateUserModelByUser(
-                userToLearnForGlobalId);
+                userToLearnForGlobalId, userModelType);
 
         Observation observationForDisintegration = getObservationForDisintegration(context,
                 message);

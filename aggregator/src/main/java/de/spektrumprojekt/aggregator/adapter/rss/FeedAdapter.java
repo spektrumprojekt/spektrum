@@ -22,54 +22,34 @@ package de.spektrumprojekt.aggregator.adapter.rss;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Map;
 
 import javax.net.ssl.SSLException;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.ContentEncodingHttpClient;
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
+import org.apache.http.params.HttpConnectionParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.InputSource;
 
-import com.sun.syndication.feed.module.DCModule;
-import com.sun.syndication.feed.synd.SyndCategory;
-import com.sun.syndication.feed.synd.SyndCategoryImpl;
-import com.sun.syndication.feed.synd.SyndContent;
-import com.sun.syndication.feed.synd.SyndEntry;
-import com.sun.syndication.feed.synd.SyndFeed;
-import com.sun.syndication.io.FeedException;
-import com.sun.syndication.io.SyndFeedInput;
-
+import de.spektrumprojekt.aggregator.adapter.AccessParameterMissingException;
+import de.spektrumprojekt.aggregator.adapter.AccessParameterValidationException;
 import de.spektrumprojekt.aggregator.adapter.AdapterException;
-import de.spektrumprojekt.aggregator.adapter.BasePollingAdapter;
 import de.spektrumprojekt.aggregator.chain.AggregatorChain;
 import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
 import de.spektrumprojekt.commons.SpektrumUtils;
 import de.spektrumprojekt.commons.encryption.EncryptionException;
 import de.spektrumprojekt.commons.encryption.EncryptionUtils;
-import de.spektrumprojekt.datamodel.common.MimeType;
 import de.spektrumprojekt.datamodel.common.Property;
-import de.spektrumprojekt.datamodel.message.Message;
-import de.spektrumprojekt.datamodel.message.MessagePart;
-import de.spektrumprojekt.datamodel.message.MessageType;
-import de.spektrumprojekt.datamodel.message.ScoredTerm;
-import de.spektrumprojekt.datamodel.message.Term;
-import de.spektrumprojekt.datamodel.message.Term.TermCategory;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
 
@@ -81,13 +61,22 @@ import de.spektrumprojekt.datamodel.subscription.status.StatusType;
  * @author Philipp Katz
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  */
-public final class FeedAdapter extends BasePollingAdapter {
+public final class FeedAdapter extends XMLAdapter {
 
     /** The logger for this class. */
     private static final Logger LOGGER = LoggerFactory.getLogger(FeedAdapter.class);
 
     /** The source type of this adapter. */
     public static final String SOURCE_TYPE = "RSS";
+
+    /**
+     * The key for the access parameter specifying the title of the source.
+     * 
+     * TODO it is not an access parameter, it is a property read by the souce. So we need to mark it
+     * somewhow, either give access params a property or add "properties" to the source addtional
+     * the access params
+     */
+    public static final String ACCESS_PARAMETER_TITLE = "title";
 
     /** The key for the access parameter specifying the feed's URL. */
     public static final String ACCESS_PARAMETER_URI = "feeduri";
@@ -101,25 +90,17 @@ public final class FeedAdapter extends BasePollingAdapter {
      * The key for the access parameter specifying the password, if authentication is necessary.
      */
     public static final String ACCESS_PARAMETER_CREDENTIALS_PASSWORD = "credentials_password";
+    /**
+     * The key for the access parameter specifying a cleartext password, if authentication is
+     * necessary.
+     */
+    public static final String ACCESS_PARAMETER_CREDENTIALS_CLEARTEXT_PASSWORD = "credentials_cleartext_password";
 
     /** The key for the id property **/
     public static final String MESSAGE_PROPERTY_ID = "id";
 
-    private static final int THREAD_POOL_SIZE = 100;
-
-    /**
-     * @deprecated Use {@link Property#PROPERTY_KEY_DC_CREATOR} instead.
-     */
-    @Deprecated
-    public static final String DC_CREATOR = Property.PROPERTY_KEY_DC_CREATOR;
-
-    /**
-     * @deprecated Use {@link Property#PROPERTY_KEY_AUTHOR_NAME} instead.
-     */
-    @Deprecated
-    public static final String AUTOR_NAME = Property.PROPERTY_KEY_AUTHOR_NAME;
-
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    /** the key in the context to identify the Http Get Object */
+    public static final String CONTEXT_HTTTP_GET = "http_get";
 
     /**
      * Encode the login and password as base 64
@@ -142,8 +123,7 @@ public final class FeedAdapter extends BasePollingAdapter {
 
     public FeedAdapter(AggregatorChain aggregatorChain,
             AggregatorConfiguration aggregatorConfiguration) {
-        super(aggregatorChain, aggregatorConfiguration, aggregatorConfiguration
-                .getPollingInterval(), THREAD_POOL_SIZE);
+        super(aggregatorChain, aggregatorConfiguration);
 
     }
 
@@ -161,15 +141,13 @@ public final class FeedAdapter extends BasePollingAdapter {
         }
     }
 
-    private void cleanUpResources(InputStream in, HttpGet get, boolean success) {
-        try {
-            if (in != null) {
-                in.close();
-            }
-        } catch (Exception e) {
-            LOGGER.warn("Error closing feed input stream " + e.getMessage());
-            LOGGER.debug("Error closing feed input stream " + e.getMessage(), e);
-        }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void cleanUpResources(InputStream in, Map<String, Object> context, boolean success) {
+        super.cleanUpResources(in, context, success);
+        HttpGet get = (HttpGet) context.get(CONTEXT_HTTTP_GET);
         try {
             if (!success && get != null) {
                 this.abortRequest(get);
@@ -180,70 +158,9 @@ public final class FeedAdapter extends BasePollingAdapter {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private Message convertMessage(String subscriptionId, SyndEntry syndEntry) {
-        Date publishedDate = extractDate(subscriptionId, syndEntry);
-        String tags = extractTags(syndEntry);
-        Message message = new Message(MessageType.CONTENT, StatusType.OK, subscriptionId,
-                publishedDate);
-        message.addProperty(new Property(Property.PROPERTY_KEY_TITLE, syndEntry.getTitle()));
-        if (tags != null) {
-            message.addProperty(new Property(Property.PROPERTY_KEY_TAGS, tags));
-        }
-
-        if (syndEntry.getUri() != null) {
-            message.addProperty(new Property(MESSAGE_PROPERTY_ID, syndEntry.getUri()));
-        }
-
-        List<SyndContent> syndContents = syndEntry.getContents();
-        if (syndContents != null && !syndContents.isEmpty()) {
-            String text = syndContents.get(0).getValue();
-            MessagePart entryText = new MessagePart(MimeType.TEXT_HTML,
-                    StringEscapeUtils.unescapeHtml(text));
-
-            List<SyndCategory> categories = syndEntry.getCategories();
-            if (categories != null && !categories.isEmpty()) {
-                Collection<ScoredTerm> keyMetaInfo = new HashSet<ScoredTerm>();
-                for (SyndCategory category : categories) {
-                    String categoryName = category.getName();
-                    if (SpektrumUtils.notNullOrEmpty(categoryName)) {
-                        keyMetaInfo
-                                .add(new ScoredTerm(new Term(TermCategory.TERM, categoryName), 1));
-                    }
-                }
-            }
-            message.addMessagePart(entryText);
-        }
-        SyndContent description = syndEntry.getDescription();
-        if (description != null) {
-            MessagePart entrySummary = new MessagePart(MimeType.TEXT_HTML,
-                    StringEscapeUtils.unescapeHtml(description.getValue()));
-            message.addMessagePart(entrySummary);
-        }
-        String link = syndEntry.getLink();
-        if (SpektrumUtils.notNullOrEmpty(link)) {
-            message.addProperty(new Property(Property.PROPERTY_KEY_LINK, link));
-        }
-        DCModule module = (DCModule) syndEntry.getModule(DCModule.URI);
-        userextraction: {
-            String creator;
-            if (module != null) {
-                creator = module.getCreator();
-                if (SpektrumUtils.notNullOrEmpty(creator)) {
-                    message.addProperty(new Property(Property.PROPERTY_KEY_DC_CREATOR, creator));
-                    break userextraction;
-                }
-            }
-            creator = syndEntry.getAuthor();
-            if (SpektrumUtils.notNullOrEmpty(creator)) {
-                message.addProperty(new Property(Property.PROPERTY_KEY_AUTHOR_NAME, creator));
-            }
-        }
-
-        return message;
-    }
-
-    private HttpGet createHttpGetRequest(String uri, String base64EncodedCredentials) {
+    private HttpGet createHttpGetRequest(String uriString, String base64EncodedCredentials)
+            throws MalformedURLException {
+        URI uri = createUri(uriString);
         HttpGet get = new HttpGet(uri);
         if (SpektrumUtils.notNullOrEmpty(base64EncodedCredentials)) {
             get.setHeader("Authorization", "Basic " + base64EncodedCredentials);
@@ -251,58 +168,40 @@ public final class FeedAdapter extends BasePollingAdapter {
         return get;
     }
 
-    private Date extractDate(String subscriptionId, SyndEntry syndEntry) {
-        Date publishedDate = syndEntry.getPublishedDate();
-        if (publishedDate == null) {
-            publishedDate = syndEntry.getUpdatedDate();
+    /**
+     * Create the URI from the string and do a minimal set of validations.
+     * 
+     * @param uriString
+     *            the String to process
+     * @return the URI
+     * @throws MalformedURLException
+     *             in case the URI is not valid
+     */
+    private URI createUri(String uriString) throws MalformedURLException {
+        URI uri;
+        try {
+            uri = new URI(uriString);
+        } catch (URISyntaxException e) {
+            throw new MalformedURLException(e.getMessage());
         }
-        if (publishedDate == null) {
-            publishedDate = new Date();
-            LOGGER.debug("For an entry in subscription {} no date was found. Using current time.",
-                    subscriptionId);
+        if (SpektrumUtils.nullOrEmpty(uri.getScheme())) {
+            throw new MalformedURLException("URL not valid: protocoll is missing");
         }
-        return publishedDate;
-    }
-
-    private String extractTags(SyndEntry syndEntry) {
-        List<String> tags = new LinkedList<String>();
-        for (Object category : syndEntry.getCategories()) {
-            SyndCategoryImpl categoryImpl = (SyndCategoryImpl) category;
-            tags.add(categoryImpl.getName());
+        if (SpektrumUtils.nullOrEmpty(uri.getHost())) {
+            throw new MalformedURLException("URL not valid: host is missing");
         }
-        if (tags.size() > 0) {
-            try {
-                return MAPPER.writeValueAsString(tags.toArray(new String[] { }));
-            } catch (JsonGenerationException e) {
-                LOGGER.error("Error processing tags: {}", e);
-            } catch (JsonMappingException e) {
-                LOGGER.error("Error processing tags: {}", e);
-            } catch (IOException e) {
-                LOGGER.error("Error processing tags: {}", e);
-            }
-        }
-        return null;
+        return uri;
     }
 
     @Override
-    public String getSourceType() {
-        return SOURCE_TYPE;
-    }
-
-    @Override
-    public List<Message> poll(SourceStatus subscriptionStatus) throws AdapterException {
-        LOGGER.trace(">handleSubscription {}", subscriptionStatus);
-        boolean success = false;
-        List<Message> messages = new ArrayList<Message>();
-
-        Collection<Property> accParams = subscriptionStatus.getSource().getAccessParameters();
-        // logger.debug("access parameters for {}: {}", subscription,
-        // accParams);
+    protected InputStream getInputStream(Map<String, Object> context) throws AdapterException {
+        InputStream result = null;
         String uri = "";
         String base64EncodedCredentials = "";
         String login = "";
         String password = "";
-
+        SourceStatus subscriptionStatus = (SourceStatus) context.get(CONTEXT_SOURCE_STATUS);
+        Collection<Property> accParams = subscriptionStatus.getSource().getAccessParameters();
         for (Property accessParam : accParams) {
             if (accessParam.getPropertyKey().equals(ACCESS_PARAMETER_URI)) {
                 uri = accessParam.getPropertyValue();
@@ -318,102 +217,152 @@ public final class FeedAdapter extends BasePollingAdapter {
                 }
             }
         }
+        if (uri == null) {
+            throw new AdapterException("No URI provided!", StatusType.ERROR_INVALID_DATA);
+        }
         // only if login + password were supplied
         if (login.length() > 0 && password.length() > 0) {
             try {
                 base64EncodedCredentials = getBaseAuthenticationCredentials(login, password);
-
             } catch (UnsupportedEncodingException e) {
                 throw new AdapterException("Unsupported encoding", e,
                         StatusType.ERROR_INTERNAL_ADAPTER);
             }
         }
-        if (SpektrumUtils.notNullOrEmpty(uri)) {
-            HttpGet get = null;
-            HttpResponse httpResult = null;
-            InputStream in = null;
-            HttpClient httpClient = null;
+        HttpGet get = null;
+        HttpResponse httpResult = null;
+        HttpClient httpClient = null;
+        httpClient = new ContentEncodingHttpClient();
+        HttpConnectionParams.setConnectionTimeout(httpClient.getParams(), 60000);
+        HttpConnectionParams.setSoTimeout(httpClient.getParams(), 120000);
+        try {
+            get = createHttpGetRequest(uri, base64EncodedCredentials);
+            context.put(CONTEXT_HTTTP_GET, get);
+            httpResult = httpClient.execute(get);
+            int statusCode = httpResult.getStatusLine().getStatusCode();
+            if (statusCode >= 400) {
+                throw new AdapterException("HTTP error code " + statusCode,
+                        mapHttpErrorCode(statusCode));
+            }
+            HttpEntity httpEntity = httpResult.getEntity();
+            if (httpEntity != null) {
+                result = httpEntity.getContent();
+            }
+        } catch (ClientProtocolException e) {
+            throw new AdapterException("ClientProtocolException " + e.getMessage(), e,
+                    StatusType.ERROR_NETWORK);
+        } catch (SSLException e) {
+            throw new AdapterException("SSLException: " + e.getMessage(), e, StatusType.ERROR_SSL);
+        } catch (MalformedURLException e) {
+            throw new AdapterException(e.getMessage(), e, StatusType.ERROR_NETWORK);
+        } catch (IOException e) {
+            throw new AdapterException("IOException: " + e.getMessage(), e,
+                    StatusType.ERROR_NETWORK);
+        }
+        return result;
+    }
 
+    @Override
+    public String getSourceType() {
+        return SOURCE_TYPE;
+    }
+
+    /**
+     * Map a HTTP error Code to the appropriate StatusType
+     * 
+     * @param statusCode
+     *            the HTTP error code to map
+     * @return the status type
+     */
+    private StatusType mapHttpErrorCode(int statusCode) {
+        StatusType errorType;
+        switch (statusCode) {
+        case 401:
+            errorType = StatusType.ERROR_AUTHENTICATION;
+            break;
+        default:
+            errorType = StatusType.ERROR_NETWORK;
+        }
+        return errorType;
+    }
+
+    /**
+     * Prepare the source access parameters holding credentials for authenticating against the
+     * source. If a login and a cleartext password is contained the cleartext password is removed
+     * and an encrypted password is added instead. If no login is contained the password parameters
+     * are removed.
+     * 
+     * @param login
+     *            the login/username or null
+     * @param clearPassword
+     *            the cleartext password or null
+     * @param password
+     *            the encrypted password or null
+     * @param accessParameters
+     *            the access parameters
+     * @throws AccessParameterValidationException
+     *             in case the password encryption failed
+     */
+    private void prepareCredentialAccessParameters(Property login, Property clearPassword,
+            Property password, Collection<Property> accessParameters)
+            throws AccessParameterValidationException {
+        if (login != null) {
+            if (clearPassword != null) {
+                accessParameters.remove(clearPassword);
+                String encryptedPassword;
+                try {
+                    encryptedPassword = EncryptionUtils.encrypt(clearPassword.getPropertyValue(),
+                            getAggregatorConfiguration().getEncryptionPassword());
+                } catch (EncryptionException e) {
+                    LOGGER.error("Encryption of source access password failed", e);
+                    throw new AccessParameterValidationException(
+                            ACCESS_PARAMETER_CREDENTIALS_CLEARTEXT_PASSWORD,
+                            "Error during password encryption");
+                }
+                accessParameters.add(new Property(ACCESS_PARAMETER_CREDENTIALS_PASSWORD,
+                        encryptedPassword));
+            }
+        } else {
+            if (password != null) {
+                accessParameters.remove(password);
+            }
+            if (clearPassword != null) {
+                accessParameters.remove(clearPassword);
+            }
+        }
+    }
+
+    @Override
+    public void processAccessParametersBeforeSubscribing(Collection<Property> accessParameters)
+            throws AccessParameterValidationException {
+        Property uri = null;
+        Property login = null;
+        Property clearPassword = null;
+        Property password = null;
+        if (accessParameters != null) {
+            for (Property param : accessParameters) {
+                if (param.getPropertyKey().equals(ACCESS_PARAMETER_URI)) {
+                    uri = param;
+                } else if (param.getPropertyKey().equals(ACCESS_PARAMETER_CREDENTIALS_LOGIN)) {
+                    login = param;
+                } else if (param.getPropertyKey().equals(ACCESS_PARAMETER_CREDENTIALS_PASSWORD)) {
+                    password = param;
+                } else if (param.getPropertyKey().equals(
+                        ACCESS_PARAMETER_CREDENTIALS_CLEARTEXT_PASSWORD)) {
+                    clearPassword = param;
+                }
+            }
+        }
+        if (uri == null || uri.getPropertyValue() == null) {
+            throw new AccessParameterMissingException(ACCESS_PARAMETER_URI);
+        } else {
             try {
-
-                httpClient = new ContentEncodingHttpClient();
-                get = createHttpGetRequest(uri, base64EncodedCredentials);
-                httpResult = httpClient.execute(get);
-                int statusCode = httpResult.getStatusLine().getStatusCode();
-
-                if (statusCode >= 400) {
-                    throw new AdapterException("HTTP error code " + statusCode,
-                            StatusType.ERROR_NETWORK);
-                }
-                HttpEntity httpEntity = httpResult.getEntity();
-                if (httpEntity != null) {
-                    SyndFeedInput feedInput = new SyndFeedInput();
-                    in = httpEntity.getContent();
-                    SyndFeed syndFeed = feedInput.build(new InputSource(in));
-                    LOGGER.debug("retrieved {} items from {}", syndFeed.getEntries().size(), uri);
-                    messages = processMessages(syndFeed, subscriptionStatus);
-                    success = true;
-                } else {
-                    throw new AdapterException("No content", StatusType.ERROR_PROCESSING_CONTENT);
-                }
-            } catch (ClientProtocolException e) {
-                throw new AdapterException("ClientProtocolException " + e.getMessage(), e,
-                        StatusType.ERROR_NETWORK);
-            } catch (SSLException e) {
-                throw new AdapterException("SSLException: " + e.getMessage(), e,
-                        StatusType.ERROR_SSL);
-            } catch (IOException e) {
-                throw new AdapterException("IOException: " + e.getMessage(), e,
-                        StatusType.ERROR_NETWORK);
-            } catch (IllegalArgumentException e) {
-                throw new AdapterException("IllegalArgumentException " + e.getMessage(), e,
-                        StatusType.ERROR_INVALID_DATA);
-            } catch (IllegalStateException e) {
-                throw new AdapterException("IllegalStateException " + e.getMessage(), e,
-                        StatusType.ERROR_NETWORK);
-            } catch (FeedException e) {
-                throw new AdapterException("FeedException " + e.getMessage(), e,
-                        StatusType.ERROR_PROCESSING_CONTENT);
-            } finally {
-                cleanUpResources(in, get, success);
+                createUri(uri.getPropertyValue());
+            } catch (MalformedURLException e) {
+                throw new AccessParameterValidationException(ACCESS_PARAMETER_URI, "URL not valid",
+                        e);
             }
         }
-        LOGGER.trace("<handleSubscription, success {}", success);
-        return messages;
+        prepareCredentialAccessParameters(login, clearPassword, password, accessParameters);
     }
-
-    private List<Message> processMessages(SyndFeed feed, SourceStatus sourceStatus) {
-        @SuppressWarnings("unchecked")
-        List<SyndEntry> entries = feed.getEntries();
-        List<Message> messages = new ArrayList<Message>();
-        Date lastContentTime = sourceStatus.getLastContentTimestamp();
-        Date mostRecentTime = null;
-
-        // TODO for feeds which provide no date information for their items,
-        // implement a filtering strategy based on items' hashes.
-
-        for (SyndEntry entry : entries) {
-            Date itemPublishDate = entry.getPublishedDate();
-
-            // ignore those messages, which were already acquired in last poll
-            if (itemPublishDate != null && lastContentTime != null
-                    && !itemPublishDate.after(lastContentTime)) {
-                continue;
-            }
-
-            Message message = convertMessage(sourceStatus.getSource().getGlobalId(), entry);
-            messages.add(message);
-
-            if (mostRecentTime == null || mostRecentTime.before(itemPublishDate)) {
-                mostRecentTime = itemPublishDate;
-            }
-        }
-        if (mostRecentTime != null) {
-            sourceStatus.setLastContentTimestamp(mostRecentTime);
-        }
-        LOGGER.debug("# new items in subscription {}: {}", sourceStatus.getGlobalId(),
-                messages.size());
-        return messages;
-    }
-
 }

@@ -303,7 +303,7 @@ public class TermVectorSimilarityComputerTest extends IntelligenceSpektrumTest {
 
     private void initUserModel() {
         UserModel userModel = getPersistence().getOrCreateUserModelByUser(
-                "user1_" + UUID.randomUUID().toString());
+                "user1_" + UUID.randomUUID().toString(), UserModel.DEFAULT_USER_MODEL_TYPE);
 
         Collection<UserModelEntry> entries = new ArrayList<UserModelEntry>();
         entries.add(new UserModelEntry(userModel, new ScoredTerm(getPersistence().getOrCreateTerm(

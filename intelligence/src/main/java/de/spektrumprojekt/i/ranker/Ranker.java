@@ -36,6 +36,7 @@ import de.spektrumprojekt.communication.transfer.RankingCommunicationMessage;
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
+import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionConfiguration;
 import de.spektrumprojekt.i.ranker.chain.AdaptMessageRankByCMFOfSimilarUsersCommand;
@@ -169,18 +170,15 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         userFeatureCommand = new UserFeatureCommand(memberRunner);
         reRankUserFeatureCommand = new UserFeatureCommand(memberRunner);
 
-        this.informationExtractionChain = InformationExtractionCommand
-                .createDefaultGermanEnglish(persistence,
-                        this.rankerConfiguration.getInformationExtractionConfiguration());
+        this.informationExtractionChain = InformationExtractionCommand.createDefaultGermanEnglish(
+                persistence, this.rankerConfiguration.getInformationExtractionConfiguration());
 
         UserSimilaritySimType userSimilaritySimType = this.rankerConfiguration
-                .getUserModelAdapterConfiguration()
-                .getUserSimilaritySimType();
+                .getUserModelAdapterConfiguration().getUserSimilaritySimType();
         if (userSimilaritySimType == null) {
             userSimilaritySimType = UserSimilaritySimType.VOODOO;
         }
-        userSimilarityComputer = new UserSimilarityComputer(this.persistence,
-                userSimilaritySimType);
+        userSimilarityComputer = new UserSimilarityComputer(this.persistence, userSimilaritySimType);
 
         storeMessageCommand = new StoreMessageCommand(persistence);
         userSimilarityIntegrationCommand = new UserSimilarityIntegrationCommand(
@@ -191,9 +189,9 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         DiscussionParticipationFeatureCommand discussionParticipationFeatureCommand = new DiscussionParticipationFeatureCommand();
         DiscussionMentionFeatureCommand discussionMentionFeatureCommand = new DiscussionMentionFeatureCommand();
 
-        termMatchFeatureCommand = new ContentMatchFeatureCommand(
-                persistence, termVectorSimilarityComputer,
-                rankerConfiguration.getInterestTermTreshold());
+        termMatchFeatureCommand = new ContentMatchFeatureCommand(persistence,
+                termVectorSimilarityComputer, rankerConfiguration.getInterestTermTreshold(),
+                rankerConfiguration);
         determineInteractionLevelCommand = new DetermineInteractionLevelCommand();
         computeMessageRankCommand = new ComputeMessageRankCommand(
                 this.rankerConfiguration
@@ -201,12 +199,11 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
                         || this.rankerConfiguration
                                 .hasFlag(RankerConfigurationFlag.ONLY_USE_TERM_MATCHER_FEATURE),
                 this.rankerConfiguration.getNonParticipationFactor());
-        invokeLearnerCommand = new InvokeLearnerCommand(
-                this.persistence,
-                this.communicator,
+        invokeLearnerCommand = new InvokeLearnerCommand(this.persistence, this.communicator,
                 this.rankerConfiguration);
         triggerUserModelAdaptationCommand = new TriggerUserModelAdaptationCommand(
                 this.communicator,
+                UserModel.DEFAULT_USER_MODEL_TYPE,
                 this.rankerConfiguration.getUserModelAdapterConfiguration()
                         .getConfidenceThreshold(),
                 this.rankerConfiguration
@@ -222,7 +219,9 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
         storeMessageRankCommand = new StoreMessageRankCommand(persistence);
 
         // add the commands to the chain
-        rankerChain.addCommand(this.informationExtractionChain);
+        if (!this.rankerConfiguration.hasFlag(RankerConfigurationFlag.NO_INFORMATION_EXTRACTION)) {
+            rankerChain.addCommand(this.informationExtractionChain);
+        }
 
         // store the message after the terms have been extracted
         rankerChain.addCommand(storeMessageCommand);
@@ -259,16 +258,14 @@ public class Ranker implements MessageHandler<RankingCommunicationMessage>,
 
             userFeatureCommand.getUserSpecificCommandChain().addCommand(
                     discussionParticipationFeatureCommand);
-            userFeatureCommand.addCommand(
-                    discussionMentionFeatureCommand);
+            userFeatureCommand.addCommand(discussionMentionFeatureCommand);
         }
 
         if (!this.rankerConfiguration
                 .hasFlag(RankerConfigurationFlag.DO_NOT_USE_CONTENT_MATCHER_FEATURE)) {
             userFeatureCommand.addCommand(termMatchFeatureCommand);
         }
-        featureAggregateCommand = new FeatureAggregateCommand(
-                this.persistence);
+        featureAggregateCommand = new FeatureAggregateCommand(this.persistence);
 
         userFeatureCommand.addCommand(determineInteractionLevelCommand);
         userFeatureCommand.addCommand(featureAggregateCommand);

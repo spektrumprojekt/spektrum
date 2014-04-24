@@ -34,6 +34,15 @@ import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.identifiable.Identifiable;
 
 /**
+ * This class defines a source which if correctly configured can be used with a adapter to access
+ * messages.
+ * 
+ * The {@link #connectorType} defines the type of adapter this source is used for.
+ * 
+ * The {@link #accessParameters} is a collection of properties. The useful properties depend on the
+ * adapter type.
+ * 
+ * 
  * 
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  */
@@ -67,10 +76,34 @@ public class Source extends Identifiable {
         this.connectorType = connectorType;
     }
 
-    public void addAccessParameter(Property prop) {
+    /**
+     * Add the property. If it exists it will be replaced.
+     * 
+     * @param prop
+     * @return the old value, null if none.
+     */
+    public Property addAccessParameter(final Property prop) {
+        Property oldValue = null;
+        for (Property property : this.accessParameters) {
+            if (property.getPropertyKey().equals(prop.getPropertyKey())) {
+                oldValue = property;
+                break;
+            }
+        }
+        if (oldValue != null) {
+            this.accessParameters.remove(oldValue);
+        }
         this.accessParameters.add(prop);
+        return oldValue;
     }
 
+    /**
+     * Get the access parameter for the given key.
+     * 
+     * @param propertyKey
+     *            the key to check
+     * @return null if it no property exists
+     */
     public Property getAccessParameter(String propertyKey) {
         for (Property parameter : accessParameters) {
             if (parameter.getPropertyKey().equals(propertyKey)) {
@@ -86,6 +119,14 @@ public class Source extends Identifiable {
 
     public String getConnectorType() {
         return connectorType;
+    }
+
+    public boolean removeAccessParameter(String propertyKey) {
+        Property prop = this.getAccessParameter(propertyKey);
+        if (prop == null) {
+            return this.accessParameters.remove(prop);
+        }
+        return false;
     }
 
     @Override

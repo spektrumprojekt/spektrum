@@ -27,6 +27,7 @@ import java.util.Map;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate;
 import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
@@ -36,12 +37,16 @@ import de.spektrumprojekt.datamodel.message.TermFrequency;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.source.Source;
+import de.spektrumprojekt.datamodel.source.SourceNotFoundException;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionSourceStatus;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
+import de.spektrumprojekt.exceptions.SubscriptionNotFoundException;
 
 /**
  * The main interface for accessing the persistence.
@@ -72,11 +77,19 @@ public interface Persistence {
 
     Source findSource(String connectorType, Collection<Property> accessParameters);
 
+    List<SourceStatus> findSourceStatusByProperty(Property property);
+
     Collection<MessageGroup> getAllMessageGroups();
 
-    List<Subscription> getAllSubscriptionsBySourceGlobalId(String sourceGlobalId);
-
     Collection<Term> getAllTerms();
+
+    /**
+     * returns all userModelEntries of this type of usermodel
+     * 
+     * @param userModel
+     * @return
+     */
+    Map<UserModel, Collection<UserModelEntry>> getAllUserModelEntries(String userModelType);
 
     Collection<User> getAllUsers();
 
@@ -103,18 +116,7 @@ public interface Persistence {
 
     MessageRelation getMessageRelation(Message message);
 
-    /**
-     * 
-     * @param pattern
-     * @param messagePublicationFilterDate
-     *            publication date of the messages to consider
-     * @return the messages that match the pattern
-     */
-    Collection<Message> getMessagesForPattern(String pattern, Date messagePublicationFilterDate);
-
-    Collection<Message> getMessagesSince(Date fromDate);
-
-    Collection<Message> getMessagesSince(String messageGroupGlobalId, Date fromDate);
+    List<Message> getMessages(MessageFilter messageFilter);
 
     int getNumberOfSubscriptionsBySourceGlobalId(String globalId);
 
@@ -141,17 +143,23 @@ public interface Persistence {
      *            the users id
      * @return the user model
      */
-    UserModel getOrCreateUserModelByUser(String userGlobalId);
+    UserModel getOrCreateUserModelByUser(String userGlobalId, String userModelType);
 
-    Source getSourceByGlobalId(String sourceGlobalId);
+    Source getSourceByGlobalId(String sourceGlobalId) throws SourceNotFoundException;
 
     SourceStatus getSourceStatusBySourceGlobalId(String sourceGlobalId);
 
     List<SourceStatus> getSourceStatusList();
 
-    Subscription getSubscriptionByGlobalId(String subscriptionGlobalId);
+    Subscription getSubscriptionByGlobalId(String subscriptionGlobalId)
+            throws SubscriptionNotFoundException;
+
+    List<Subscription> getSubscriptions(SubscriptionFilter subscriptionFilter);
+    List<SubscriptionSourceStatus> getSubscriptionsWithSourceStatus(SubscriptionFilter subscriptionFilter);
 
     TermFrequency getTermFrequency();
+
+    Map<String, String> getUserModelEntriesCountDescription();
 
     /**
      * 
@@ -173,7 +181,7 @@ public interface Persistence {
     UserSimilarity getUserSimilarity(String userGlobalIdFrom, String userGlobalIdTo,
             String messageGroupGlobalId);
 
-    Collection<UserModel> getUsersWithUserModel(Collection<Term> terms);
+    Collection<UserModel> getUsersWithUserModel(Collection<Term> terms, String userModelType);
 
     void initialize();
 
@@ -245,11 +253,11 @@ public interface Persistence {
 
     void updateMessageRank(MessageRank rankToUpdate);
 
-    Source updateSource(Source source);
+    Source updateSource(Source source) throws SourceNotFoundException;
 
     void updateSourceStatus(SourceStatus sourceStatus);
 
-    Subscription updateSubscription(Subscription subscription);
+    Subscription updateSubscription(Subscription subscription) throws SubscriptionNotFoundException;
 
     void updateTermFrequency(TermFrequency termFrequency);
 
@@ -257,5 +265,4 @@ public interface Persistence {
 
     void visitAllMessageRanks(MessageRankVisitor visitor, Date startDate, Date endDate)
             throws Exception;
-
 }

@@ -19,6 +19,7 @@
 
 package de.spektrumprojekt.persistence.jpa.impl;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -31,6 +32,7 @@ import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.From;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.ParameterExpression;
 import javax.persistence.criteria.Path;
@@ -41,6 +43,8 @@ import org.apache.commons.lang3.Validate;
 
 import de.spektrumprojekt.datamodel.identifiable.SpektrumEntity;
 import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.message.MessageFilter;
+import de.spektrumprojekt.datamodel.message.MessageFilter.OrderDirection;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessagePattern;
 import de.spektrumprojekt.datamodel.message.MessageRank;
@@ -222,73 +226,96 @@ public final class MessagePersistence extends AbstractPersistenceLayer {
         }
     }
 
-    public Collection<Message> getMessagesForPattern(String pattern) {
-        Validate.notNull(pattern, "pattern must not be null");
-        EntityManager entityManager = getEntityManager();
-        TypedQuery<Message> query = entityManager.createQuery(
-                "SELECT mp.message FROM MessagePattern mp WHERE mp.pattern =:pattern",
-                Message.class);
-        query.setParameter("pattern", pattern);
-        try {
-            return query.getResultList();
-        } finally {
-            entityManager.close();
-        }
-    }
+    public List<Message> getMessages(final MessageFilter messageFilter) {
 
-    public Collection<Message> getMessagesForPattern(String pattern,
-            Date messagePublicationFilterDate) {
-        Validate.notNull(pattern, "pattern must not be null");
-        Validate.notNull(messagePublicationFilterDate,
-                "messagePublicationFilterDate must not be null");
-        EntityManager entityManager = getEntityManager();
-        TypedQuery<Message> query = entityManager.createQuery(
-                "SELECT mp.message FROM MessagePattern mp INNER JOIN mp.message mes "
-                        + "WHERE mp.pattern =:pattern AND mes.publicationDate > :startDate",
-                Message.class);
-        query.setParameter("pattern", pattern);
-        query.setParameter("startDate", messagePublicationFilterDate);
-        try {
-            return query.getResultList();
-        } finally {
-            entityManager.close();
-        }
-    }
-
-    public Collection<Message> getMessagesSince(Date fromDate) {
-        return this.getMessagesSince(null, fromDate);
-    }
-
-    public List<Message> getMessagesSince(final String messageGroupGlobalId, final Date fromDate) {
         Transaction<List<Message>> transaction = new Transaction<List<Message>>() {
 
             @Override
             protected List<Message> doTransaction(EntityManager entityManager) {
+                final List<Predicate> predicates = new ArrayList<Predicate>();
+
                 CriteriaBuilder cb = entityManager.getCriteriaBuilder();
                 CriteriaQuery<Message> query = cb.createQuery(Message.class);
-                Root<Message> messageEntity = query.from(Message.class);
+
+                From<?, Message> messageEntity;
+
+                if (messageFilter.getPattern() != null) {
+                    // if we filter for a pattern, use it as "root from" and join the messages
+                    Root<MessagePattern> messagePatternEntity = query.from(MessagePattern.class);
+                    messageEntity = messagePatternEntity.join("message");
+                    query.select(query.from(Message.class));
+
+                    Predicate patternPred = cb.equal(messagePatternEntity.get("pattern"),
+                            messageFilter.getPattern());
+
+                    predicates.add(patternPred);
+                } else {
+                    messageEntity = query.from(Message.class);
+                    query.select(query.from(Message.class));
+                }
+
+                // we want the messages
                 query.select(messageEntity);
 
                 Path<Date> publicationDate = messageEntity.get("publicationDate");
-                Predicate one = cb.greaterThanOrEqualTo(publicationDate, fromDate);
+                Path<Long> messageLongId = messageEntity.get("id");
 
-                if (messageGroupGlobalId != null) {
-                    Join<Message, MessageGroup> messageGroup = messageEntity.join("messageGroup");
-                    Predicate two = cb.equal(messageGroup.get("globalId"), messageGroupGlobalId);
+                // filter for publication date
+                if (messageFilter.getMinPublicationDate() != null) {
 
-                    query.where(one, two);
-                } else {
-                    query.where(one);
+                    Predicate datePred = cb.greaterThanOrEqualTo(publicationDate,
+                            messageFilter.getMinPublicationDate());
+                    predicates.add(datePred);
                 }
-                query.orderBy(cb.asc(publicationDate));
+
+                // filter for message group
+                if (messageFilter.getMessageGroupGlobalId() != null) {
+                    Join<Message, MessageGroup> messageGroupEntity = messageEntity
+                            .join("messageGroup");
+                    Predicate mgPred = cb.equal(messageGroupEntity.get("globalId"),
+                            messageFilter.getMessageGroupGlobalId());
+
+                    predicates.add(mgPred);
+                }
+
+                // filter for source id
+                if (messageFilter.getSourceGlobalId() != null) {
+                    Predicate sourcePred = cb.equal(messageEntity.get("sourceGlobalId"),
+                            messageFilter.getSourceGlobalId());
+
+                    predicates.add(sourcePred);
+                }
+
+                query.where(predicates.toArray(new Predicate[predicates.size()]));
+
+                // sort
+                if (OrderDirection.ASC.equals(messageFilter.getMessageIdOrderDirection())) {
+                    query.orderBy(cb.asc(messageLongId));
+                } else if (OrderDirection.DESC.equals(messageFilter.getMessageIdOrderDirection())) {
+                    query.orderBy(cb.desc(messageLongId));
+                } else if (OrderDirection.ASC.equals(messageFilter
+                        .getPublicationDateOrderDirection())) {
+                    query.orderBy(cb.asc(publicationDate));
+                } else if (OrderDirection.DESC.equals(messageFilter
+                        .getPublicationDateOrderDirection())) {
+                    query.orderBy(cb.desc(publicationDate));
+                }
+
+                TypedQuery<Message> typedQuery = entityManager.createQuery(query);
+
+                if (messageFilter.getLastMessagesCount() > 0) {
+                    typedQuery.setMaxResults(messageFilter.getLastMessagesCount());
+                }
 
                 try {
-                    return entityManager.createQuery(query).getResultList();
+                    return typedQuery.getResultList();
                 } catch (NoResultException e) {
                     return Collections.emptyList();
                 }
+
             }
         };
+
         return transaction.executeTransaction(getEntityManager());
     }
 

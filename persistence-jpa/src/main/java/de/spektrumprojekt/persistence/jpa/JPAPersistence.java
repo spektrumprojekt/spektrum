@@ -21,6 +21,7 @@ package de.spektrumprojekt.persistence.jpa;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,6 +29,7 @@ import de.spektrumprojekt.configuration.Configuration;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate;
 import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
@@ -37,12 +39,16 @@ import de.spektrumprojekt.datamodel.message.TermFrequency;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.source.Source;
+import de.spektrumprojekt.datamodel.source.SourceNotFoundException;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionSourceStatus;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
+import de.spektrumprojekt.exceptions.SubscriptionNotFoundException;
 import de.spektrumprojekt.persistence.MessageRankVisitor;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.Statistics;
@@ -138,19 +144,23 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
+    public List<SourceStatus> findSourceStatusByProperty(Property property) {
+        return this.sourceStatusPersistence.findSourceStatusByProperty(property);
+    }
+
+    @Override
     public Collection<MessageGroup> getAllMessageGroups() {
         return this.messagePersistence.getAllMessageGroups();
     }
 
     @Override
-    public List<Subscription> getAllSubscriptionsBySourceGlobalId(String sourceGlobalId) {
-
-        return this.subscriptionPersistence.getAllSubscriptionsBySourceGlobalId(sourceGlobalId);
+    public Collection<Term> getAllTerms() {
+        return this.messagePersistence.getAllTerms();
     }
 
     @Override
-    public Collection<Term> getAllTerms() {
-        return this.messagePersistence.getAllTerms();
+    public Map<UserModel, Collection<UserModelEntry>> getAllUserModelEntries(String userModelType) {
+        throw new RuntimeException("Not implemented yet.");
     }
 
     @Override
@@ -185,19 +195,8 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public Collection<Message> getMessagesForPattern(String pattern,
-            Date messagePublicationFilterDate) {
-        return messagePersistence.getMessagesForPattern(pattern, messagePublicationFilterDate);
-    }
-
-    @Override
-    public Collection<Message> getMessagesSince(Date fromDate) {
-        return this.messagePersistence.getMessagesSince(fromDate);
-    }
-
-    @Override
-    public List<Message> getMessagesSince(String topicId, Date fromDate) {
-        return this.messagePersistence.getMessagesSince(topicId, fromDate);
+    public List<Message> getMessages(MessageFilter messageFilter) {
+        return this.messagePersistence.getMessages(messageFilter);
     }
 
     @Override
@@ -224,18 +223,18 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public UserModel getOrCreateUserModelByUser(String userGlobalId) {
-        return this.userPersistence.getOrCreateUserModelByUser(userGlobalId);
+    public UserModel getOrCreateUserModelByUser(String userGlobalId, String userModelType) {
+        return this.userPersistence.getOrCreateUserModelByUser(userGlobalId, userModelType);
     }
 
     @Override
-    public Source getSourceByGlobalId(String sourceGlobalId) {
+    public Source getSourceByGlobalId(String sourceGlobalId) throws SourceNotFoundException {
         return this.sourcePersistence.getSourceByGlobalId(sourceGlobalId);
     }
 
     @Override
-    public SourceStatus getSourceStatusBySourceGlobalId(String subscriptionId) {
-        return sourceStatusPersistence.getSourceStatusBySourceGlobalId(subscriptionId);
+    public SourceStatus getSourceStatusBySourceGlobalId(String sourceGlobalId) {
+        return sourceStatusPersistence.getSourceStatusBySourceGlobalId(sourceGlobalId);
     }
 
     @Override
@@ -244,13 +243,31 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public Subscription getSubscriptionByGlobalId(String subscriptionGlobalId) {
+    public Subscription getSubscriptionByGlobalId(String subscriptionGlobalId)
+            throws SubscriptionNotFoundException {
         return this.subscriptionPersistence.getSubscriptionByGlobalId(subscriptionGlobalId);
+    }
+
+    @Override
+    public List<Subscription> getSubscriptions(SubscriptionFilter subscriptionFilter) {
+        return this.subscriptionPersistence.getSubscriptions(subscriptionFilter);
+    }
+    
+    @Override
+    public List<SubscriptionSourceStatus> getSubscriptionsWithSourceStatus(SubscriptionFilter subscriptionFilter) {
+        return this.subscriptionPersistence.getSubscriptionsWithSourceStatus(subscriptionFilter);
     }
 
     @Override
     public TermFrequency getTermFrequency() {
         return this.messagePersistence.getTermFrequency();
+    }
+
+    @Override
+    public Map<String, String> getUserModelEntriesCountDescription() {
+        Map<String, String> countDesc = new HashMap<String, String>();
+        countDesc.put("N/A", "N/A");
+        return countDesc;
     }
 
     @Override
@@ -280,8 +297,8 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public Collection<UserModel> getUsersWithUserModel(Collection<Term> terms) {
-        return this.userPersistence.getUsersWithUserModel(terms);
+    public Collection<UserModel> getUsersWithUserModel(Collection<Term> terms, String userModelType) {
+        return this.userPersistence.getUsersWithUserModel(terms, userModelType);
     }
 
     @Override
@@ -378,7 +395,7 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public Source updateSource(Source source) {
+    public Source updateSource(Source source) throws SourceNotFoundException {
         return this.sourcePersistence.updateSource(source);
     }
 
@@ -388,7 +405,8 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public Subscription updateSubscription(Subscription subscription) {
+    public Subscription updateSubscription(Subscription subscription)
+            throws SubscriptionNotFoundException {
         return this.subscriptionPersistence.updateSubscription(subscription);
     }
 

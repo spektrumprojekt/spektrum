@@ -3,7 +3,10 @@ package de.spektrumprojekt.i.ranker;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.spektrumprojekt.configuration.ConfigurationDescriptable;
@@ -12,18 +15,22 @@ import de.spektrumprojekt.i.informationextraction.InformationExtractionConfigura
 import de.spektrumprojekt.i.learner.adaptation.UserModelAdapterConfiguration;
 import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
 import de.spektrumprojekt.i.term.TermWeightStrategy;
+import de.spektrumprojekt.i.timebased.config.ShortTermMemoryConfiguration;
 
 public class RankerConfiguration implements ConfigurationDescriptable, Cloneable {
 
     private Set<RankerConfigurationFlag> flags = new HashSet<RankerConfigurationFlag>();
 
-    // the minimum user similarity that must be fullfilled to be eglible to take the score of
+    // for adaption the message rank (not the user model): the minimum user similarity that must be
+    // fullfilled to be eglible to take the score of
     private float minUserSimilarity = 0.5f;
 
-    // the minimum score the cmf feature of a similar user must have such that it will be used.
+    // for adaption the message rank (not the user model): the minimum score the cmf feature of a
+    // similar user must have such that it will be used.
     private float minContentMessageScore = 0.5f;
 
-    // the message rank threshold determines for which users the adaption will take place.
+    // for adaption the message rank (not the user model): the message rank threshold determines for
+    // which users the adaption will take place.
     private float messageRankThreshold = 0.5f;
 
     private float nonParticipationFactor = 1f;
@@ -40,18 +47,23 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
 
     private String termUniquenessLogfile;
 
+    private Map<String, UserModelConfiguration> userModelTypes = new HashMap<String, UserModelConfiguration>();// UserModel.DEFAULT_USER_MODEL_TYPE;
+
     private final InformationExtractionConfiguration informationExtractionConfiguration;
+
     private final InformationExtractionCommand<MessageFeatureContext> informationExtractionCommand;
 
-    private final UserModelAdapterConfiguration userModelAdapterConfiguration =
-            new UserModelAdapterConfiguration();
+    private final UserModelAdapterConfiguration userModelAdapterConfiguration = new UserModelAdapterConfiguration();
+
+    private boolean mixMemoriesForRating = false;
+
+    private ShortTermMemoryConfiguration shortTermMemoryConfiguration;
 
     public RankerConfiguration(TermWeightStrategy strategy, TermVectorSimilarityStrategy aggregation) {
         this(strategy, aggregation, null, null, (RankerConfigurationFlag[]) null);
     }
 
-    private RankerConfiguration(
-            TermWeightStrategy termWeightStrategy,
+    private RankerConfiguration(TermWeightStrategy termWeightStrategy,
             TermVectorSimilarityStrategy termWeightAggregation,
             InformationExtractionCommand<MessageFeatureContext> informationExtractionCommand,
             InformationExtractionConfiguration informationExtractionConfiguration,
@@ -78,8 +90,7 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
             TermVectorSimilarityStrategy termWeightAggregation,
             InformationExtractionCommand<MessageFeatureContext> informationExtractionCommand,
             RankerConfigurationFlag... flags) {
-        this(termWeightStrategy, termWeightAggregation,
-                informationExtractionCommand,
+        this(termWeightStrategy, termWeightAggregation, informationExtractionCommand,
                 informationExtractionCommand.getInformationExtractionConfiguration(), flags);
     }
 
@@ -172,6 +183,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         return nonParticipationFactor;
     }
 
+    public ShortTermMemoryConfiguration getShortTermMemoryConfiguration() {
+        return shortTermMemoryConfiguration;
+    }
+
     public String getTermUniquenessLogfile() {
         return termUniquenessLogfile;
     }
@@ -188,6 +203,10 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         return userModelAdapterConfiguration;
     }
 
+    public Map<String, UserModelConfiguration> getUserModelTypes() {
+        return userModelTypes;
+    }
+
     public boolean hasFlag(RankerConfigurationFlag flag) {
         return this.flags.contains(flag);
     }
@@ -201,8 +220,17 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         return immutable;
     }
 
+    public boolean isMixMemoriesForRating() {
+        return mixMemoriesForRating;
+    }
+
     public boolean isTreatMissingUserModelEntriesAsZero() {
         return treatMissingUserModelEntriesAsZero;
+    }
+
+    public UserModelConfiguration put(String userModelType,
+            UserModelConfiguration modelConfiguration) {
+        return userModelTypes.put(userModelType, modelConfiguration);
     }
 
     public void setFlags(RankerConfigurationFlag... flags) {
@@ -241,8 +269,17 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         this.minUserSimilarity = minUserSimilarity;
     }
 
+    public void setMixMemoriesForRating(boolean mixMemoriesForRating) {
+        this.mixMemoriesForRating = mixMemoriesForRating;
+    }
+
     public void setNonParticipationFactor(float nonParticipationFactor) {
         this.nonParticipationFactor = nonParticipationFactor;
+    }
+
+    public void setShortTermMemoryConfiguration(
+            ShortTermMemoryConfiguration shortTermMemoryConfiguration) {
+        this.shortTermMemoryConfiguration = shortTermMemoryConfiguration;
     }
 
     public void setTermUniquenessLogfile(String termUniquenessLogfile) {
@@ -272,39 +309,66 @@ public class RankerConfiguration implements ConfigurationDescriptable, Cloneable
         this.treatMissingUserModelEntriesAsZero = treatMissingUserModelEntriesAsZero;
     }
 
+    public void setUserModelType(Map<String, UserModelConfiguration> userModelTypes) {
+        if (userModelTypes == null) {
+            throw new IllegalArgumentException("userModelType cannot be null.");
+        }
+        assertCanSet();
+        this.userModelTypes = userModelTypes;
+    }
+
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("RankerConfiguration [flags=");
-        builder.append(flags);
-        builder.append(", minUserSimilarity=");
-        builder.append(minUserSimilarity);
-        builder.append(", minContentMessageScore=");
-        builder.append(minContentMessageScore);
-        builder.append(", messageRankThreshold=");
-        builder.append(messageRankThreshold);
-        builder.append(", nonParticipationFactor=");
-        builder.append(nonParticipationFactor);
-        builder.append(", minimumCleanTextLengthForInvokingLearner=");
-        builder.append(minimumCleanTextLengthForInvokingLearner);
-        builder.append(", termWeightStrategy=");
-        builder.append(termWeightStrategy);
-        builder.append(", termVectorSimilarityStrategy=");
-        builder.append(termVectorSimilarityStrategy);
-        builder.append(", immutable=");
-        builder.append(immutable);
-        builder.append(", interestTermTreshold=");
-        builder.append(interestTermTreshold);
-        builder.append(", treatMissingUserModelEntriesAsZero=");
-        builder.append(treatMissingUserModelEntriesAsZero);
-        builder.append(", termUniquenessLogfile=");
-        builder.append(termUniquenessLogfile);
-        builder.append(", informationExtractionConfiguration=");
-        builder.append(informationExtractionConfiguration);
-        builder.append(", userModelAdapterConfiguration=");
-        builder.append(userModelAdapterConfiguration);
-        builder.append("]");
-        return builder.toString();
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        boolean first = true;
+        for (Entry<String, UserModelConfiguration> entry : userModelTypes.entrySet()) {
+            if (first) {
+                first = false;
+            } else {
+                sb.append(", ");
+            }
+            sb.append(entry.getKey());
+            sb.append(":");
+            sb.append(entry.getValue().getConfigurationDescription());
+        }
+        return "RankerConfiguration [flags="
+                + flags
+                + ", minUserSimilarity="
+                + minUserSimilarity
+                + ", minContentMessageScore="
+                + minContentMessageScore
+                + ", messageRankThreshold="
+                + messageRankThreshold
+                + ", nonParticipationFactor="
+                + nonParticipationFactor
+                + ", minimumCleanTextLengthForInvokingLearner="
+                + minimumCleanTextLengthForInvokingLearner
+                + ", termWeightStrategy="
+                + termWeightStrategy
+                + ", termVectorSimilarityStrategy="
+                + termVectorSimilarityStrategy
+                + ", immutable="
+                + immutable
+                + ", interestTermTreshold="
+                + interestTermTreshold
+                + ", treatMissingUserModelEntriesAsZero="
+                + treatMissingUserModelEntriesAsZero
+                + ", termUniquenessLogfile="
+                + termUniquenessLogfile
+                + ", userModelTypes="
+                + sb.toString()
+                + ", informationExtractionConfiguration="
+                + informationExtractionConfiguration
+                + ", informationExtractionCommand="
+                + informationExtractionCommand
+                + ", userModelAdapterConfiguration="
+                + userModelAdapterConfiguration
+                + ", mixMemoriesForRating="
+                + mixMemoriesForRating
+                + ", shortTermMemoryConfiguration="
+                + (shortTermMemoryConfiguration == null ? "null" : shortTermMemoryConfiguration
+                        .getConfigurationDescription()) + "]";
     }
 
 }

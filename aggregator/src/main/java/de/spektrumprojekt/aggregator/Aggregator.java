@@ -33,6 +33,7 @@ import de.spektrumprojekt.aggregator.chain.PublicationDateFilterCommand;
 import de.spektrumprojekt.aggregator.chain.SendAggregatorMessageCommand;
 import de.spektrumprojekt.aggregator.configuration.AggregatorConfiguration;
 import de.spektrumprojekt.aggregator.duplicate.hashduplicate.HashDuplicationDetection;
+import de.spektrumprojekt.aggregator.subscription.PersistentSubscriptionManager;
 import de.spektrumprojekt.aggregator.subscription.SubscriptionManager;
 import de.spektrumprojekt.aggregator.subscription.handler.CreateSubscriptionMessageHandler;
 import de.spektrumprojekt.aggregator.subscription.handler.DeleteSubscriptionMessageHandler;
@@ -92,7 +93,7 @@ public class Aggregator {
         this.aggregatorConfiguration = aggregatorConfiguration;
         this.informationExtractionCommand = informationExtractionCommand;
 
-        this.setupChain();
+        this.setupChains();
     }
 
     public Aggregator(Communicator communicator, Persistence persistence,
@@ -103,14 +104,14 @@ public class Aggregator {
     }
 
     /**
-     * loads the configuration and creates a {@link SubscriptionManager}
+     * loads the configuration and creates a {@link PersistentSubscriptionManager}
      * 
      * @throws ConfigurationException
      *             something is wring with the configuration file
      */
     private void createSubscriptionManager() throws ConfigurationException {
 
-        subscriptionManager = new SubscriptionManager(communicator,
+        subscriptionManager = new PersistentSubscriptionManager(communicator,
                 persistence, aggregatorChain, aggregatorConfiguration);
     }
 
@@ -130,23 +131,34 @@ public class Aggregator {
         return aggregatorChain;
     }
 
-    private void setupChain() {
+    public SubscriptionManager getSubscriptionManager() {
+        return subscriptionManager;
+    }
+
+    private void setupChains() {
 
         aggregatorChain = new AggregatorChain(this.persistence);
 
-        aggregatorChain.addCommand(new PublicationDateFilterCommand(this.aggregatorConfiguration
-                .getMinimumPublicationDate()));
-        aggregatorChain.addCommand(new DuplicationDetectionCommand(new HashDuplicationDetection(
-                aggregatorConfiguration, persistence)));
+        aggregatorChain.getNewMessageChain().addCommand(
+                new PublicationDateFilterCommand(this.aggregatorConfiguration
+                        .getMinimumPublicationDate()));
+        aggregatorChain.getNewMessageChain().addCommand(
+                new DuplicationDetectionCommand(new HashDuplicationDetection(
+                        aggregatorConfiguration, persistence)));
 
         if (this.informationExtractionCommand != null) {
-            aggregatorChain.addCommand(new AggregatorProxyMessageFeatureCommand(
-                    informationExtractionCommand));
+            aggregatorChain.getNewMessageChain().addCommand(
+                    new AggregatorProxyMessageFeatureCommand(
+                            informationExtractionCommand));
         }
-        aggregatorChain.addCommand(new AggregatorProxyMessageFeatureCommand(
+        aggregatorChain.getNewMessageChain().addCommand(new AggregatorProxyMessageFeatureCommand(
                 new StoreMessageCommand(persistence)));
 
-        aggregatorChain.addCommand(new SendAggregatorMessageCommand(this.communicator));
+        SendAggregatorMessageCommand sendAggregatorMessageCommand = new SendAggregatorMessageCommand(
+                this.communicator);
+        aggregatorChain.getNewMessageChain().addCommand(sendAggregatorMessageCommand);
+
+        aggregatorChain.getAddMessageToSubscriptionChain().addCommand(sendAggregatorMessageCommand);
     }
 
     /**
@@ -157,7 +169,7 @@ public class Aggregator {
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void start() throws ConfigurationException {
-        LOGGER.debug("Starting Aggregator ...");
+        LOGGER.info("Starting Aggregator ...");
 
         createSubscriptionManager();
         fillMessageHandlers();
@@ -175,7 +187,7 @@ public class Aggregator {
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void stop() {
-        LOGGER.debug("stopping ...");
+        LOGGER.info("Stopping Aggregator ...");
         for (MessageHandler handler : messageHandlers) {
             if (handler != null) {
                 communicator.unregisterMessageHandler(handler);
@@ -183,6 +195,6 @@ public class Aggregator {
         }
         subscriptionManager.stop();
         communicator.close();
-        LOGGER.debug("... stopped");
+        LOGGER.info("Aggregator stopped");
     }
 }

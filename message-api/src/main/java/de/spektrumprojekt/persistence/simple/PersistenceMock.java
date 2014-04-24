@@ -21,12 +21,14 @@ package de.spektrumprojekt.persistence.simple;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate;
 import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
@@ -38,6 +40,8 @@ import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.source.Source;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionSourceStatus;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
@@ -90,17 +94,23 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
+    public List<SourceStatus> findSourceStatusByProperty(Property property) {
+        return null;
+    }
+
+    @Override
     public Collection<MessageGroup> getAllMessageGroups() {
         return null;
     }
 
     @Override
-    public List<Subscription> getAllSubscriptionsBySourceGlobalId(String sourceGlobalId) {
+    public Collection<Term> getAllTerms() {
         return null;
     }
 
     @Override
-    public Collection<Term> getAllTerms() {
+    public Map<UserModel, Collection<UserModelEntry>> getAllUserModelEntries(String userModelType) {
+        // TODO Auto-generated method stub
         return null;
     }
 
@@ -135,18 +145,7 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
-    public Collection<Message> getMessagesForPattern(String pattern,
-            Date messagePublicationFilterDate) {
-        return null;
-    }
-
-    @Override
-    public Collection<Message> getMessagesSince(Date fromDate) {
-        return null;
-    }
-
-    @Override
-    public List<Message> getMessagesSince(String topicId, Date fromDate) {
+    public List<Message> getMessages(MessageFilter messageFilter) {
         return null;
     }
 
@@ -173,7 +172,7 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
-    public UserModel getOrCreateUserModelByUser(String userGlobalId) {
+    public UserModel getOrCreateUserModelByUser(String userGlobalId, String userModelType) {
         return null;
     }
 
@@ -199,8 +198,25 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
+    public List<Subscription> getSubscriptions(SubscriptionFilter subscriptionFilter) {
+        return null;
+    }
+    
+    @Override
+    public List<SubscriptionSourceStatus> getSubscriptionsWithSourceStatus(SubscriptionFilter subscriptionFilter) {
+        return null;
+    }
+
+    @Override
     public TermFrequency getTermFrequency() {
         return null;
+    }
+
+    @Override
+    public Map<String, String> getUserModelEntriesCountDescription() {
+        Map<String, String> countDesc = new HashMap<String, String>();
+        countDesc.put("N/A", "N/A");
+        return countDesc;
     }
 
     @Override
@@ -227,7 +243,8 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
-    public Collection<UserModel> getUsersWithUserModel(Collection<Term> arrayList) {
+    public Collection<UserModel> getUsersWithUserModel(Collection<Term> arrayList,
+            String userModelType) {
         return null;
     }
 

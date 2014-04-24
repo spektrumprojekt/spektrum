@@ -23,6 +23,8 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Transient;
 
+import org.eclipse.persistence.annotations.Index;
+
 import de.spektrumprojekt.datamodel.identifiable.SpektrumEntity;
 
 /**
@@ -44,8 +46,12 @@ public class MessageRank /* extends Identifiable */implements SpektrumEntity {
     private static final long serialVersionUID = 1L;
 
     private float rank;
+
+    @Index
     @Id
     private String messageGlobalId;
+
+    @Index
     @Id
     private String userGlobalId;
 

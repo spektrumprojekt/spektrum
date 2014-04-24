@@ -92,16 +92,24 @@ public abstract class BasePollingAdapter extends BaseAdapter {
     }
 
     @Override
-    public void addSource(final SourceStatus sourceStatus) {
-        LOGGER.debug("adding source status " + sourceStatus);
+    public synchronized void addSource(final SourceStatus sourceStatus) {
+        LOGGER.debug("Adding source status " + sourceStatus);
+
+        Future<?> existingTask = this.scheduledSources.get(sourceStatus.getSource().getGlobalId());
+        if (existingTask != null) {
+            LOGGER.info("Source status already in progress. Remove it first. " + sourceStatus);
+            this.removeSource(sourceStatus.getGlobalId());
+        }
+
         Runnable task = new Runnable() {
             @Override
             public void run() {
                 try {
                     List<Message> messages = poll(sourceStatus);
                     addMessages(messages);
-                    triggerListener(sourceStatus.getSource(),
-                            StatusType.OK);
+                    // TODO this should probably be done in addMessages so that not every subclass
+                    // has to worry about it
+                    triggerListener(sourceStatus.getSource(), StatusType.OK);
                 } catch (AdapterException e) {
                     LOGGER.warn("encountered AdapterException {} sourceStatus={}",
                             e.toString(), sourceStatus);
@@ -111,6 +119,8 @@ public abstract class BasePollingAdapter extends BaseAdapter {
                             e.getStatusType(), e);
                 } catch (Throwable t) {
                     LOGGER.error("encountered exception " + t + " for " + sourceStatus, t);
+                    triggerListener(sourceStatus.getSource(),
+                            StatusType.ERROR_UNSPECIFIED, null);
                 }
             }
         };
@@ -153,13 +163,13 @@ public abstract class BasePollingAdapter extends BaseAdapter {
             throws AdapterException;
 
     @Override
-    public void removeSource(String sourceStatusId) {
-        Future<?> task = scheduledSources.remove(sourceStatusId);
+    public void removeSource(String sourceGlobalId) {
+        Future<?> task = scheduledSources.remove(sourceGlobalId);
         if (task != null) {
             task.cancel(false);
-            LOGGER.debug("removed source {}", sourceStatusId);
+            LOGGER.debug("removed source {}", sourceGlobalId);
         } else {
-            LOGGER.error("no source with ID {}", sourceStatusId);
+            LOGGER.error("no source with ID {}", sourceGlobalId);
         }
     }
 

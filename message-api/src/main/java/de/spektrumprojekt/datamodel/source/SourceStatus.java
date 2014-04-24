@@ -19,9 +19,14 @@
 
 package de.spektrumprojekt.datamodel.source;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
@@ -30,6 +35,7 @@ import javax.persistence.UniqueConstraint;
 
 import org.apache.commons.lang3.Validate;
 
+import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.identifiable.Identifiable;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
@@ -88,6 +94,13 @@ public class SourceStatus extends Identifiable {
     /** The hash of the most recent item in the source at the last poll. */
     private String lastContentHash;
 
+    /** The last message occurred while accessing the source */
+    private String lastAccessMessage;
+
+    /** Properties for additional information */
+    @OneToMany(cascade = CascadeType.ALL)
+    private final Collection<Property> properties = new HashSet<Property>();
+
     /** Constructor for ORM layer. */
     protected SourceStatus() {
 
@@ -117,6 +130,25 @@ public class SourceStatus extends Identifiable {
     }
 
     /**
+     * @param e
+     *            Property
+     * @return the old value of the property, null if it did not exist
+     */
+    public Property addProperty(Property e) {
+        Property oldValue = null;
+        for (Property property : properties) {
+            if (property.getPropertyKey().equals(e.getPropertyKey())) {
+                oldValue = property;
+            }
+        }
+        if (oldValue != null) {
+            properties.remove(oldValue);
+        }
+        properties.add(e);
+        return oldValue;
+    }
+
+    /**
      * @return the consecutiveErrorCount
      */
     public Integer getConsecutiveErrorCount() {
@@ -128,6 +160,10 @@ public class SourceStatus extends Identifiable {
      */
     public Integer getErrorCount() {
         return errorCount;
+    }
+
+    public String getLastAccessMessage() {
+        return lastAccessMessage;
     }
 
     /**
@@ -162,6 +198,38 @@ public class SourceStatus extends Identifiable {
         return lastSuccessfulCheck;
     }
 
+    /**
+     * @return the last date when tried to access the subscription
+     */
+    public Date getLatestCheckDate() {
+        if (lastSuccessfulCheck == null) {
+            return lastError;
+        }
+        if (lastError == null) {
+            return lastSuccessfulCheck;
+        }
+        return lastSuccessfulCheck.after(lastError) ? lastSuccessfulCheck : lastError;
+    }
+
+    public Collection<Property> getProperties() {
+        return Collections.unmodifiableCollection(properties);
+    }
+
+    /**
+     * 
+     * @param key
+     *            propertykey
+     * @return property
+     */
+    public Property getProperty(String key) {
+        for (Property property : properties) {
+            if (property.getPropertyKey().equals(key)) {
+                return property;
+            }
+        }
+        return null;
+    }
+
     public Source getSource() {
         return source;
     }
@@ -180,8 +248,20 @@ public class SourceStatus extends Identifiable {
         return blocked;
     }
 
+    public boolean removeProperty(String propertyKey) {
+        Property prop = this.getProperty(propertyKey);
+        if (prop == null) {
+            return properties.remove(prop);
+        }
+        return false;
+    }
+
     public void setBlocked(boolean blocked) {
         this.blocked = blocked;
+    }
+
+    public void setLastAccessMessage(String lastAccessMessage) {
+        this.lastAccessMessage = lastAccessMessage;
     }
 
     /**
@@ -231,6 +311,8 @@ public class SourceStatus extends Identifiable {
         builder.append(lastContentTimestamp);
         builder.append(", lastContentHash=");
         builder.append(lastContentHash);
+        builder.append(", lastAccessMessage=");
+        builder.append(lastAccessMessage);
         builder.append("]");
         return builder.toString();
     }
@@ -249,6 +331,7 @@ public class SourceStatus extends Identifiable {
             successfulCheckCount++;
             consecutiveErrorCount = 0;
             lastError = null;
+            lastAccessMessage = null;
             setLastSuccessfulCheck(new Date());
         } else {
             errorCount++;

@@ -32,6 +32,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import de.spektrumprojekt.configuration.properties.SimpleProperties;
+import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.source.Source;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
@@ -86,6 +87,24 @@ public class SourceStatusPersistenceTest {
 
         assertEquals(1, persistence.getSourceStatusList().size());
 
+    }
+
+    @Test
+    public void testFilterForSourceStatusProperty() {
+        Source source = new Source("connectorType");
+        source.addAccessParameter(new Property("someAccessParm", "test12"));
+
+        // persistence.saveSource(source);
+
+        SourceStatus sourceStatus = new SourceStatus(source);
+
+        Property p = new Property("sourceStatusProp1", "someValue");
+        sourceStatus.addProperty(p);
+        persistence.save(sourceStatus);
+
+        List<SourceStatus> status = persistence.findSourceStatusByProperty(p);
+        Assert.assertEquals(1, status.size());
+        Assert.assertEquals(sourceStatus.getGlobalId(), status.get(0).getGlobalId());
     }
 
     @Test

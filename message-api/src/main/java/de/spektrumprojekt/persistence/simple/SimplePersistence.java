@@ -34,8 +34,10 @@ import java.util.Set;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate;
 import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessagePart;
+import de.spektrumprojekt.datamodel.message.MessagePublicationDateComperator;
 import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
@@ -47,6 +49,8 @@ import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.source.Source;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.datamodel.subscription.Subscription;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionFilter;
+import de.spektrumprojekt.datamodel.subscription.SubscriptionSourceStatus;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
@@ -64,10 +68,12 @@ import de.spektrumprojekt.persistence.Statistics;
  */
 public class SimplePersistence implements Persistence {
 
-    private class ObservationKey {
+    public static class ObservationKey {
 
         private final String userGlobalId;
+
         private final String messageGlobalId;
+
         private final ObservationType observationType;
 
         public ObservationKey(String userGlobalId, String messageGlobalId,
@@ -89,9 +95,7 @@ public class SimplePersistence implements Persistence {
                 return false;
             }
             ObservationKey other = (ObservationKey) obj;
-            if (!getOuterType().equals(other.getOuterType())) {
-                return false;
-            }
+
             if (messageGlobalId == null) {
                 if (other.messageGlobalId != null) {
                     return false;
@@ -112,19 +116,32 @@ public class SimplePersistence implements Persistence {
             return true;
         }
 
-        private SimplePersistence getOuterType() {
-            return SimplePersistence.this;
+        public String getMessageGlobalId() {
+            return messageGlobalId;
+        }
+
+        public ObservationType getObservationType() {
+            return observationType;
+        }
+
+        public String getUserGlobalId() {
+            return userGlobalId;
         }
 
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = prime * result + getOuterType().hashCode();
             result = prime * result + (messageGlobalId == null ? 0 : messageGlobalId.hashCode());
             result = prime * result + (observationType == null ? 0 : observationType.hashCode());
             result = prime * result + (userGlobalId == null ? 0 : userGlobalId.hashCode());
             return result;
+        }
+
+        @Override
+        public String toString() {
+            return "ObservationKey [userGlobalId=" + userGlobalId + ", messageGlobalId="
+                    + messageGlobalId + ", observationType=" + observationType + "]";
         }
     }
 
@@ -132,7 +149,8 @@ public class SimplePersistence implements Persistence {
 
     private final Map<String, User> users = new HashMap<String, User>();
 
-    private final Map<User, UserModelHolder> userModelHolders = new HashMap<User, UserModelHolder>();
+    // first key: userModelType, second key: user of user model
+    private final Map<String, Map<User, UserModelHolder>> userModelByTypeHolders = new HashMap<String, Map<User, UserModelHolder>>();
 
     private final Map<String, Message> messages = new HashMap<String, Message>();
 
@@ -183,7 +201,7 @@ public class SimplePersistence implements Persistence {
 
         statistics.setTermCount(this.termsTerms.size() + this.keyPhraseTerms.size());
         statistics.setUserCount(this.users.size());
-        statistics.setUserModelCount(this.userModelHolders.size());
+        statistics.setUserModelCount(this.userModelByTypeHolders.size());
         statistics.setUserModelEntryCount(-1);
         statistics.setUserModelEntryTimeBinCount(-1);
 
@@ -219,10 +237,13 @@ public class SimplePersistence implements Persistence {
     }
 
     public String dumpUserModelSizes() {
-        String result = "UserModel Sizes (userId => userModelEntries.size) \n";
-        for (Entry<User, UserModelHolder> entry : this.userModelHolders.entrySet()) {
-            result += entry.getKey().getGlobalId() + " "
-                    + entry.getValue().getUserModelEntries().size() + "\n";
+        String result = "UserModel Sizes (userModelType => userId => userModelEntries.size) \n";
+        for (Entry<String, Map<User, UserModelHolder>> userModelTypeEntry : this.userModelByTypeHolders
+                .entrySet()) {
+            for (Entry<User, UserModelHolder> entry : userModelTypeEntry.getValue().entrySet()) {
+                result += userModelTypeEntry.getKey() + " " + entry.getKey().getGlobalId() + " "
+                        + entry.getValue().getUserModelEntries().size() + "\n";
+            }
         }
         return result;
     }
@@ -233,18 +254,30 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
+    public List<SourceStatus> findSourceStatusByProperty(Property property) {
+        return null;
+    }
+
+    @Override
     public Collection<MessageGroup> getAllMessageGroups() {
         return this.messageGroups.values();
     }
 
     @Override
-    public List<Subscription> getAllSubscriptionsBySourceGlobalId(String sourceGlobalId) {
-        throw new UnsupportedOperationException("implement me.");
+    public Collection<Term> getAllTerms() {
+        return this.termsTerms.values();
     }
 
     @Override
-    public Collection<Term> getAllTerms() {
-        return this.termsTerms.values();
+    public Map<UserModel, Collection<UserModelEntry>> getAllUserModelEntries(String userModelType) {
+        Map<UserModel, Collection<UserModelEntry>> result = new HashMap<UserModel, Collection<UserModelEntry>>();
+        Map<User, UserModelHolder> map = userModelByTypeHolders.get(userModelType);
+        if (map != null) {
+            for (UserModelHolder holder : map.values()) {
+                result.put(holder.getUserModel(), holder.getUserModelEntries().values());
+            }
+        }
+        return result;
     }
 
     @Override
@@ -283,37 +316,32 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
-    public Collection<Message> getMessagesForPattern(String pattern,
-            Date messagePublicationFilterDate) {
-        List<Message> messages = patternMessages.get(pattern);
-        if (messages == null) {
-            return Collections.emptyList();
-        }
-        List<Message> result = new ArrayList<Message>();
-        for (Message message : messages) {
-            if (message.getPublicationDate().after(messagePublicationFilterDate)) {
-                result.add(message);
-            }
-        }
-        return result;
-    }
+    public List<Message> getMessages(MessageFilter messageFilter) {
+        List<Message> filteredMessages = new ArrayList<Message>();
+        List<Message> baseMessages = new ArrayList<Message>();
 
-    @Override
-    public Collection<Message> getMessagesSince(Date fromDate) {
-        return getMessagesSince(null, fromDate);
-    }
+        if (messageFilter.getPattern() != null) {
+            baseMessages.addAll(patternMessages.get(messageFilter.getPattern()));
+        } else {
+            baseMessages.addAll(this.messages.values());
+        }
+        Collections.sort(baseMessages, new MessagePublicationDateComperator());
 
-    @Override
-    public Collection<Message> getMessagesSince(String messageGroupGlobalId, Date fromDate) {
-        Collection<Message> filteredMessages = new HashSet<Message>();
-        for (Message message : this.messages.values()) {
-            if (messageGroupGlobalId != null
-                    && !messageGroupGlobalId.equals(message.getMessageGroup().getGlobalId())) {
+        for (Message message : baseMessages) {
+            if (messageFilter.getMessageGroupGlobalId() != null
+                    && !messageFilter.getMessageGroupGlobalId().equals(
+                            message.getMessageGroup().getGlobalId())) {
                 continue;
             }
 
-            if (message.getPublicationDate().after(fromDate)) {
+            if (messageFilter.getMinPublicationDate() == null
+                    || message.getPublicationDate().after(messageFilter.getMinPublicationDate())) {
                 filteredMessages.add(message);
+            }
+
+            if (messageFilter.getLastMessagesCount() > 0
+                    && messageFilter.getLastMessagesCount() <= filteredMessages.size()) {
+                break;
             }
         }
         return filteredMessages;
@@ -322,6 +350,10 @@ public class SimplePersistence implements Persistence {
     @Override
     public int getNumberOfSubscriptionsBySourceGlobalId(String globalId) {
         throw new UnsupportedOperationException("Implement me.");
+    }
+
+    public Map<ObservationKey, Collection<Observation>> getObservations() {
+        return observations;
     }
 
     @Override
@@ -366,17 +398,28 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
-    public UserModel getOrCreateUserModelByUser(String userGlobalId) {
+    public UserModel getOrCreateUserModelByUser(String userGlobalId, String userModelType) {
         User user = getOrCreateUser(userGlobalId);
-        UserModelHolder userModelHolder = userModelHolders.get(user);
+        Map<User, UserModelHolder> userModelTypeHolders = getOrCreateUserModelTypeHoldersByUserModelType(userModelType);
+        UserModelHolder userModelHolder = userModelTypeHolders.get(user);
         if (userModelHolder == null) {
-            UserModel userModel = new UserModel(user);
+            UserModel userModel = new UserModel(user, userModelType);
             userModel.setId(idGenerator.getNextUserModelId());
             userModelHolder = new UserModelHolder(userModel);
-            userModelHolders.put(user, userModelHolder);
-
+            userModelTypeHolders.put(user, userModelHolder);
         }
+
         return userModelHolder.getUserModel();
+    }
+
+    private Map<User, UserModelHolder> getOrCreateUserModelTypeHoldersByUserModelType(
+            String userModelType) {
+        Map<User, UserModelHolder> userModelHolder = this.userModelByTypeHolders.get(userModelType);
+        if (userModelHolder == null) {
+            userModelHolder = new HashMap<User, UserModelHolder>();
+            this.userModelByTypeHolders.put(userModelType, userModelHolder);
+        }
+        return userModelHolder;
     }
 
     public Map<String, List<Message>> getPatternMessages() {
@@ -406,9 +449,63 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
+    public List<Subscription> getSubscriptions(SubscriptionFilter subscriptionFilter) {
+        throw new UnsupportedOperationException("Not implemented.");
+    }
+    
+    @Override
+    public List<SubscriptionSourceStatus> getSubscriptionsWithSourceStatus(SubscriptionFilter subscriptionFilter) {
+        throw new UnsupportedOperationException("Not implemented.");
+    }
+
+    @Override
     public TermFrequency getTermFrequency() {
         termFrequency.init();
         return termFrequency;
+    }
+
+    public User getUserById(Long userId) {
+        for (User user : this.users.values()) {
+            if (userId.equals(user.getId())) {
+                return user;
+            }
+
+        }
+        return null;
+    }
+
+    public Map<String, Map<User, UserModelHolder>> getUserModelByTypeHolders() {
+        return userModelByTypeHolders;
+    }
+
+    /**
+     * 
+     * @return a map of user model type => description of the counts
+     */
+    @Override
+    public Map<String, String> getUserModelEntriesCountDescription() {
+        Map<String, String> countDescription = new HashMap<String, String>();
+        for (Entry<String, Map<User, UserModelHolder>> userModelHolders : this.userModelByTypeHolders
+                .entrySet()) {
+
+            int size = 0;
+            int timeBins = 0;
+
+            for (UserModelHolder userModel : userModelHolders.getValue().values()) {
+                size += userModel.getUserModelEntries().size();
+                for (UserModelEntry entry : userModel.getUserModelEntries().values()) {
+                    if (entry.getTimeBinEntries() != null) {
+                        timeBins += entry.getTimeBinEntries().size();
+                    }
+                }
+            }
+            double ratio = timeBins / (double) size;
+            String desc = size + " ume " + timeBins + " timeBins " + ratio + " bins_per_entry";
+
+            countDescription.put(userModelHolders.getKey(), desc);
+        }
+        return countDescription;
+
     }
 
     @Override
@@ -425,22 +522,19 @@ public class SimplePersistence implements Persistence {
         return entries;
     }
 
-    public UserModelHolder getUserModelHolder(User user) {
-        return this.userModelHolders.get(user);
+    public UserModelHolder getUserModelHolder(User user, String userModelType) {
+        return this.getOrCreateUserModelTypeHoldersByUserModelType(userModelType).get(user);
     }
 
     private UserModelHolder getUserModelHolder(UserModel userModel) {
-        UserModelHolder userModelHolder = this.userModelHolders.get(userModel.getUser());
+        UserModelHolder userModelHolder = this.getOrCreateUserModelTypeHoldersByUserModelType(
+                userModel.getUserModelType()).get(userModel.getUser());
         if (userModelHolder == null) {
             throw new IllegalStateException(
                     "the userModel has not been created within this persistence. userModel="
                             + userModel);
         }
         return userModelHolder;
-    }
-
-    public Map<User, UserModelHolder> getUserModelHolders() {
-        return userModelHolders;
     }
 
     @Override
@@ -482,9 +576,10 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
-    public Collection<UserModel> getUsersWithUserModel(Collection<Term> terms) {
+    public Collection<UserModel> getUsersWithUserModel(Collection<Term> terms, String userModelType) {
         Collection<UserModel> userModels = new HashSet<UserModel>();
-        userModels: for (UserModelHolder holder : this.userModelHolders.values()) {
+        userModels: for (UserModelHolder holder : this
+                .getOrCreateUserModelTypeHoldersByUserModelType(userModelType).values()) {
             for (Term term : terms) {
                 if (holder.getUserModelEntry(term) != null) {
                     userModels.add(holder.getUserModel());
@@ -507,9 +602,9 @@ public class SimplePersistence implements Persistence {
 
     @Override
     public void removeUserModelEntry(UserModel userModel, UserModelEntry userModelEntry) {
-        UserModelHolder userModelHolder = this.userModelHolders.get(userModel.getUser());
+        UserModelHolder userModelHolder = this.getOrCreateUserModelTypeHoldersByUserModelType(
+                userModel.getUserModelType()).get(userModel.getUser());
         userModelHolder.getUserModelEntries().remove(userModelEntry.getScoredTerm().getTerm());
-
     }
 
     @Override
@@ -695,4 +790,5 @@ public class SimplePersistence implements Persistence {
             visitor.visit(messageRank, message);
         }
     }
+
 }

@@ -28,8 +28,6 @@ import java.util.Map;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -49,13 +47,11 @@ import de.spektrumprojekt.datamodel.subscription.status.StatusType;
  * The Message.
  * </p>
  * 
- * @author Marius Feldmann
  * @author Philipp Katz
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 
  */
 @Entity
-@Inheritance(strategy = InheritanceType.JOINED)
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = "globalId"))
 public class Message extends Identifiable {
 

@@ -46,7 +46,9 @@ public class DirectedUserModelAdaptationMessage implements CommunicationMessage 
         // for json deserialization
     }
 
-    public DirectedUserModelAdaptationMessage(String userGlobalId, String messageId,
+    public DirectedUserModelAdaptationMessage(
+            String userGlobalId,
+            String messageId,
             String messageGroupGlobalId,
             Term[] termsToAdapt,
             MessageRank rankBeforeAdaptation) {
@@ -65,11 +67,18 @@ public class DirectedUserModelAdaptationMessage implements CommunicationMessage 
         if (rankBeforeAdaptation == null) {
             throw new IllegalArgumentException("rankBeforeAdaptation cannot be null.");
         }
+        if (!rankBeforeAdaptation.getMessageGlobalId().equals(messageId)) {
+            throw new IllegalArgumentException("messageId should be equal.");
+        }
+        if (!rankBeforeAdaptation.getUserGlobalId().equals(userGlobalId)) {
+            throw new IllegalArgumentException("userGlobalId should be equal.");
+        }
         this.userGlobalId = userGlobalId;
         this.messageId = messageId;
         this.messageGroupGlobalId = messageGroupGlobalId;
         this.termsToAdapt = termsToAdapt;
         this.rankBeforeAdaptation = rankBeforeAdaptation;
+
     }
 
     public String getMessageGroupGlobalId() {

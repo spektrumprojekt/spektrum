@@ -25,13 +25,19 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
 import javax.persistence.NoResultException;
 import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.spektrumprojekt.datamodel.common.Property;
+import de.spektrumprojekt.datamodel.source.Source;
 import de.spektrumprojekt.datamodel.source.SourceStatus;
 import de.spektrumprojekt.persistence.jpa.JPAConfiguration;
+import de.spektrumprojekt.persistence.jpa.transaction.Transaction;
 
 /**
  * <p>
@@ -80,6 +86,39 @@ public class SourceStatusPersistence extends AbstractPersistenceLayer {
         }
         transaction.commit();
         entityManager.close();
+    }
+
+    public List<SourceStatus> findSourceStatusByProperty(final Property property) {
+        Transaction<List<SourceStatus>> transaction = new Transaction<List<SourceStatus>>() {
+
+            @Override
+            protected List<SourceStatus> doTransaction(EntityManager entityManager) {
+
+                CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+                CriteriaQuery<Source> query = criteriaBuilder.createQuery(Source.class);
+                Root<Source> entity = query.from(Source.class);
+                query.select(entity);
+
+                StringBuilder q = new StringBuilder();
+                q.append("SELECT sourceStatus ");
+                q.append("from SourceStatus sourceStatus ");
+                q.append("left join sourceStatus.properties property ");
+                q.append("WHERE ");
+                q.append("property.propertyKey = :propertyKey ");
+                q.append("AND property.propertyValue = :propertyValue ");
+
+                TypedQuery<SourceStatus> typedQuery = entityManager
+                        .createQuery(q.toString(), SourceStatus.class);
+
+                typedQuery.setParameter("propertyKey", property.getPropertyKey());
+                typedQuery.setParameter("propertyValue", property.getPropertyValue());
+
+                List<SourceStatus> sourceStatus = typedQuery.getResultList();
+
+                return sourceStatus;
+            }
+        };
+        return transaction.executeTransaction(getEntityManager());
     }
 
     /**

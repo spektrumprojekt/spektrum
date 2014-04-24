@@ -28,6 +28,8 @@ import javax.persistence.MappedSuperclass;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+import org.eclipse.persistence.annotations.Index;
+
 /**
  * Now you may ask, why do we have two identifiers? The answer, the id is the "local" one, only
  * valid for the persistence unit used within one component. Once transferred to another
@@ -58,6 +60,7 @@ public abstract class Identifiable implements SpektrumEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id = null;
 
+    @Index
     private String globalId;
 
     public Identifiable() {

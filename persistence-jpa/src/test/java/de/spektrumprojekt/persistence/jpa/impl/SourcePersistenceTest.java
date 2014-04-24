@@ -13,6 +13,7 @@ import org.junit.Test;
 import de.spektrumprojekt.configuration.properties.SimpleProperties;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.source.Source;
+import de.spektrumprojekt.datamodel.source.SourceNotFoundException;
 import de.spektrumprojekt.persistence.jpa.JPAConfiguration;
 
 public class SourcePersistenceTest {
@@ -51,7 +52,7 @@ public class SourcePersistenceTest {
     }
 
     @Test
-    public void testCreate() {
+    public void testCreate() throws SourceNotFoundException {
         Source source = new Source("connectorType");
         source.addAccessParameter(new Property(ACCESS_PARAM1, VAL1));
 
@@ -71,9 +72,13 @@ public class SourcePersistenceTest {
 
         persistence.deleteSource(source.getGlobalId());
 
-        persistedSource = persistence.getSourceByGlobalId(source.getGlobalId());
+        try {
+            persistedSource = persistence.getSourceByGlobalId(source.getGlobalId());
+            Assert.fail("Expected SourceNotFoundException");
 
-        Assert.assertNull(persistedSource);
+        } catch (SourceNotFoundException e) {
+            // success
+        }
 
     }
 
@@ -115,5 +120,20 @@ public class SourcePersistenceTest {
         foundSource = this.persistence.findSource(source.getConnectorType(),
                 source.getAccessParameters());
         Assert.assertNull(foundSource);
+    }
+
+    @Test
+    public void testSubscriptionNotFoundException() {
+        Source source = new Source("connectorType");
+        source.addAccessParameter(new Property(ACCESS_PARAM1, "blablub"));
+
+        persistence.saveSource(source);
+
+        try {
+            persistence.getSourceByGlobalId("idonotexist!");
+            Assert.fail("Expected a SourceNotFoundException.");
+        } catch (SourceNotFoundException e) {
+            // success
+        }
     }
 }
