@@ -25,11 +25,11 @@ public interface EvaluationExecuterConfiguration {
 
     public int getPriority();
 
-    public Double getRandomRankerThresholdOfRankingRelevant();
+    public Double getRandomScorerThresholdOfScoringRelevant();
 
     public ScorerConfiguration getScorerConfiguration();
 
-    public <T extends Command<UserSpecificMessageFeatureContext>> Class<T> getSpecialRankCommandClass();
+    public <T extends Command<UserSpecificMessageFeatureContext>> Class<T> getSpecialScoreCommandClass();
 
     public Date getStartDate();
 
@@ -41,9 +41,9 @@ public interface EvaluationExecuterConfiguration {
 
     public boolean isOutputTerms();
 
-    public boolean isUseCollabRanker();
+    public boolean isUseCollabScorer();
 
-    public boolean isUseIterativeCollabRanker();
+    public boolean isUseIterativeCollabScorer();
 
     public boolean isUseMessageAnalyzer();
 

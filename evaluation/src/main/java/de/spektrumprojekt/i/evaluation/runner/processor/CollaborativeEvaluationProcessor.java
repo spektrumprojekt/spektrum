@@ -45,7 +45,7 @@ public class CollaborativeEvaluationProcessor extends SimpleEvaluationProcessor 
     public void afterSingleRun() throws EvaluationException {
 
         if (!getEvaluationExecutionProvider().getEvaluationExecuterConfiguration()
-                .isUseCollabRanker()) {
+                .isUseCollabScorer()) {
             return;
         }
 
@@ -168,7 +168,7 @@ public class CollaborativeEvaluationProcessor extends SimpleEvaluationProcessor 
 
     private void startCollaborativeRanker() throws EvaluationException {
         if (!getEvaluationExecutionProvider().getEvaluationExecuterConfiguration()
-                .isUseCollabRanker()) {
+                .isUseCollabScorer()) {
             return;
         }
         // if there is nothing to evaluate we dont need a recomputation

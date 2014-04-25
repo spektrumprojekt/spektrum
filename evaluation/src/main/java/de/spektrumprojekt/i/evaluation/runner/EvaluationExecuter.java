@@ -783,7 +783,7 @@ public class EvaluationExecuter implements EvaluationExecutionProvider {
         }
         MessageGroupMemberRunner<MessageFeatureContext> memberRunner = new SimpleMessageGroupMemberRunner<MessageFeatureContext>(
                 userIds);
-        if (executionConfiguration.isUseIterativeCollabRanker()) {
+        if (executionConfiguration.isUseIterativeCollabScorer()) {
             ObservationType[] observationTypesToUseForDataModel;
             if (evaluatorConfiguration.getTrainingRatingSetRatio() == 0f) {
                 observationTypesToUseForDataModel = UserToMessageCollaborativeScoreComputer.OT_ONLY_MESSAGE;
@@ -802,19 +802,19 @@ public class EvaluationExecuter implements EvaluationExecutionProvider {
             learner = collaborativeIntelligenceFactory.getLearner();
         } else {
 
-            if (executionConfiguration.getSpecialRankCommandClass() != null) {
+            if (executionConfiguration.getSpecialScoreCommandClass() != null) {
                 Command<UserSpecificMessageFeatureContext> command;
 
-                if (executionConfiguration.getSpecialRankCommandClass().equals(
+                if (executionConfiguration.getSpecialScoreCommandClass().equals(
                         RandomScorerCommand.class)) {
                     command = new RandomScorerCommand(
-                            executionConfiguration.getRandomRankerThresholdOfRankingRelevant());
-                } else if (executionConfiguration.getSpecialRankCommandClass().equals(
+                            executionConfiguration.getRandomScorerThresholdOfScoringRelevant());
+                } else if (executionConfiguration.getSpecialScoreCommandClass().equals(
                         RelevantScorerCommand.class)) {
                     command = new RelevantScorerCommand();
                 } else {
                     throw new IllegalArgumentException("Unknown command clazz"
-                            + executionConfiguration.getSpecialRankCommandClass());
+                            + executionConfiguration.getSpecialScoreCommandClass());
                 }
 
                 scorer = new SpecialScorer<Command<UserSpecificMessageFeatureContext>>(persistence,

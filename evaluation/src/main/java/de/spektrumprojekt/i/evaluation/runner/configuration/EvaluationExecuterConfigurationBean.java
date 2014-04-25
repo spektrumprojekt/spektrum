@@ -21,7 +21,7 @@ public class EvaluationExecuterConfigurationBean implements EvaluationExecuterCo
 
     private String comment;
 
-    private boolean useCollabRanker;
+    private boolean useCollabScorer;
 
     private boolean useIterativeCollabScorer;
 
@@ -54,7 +54,7 @@ public class EvaluationExecuterConfigurationBean implements EvaluationExecuterCo
     // private UserModelEntryIntegrationStrategy
     // userModelEntryIntegrationStrategy;
 
-    private Double randomRankerThresholdOfRankingRelevant;
+    private Double randomScorerThresholdOfScoringRelevant;
 
     private boolean outputMessageGroupSimilarity;
 
@@ -195,8 +195,8 @@ public class EvaluationExecuterConfigurationBean implements EvaluationExecuterCo
     }
 
     @Override
-    public Double getRandomRankerThresholdOfRankingRelevant() {
-        return randomRankerThresholdOfRankingRelevant;
+    public Double getRandomScorerThresholdOfScoringRelevant() {
+        return randomScorerThresholdOfScoringRelevant;
     }
 
     @Override
@@ -206,7 +206,7 @@ public class EvaluationExecuterConfigurationBean implements EvaluationExecuterCo
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends Command<UserSpecificMessageFeatureContext>> Class<T> getSpecialRankCommandClass() {
+    public <T extends Command<UserSpecificMessageFeatureContext>> Class<T> getSpecialScoreCommandClass() {
         return (Class<T>) this.specialRankCommandClass;
     }
 
@@ -236,12 +236,12 @@ public class EvaluationExecuterConfigurationBean implements EvaluationExecuterCo
     }
 
     @Override
-    public boolean isUseCollabRanker() {
-        return useCollabRanker;
+    public boolean isUseCollabScorer() {
+        return useCollabScorer;
     }
 
     @Override
-    public boolean isUseIterativeCollabRanker() {
+    public boolean isUseIterativeCollabScorer() {
         return useIterativeCollabScorer;
     }
 
@@ -325,9 +325,9 @@ public class EvaluationExecuterConfigurationBean implements EvaluationExecuterCo
         this.priority = priority;
     }
 
-    public void setRandomRankerThresholdOfRankingRelevant(
-            Double randomRankerThresholdOfRankingRelevant) {
-        this.randomRankerThresholdOfRankingRelevant = randomRankerThresholdOfRankingRelevant;
+    public void setRandomScorerThresholdOfScoringRelevant(
+            Double randomScorerThresholdOfScoringRelevant) {
+        this.randomScorerThresholdOfScoringRelevant = randomScorerThresholdOfScoringRelevant;
     }
 
     public void setRerankAtTheEnd(boolean rerankAtTheEnd) {
@@ -343,13 +343,13 @@ public class EvaluationExecuterConfigurationBean implements EvaluationExecuterCo
         this.startDate = startDate;
     }
 
-    public void setUseCollabRanker(boolean useCollabRanker) {
-        this.useCollabRanker = useCollabRanker;
+    public void setUseCollabScorer(boolean useCollabScorer) {
+        this.useCollabScorer = useCollabScorer;
 
     }
 
-    public void setUseIterativeCollabRanker(boolean useIterativeCollabRanker) {
-        this.useIterativeCollabScorer = useIterativeCollabRanker;
+    public void setUseIterativeCollabScorer(boolean useIterativeCollabScorer) {
+        this.useIterativeCollabScorer = useIterativeCollabScorer;
     }
 
     public void setUseMessageAnalyzer(boolean useMessageAnalyzer) {
@@ -366,24 +366,24 @@ public class EvaluationExecuterConfigurationBean implements EvaluationExecuterCo
     public String toString() {
         return "EvaluationExecuterConfigurationBean [name=" + name + ", scorerConfiguration="
                 + scorerConfiguration + ", evaluatorConfiguration=" + evaluatorConfiguration
-                + ", comment=" + comment + ", useCollabRanker=" + useCollabRanker
-                + ", useIterativeCollabRanker=" + useIterativeCollabScorer + ", logTermFrequency="
+                + ", comment=" + comment + ", useCollabScorer=" + useCollabScorer
+                + ", useIterativeCollabScorer=" + useIterativeCollabScorer + ", logTermFrequency="
                 + logTermFrequency + ", outputTerms=" + outputTerms + ", useMessageAnalyzer="
                 + useMessageAnalyzer + ", priority=" + priority + ", dataSetProviderLoader="
                 + dataSetProviderLoader + ", dataSetProvider=" + dataSetProvider
                 + ", messageAnalyzerOnlyAnalyzeAfter=" + messageAnalyzerOnlyAnalyzeAfter
                 + ", startDate=" + startDate + ", endDate=" + endDate + ", uniqueId=" + uniqueId
                 + ", specialRankCommandClass=" + specialRankCommandClass
-                + ", randomRankerThresholdOfRankingRelevant="
-                + randomRankerThresholdOfRankingRelevant + ", outputMessageGroupSimilarity="
+                + ", randomScorerThresholdOfScoringRelevant="
+                + randomScorerThresholdOfScoringRelevant + ", outputMessageGroupSimilarity="
                 + outputMessageGroupSimilarity + "]";
     }
 
-    public void useRandomRanker() {
+    public void useRandomScorer() {
         this.specialRankCommandClass = RandomScorerCommand.class;
     }
 
-    public void useRelevantRanker() {
+    public void useRelevantScorer() {
         this.specialRankCommandClass = RelevantScorerCommand.class;
     }
 
@@ -440,7 +440,7 @@ public class EvaluationExecuterConfigurationBean implements EvaluationExecuterCo
         if (this.scorerConfiguration.getUserModelConfigurations() == null
                 || this.scorerConfiguration.getUserModelConfigurations().size() == 0) {
             throw new IllegalArgumentException(
-                    "this.rankerConfiguration.getUserModelTypes() is not set.");
+                    "this.scorerConfiguration.getUserModelTypes() is not set.");
         }
 
     }

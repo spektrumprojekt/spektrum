@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,6 +38,8 @@ import de.spektrumprojekt.i.evaluation.runner.configuration.EvaluationExecuterCo
 public class EvaluationExecuterStarter implements EvaluationExecuterStarterMBean {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(EvaluationExecuter.class);
+
+    public final static SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
     public static <T extends EvaluationExecuterStarter> T createStarterFromDefaultConfiguration(
             Class<T> clazz)
