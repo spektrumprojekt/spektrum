@@ -3,7 +3,7 @@ package de.spektrumprojekt.persistence;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.UserMessageScore;
 
-public interface MessageRankVisitor {
+public interface UserMessageScoreVisitor {
 
-    public void visit(UserMessageScore messageRank, Message message) throws Exception;
+    public void visit(UserMessageScore userMessageScore, Message message) throws Exception;
 }

@@ -27,6 +27,7 @@ import javax.persistence.UniqueConstraint;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.eclipse.persistence.annotations.Index;
 
 import de.spektrumprojekt.datamodel.identifiable.Identifiable;
@@ -120,6 +121,7 @@ public class Term extends Identifiable {
         return count;
     }
 
+    @JsonIgnore
     public Long getMessageGroupId() {
         return messageGroupId;
     }

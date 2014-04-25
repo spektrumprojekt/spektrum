@@ -30,6 +30,7 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
 import org.apache.commons.lang3.StringUtils;
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 import de.spektrumprojekt.datamodel.common.MimeType;
 import de.spektrumprojekt.datamodel.identifiable.Identifiable;
@@ -90,6 +91,7 @@ public class MessagePart extends Identifiable {
         return scoredTerms;
     }
 
+    @JsonIgnore
     public boolean isAttachment() {
         return !(MimeType.JSON.getTypeIdentifier().equals(mimeType)
                 || MimeType.XML.getTypeIdentifier().equals(mimeType)
@@ -98,15 +100,18 @@ public class MessagePart extends Identifiable {
                 .equals(mimeType));
     }
 
+    @JsonIgnore
     public boolean isImageAttachment() {
         return this.mimeType != null && this.mimeType.startsWith("image");
     }
 
+    @JsonIgnore
     public boolean isMimeType(MimeType mimeType) {
         return mimeType == null && this.mimeType == null
                 || StringUtils.equals(mimeType.getTypeIdentifier(), this.mimeType);
     }
 
+    @JsonIgnore
     public boolean isText() {
         return isMimeType(MimeType.TEXT_HTML) || isMimeType(MimeType.TEXT_PLAIN);
     }

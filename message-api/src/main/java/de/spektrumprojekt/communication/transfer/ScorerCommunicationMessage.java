@@ -38,7 +38,7 @@ public class ScorerCommunicationMessage extends MessageCommunicationMessage {
 
     private boolean noRankingOnlyLearning;
 
-    private String[] userGlobalIdsToRankFor;
+    private String[] userGlobalIdsToScoreFor;
 
     /**
      * // for json deserialization
@@ -56,7 +56,7 @@ public class ScorerCommunicationMessage extends MessageCommunicationMessage {
     }
 
     public String[] getUserGlobalIdsToScoreFor() {
-        return userGlobalIdsToRankFor;
+        return userGlobalIdsToScoreFor;
     }
 
     public boolean isNoScoringOnlyLearning() {
@@ -67,12 +67,12 @@ public class ScorerCommunicationMessage extends MessageCommunicationMessage {
         this.messageRelation = messageRelation;
     }
 
-    public void setNoRankingOnlyLearning(boolean noRankingOnlyLearning) {
+    public void setNoScoringOnlyLearning(boolean noRankingOnlyLearning) {
         this.noRankingOnlyLearning = noRankingOnlyLearning;
     }
 
-    public void setUserGlobalIdsToRankFor(String[] userGlobalIdsToRankFor) {
-        this.userGlobalIdsToRankFor = userGlobalIdsToRankFor;
+    public void setUserGlobalIdsToScoreFor(String[] userGlobalIdsToScoreFor) {
+        this.userGlobalIdsToScoreFor = userGlobalIdsToScoreFor;
     }
 
 }

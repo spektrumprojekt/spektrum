@@ -126,11 +126,15 @@ public class ContentMatchFeatureCommand implements Command<UserSpecificMessageFe
 
         Map<Term, UserModelEntry> entries = persistence.getUserModelEntriesForTerms(userModel,
                 messageTerms);
+        if (userModelEntryIntegrationStrategies == null) {
+            throw new IllegalStateException(
+                    "No userModelEntryIntegrationStrategies. Did you call scorer.configLearner()?");
+        }
         UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy = userModelEntryIntegrationStrategies
                 .get(userModel.getUserModelType());
         if (userModelEntryIntegrationStrategy == null) {
             throw new IllegalStateException("No userModelEntryIntegrationStrategy for "
-                    + userModel.getUserModelType() + " Did you call scorer.configLearner?");
+                    + userModel.getUserModelType() + " Did you call scorer.configLearner()?");
         }
         if (!useAdaptedEntries) {
             entries = UserModelEntry.filteredForNonAdaptedEntries(entries);
