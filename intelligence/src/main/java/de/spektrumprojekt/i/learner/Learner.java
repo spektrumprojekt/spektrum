@@ -42,10 +42,10 @@ import de.spektrumprojekt.i.learner.contentbased.TermCountUserModelEntryIntegrat
 import de.spektrumprojekt.i.learner.contentbased.UserModelConfiguration;
 import de.spektrumprojekt.i.learner.contentbased.UserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.i.learner.time.TimeBinnedUserModelEntryIntegrationStrategy;
-import de.spektrumprojekt.i.ranker.MessageFeatureContext;
-import de.spektrumprojekt.i.ranker.Scorer;
-import de.spektrumprojekt.i.ranker.ScorerConfiguration;
-import de.spektrumprojekt.i.ranker.ScorerConfigurationFlag;
+import de.spektrumprojekt.i.scorer.MessageFeatureContext;
+import de.spektrumprojekt.i.scorer.Scorer;
+import de.spektrumprojekt.i.scorer.ScorerConfiguration;
+import de.spektrumprojekt.i.scorer.ScorerConfigurationFlag;
 import de.spektrumprojekt.i.timebased.TermCounterCommand;
 import de.spektrumprojekt.persistence.Persistence;
 

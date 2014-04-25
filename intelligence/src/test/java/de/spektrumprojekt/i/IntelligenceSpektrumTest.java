@@ -32,7 +32,7 @@ import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessagePart;
 import de.spektrumprojekt.datamodel.message.MessageType;
 import de.spektrumprojekt.datamodel.subscription.status.StatusType;
-import de.spektrumprojekt.i.ranker.MessageFeatureContext;
+import de.spektrumprojekt.i.scorer.MessageFeatureContext;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.jpa.JPAPersistence;
 import de.spektrumprojekt.persistence.simple.SimplePersistence;

@@ -28,7 +28,7 @@ import de.spektrumprojekt.commons.chain.CommandChain;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessagePart;
-import de.spektrumprojekt.i.ranker.MessageFeatureContext;
+import de.spektrumprojekt.i.scorer.MessageFeatureContext;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
 import de.spektrumprojekt.informationextraction.extractors.CharNGramsExtractorCommand;
 import de.spektrumprojekt.informationextraction.extractors.ExecuteOnlyForExternalMessagesCommand;

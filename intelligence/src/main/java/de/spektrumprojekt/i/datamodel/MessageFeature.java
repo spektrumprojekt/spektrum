@@ -19,7 +19,7 @@
 
 package de.spektrumprojekt.i.datamodel;
 
-import de.spektrumprojekt.i.ranker.feature.Feature;
+import de.spektrumprojekt.i.scorer.feature.Feature;
 
 /**
  * A message feature

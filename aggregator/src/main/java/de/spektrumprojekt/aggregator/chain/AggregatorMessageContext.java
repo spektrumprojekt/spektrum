@@ -2,7 +2,7 @@ package de.spektrumprojekt.aggregator.chain;
 
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
-import de.spektrumprojekt.i.ranker.MessageFeatureContext;
+import de.spektrumprojekt.i.scorer.MessageFeatureContext;
 import de.spektrumprojekt.persistence.Persistence;
 
 public class AggregatorMessageContext {

@@ -47,8 +47,8 @@ import de.spektrumprojekt.i.learner.LearningMessage;
 import de.spektrumprojekt.i.learner.contentbased.TermCountUserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.i.learner.contentbased.UserModelConfiguration;
 import de.spektrumprojekt.i.learner.contentbased.UserModelEntryIntegrationStrategy;
-import de.spektrumprojekt.i.ranker.MessageFeatureContext;
-import de.spektrumprojekt.i.ranker.ScorerConfiguration;
+import de.spektrumprojekt.i.scorer.MessageFeatureContext;
+import de.spektrumprojekt.i.scorer.ScorerConfiguration;
 import de.spektrumprojekt.i.term.TermVectorSimilarityStrategy;
 import de.spektrumprojekt.i.term.TermWeightStrategy;
 

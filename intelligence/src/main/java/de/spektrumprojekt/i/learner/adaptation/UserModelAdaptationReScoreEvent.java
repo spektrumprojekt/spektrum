@@ -1,7 +1,7 @@
 package de.spektrumprojekt.i.learner.adaptation;
 
 import de.spektrumprojekt.commons.event.Event;
-import de.spektrumprojekt.i.ranker.MessageFeatureContext;
+import de.spektrumprojekt.i.scorer.MessageFeatureContext;
 
 public class UserModelAdaptationReScoreEvent implements Event {
 

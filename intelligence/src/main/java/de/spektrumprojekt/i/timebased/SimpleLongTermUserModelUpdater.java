@@ -20,7 +20,7 @@ import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserModelEntryTimeBin;
 import de.spektrumprojekt.i.learner.contentbased.UserModelConfiguration;
 import de.spektrumprojekt.i.learner.time.TimeBinnedUserModelEntryIntegrationStrategy;
-import de.spektrumprojekt.i.ranker.ScorerConfiguration;
+import de.spektrumprojekt.i.scorer.ScorerConfiguration;
 import de.spektrumprojekt.i.timebased.config.LongTermMemoryConfiguration;
 import de.spektrumprojekt.i.timebased.config.PermanentLongTermInterestDetector;
 import de.spektrumprojekt.persistence.Persistence;

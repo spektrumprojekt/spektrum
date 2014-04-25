@@ -6,7 +6,7 @@ import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
-import de.spektrumprojekt.i.ranker.CollaborativeConfiguration;
+import de.spektrumprojekt.i.scorer.CollaborativeConfiguration;
 import de.spektrumprojekt.persistence.Persistence;
 
 public class UserToMessageGroupSpecificMessageTermCollaborativeScoreComputer extends

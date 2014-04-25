@@ -30,7 +30,7 @@ import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
-import de.spektrumprojekt.i.ranker.CollaborativeConfiguration;
+import de.spektrumprojekt.i.scorer.CollaborativeConfiguration;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.simple.SimplePersistence;
 

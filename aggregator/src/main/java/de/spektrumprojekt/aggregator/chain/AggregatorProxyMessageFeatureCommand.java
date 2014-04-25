@@ -2,7 +2,7 @@ package de.spektrumprojekt.aggregator.chain;
 
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.commons.chain.CommandException;
-import de.spektrumprojekt.i.ranker.MessageFeatureContext;
+import de.spektrumprojekt.i.scorer.MessageFeatureContext;
 
 public class AggregatorProxyMessageFeatureCommand implements
         Command<AggregatorMessageContext> {

@@ -1,6 +1,6 @@
 package de.spektrumprojekt.i.term;
 
-import de.spektrumprojekt.i.ranker.ScorerConfiguration;
+import de.spektrumprojekt.i.scorer.ScorerConfiguration;
 import de.spektrumprojekt.i.term.frequency.TermFrequencyComputer;
 import de.spektrumprojekt.i.term.similarity.AverageTermVectorSimilarityComputer;
 import de.spektrumprojekt.i.term.similarity.CosinusTermVectorSimilarityComputer;

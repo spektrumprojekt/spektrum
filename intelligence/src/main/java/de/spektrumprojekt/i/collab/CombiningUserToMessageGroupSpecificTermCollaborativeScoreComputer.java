@@ -16,7 +16,7 @@ import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.helper.MessageHelper;
-import de.spektrumprojekt.i.ranker.CollaborativeConfiguration;
+import de.spektrumprojekt.i.scorer.CollaborativeConfiguration;
 import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
 import de.spektrumprojekt.persistence.Persistence;
 

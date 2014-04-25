@@ -1,7 +1,7 @@
 package de.spektrumprojekt.i.collab;
 
 import de.spektrumprojekt.datamodel.observation.ObservationType;
-import de.spektrumprojekt.i.ranker.CollaborativeConfiguration;
+import de.spektrumprojekt.i.scorer.CollaborativeConfiguration;
 import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
 import de.spektrumprojekt.persistence.Persistence;
 

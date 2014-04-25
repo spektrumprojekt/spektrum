@@ -19,7 +19,7 @@ import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.i.learner.contentbased.UserModelConfiguration;
 import de.spektrumprojekt.i.learner.contentbased.UserModelEntryIntegrationStrategyType;
-import de.spektrumprojekt.i.ranker.ScorerConfiguration;
+import de.spektrumprojekt.i.scorer.ScorerConfiguration;
 import de.spektrumprojekt.i.timebased.config.EnergyCalculationConfiguration;
 import de.spektrumprojekt.i.timebased.config.LongTermMemoryConfiguration;
 import de.spektrumprojekt.i.timebased.config.PermanentLongTermInterestDetector;

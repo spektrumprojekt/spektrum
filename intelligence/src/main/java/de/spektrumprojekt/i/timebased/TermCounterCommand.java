@@ -18,7 +18,7 @@ import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.i.learner.LearnerMessageContext;
 import de.spektrumprojekt.i.learner.time.TimeBinnedUserModelEntryIntegrationStrategy;
-import de.spektrumprojekt.i.ranker.ScorerConfiguration;
+import de.spektrumprojekt.i.scorer.ScorerConfiguration;
 import de.spektrumprojekt.persistence.Persistence;
 
 public class TermCounterCommand implements Command<LearnerMessageContext> {

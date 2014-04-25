@@ -42,8 +42,8 @@ import de.spektrumprojekt.communication.Communicator;
 import de.spektrumprojekt.communication.MessageHandler;
 import de.spektrumprojekt.configuration.Configuration;
 import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
-import de.spektrumprojekt.i.ranker.MessageFeatureContext;
-import de.spektrumprojekt.i.ranker.chain.StoreMessageCommand;
+import de.spektrumprojekt.i.scorer.MessageFeatureContext;
+import de.spektrumprojekt.i.scorer.chain.StoreMessageCommand;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**

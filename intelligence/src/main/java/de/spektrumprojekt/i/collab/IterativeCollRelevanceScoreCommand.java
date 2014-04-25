@@ -7,7 +7,7 @@ import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.commons.chain.CommandException;
 import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.user.User;
-import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
+import de.spektrumprojekt.i.scorer.UserSpecificMessageFeatureContext;
 import de.spektrumprojekt.persistence.Persistence;
 
 public class IterativeCollRelevanceScoreCommand implements Command<UserSpecificMessageFeatureContext> {
