@@ -11,6 +11,9 @@ import de.spektrumprojekt.i.timebased.MergeValuesStrategy;
 
 public interface TermVectorSimilarityComputer extends ConfigurationDescriptable {
 
+    public float getSimilarity(Map<Term, UserModelEntry> relevantEntries1,
+            Map<Term, UserModelEntry> relevantEntries2);
+
     public Float getSimilarity(String messageGroupId,
             Map<String, Map<Term, UserModelEntry>> allEntries,
             MergeValuesStrategy strategy,

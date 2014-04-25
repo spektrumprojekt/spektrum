@@ -32,5 +32,5 @@ public interface RankerProvider {
      * 
      * @return the ranker
      */
-    public Ranker getRanker();
+    public Scorer getRanker();
 }

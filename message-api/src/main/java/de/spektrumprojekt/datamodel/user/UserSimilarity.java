@@ -26,12 +26,13 @@ import javax.persistence.UniqueConstraint;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
+import de.spektrumprojekt.commons.output.SpektrumParseableElement;
 import de.spektrumprojekt.datamodel.identifiable.Identifiable;
 
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = { "userGlobalIdFrom", "userGlobalIdTo",
         "topicGlobalId" }))
-public class UserSimilarity extends Identifiable {
+public class UserSimilarity extends Identifiable implements SpektrumParseableElement {
 
     /**
      * 
@@ -168,6 +169,7 @@ public class UserSimilarity extends Identifiable {
         this.similarity = similarity;
     }
 
+    @Override
     public String toParseableString() {
         return StringUtils.join(new String[] {
                 messageGroupGlobalId,

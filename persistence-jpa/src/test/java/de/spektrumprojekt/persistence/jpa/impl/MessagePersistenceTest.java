@@ -43,7 +43,6 @@ import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.MessagePart;
-import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.MessageRelation.MessageRelationType;
 import de.spektrumprojekt.datamodel.message.MessageType;
@@ -51,6 +50,7 @@ import de.spektrumprojekt.datamodel.message.ScoredTerm;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
 import de.spektrumprojekt.datamodel.message.TermFrequency;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.observation.Interest;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationPriority;
@@ -301,7 +301,7 @@ public class MessagePersistenceTest {
 
     @Test
     public void testMessageRanks() {
-        Collection<MessageRank> ranks = new HashSet<MessageRank>();
+        Collection<UserMessageScore> ranks = new HashSet<UserMessageScore>();
 
         Message message1 = createTestMessage("hello, world!");
         Message message2 = createTestMessage("hello, world!");
@@ -315,25 +315,25 @@ public class MessagePersistenceTest {
         Assert.assertNotNull(message2);
         Assert.assertNotNull(user);
 
-        MessageRank rank1 = new MessageRank(message1.getGlobalId(), user.getGlobalId());
-        rank1.setRank(0.25f);
-        MessageRank rank2 = new MessageRank(message2.getGlobalId(), user.getGlobalId());
-        rank2.setRank(0.75f);
+        UserMessageScore rank1 = new UserMessageScore(message1.getGlobalId(), user.getGlobalId());
+        rank1.setScore(0.25f);
+        UserMessageScore rank2 = new UserMessageScore(message2.getGlobalId(), user.getGlobalId());
+        rank2.setScore(0.75f);
 
         ranks.add(rank1);
         ranks.add(rank2);
         persistence.storeMessageRanks(ranks);
 
-        MessageRank rank1return = persistence.getMessageRank(user.getGlobalId(),
+        UserMessageScore rank1return = persistence.getMessageScore(user.getGlobalId(),
                 message1.getGlobalId());
-        MessageRank rank2return = persistence.getMessageRank(user.getGlobalId(),
+        UserMessageScore rank2return = persistence.getMessageScore(user.getGlobalId(),
                 message2.getGlobalId());
 
         Assert.assertNotNull(rank1return);
-        Assert.assertEquals(rank1.getRank(), rank1return.getRank(), 0.0001);
+        Assert.assertEquals(rank1.getScore(), rank1return.getScore(), 0.0001);
 
         Assert.assertNotNull(rank2return);
-        Assert.assertEquals(rank2.getRank(), rank2return.getRank(), 0.0001);
+        Assert.assertEquals(rank2.getScore(), rank2return.getScore(), 0.0001);
     }
 
     @Test
@@ -412,5 +412,28 @@ public class MessagePersistenceTest {
 
             Assert.assertEquals(i + 11, tf4.getMessageGroupMessageCounts().get("mg" + i).intValue());
         }
+    }
+
+    /**
+     * Test term with message group string
+     */
+    @Test
+    public void testTermMG() {
+        final String test = "test";
+        final MessageGroup mg = new MessageGroup();
+        mg.setId(13l);
+
+        String mgValue = Term.getMessageGroupSpecificTermValue(mg, test);
+        Term mgTerm = this.persistence.getOrCreateTerm(TermCategory.TERM, mgValue);
+        Term nonMgTerm = this.persistence.getOrCreateTerm(TermCategory.TERM, test);
+
+        Assert.assertEquals(mg.getId(), mgTerm.getMessageGroupId());
+        Assert.assertNull(nonMgTerm.getMessageGroupId());
+
+        mgTerm = this.persistence.getOrCreateTerm(TermCategory.TERM, mgValue);
+        nonMgTerm = this.persistence.getOrCreateTerm(TermCategory.TERM, test);
+
+        Assert.assertEquals(mg.getId(), mgTerm.getMessageGroupId());
+        Assert.assertNull(nonMgTerm.getMessageGroupId());
     }
 }

@@ -26,12 +26,13 @@ import java.util.Map;
 
 import de.spektrumprojekt.datamodel.message.InteractionLevel;
 import de.spektrumprojekt.datamodel.message.Message;
-import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.Term;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.i.datamodel.MessageFeature;
-import de.spektrumprojekt.i.ranker.chain.features.FeatureAggregate;
+import de.spektrumprojekt.i.ranker.feature.Feature;
+import de.spektrumprojekt.i.ranker.feature.FeatureAggregate;
 
 /**
  * 
@@ -44,16 +45,18 @@ public class UserSpecificMessageFeatureContext extends FeatureContext {
 
     private FeatureAggregate featureAggregate;
 
-    private MessageRank messageRank;
+    private UserMessageScore messageRank;
 
     private InteractionLevel interactionLevel;
 
-    private final Collection<MessageRank> ranksToUpdate = new HashSet<MessageRank>();
+    private final Collection<UserMessageScore> ranksToUpdate = new HashSet<UserMessageScore>();
 
     private final String userGlobalId;
 
     // first key is the user model type
     private Map<String, Map<Term, UserModelEntry>> matchingUserModelEntries;
+
+    private boolean matchingUserModelEntriesContainsAdapted;
 
     /**
      * 
@@ -82,7 +85,17 @@ public class UserSpecificMessageFeatureContext extends FeatureContext {
         }
     }
 
-    public void addRankToUpdate(MessageRank messageRank) {
+    public void addMessageFeature(Feature featureId, float featureValue) {
+        MessageFeature messageFeature = new MessageFeature(featureId);
+        messageFeature.setMessageGlobalId(this.getMessageFeatureContext().getMessage()
+                .getGlobalId());
+        messageFeature.setMessageGlobalId(this.userGlobalId);
+        messageFeature.setValue(featureValue);
+
+        this.addMessageFeature(messageFeature);
+    }
+
+    public void addRankToUpdate(UserMessageScore messageRank) {
         this.ranksToUpdate.add(messageRank);
 
     }
@@ -112,19 +125,19 @@ public class UserSpecificMessageFeatureContext extends FeatureContext {
         return messageFeatureContext;
     }
 
-    /**
-     * 
-     * @return the rank (null if not computed or uncomputeable)
-     */
-    public MessageRank getMessageRank() {
-        return messageRank;
-    }
-
     public MessageRelation getMessageRelation() {
         return this.messageFeatureContext.getMessageRelation();
     }
 
-    public Collection<MessageRank> getRanksToUpdate() {
+    /**
+     * 
+     * @return the rank (null if not computed or uncomputeable)
+     */
+    public UserMessageScore getMessageScore() {
+        return messageRank;
+    }
+
+    public Collection<UserMessageScore> getRanksToUpdate() {
         return ranksToUpdate;
     }
 
@@ -134,6 +147,10 @@ public class UserSpecificMessageFeatureContext extends FeatureContext {
      */
     public String getUserGlobalId() {
         return userGlobalId;
+    }
+
+    public boolean isMatchingUserModelEntriesContainsAdapted() {
+        return matchingUserModelEntriesContainsAdapted;
     }
 
     public void setFeatureAggregate(FeatureAggregate featureAggregate) {
@@ -148,12 +165,17 @@ public class UserSpecificMessageFeatureContext extends FeatureContext {
         this.matchingUserModelEntries = entries;
     }
 
+    public void setMatchingUserModelEntriesContainsAdapted(
+            boolean matchingUserModelEntriesContainsAdapted) {
+        this.matchingUserModelEntriesContainsAdapted = matchingUserModelEntriesContainsAdapted;
+    }
+
     /**
      * 
      * @param messageRank
      *            the message rank
      */
-    public void setMessageRank(MessageRank messageRank) {
+    public void setMessageRank(UserMessageScore messageRank) {
         this.messageRank = messageRank;
     }
 

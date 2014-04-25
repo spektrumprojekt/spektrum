@@ -173,7 +173,7 @@
 			<dependency>
 				<groupId>org.twitter4j</groupId>
 				<artifactId>twitter4j-stream</artifactId>
-				<version>2.2.5</version>
+				<version>3.0.4</version>
 			</dependency>
 			<dependency>
 				<groupId>rome</groupId>
@@ -227,6 +227,11 @@
 				<groupId>org.apache.opennlp</groupId>
 				<artifactId>opennlp-tools</artifactId>
 				<version>1.5.2-incubating</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.mahout</groupId>
+				<artifactId>mahout-core</artifactId>
+				<version>0.7</version>
 			</dependency>
 			<dependency>
 				<groupId>org.apache.commons</groupId>

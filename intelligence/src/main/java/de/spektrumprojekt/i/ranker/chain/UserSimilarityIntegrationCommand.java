@@ -21,24 +21,24 @@ package de.spektrumprojekt.i.ranker.chain;
 
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
-import de.spektrumprojekt.i.user.similarity.UserSimilarityComputer;
+import de.spektrumprojekt.i.similarity.user.IterativeUserSimilarityComputer;
 
 /**
- * A command to store the message ranks
+ * A command to invoke an {@link IterativeUserSimilarityComputer}
  * 
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 
  */
 public class UserSimilarityIntegrationCommand implements Command<MessageFeatureContext> {
 
-    private final UserSimilarityComputer userSimilarityComputer;
+    private final IterativeUserSimilarityComputer userSimilarityComputer;
 
     /**
      * 
      * @param persistence
      *            the persistence to use
      */
-    public UserSimilarityIntegrationCommand(UserSimilarityComputer userSimilarityComputer) {
+    public UserSimilarityIntegrationCommand(IterativeUserSimilarityComputer userSimilarityComputer) {
         this.userSimilarityComputer = userSimilarityComputer;
     }
 

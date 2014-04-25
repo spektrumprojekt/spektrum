@@ -19,6 +19,10 @@
 
 package de.spektrumprojekt.i.learner;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,12 +37,15 @@ import de.spektrumprojekt.i.informationextraction.InformationExtractionCommand;
 import de.spektrumprojekt.i.learner.chain.LoadRelatedObservationsCommand;
 import de.spektrumprojekt.i.learner.chain.StoreObservationCommand;
 import de.spektrumprojekt.i.learner.chain.UserModelLearnerCommand;
+import de.spektrumprojekt.i.learner.contentbased.IncrementalUserModelIntegrationStrategy;
+import de.spektrumprojekt.i.learner.contentbased.TermCountUserModelEntryIntegrationStrategy;
+import de.spektrumprojekt.i.learner.contentbased.UserModelConfiguration;
+import de.spektrumprojekt.i.learner.contentbased.UserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.i.learner.time.TimeBinnedUserModelEntryIntegrationStrategy;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
-import de.spektrumprojekt.i.ranker.Ranker;
-import de.spektrumprojekt.i.ranker.RankerConfiguration;
-import de.spektrumprojekt.i.ranker.RankerConfigurationFlag;
-import de.spektrumprojekt.i.ranker.UserModelConfiguration;
+import de.spektrumprojekt.i.ranker.Scorer;
+import de.spektrumprojekt.i.ranker.ScorerConfiguration;
+import de.spektrumprojekt.i.ranker.ScorerConfigurationFlag;
 import de.spektrumprojekt.i.timebased.TermCounterCommand;
 import de.spektrumprojekt.persistence.Persistence;
 
@@ -53,7 +60,16 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
 
     private final Persistence persistence;
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(Ranker.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(Scorer.class);
+
+    private final Map<String, UserModelEntryIntegrationStrategy> userModelEntryIntegrationStrategies = new HashMap<String, UserModelEntryIntegrationStrategy>();
+
+    public Learner(
+            Persistence persistence,
+            ScorerConfiguration configuration,
+            InformationExtractionCommand<MessageFeatureContext> ieChain) {
+        this(persistence, configuration, ieChain, false);
+    }
 
     /**
      * TODO use a LearnerConfiguration
@@ -63,53 +79,86 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
      * @param userModelEntryIntegrationStrategy
      *            the strategy to integrate the user model
      */
-    public Learner(Persistence persistence, RankerConfiguration configuration,
-            InformationExtractionCommand<MessageFeatureContext> ieChain) {
+    public Learner(
+            Persistence persistence,
+            ScorerConfiguration configuration,
+            InformationExtractionCommand<MessageFeatureContext> ieChain,
+            boolean onlyDoObservations) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null!");
         }
         if (configuration == null) {
             throw new IllegalArgumentException("configuration cannot be null!");
         }
-        if (configuration.getUserModelTypes() == null
-                || configuration.getUserModelTypes().size() == 0) {
+        if (!onlyDoObservations && (configuration.getUserModelConfigurations() == null
+                || configuration.getUserModelConfigurations().size() == 0)) {
             throw new IllegalArgumentException(
                     "configuration.getUserModelTypes() cannot be null or empty !");
         }
         this.persistence = persistence;
 
         this.learnerChain = new CommandChain<LearnerMessageContext>();
-        if (!configuration.hasFlag(RankerConfigurationFlag.NO_INFORMATION_EXTRACTION)) {
+        if (!onlyDoObservations
+                && !configuration.hasFlag(ScorerConfigurationFlag.NO_INFORMATION_EXTRACTION)) {
             this.learnerChain
                     .addCommand(new ProxyCommand<MessageFeatureContext, LearnerMessageContext>(
                             ieChain));
         }
         this.learnerChain.addCommand(new LoadRelatedObservationsCommand(this.persistence));
 
-        for (String userModelType : configuration.getUserModelTypes().keySet()) {
-            UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy;
-            UserModelConfiguration userModelConfiguration = configuration.getUserModelTypes().get(
-                    userModelType);
-            switch (userModelConfiguration.getUserModelEntryIntegrationStrategy()) {
-            case PLAIN:
-                userModelEntryIntegrationStrategy = new UserModelEntryIntegrationPlainStrategy();
-                break;
-            default:
-                userModelEntryIntegrationStrategy = new TimeBinnedUserModelEntryIntegrationStrategy(
-                        userModelConfiguration.getStartTime(), userModelConfiguration.getBinSize(),
-                        userModelConfiguration.getPrecision(),
-                        userModelConfiguration.isCalculateLater());
+        if (!onlyDoObservations) {
+            for (Entry<String, UserModelConfiguration> userModelConfigEntry : configuration
+                    .getUserModelConfigurations().entrySet()) {
+                final UserModelConfiguration userModelConfiguration = userModelConfigEntry
+                        .getValue();
+                final String userModelType = userModelConfigEntry.getKey();
+
+                final UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy = createUserModelEntryIntegrationStrategy(userModelConfiguration);
+                userModelEntryIntegrationStrategies.put(userModelType,
+                        userModelEntryIntegrationStrategy);
+
+                this.learnerChain.addCommand(new UserModelLearnerCommand(
+                        this.persistence,
+                        userModelType,
+                        userModelEntryIntegrationStrategy,
+                        configuration.isCreateUnknownTermsInUsermodel(userModelType)));
             }
-            this.learnerChain.addCommand(new UserModelLearnerCommand(this.persistence,
-                    userModelType, userModelEntryIntegrationStrategy));
         }
         this.learnerChain.addCommand(new StoreObservationCommand(this.persistence));
 
-        if (configuration.getShortTermMemoryConfiguration() != null
+        if (!onlyDoObservations && configuration.getShortTermMemoryConfiguration() != null
                 && configuration.getShortTermMemoryConfiguration()
                         .getEnergyCalculationConfiguration() != null) {
             this.learnerChain.addCommand(new TermCounterCommand(configuration, this.persistence));
         }
+    }
+
+    private UserModelEntryIntegrationStrategy createUserModelEntryIntegrationStrategy(
+            final UserModelConfiguration userModelConfiguration) {
+        UserModelEntryIntegrationStrategy userModelEntryIntegrationStrategy;
+        switch (userModelConfiguration.getUserModelEntryIntegrationStrategyType()) {
+        case TERM_COUNT:
+            userModelEntryIntegrationStrategy = new TermCountUserModelEntryIntegrationStrategy();
+            break;
+        case INCREMENTAL:
+            userModelEntryIntegrationStrategy = new IncrementalUserModelIntegrationStrategy(
+                    userModelConfiguration);
+
+            break;
+        case TIMEBINNED:
+
+            userModelEntryIntegrationStrategy = new TimeBinnedUserModelEntryIntegrationStrategy(
+                    userModelConfiguration.getStartTime(),
+                    userModelConfiguration.getLengthOfAllBinsInMs(),
+                    userModelConfiguration.getLengthOfSingleBinInMs(),
+                    userModelConfiguration.isCalculateLater());
+            break;
+        default:
+            throw new IllegalArgumentException(
+                    userModelConfiguration.getUserModelEntryIntegrationStrategyType()
+                            + " is not known and handled.");
+        }
+        return userModelEntryIntegrationStrategy;
     }
 
     /**
@@ -149,12 +198,20 @@ public class Learner implements MessageHandler<LearningMessage>, ConfigurationDe
                 + this.learnerChain.getConfigurationDescription();
     }
 
+    public CommandChain<LearnerMessageContext> getLearnerChain() {
+        return learnerChain;
+    }
+
     /**
      * {@inheritDoc}
      */
     @Override
     public Class<LearningMessage> getMessageClass() {
         return LearningMessage.class;
+    }
+
+    public Map<String, UserModelEntryIntegrationStrategy> getUserModelEntryIntegrationStrategies() {
+        return userModelEntryIntegrationStrategies;
     }
 
     /**

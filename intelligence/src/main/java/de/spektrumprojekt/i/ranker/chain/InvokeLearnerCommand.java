@@ -21,6 +21,7 @@ package de.spektrumprojekt.i.ranker.chain;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.communication.Communicator;
@@ -32,10 +33,12 @@ import de.spektrumprojekt.datamodel.observation.ObservationPriority;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.i.learner.LearningMessage;
-import de.spektrumprojekt.i.ranker.RankerConfiguration;
-import de.spektrumprojekt.i.ranker.RankerConfigurationFlag;
+import de.spektrumprojekt.i.ranker.ScorerConfiguration;
+import de.spektrumprojekt.i.ranker.ScorerConfigurationFlag;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
-import de.spektrumprojekt.i.ranker.chain.features.Feature;
+import de.spektrumprojekt.i.ranker.feature.Feature;
+import de.spektrumprojekt.i.ranker.feature.FixWeightFeatureAggregator;
+import de.spektrumprojekt.i.ranker.feature.FixWeightFeatureThresholdValidator;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**
@@ -51,34 +54,38 @@ public class InvokeLearnerCommand implements Command<UserSpecificMessageFeatureC
 
     private final boolean learnFromParent;
     private final boolean learnFromParents;
-    private final boolean learnLowInterest;
-    private final boolean learnFromDiscussions;
-    private final boolean learnFromEveryMessage;
-    private final int minimumCleanTextLength;
 
-    /**
-     * 
-     * @param persistence
-     *            the persistence to use
-     */
+    private final boolean learnFromEveryMessage;
+
+    private final FixWeightFeatureAggregator featureAggregator;
+    private final FixWeightFeatureThresholdValidator featureThresholdValidator;
+
+    private final float scoreToLearnThreshold;
+
+    private int learnCount;
+
     public InvokeLearnerCommand(
             Persistence persistence,
             Communicator communicator,
-            boolean learnLowInterest,
+            Map<Feature, Float> learningFeatureWeights,
+            Map<Feature, Float> learningFeatureThresholds,
             boolean learnFromParent,
             boolean learnFromParents,
-            boolean learnFromDiscussions,
             boolean learnFromEveryMessage,
-            int minimumCleanTextLength) {
-        this.learnLowInterest = learnLowInterest;
+            float scoreToLearnThreshold) {
+
         this.communicator = communicator;
         this.persistence = persistence;
 
+        this.featureAggregator = new FixWeightFeatureAggregator(learningFeatureWeights);
+        this.featureThresholdValidator = new FixWeightFeatureThresholdValidator(
+                learningFeatureThresholds);
+
         this.learnFromParent = learnFromParent;
         this.learnFromParents = learnFromParents;
-        this.learnFromDiscussions = learnFromDiscussions;
+
         this.learnFromEveryMessage = learnFromEveryMessage;
-        this.minimumCleanTextLength = minimumCleanTextLength;
+        this.scoreToLearnThreshold = scoreToLearnThreshold;
     }
 
     /**
@@ -87,51 +94,39 @@ public class InvokeLearnerCommand implements Command<UserSpecificMessageFeatureC
      *            the persistence to use
      */
     public InvokeLearnerCommand(Persistence persistence, Communicator communicator,
-            RankerConfiguration rankerConfiguration) {
+            ScorerConfiguration scorerConfiguration) {
         this(
                 persistence,
                 communicator,
-                rankerConfiguration.hasFlag(RankerConfigurationFlag.LEARN_NEGATIVE),
-                rankerConfiguration
-                        .hasFlag(RankerConfigurationFlag.DISCUSSION_PARTICIPATION_LEARN_FROM_PARENT_MESSAGE),
-                rankerConfiguration
-                        .hasFlag(RankerConfigurationFlag.DISCUSSION_PARTICIPATION_LEARN_FROM_ALL_PARENT_MESSAGES),
-                !rankerConfiguration
-                        .hasFlag(RankerConfigurationFlag.DO_NOT_LEARN_FROM_DISCUSSION_PARTICIPATION),
-                rankerConfiguration
-                        .hasFlag(RankerConfigurationFlag.LEARN_FROM_EVERY_MESSAGE),
-                rankerConfiguration.getMinimumCleanTextLengthForInvokingLearner());
+                scorerConfiguration.getLearningFeatureWeights(),
+                scorerConfiguration.getLearningFeatureTresholds(),
+                scorerConfiguration
+                        .hasFlag(ScorerConfigurationFlag.DISCUSSION_PARTICIPATION_LEARN_FROM_PARENT_MESSAGE),
+                scorerConfiguration
+                        .hasFlag(ScorerConfigurationFlag.DISCUSSION_PARTICIPATION_LEARN_FROM_ALL_PARENT_MESSAGES),
+                scorerConfiguration
+                        .hasFlag(ScorerConfigurationFlag.LEARN_FROM_EVERY_MESSAGE),
+                scorerConfiguration.getScoreToLearnThreshold());
     }
 
     private Interest generateInterest(UserSpecificMessageFeatureContext context) {
         Interest value = null;
-        if (context.getFeatureAggregate().cleanedTextLength < minimumCleanTextLength) {
+
+        // check
+        boolean check = this.featureThresholdValidator.validate(context.getFeatureAggregate());
+        if (!check) {
             return null;
         }
         if (learnFromEveryMessage) {
             value = Interest.EXTREME;
             return value;
         }
-        if (context.check(Feature.AUTHOR_FEATURE, 1)) {
-            value = Interest.EXTREME;
-        } else if (context.check(Feature.MENTION_FEATURE, 1)) {
-            value = Interest.HIGH;
-        } else if (context.check(Feature.LIKE_FEATURE, 1)) {
-            value = Interest.HIGH;
-        } else if (learnFromDiscussions
-                && context.check(Feature.DISCUSSION_PARTICIPATION_FEATURE, 1)) {
-            value = Interest.HIGH;
-        } else if (learnFromDiscussions && context.check(Feature.DISCUSSION_MENTION_FEATURE, 1)) {
-            value = Interest.HIGH;
-        } else if (learnLowInterest && !context.check(Feature.DISCUSSION_ROOT_FEATURE, 1)) {
-            if (context.getMessageRank().getRank() < 0.5f) {
-                value = Interest.NORMAL;
-            } else if (context.getMessageRank().getRank() < 0.25f) {
-                value = Interest.LOW;
-            } else if (context.getMessageRank().getRank() < 0.1f) {
-                value = Interest.NONE;
-            }
+        float score = this.featureAggregator.aggregate(context.getFeatureAggregate());
+
+        if (score >= scoreToLearnThreshold) {
+            value = Interest.match(score);
         }
+
         return value;
     }
 
@@ -141,12 +136,12 @@ public class InvokeLearnerCommand implements Command<UserSpecificMessageFeatureC
     @Override
     public String getConfigurationDescription() {
         return this.getClass().getSimpleName()
-                + " learnFromParent=" + learnFromParent
-                + " learnFromParents=" + learnFromParents
-                + " learnLowInterest=" + learnLowInterest
-                + " learnFromDiscussions=" + learnFromDiscussions
-                + " minimumCleanTextLength=" + minimumCleanTextLength;
+                + " " + this.toString();
 
+    }
+
+    public int getLearnCount() {
+        return learnCount;
     }
 
     private void learnFromParentMessage(UserSpecificMessageFeatureContext context, Message message,
@@ -213,7 +208,7 @@ public class InvokeLearnerCommand implements Command<UserSpecificMessageFeatureC
                     message,
                     ObservationPriority.FIRST_LEVEL_FEATURE_INFERRED,
                     interest);
-
+            learnCount++;
         }
 
         if (context.check(Feature.DISCUSSION_PARTICIPATION_FEATURE, 1)) {
@@ -225,5 +220,14 @@ public class InvokeLearnerCommand implements Command<UserSpecificMessageFeatureC
             }
         }
 
+    }
+
+    @Override
+    public String toString() {
+        return "InvokeLearnerCommand [learnFromParent=" + learnFromParent + ", learnFromParents="
+                + learnFromParents + ", learnFromEveryMessage=" + learnFromEveryMessage
+                + ", featureAggregator=" + featureAggregator + ", featureThresholdValidator="
+                + featureThresholdValidator + ", scoreToLearnThreshold=" + scoreToLearnThreshold
+                + "]";
     }
 }

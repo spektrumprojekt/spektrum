@@ -20,7 +20,11 @@
 package de.spektrumprojekt.datamodel.user;
 
 import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -33,8 +37,14 @@ import javax.persistence.UniqueConstraint;
 
 import de.spektrumprojekt.datamodel.identifiable.Identifiable;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
+import de.spektrumprojekt.datamodel.message.Term;
 
 /**
+ * A user model entry with a term. The actual value to be used is stored in the {@link #scoredTerm}
+ * {@link ScoredTerm#getWeight()}. The {@link #scoreCount} keeps number of scores add to
+ * {@link #scoreSum}. The flag {@link #adapted} tells that the weight of the scored term is not
+ * derived by the sum and count of the entry but from somewhere else (e.g. from other user models or
+ * somewhere else).
  * 
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 
@@ -47,6 +57,31 @@ public class UserModelEntry extends Identifiable {
      * 
      */
     private static final long serialVersionUID = 1L;
+
+    public static Map<Term, UserModelEntry> createTermToEntryMap(Collection<UserModelEntry> entries) {
+        Map<Term, UserModelEntry> map = new HashMap<Term, UserModelEntry>();
+        for (UserModelEntry entry : entries) {
+            map.put(entry.getScoredTerm().getTerm(), entry);
+        }
+        return map;
+    }
+
+    /**
+     * Filter the map to only return term to {@link UserModelEntry} pairs that are NOT adapted.
+     * 
+     * @param entries
+     * @return
+     */
+    public static Map<Term, UserModelEntry> filteredForNonAdaptedEntries(
+            Map<Term, UserModelEntry> entries) {
+        final Map<Term, UserModelEntry> filteredEntries = new HashMap<Term, UserModelEntry>();
+        for (Entry<Term, UserModelEntry> entry : entries.entrySet()) {
+            if (!entry.getValue().isAdapted()) {
+                filteredEntries.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return filteredEntries;
+    }
 
     @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
     private ScoredTerm scoredTerm;
@@ -65,6 +100,8 @@ public class UserModelEntry extends Identifiable {
     private float scoreSum;
 
     private transient boolean adapted;
+
+    private transient Date lastChange;
 
     /**
      * for the jpa
@@ -98,6 +135,15 @@ public class UserModelEntry extends Identifiable {
         return timeBinEntriesHistory.add(e);
     }
 
+    public void cleanUpTimeBins(long minimumTimeBinSizeStart) {
+        for (UserModelEntryTimeBin entryTimeBin : new HashSet<UserModelEntryTimeBin>(
+                this.timeBinEntries)) {
+            if (entryTimeBin.getTimeBinStart() < minimumTimeBinSizeStart) {
+                this.timeBinEntries.remove(entryTimeBin);
+            }
+        }
+    }
+
     public void consolidate() {
         if (!this.adapted) {
             this.scoredTerm.setWeight(this.scoreSum / this.scoreCount);
@@ -115,6 +161,10 @@ public class UserModelEntry extends Identifiable {
         this.scoreCount = count;
         this.scoreSum = sum;
         consolidate();
+    }
+
+    public Date getLastChange() {
+        return lastChange;
     }
 
     public float getScoreCount() {
@@ -163,6 +213,10 @@ public class UserModelEntry extends Identifiable {
 
     public void setAdapted(boolean adapted) {
         this.adapted = adapted;
+    }
+
+    public void setLastChange(Date lastChange) {
+        this.lastChange = lastChange;
     }
 
     public void setScoreCount(float scoreCount) {

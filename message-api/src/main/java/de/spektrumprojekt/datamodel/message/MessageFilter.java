@@ -13,6 +13,7 @@ public class MessageFilter {
     private OrderDirection messageIdOrderDirection;
 
     private String messageGroupGlobalId;
+    private Long messageGroupId;
 
     private String sourceGlobalId;
 
@@ -28,6 +29,10 @@ public class MessageFilter {
 
     public String getMessageGroupGlobalId() {
         return messageGroupGlobalId;
+    }
+
+    public Long getMessageGroupId() {
+        return messageGroupId;
     }
 
     public OrderDirection getMessageIdOrderDirection() {
@@ -56,6 +61,10 @@ public class MessageFilter {
 
     public void setMessageGroupGlobalId(String messageGroupGlobalId) {
         this.messageGroupGlobalId = messageGroupGlobalId;
+    }
+
+    public void setMessageGroupId(Long messageGroupId) {
+        this.messageGroupId = messageGroupId;
     }
 
     public void setMessageIdOrderDirection(OrderDirection messageIdOrderDirection) {

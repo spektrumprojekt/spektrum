@@ -22,7 +22,7 @@ package de.spektrumprojekt.i.learner.adaptation;
 import java.util.Arrays;
 
 import de.spektrumprojekt.communication.CommunicationMessage;
-import de.spektrumprojekt.datamodel.message.MessageRank;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.message.Term;
 
 public class DirectedUserModelAdaptationMessage implements CommunicationMessage {
@@ -37,7 +37,7 @@ public class DirectedUserModelAdaptationMessage implements CommunicationMessage 
     private String userGlobalId;
 
     private Term[] termsToAdapt;
-    private MessageRank rankBeforeAdaptation;
+    private UserMessageScore rankBeforeAdaptation;
 
     /**
      * for json deserialization
@@ -51,7 +51,7 @@ public class DirectedUserModelAdaptationMessage implements CommunicationMessage 
             String messageId,
             String messageGroupGlobalId,
             Term[] termsToAdapt,
-            MessageRank rankBeforeAdaptation) {
+            UserMessageScore rankBeforeAdaptation) {
         if (userGlobalId == null) {
             throw new IllegalArgumentException("userGlobalId cannot be null.");
         }
@@ -89,7 +89,7 @@ public class DirectedUserModelAdaptationMessage implements CommunicationMessage 
         return messageId;
     }
 
-    public MessageRank getRankBeforeAdaptation() {
+    public UserMessageScore getRankBeforeAdaptation() {
         return rankBeforeAdaptation;
     }
 

@@ -22,7 +22,7 @@ package de.spektrumprojekt.i.ranker.chain;
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.datamodel.message.InteractionLevel;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
-import de.spektrumprojekt.i.ranker.chain.features.Feature;
+import de.spektrumprojekt.i.ranker.feature.Feature;
 
 /**
  * Command for computing the message rank out of the features

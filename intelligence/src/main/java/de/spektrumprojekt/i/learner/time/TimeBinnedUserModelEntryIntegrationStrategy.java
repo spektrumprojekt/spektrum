@@ -20,19 +20,22 @@
 package de.spektrumprojekt.i.learner.time;
 
 import java.util.Date;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.lang3.time.DateUtils;
 
 import de.spektrumprojekt.commons.time.TimeProviderHolder;
 import de.spektrumprojekt.datamodel.message.ScoredTerm;
+import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.observation.Interest;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserModelEntryTimeBin;
-import de.spektrumprojekt.i.learner.UserModelEntryIntegrationPlainStrategy;
+import de.spektrumprojekt.i.learner.contentbased.TermCountUserModelEntryIntegrationStrategy;
 
 public class TimeBinnedUserModelEntryIntegrationStrategy extends
-        UserModelEntryIntegrationPlainStrategy {
+        TermCountUserModelEntryIntegrationStrategy {
 
     public static long DAY = DateUtils.MILLIS_PER_DAY;
     public static long WEEK = 7 * DateUtils.MILLIS_PER_DAY;
@@ -48,38 +51,102 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
 
     private final long startTime;
 
-    private final long binSizeInMs;
+    private final long lengthOfAllBinsInMs;
 
-    private final long binPrecisionInMs;
+    private final long lengthOfSingleBinInMs;
 
     private final boolean calculateLater;
 
-    public TimeBinnedUserModelEntryIntegrationStrategy(long startTime, long binSizeInMs,
-            long binPrecisionInMs) {
-        this(startTime, binSizeInMs, binPrecisionInMs, false);
+    public TimeBinnedUserModelEntryIntegrationStrategy(long startTime, long lengthOfAllBinsInMs,
+            long lengthOfSingleBinInMs) {
+        this(startTime, lengthOfAllBinsInMs, lengthOfSingleBinInMs, false);
 
     }
 
-    public TimeBinnedUserModelEntryIntegrationStrategy(long startTime, long binSizeInMs,
-            long binPrecisionInMs, boolean calculateLater) {
-        if (binPrecisionInMs <= 0) {
+    /**
+     * Better to only use the single bin length and the number of bins
+     * 
+     * @param startTime
+     * @param lengthOfAllBinsInMs
+     * @param lengthOfSingleBinInMs
+     * @param calculateLater
+     */
+    public TimeBinnedUserModelEntryIntegrationStrategy(
+            long startTime,
+            long lengthOfAllBinsInMs,
+            long lengthOfSingleBinInMs,
+            boolean calculateLater) {
+        if (lengthOfSingleBinInMs <= 0) {
             throw new IllegalArgumentException("binPrecisionInMs must be > 0 but is "
-                    + binPrecisionInMs);
+                    + lengthOfSingleBinInMs);
         }
+
+        int factor = (int) Math.ceil((double) lengthOfAllBinsInMs / lengthOfSingleBinInMs);
+
         this.startTime = startTime;
-        this.binSizeInMs = binSizeInMs;
-        this.binPrecisionInMs = binPrecisionInMs;
+        this.lengthOfAllBinsInMs = factor * lengthOfSingleBinInMs;
+        this.lengthOfSingleBinInMs = lengthOfSingleBinInMs;
         this.calculateLater = calculateLater;
     }
 
-    private long determineTimeBinPrecisionStart(long time) {
-        long index = (time - startTime) / binPrecisionInMs;
-        return index * binPrecisionInMs;
+    @Override
+    public Map<Term, UserModelEntry> cleanUpEntries(Map<Term, UserModelEntry> entries) {
+        entries = super.cleanUpEntries(entries);
+
+        Map<Term, UserModelEntry> cleanedEntries = new HashMap<Term, UserModelEntry>();
+
+        long minimumTimeBinSizeStart = this
+                .determineFirstTimeBinStart(TimeProviderHolder.DEFAULT.getCurrentTime());
+        for (Entry<Term, UserModelEntry> entry : entries.entrySet()) {
+
+            entry.getValue().cleanUpTimeBins(minimumTimeBinSizeStart);
+
+            if (!calculateLater) {
+                entry.getValue().consolidateByTimeBins();
+            }
+            if (entry.getValue().getTimeBinEntries().size() > 0) {
+                cleanedEntries.put(entry.getKey(), entry.getValue());
+
+            }
+        }
+        return cleanedEntries;
     }
 
-    private long determineTimeBinSizeStart(long time) {
-        long index = (time - startTime) / binSizeInMs;
-        return index * binSizeInMs;
+    public int determineBinIndex(long time) {
+        long first = determineFirstTimeBinStart(time);
+        long current = determineCurrentTimeBinStart(time);
+        int index = (int) ((current - first) / this.lengthOfSingleBinInMs);
+        return index;
+    }
+
+    /**
+     * Example: <br>
+     * lengthOfSingleBinInMs is the time interval for a day<br>
+     * startTime is 0 (default)<br>
+     * time given is 2011-12-12 4:12pm<br>
+     * than the return will be 2011-12-12 0:00<br>
+     * 
+     * @param time
+     * @return the time the current bin started for the given time
+     */
+    public long determineCurrentTimeBinStart(long time) {
+        long index = (time - startTime) / lengthOfSingleBinInMs;
+        return index * lengthOfSingleBinInMs;
+    }
+
+    /**
+     * Example: <br>
+     * lengthOfAllBinsInMs is the time interval for a month<br>
+     * startTime is 0 (default)<br>
+     * time given is 2011-12-12<br>
+     * than the return will be 2011-12-01<br>
+     * 
+     * @param time
+     * @return the time the first bin started
+     */
+    public long determineFirstTimeBinStart(long time) {
+        long index = (time - startTime) / lengthOfAllBinsInMs;
+        return index * lengthOfAllBinsInMs;
     }
 
     @Override
@@ -91,21 +158,20 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
         return updateEntry(entry, -1 * interest.getScore(), scoredTerm, observationDate);
     }
 
-    public long getBinPrecisionInMs() {
-        return binPrecisionInMs;
-    }
-
-    public long getBinSizeInMs() {
-        return binSizeInMs;
-    }
-
     /**
      * {@inheritDoc}
      */
     @Override
     public String getConfigurationDescription() {
-        return getClass().getSimpleName() + " binSizeInMs=" + binSizeInMs + " binPrecisionInMs="
-                + binPrecisionInMs + " startTime=" + startTime;
+        return toString();
+    }
+
+    public long getLengthOfAllBinsInMs() {
+        return lengthOfAllBinsInMs;
+    }
+
+    public long getLengthOfSingleBinInMs() {
+        return lengthOfSingleBinInMs;
     }
 
     public long getStartTime() {
@@ -126,15 +192,30 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
         return calculateLater;
     }
 
+    public boolean isTimeBinChanged(Date lastTimeBinChecked) {
+        long lastStart = determineFirstTimeBinStart(lastTimeBinChecked.getTime());
+        long currentStart = determineFirstTimeBinStart(TimeProviderHolder.DEFAULT.getCurrentTime());
+
+        return lastStart < currentStart;
+    }
+
+    @Override
+    public String toString() {
+        return "TimeBinnedUserModelEntryIntegrationStrategy [startTime=" + startTime
+                + ", lengthOfAllBinsInMs=" + lengthOfAllBinsInMs + ", lengthOfSingleBinInMs="
+                + lengthOfSingleBinInMs + ", calculateLater=" + calculateLater + "]";
+    }
+
     private boolean updateEntry(UserModelEntry entry, float interestScore, ScoredTerm scoredTerm,
             Date observationDate) {
         if (scoredTerm.getWeight() >= getMinScore()) {
 
             long currentTime = TimeProviderHolder.DEFAULT.getCurrentTime();
 
-            long timeBinPrecisionStart = determineTimeBinPrecisionStart(observationDate.getTime());
-            long currentTimeBinSizeStart = determineTimeBinSizeStart(currentTime);
+            long timeBinPrecisionStart = determineCurrentTimeBinStart(observationDate.getTime());
+            long currentTimeBinSizeStart = determineFirstTimeBinStart(currentTime);
 
+            // time is out of the bin
             if (timeBinPrecisionStart >= currentTimeBinSizeStart) {
 
                 UserModelEntryTimeBin timeBin = entry
@@ -151,21 +232,23 @@ public class TimeBinnedUserModelEntryIntegrationStrategy extends
                 }
                 timeBin.setScoreSum(timeBin.getScoreSum() + interestScore);
 
-                for (UserModelEntryTimeBin entryTimeBin : new HashSet<UserModelEntryTimeBin>(
-                        entry.getTimeBinEntries())) {
-                    if (entryTimeBin.getTimeBinStart() < currentTimeBinSizeStart) {
-                        entry.getTimeBinEntries().remove(entryTimeBin);
-                    }
-                }
+                // todo: this should be called on every time bin change
+                entry.cleanUpTimeBins(currentTimeBinSizeStart);
                 if (!calculateLater) {
                     entry.consolidateByTimeBins();
                 }
                 entry.addToTimeBinEntriesHistory(timeBin);
 
                 int size = entry.getTimeBinEntries() == null ? 0 : entry.getTimeBinEntries().size();
-                assert size <= this.binSizeInMs / this.binPrecisionInMs : "timeBinEntries.size="
-                        + size + " is greater than this.binSizeInMs / this.binPrecisionInMs = "
-                        + this.binSizeInMs / this.binPrecisionInMs + ".";
+                double ceiledMaxBins = Math
+                        .ceil(this.lengthOfAllBinsInMs / (double) this.lengthOfSingleBinInMs);
+                if (size > ceiledMaxBins) {
+                    throw new IllegalArgumentException(
+                            "timeBinEntries.size="
+                                    + size
+                                    + " is greater than ceil( this.lengthOfAllBinsInMs / this.lengthOfSingleBinInMs) = "
+                                    + ceiledMaxBins + ".");
+                }
             }
         }
         return entry.getTimeBinEntries() == null || entry.getTimeBinEntries().size() == 0;

@@ -24,16 +24,18 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
-import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
 import de.spektrumprojekt.datamodel.message.TermFrequency;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.source.Source;
@@ -55,6 +57,25 @@ import de.spektrumprojekt.exceptions.SubscriptionNotFoundException;
  * 
  */
 public interface Persistence {
+
+    public static enum MatchMode {
+        EXACT,
+        STARTS_WITH,
+        ENDS_WITH;
+
+        public boolean matches(String base, String toMatch) {
+            switch (this) {
+            case EXACT:
+                return StringUtils.equals(base, toMatch);
+            case ENDS_WITH:
+                return base.endsWith(toMatch);
+            case STARTS_WITH:
+                return base.startsWith(toMatch);
+            default:
+                return StringUtils.equals(base, toMatch);
+            }
+        }
+    }
 
     void close();
 
@@ -112,7 +133,7 @@ public interface Persistence {
      */
     MessageGroup getMessageGroupByGlobalId(String globalIdString);
 
-    MessageRank getMessageRank(String userGlobalId, String messageGlobalId);
+    UserMessageScore getMessageScore(String userGlobalId, String messageGlobalId);
 
     MessageRelation getMessageRelation(Message message);
 
@@ -159,6 +180,18 @@ public interface Persistence {
 
     TermFrequency getTermFrequency();
 
+    User getUserByGlobalId(String userGlobalId);
+
+    Collection<UserModelEntry> getUserModelEntries(
+            UserModel userModel,
+            Collection<String> termsToMatch,
+            Collection<Long> messageGroupIdsToConsider,
+            MatchMode matchMode,
+            boolean useMGFreeTermValue);
+
+    Collection<UserModelEntry> getUserModelEntries(UserModel userModel,
+            Collection<String> termsToMatch, MatchMode matchMode);
+
     Map<String, String> getUserModelEntriesCountDescription();
 
     /**
@@ -181,7 +214,8 @@ public interface Persistence {
     UserSimilarity getUserSimilarity(String userGlobalIdFrom, String userGlobalIdTo,
             String messageGroupGlobalId);
 
-    Collection<UserModel> getUsersWithUserModel(Collection<Term> terms, String userModelType);
+    Collection<UserModel> getUsersWithUserModel(Collection<Term> terms, String userModelType,
+            MatchMode matchMode);
 
     void initialize();
 
@@ -219,7 +253,7 @@ public interface Persistence {
      * @param ranks
      *            store the ranks
      */
-    void storeMessageRanks(Collection<MessageRank> ranks);
+    void storeMessageRanks(Collection<UserMessageScore> ranks);
 
     /**
      * Stores the message relation
@@ -251,7 +285,7 @@ public interface Persistence {
 
     void storeUserSimilarity(UserSimilarity stat);
 
-    void updateMessageRank(MessageRank rankToUpdate);
+    void updateMessageRank(UserMessageScore rankToUpdate);
 
     Source updateSource(Source source) throws SourceNotFoundException;
 
@@ -265,4 +299,5 @@ public interface Persistence {
 
     void visitAllMessageRanks(MessageRankVisitor visitor, Date startDate, Date endDate)
             throws Exception;
+
 }

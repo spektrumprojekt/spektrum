@@ -17,6 +17,27 @@ public class MaximumTermVectorSimilarityComputer extends TermWeightTermVectorSim
     }
 
     @Override
+    public float getSimilarity(Map<Term, UserModelEntry> relevantEntries1,
+            Map<Term, UserModelEntry> relevantEntries2) {
+        float max = 0;
+
+        for (Term term : relevantEntries1.keySet()) {
+            UserModelEntry entry1 = relevantEntries1.get(term);
+            UserModelEntry entry2 = relevantEntries2.get(term);
+
+            if (entry2 == null) {
+                continue;
+            }
+            float entryScore1 = entry1.getScoredTerm().getWeight();
+            float entryScore2 = entry2.getScoredTerm().getWeight();
+
+            max = Math.max(max, entryScore1 * entryScore2);
+        }
+        return max;
+
+    }
+
+    @Override
     public Float getSimilarity(String messageGroupId,
             Map<String, Map<Term, UserModelEntry>> allEntries, MergeValuesStrategy strategy,
             Collection<Term> terms) {

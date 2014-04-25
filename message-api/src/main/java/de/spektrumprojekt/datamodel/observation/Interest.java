@@ -35,18 +35,31 @@ public enum Interest {
      * Extreme
      */
     EXTREME(1f),
+
+    /**
+     * high
+     */
+    VERY_HIGH(0.875f),
+
     /**
      * high
      */
     HIGH(0.75f),
+
+    ABOVE_NORMAL(0.625f),
     /**
      * normal
      */
     NORMAL(0.5f),
+
+    BELOW_NORMAL(0.375f),
+
     /**
      * low
      */
     LOW(0.25f),
+
+    VERY_LOW(0.125f),
     /**
      * none
      */
@@ -58,7 +71,16 @@ public enum Interest {
      * Unmodifiable list with all interests, starting with the lowest.
      */
     public static final List<Interest> INTERESTS_ORDERED = Collections.unmodifiableList(Arrays
-            .asList(new Interest[] { NONE, LOW, NORMAL, HIGH, EXTREME }));
+            .asList(new Interest[] {
+                    NONE,
+                    VERY_LOW,
+                    LOW,
+                    BELOW_NORMAL,
+                    NORMAL,
+                    ABOVE_NORMAL,
+                    HIGH,
+                    VERY_HIGH, EXTREME
+            }));
 
     /**
      * Get the nearest interest to the given score.

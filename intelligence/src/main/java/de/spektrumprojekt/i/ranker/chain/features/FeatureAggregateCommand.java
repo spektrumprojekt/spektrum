@@ -19,20 +19,16 @@
 
 package de.spektrumprojekt.i.ranker.chain.features;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import de.spektrumprojekt.commons.chain.Command;
-import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.message.InteractionLevel;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
-import de.spektrumprojekt.helper.MessageHelper;
-import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
-import de.spektrumprojekt.informationextraction.InformationExtractionContext;
+import de.spektrumprojekt.i.ranker.feature.Feature;
+import de.spektrumprojekt.i.ranker.feature.FeatureAggregate;
 import de.spektrumprojekt.persistence.Persistence;
 
 /**
- * Command feature to compute the auhtor feature
+ * Command feature to compute the feature aggregate
  * 
  * @author Communote GmbH - <a href="http://www.communote.de/">http://www.communote.com/</a>
  * 
@@ -62,68 +58,30 @@ public class FeatureAggregateCommand implements Command<UserSpecificMessageFeatu
     @Override
     public void process(UserSpecificMessageFeatureContext context) {
 
-        MessageFeatureContext messageFeatureContext = context.getMessageFeatureContext();
-
         String userGlobalId = context.getUserGlobalId();
-        int msgLength = 0;
-        int cleanedTextLength = 0;
-        int numTerms = 0;
-        for (InformationExtractionContext iec : messageFeatureContext
-                .getInformationExtractionContexts()) {
 
-            if (iec.getCleanText() != null) {
-                cleanedTextLength += iec.getCleanText().length();
-            }
-            if (iec.getMessagePart().getScoredTerms() != null) {
-                numTerms += iec.getMessagePart().getScoredTerms().size();
-            }
-            if (iec.getMessagePart().getContent() != null) {
-                msgLength += iec.getMessagePart().getContent().length();
-            }
-        }
         UserSimilarity simTo = persistence.getUserSimilarity(context.getMessage()
                 .getAuthorGlobalId(), userGlobalId, context.getMessage().getMessageGroup()
                 .getGlobalId());
         UserSimilarity simFrom = persistence.getUserSimilarity(userGlobalId, context.getMessage()
                 .getAuthorGlobalId(), context.getMessage().getMessageGroup().getGlobalId());
 
-        double to = simTo == null ? 0 : simTo.getSimilarity();
-        double from = simFrom == null ? 0 : simFrom.getSimilarity();
+        float to = simTo == null ? 0 : (float) simTo.getSimilarity();
+        float from = simFrom == null ? 0 : (float) simFrom.getSimilarity();
 
-        int numMentions = MessageHelper.getMentions(context.getMessage()).size();
-        int numLikes = MessageHelper.getUserLikes(context.getMessage()).size();
-        int numDis = context.getMessageRelation() == null ? 0 : context.getMessageRelation()
-                .getNumberOfRelatedMessages();
-        int numTags = MessageHelper.getTags(context.getMessage()).size();
+        context.addMessageFeature(Feature.USER_TO_SIM_FEATURE, to);
+        context.addMessageFeature(Feature.USER_TO_SIM_FEATURE, from);
 
-        Set<String> authors = new HashSet<String>();
-        authors.add(context.getMessage().getAuthorGlobalId());
-        Set<String> mentions = new HashSet<String>(MessageHelper.getMentions(context.getMessage()));
-        Set<String> tags = new HashSet<String>(MessageHelper.getTags(context.getMessage()));
-        for (Message related : messageFeatureContext.getMessagesOfRelation().values()) {
-            authors.add(related.getAuthorGlobalId());
-            mentions.addAll(MessageHelper.getMentions(related));
-            tags.addAll(MessageHelper.getTags(related));
-        }
+        FeatureAggregate featureAggregate = new FeatureAggregate(context.getFeatures());
 
-        FeatureAggregate featureAggregate = new FeatureAggregate();
-
-        featureAggregate.features.putAll(messageFeatureContext.getFeaturesForUser(userGlobalId));
-        featureAggregate.messageTextLength = msgLength;
-        featureAggregate.cleanedTextLength = cleanedTextLength;
-        featureAggregate.numTerms = numTerms;
-        featureAggregate.userToSim = to;
-        featureAggregate.userFromSim = from;
-        featureAggregate.numMentions = numMentions;
-        featureAggregate.numLikes = numLikes;
-        featureAggregate.numTags = numTags;
-        featureAggregate.numDiscussion = numDis;
-        featureAggregate.numAuthors = authors.size();
-        featureAggregate.numDiscussionMentions = mentions.size();
-        featureAggregate.numDiscussionTags = tags.size();
-        featureAggregate.interactionLevel = context.getInteractionLevel();
-        if (featureAggregate.interactionLevel == null) {
+        featureAggregate.setInteractionLevel(context.getInteractionLevel());
+        if (featureAggregate.getInteractionLevel() == null) {
             throw new IllegalArgumentException("interactionLevel cannot be null! context="
+                    + context);
+        }
+        if (featureAggregate.getFeatureValue(Feature.AUTHOR_FEATURE) == 1f
+                && !featureAggregate.getInteractionLevel().equals(InteractionLevel.DIRECT)) {
+            throw new IllegalStateException("interactionLevel must be direct for authors! context="
                     + context);
         }
 

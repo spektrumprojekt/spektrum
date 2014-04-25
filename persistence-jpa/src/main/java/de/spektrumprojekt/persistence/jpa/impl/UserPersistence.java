@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -43,6 +44,7 @@ import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
+import de.spektrumprojekt.persistence.Persistence.MatchMode;
 import de.spektrumprojekt.persistence.jpa.JPAConfiguration;
 import de.spektrumprojekt.persistence.jpa.transaction.Transaction;
 
@@ -99,7 +101,7 @@ public class UserPersistence extends AbstractPersistenceLayer {
     }
 
     public User getOrCreateUser(final String userGlobalId) {
-        User user = getEntityByGlobalId(User.class, userGlobalId);
+        User user = getUserByGlobalId(userGlobalId);
         if (user == null) {
 
             Transaction<User> transaction = new Transaction<User>() {
@@ -167,6 +169,77 @@ public class UserPersistence extends AbstractPersistenceLayer {
         }
 
         return result;
+    }
+
+    public User getUserByGlobalId(String userGlobalId) {
+
+        return getEntityByGlobalId(User.class, userGlobalId);
+    }
+
+    public Collection<UserModelEntry> getUserModelEntries(
+            UserModel userModel,
+            Collection<String> termValuesToMatch,
+            Collection<Long> messageGroupIdsToConsider,
+            MatchMode matchMode,
+            boolean useMGFreeTermValue) {
+
+        throw new UnsupportedOperationException(
+                "To be implemented. Enhance getUserModelEntries with filtering for mgs");
+        // return this.getUserModelEntries(userModel, termValuesToMatch, matchMode);
+    }
+
+    public Collection<UserModelEntry> getUserModelEntries(final UserModel userModel,
+            final Collection<String> termValuesToMatch, final MatchMode matchMode) {
+        if (termValuesToMatch == null || termValuesToMatch.isEmpty()) {
+            throw new IllegalArgumentException("termValuesToMatch cannot be null or empty.");
+        }
+        Transaction<Collection<UserModelEntry>> transaction = new Transaction<Collection<UserModelEntry>>() {
+
+            @Override
+            protected Collection<UserModelEntry> doTransaction(EntityManager entityManager) {
+                CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+                CriteriaQuery<UserModelEntry> query = cb
+                        .createQuery(UserModelEntry.class);
+                Root<UserModelEntry> userModelEntry = query.from(UserModelEntry.class);
+                Join<UserModelEntry, UserModel> userModelJoin = userModelEntry.join("userModel");
+                Join<UserModelEntry, ScoredTerm> scoredTerm = userModelEntry.join("scoredTerm");
+                Join<ScoredTerm, Term> term = scoredTerm.join("term");
+                Path<String> termValue = term.get("value");
+
+                query.distinct(true);
+                query.select(userModelEntry);
+                Predicate modelType = cb.equal(userModelJoin, userModel);
+                Collection<Predicate> predicates = new HashSet<Predicate>();
+                Predicate match;
+                switch (matchMode) {
+                case STARTS_WITH:
+                    for (String v : termValuesToMatch) {
+                        predicates.add(cb.like(termValue, v + "%"));
+                    }
+                    match = cb.or(predicates.toArray(new Predicate[] { }));
+                    break;
+                case ENDS_WITH:
+                    for (String v : termValuesToMatch) {
+                        predicates.add(cb.like(termValue, "%" + v));
+                    }
+                    match = cb.or(predicates.toArray(new Predicate[] { }));
+                    break;
+                case EXACT:
+                default:
+                    match = termValue.in(termValuesToMatch);
+                    break;
+                }
+
+                query.where(cb.and(modelType, match));
+
+                try {
+                    return entityManager.createQuery(query).getResultList();
+                } catch (NoResultException e) {
+                    return Collections.emptyList();
+                }
+            }
+        };
+        return transaction.executeTransaction(getEntityManager());
     }
 
     /**
@@ -349,7 +422,7 @@ public class UserPersistence extends AbstractPersistenceLayer {
     }
 
     public Collection<UserModel> getUsersWithUserModel(final Collection<Term> terms,
-            final String userModelType) {
+            final String userModelType, final MatchMode matchMode) {
         if (terms == null || terms.isEmpty()) {
             throw new IllegalArgumentException("terms cannot be null or empty.");
         }
@@ -364,13 +437,33 @@ public class UserPersistence extends AbstractPersistenceLayer {
                 Join<UserModelEntry, UserModel> userModel = userModelEntry.join("userModel");
                 Join<UserModelEntry, ScoredTerm> scoredTerm = userModelEntry.join("scoredTerm");
                 Join<ScoredTerm, Term> term = scoredTerm.join("term");
+                Path<String> termValue = term.get("value");
 
                 query.distinct(true);
                 query.select(userModel);
-                query.where(cb.and(
-                        cb.equal(userModel.get("userModelType"), userModelType),
-                        term.in(terms))
-                        );
+                Predicate modelType = cb.equal(userModel.get("userModelType"), userModelType);
+                Collection<Predicate> predicates = new HashSet<Predicate>();
+                Predicate match;
+                switch (matchMode) {
+                case STARTS_WITH:
+                    for (Term t : terms) {
+                        predicates.add(cb.like(termValue, t.getValue() + "%"));
+                    }
+                    match = cb.or(predicates.toArray(new Predicate[] { }));
+                    break;
+                case ENDS_WITH:
+                    for (Term t : terms) {
+                        predicates.add(cb.like(termValue, "%" + t.getValue()));
+                    }
+                    match = cb.or(predicates.toArray(new Predicate[] { }));
+                    break;
+                case EXACT:
+                default:
+                    match = term.in(terms);
+                    break;
+                }
+
+                query.where(cb.and(modelType, match));
 
                 try {
                     return entityManager.createQuery(query).getResultList();

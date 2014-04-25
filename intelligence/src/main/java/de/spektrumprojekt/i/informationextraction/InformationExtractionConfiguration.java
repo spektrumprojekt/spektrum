@@ -134,4 +134,17 @@ public class InformationExtractionConfiguration {
     public void setUseWordNGramsInsteadOfStemming(boolean useWordNGramsInsteadOfStemming) {
         this.useWordNGramsInsteadOfStemming = useWordNGramsInsteadOfStemming;
     }
+
+    @Override
+    public String toString() {
+        return "InformationExtractionConfiguration [tagSource=" + tagSource
+                + ", termFrequencyComputer=" + termFrequencyComputer + ", addTagsToText="
+                + addTagsToText + ", beMessageGroupSpecific=" + beMessageGroupSpecific
+                + ", charNGramsRemoveStopwords=" + charNGramsRemoveStopwords + ", doTokens="
+                + doTokens + ", doTags=" + doTags + ", doKeyphrase=" + doKeyphrase
+                + ", matchTextAgainstTagSource=" + matchTextAgainstTagSource
+                + ", minimumTermLength=" + minimumTermLength + ", nGramsLength=" + nGramsLength
+                + ", useWordNGramsInsteadOfStemming=" + useWordNGramsInsteadOfStemming
+                + ", useCharNGramsInsteadOfStemming=" + useCharNGramsInsteadOfStemming + "]";
+    }
 }

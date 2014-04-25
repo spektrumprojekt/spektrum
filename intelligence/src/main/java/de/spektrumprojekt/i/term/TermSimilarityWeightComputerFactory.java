@@ -1,6 +1,6 @@
 package de.spektrumprojekt.i.term;
 
-import de.spektrumprojekt.i.ranker.RankerConfiguration;
+import de.spektrumprojekt.i.ranker.ScorerConfiguration;
 import de.spektrumprojekt.i.term.frequency.TermFrequencyComputer;
 import de.spektrumprojekt.i.term.similarity.AverageTermVectorSimilarityComputer;
 import de.spektrumprojekt.i.term.similarity.CosinusTermVectorSimilarityComputer;
@@ -23,11 +23,11 @@ public class TermSimilarityWeightComputerFactory {
     }
 
     public TermVectorSimilarityComputer createTermVectorSimilarityComputer(
-            RankerConfiguration rankerConfiguration, TermFrequencyComputer termFrequencyComputer) {
-        TermVectorSimilarityStrategy similarityStrategy = rankerConfiguration
+            ScorerConfiguration scorerConfiguration, TermFrequencyComputer termFrequencyComputer) {
+        TermVectorSimilarityStrategy similarityStrategy = scorerConfiguration
                 .getTermVectorSimilarityStrategy();
-        TermWeightStrategy termWeightStrategy = rankerConfiguration.getTermWeightStrategy();
-        boolean treatMissingUserModelEntriesAsZero = rankerConfiguration
+        TermWeightStrategy termWeightStrategy = scorerConfiguration.getTermWeightStrategy();
+        boolean treatMissingUserModelEntriesAsZero = scorerConfiguration
                 .isTreatMissingUserModelEntriesAsZero();
 
         TermWeightComputer termWeightComputer = this.createTermWeightComputer(termWeightStrategy,
@@ -44,7 +44,8 @@ public class TermSimilarityWeightComputerFactory {
             break;
         case COSINUS:
             termVectorSimilarityComputer = new CosinusTermVectorSimilarityComputer(
-                    termWeightComputer, treatMissingUserModelEntriesAsZero);
+                    termWeightComputer, scorerConfiguration.getUserModelEntryTimeDecayFunction(),
+                    treatMissingUserModelEntriesAsZero);
             break;
         }
         return termVectorSimilarityComputer;
@@ -59,7 +60,7 @@ public class TermSimilarityWeightComputerFactory {
         if (termWeightStrategy == null) {
             throw new IllegalArgumentException("termWeightStrategy cannot be null");
         }
-        RankerConfiguration rankerConfiguration = new RankerConfiguration(termWeightStrategy,
+        ScorerConfiguration rankerConfiguration = new ScorerConfiguration(termWeightStrategy,
                 similarityStrategy);
         rankerConfiguration
                 .setTreatMissingUserModelEntriesAsZero(treatMissingUserModelEntriesAsZero);

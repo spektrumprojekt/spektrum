@@ -29,7 +29,7 @@ import java.util.Map;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.i.datamodel.MessageFeature;
-import de.spektrumprojekt.i.ranker.chain.features.Feature;
+import de.spektrumprojekt.i.ranker.feature.Feature;
 import de.spektrumprojekt.informationextraction.InformationExtractionContext;
 import de.spektrumprojekt.persistence.Persistence;
 
@@ -92,6 +92,14 @@ public class MessageFeatureContext extends FeatureContext {
         this.informationExtractionContexts.add(informationExtractionContexts);
     }
 
+    public void addMessageFeature(Feature featureId, float featureValue) {
+        MessageFeature messageFeature = new MessageFeature(featureId);
+        messageFeature.setMessageGlobalId(this.message.getGlobalId());
+        messageFeature.setValue(featureValue);
+
+        this.addMessageFeature(messageFeature);
+    }
+
     /**
      * A {@link UserSpecificMessageFeatureContext} is the context of the a message per user.
      * 
@@ -102,6 +110,27 @@ public class MessageFeatureContext extends FeatureContext {
         this.userContexts.put(userContext.getUserGlobalId(), userContext);
     }
 
+    /**
+     * get the message specific plus the user specific features
+     * 
+     * @param userGlobalId
+     * @return
+     */
+    public Map<Feature, MessageFeature> getAllFeaturesForUser(String userGlobalId) {
+        Map<Feature, MessageFeature> features = new HashMap<Feature, MessageFeature>(
+                this.getFeatures());
+
+        features.putAll(this.getFeaturesForUser(userGlobalId));
+
+        return features;
+    }
+
+    /**
+     * Get only the user specific features for the user
+     * 
+     * @param userGlobalId
+     * @return
+     */
     public Map<Feature, MessageFeature> getFeaturesForUser(String userGlobalId) {
 
         Map<Feature, MessageFeature> features = Collections.emptyMap();
@@ -218,7 +247,7 @@ public class MessageFeatureContext extends FeatureContext {
         }
     }
 
-    public void setNoRankingOnlyLearning(boolean noRankingOnlyLearning) {
+    public void setNoScoreingOnlyLearning(boolean noRankingOnlyLearning) {
         this.noRankingOnlyLearning = noRankingOnlyLearning;
     }
 

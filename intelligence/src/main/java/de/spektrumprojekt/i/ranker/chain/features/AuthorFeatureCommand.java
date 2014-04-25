@@ -22,6 +22,7 @@ package de.spektrumprojekt.i.ranker.chain.features;
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.i.datamodel.MessageFeature;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
+import de.spektrumprojekt.i.ranker.feature.Feature;
 
 /**
  * Command feature to compute the auhtor feature

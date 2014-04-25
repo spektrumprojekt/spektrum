@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
+import de.spektrumprojekt.commons.time.TimeProviderHolder;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.i.term.weight.TermWeightComputer;
@@ -12,9 +13,63 @@ import de.spektrumprojekt.i.timebased.MergeValuesStrategy;
 
 public class CosinusTermVectorSimilarityComputer extends TermWeightTermVectorSimilarityComputer {
 
+    private TimeDecayFunction timeDecayFunction = null; // TimeDecayFunction.createWithDayCutOff();
+
     public CosinusTermVectorSimilarityComputer(TermWeightComputer termWeightComputer,
             boolean treatMissingUserModelEntriesAsZero) {
+        this(termWeightComputer, null, treatMissingUserModelEntriesAsZero);
+    }
+
+    public CosinusTermVectorSimilarityComputer(
+            TermWeightComputer termWeightComputer,
+            TimeDecayFunction timeDecayFunction,
+            boolean treatMissingUserModelEntriesAsZero) {
         super(termWeightComputer, treatMissingUserModelEntriesAsZero);
+        this.timeDecayFunction = timeDecayFunction;
+    }
+
+    @Override
+    public String getConfigurationDescription() {
+        return super.getConfigurationDescription() + " " + this.toString();
+    }
+
+    private float getEntryWeight(UserModelEntry entry) {
+        if (timeDecayFunction == null) {
+            return entry.getScoredTerm().getWeight();
+        }
+
+        double decay = timeDecayFunction.getDecay(entry.getLastChange().getTime(),
+                TimeProviderHolder.DEFAULT.getCurrentTime());
+        float sum = entry.getScoreSum() == 0 ? 1 : entry.getScoreSum();
+        return Math.max(0, Math.min(1, (float) decay * sum * entry.getScoredTerm().getWeight()));
+    }
+
+    @Override
+    public float getSimilarity(Map<Term, UserModelEntry> relevantEntries1,
+            Map<Term, UserModelEntry> relevantEntries2) {
+        float sumTop = 0;
+        float squareSum1 = 0;
+        float squareSum2 = 0;
+
+        for (Term term : relevantEntries1.keySet()) {
+            UserModelEntry entry1 = relevantEntries1.get(term);
+            UserModelEntry entry2 = relevantEntries2.get(term);
+
+            if (entry2 == null) {
+                continue;
+            }
+            float entryScore1 = getEntryWeight(entry1);
+            float entryScore2 = getEntryWeight(entry2);
+
+            sumTop += entryScore1 * entryScore2;
+            squareSum1 += entryScore1 * entryScore1;
+            squareSum2 += entryScore2 * entryScore2;
+        }
+
+        if (squareSum1 * squareSum2 == 0) {
+            return 0;
+        }
+        return (float) (sumTop / Math.sqrt(squareSum1 * squareSum2));
     }
 
     @Override
@@ -38,7 +93,7 @@ public class CosinusTermVectorSimilarityComputer extends TermWeightTermVectorSim
             for (String userModelType : allEntries.keySet()) {
                 UserModelEntry entry = allEntries.get(userModelType).get(term);
                 if (entry != null) {
-                    entryScores.put(userModelType, entry.getScoredTerm().getWeight());
+                    entryScores.put(userModelType, getEntryWeight(entry));
                 } else if (isTreatMissingUserModelEntriesAsZero()) {
                     entryScores.put(userModelType, 0f);
                 }
@@ -78,7 +133,7 @@ public class CosinusTermVectorSimilarityComputer extends TermWeightTermVectorSim
             UserModelEntry entry = relevantEntries.get(term);
             float entryScore = 0;
             if (entry != null) {
-                entryScore = entry.getScoredTerm().getWeight();
+                entryScore = getEntryWeight(entry);
             }
             float termWeight = getTermWeightComputer().determineTermWeight(messageGroupId, term);
 
@@ -91,6 +146,11 @@ public class CosinusTermVectorSimilarityComputer extends TermWeightTermVectorSim
             return 0;
         }
         return (float) (sumTop / Math.sqrt(squareSum1 * squareSum2));
+    }
+
+    @Override
+    public String toString() {
+        return "CosinusTermVectorSimilarityComputer [timeDecayFunction=" + timeDecayFunction + "]";
     }
 
 }

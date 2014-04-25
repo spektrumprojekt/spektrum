@@ -28,8 +28,8 @@ import java.util.Map.Entry;
 
 import de.spektrumprojekt.commons.chain.Command;
 import de.spektrumprojekt.communication.Communicator;
-import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.Term;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.helper.MessageHelper;
@@ -45,7 +45,7 @@ import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
 public class TriggerUserModelAdaptationCommand implements
         Command<UserSpecificMessageFeatureContext> {
 
-    private final float rankThreshold; // => interest term?
+    private final float scoreThreshold; // => interest term?
     private final float confidenceThreshold;
 
     private final String userModelType;
@@ -57,7 +57,7 @@ public class TriggerUserModelAdaptationCommand implements
 
     public TriggerUserModelAdaptationCommand(Communicator communicator, String userModelType,
             float confidenceThreshold,
-            float rankThreshold) {
+            float scoreThreshold) {
         if (communicator == null) {
             throw new IllegalArgumentException("communicator cannot be null!");
         }
@@ -67,7 +67,7 @@ public class TriggerUserModelAdaptationCommand implements
         this.communicator = communicator;
         this.userModelType = userModelType;
         this.confidenceThreshold = confidenceThreshold;
-        this.rankThreshold = rankThreshold;
+        this.scoreThreshold = scoreThreshold;
 
     }
 
@@ -78,7 +78,7 @@ public class TriggerUserModelAdaptationCommand implements
     public String getConfigurationDescription() {
         return this.getClass().getSimpleName()
                 + " userModelType=" + userModelType
-                + " rankThreshold=" + rankThreshold
+                + " scoreThreshold=" + scoreThreshold
                 + " confidenceThreshold=" + confidenceThreshold;
     }
 
@@ -88,9 +88,9 @@ public class TriggerUserModelAdaptationCommand implements
     @Override
     public void process(UserSpecificMessageFeatureContext context) {
 
-        MessageRank messageRank = context.getMessageRank();
+        UserMessageScore messageRank = context.getMessageScore();
 
-        if (messageRank.getRank() < rankThreshold) {
+        if (messageRank.getScore() < scoreThreshold) {
 
             String messageGroupGlobalId = context.getMessage().getMessageGroup().getGlobalId();
 

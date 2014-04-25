@@ -43,6 +43,7 @@ import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
 import de.spektrumprojekt.persistence.Persistence;
+import de.spektrumprojekt.persistence.Persistence.MatchMode;
 import de.spektrumprojekt.persistence.jpa.JPAConfiguration;
 import de.spektrumprojekt.persistence.jpa.JPAPersistence;
 
@@ -494,21 +495,24 @@ public class UserPersistenceTest {
         terms.add(term1);
 
         Collection<UserModel> userModels;
-        userModels = persistence.getUsersWithUserModel(terms, DEFAULT_USER_MODEL_TYPE);
+        userModels = persistence.getUsersWithUserModel(terms, DEFAULT_USER_MODEL_TYPE,
+                MatchMode.EXACT);
 
         Assert.assertEquals(2, userModels.size());
         Assert.assertTrue(userModels.contains(userModel1));
         Assert.assertTrue(userModels.contains(userModel2));
 
         terms.add(term2);
-        userModels = persistence.getUsersWithUserModel(terms, DEFAULT_USER_MODEL_TYPE);
+        userModels = persistence.getUsersWithUserModel(terms, DEFAULT_USER_MODEL_TYPE,
+                MatchMode.EXACT);
 
         Assert.assertEquals(2, userModels.size());
         Assert.assertTrue(userModels.contains(userModel1));
         Assert.assertTrue(userModels.contains(userModel2));
 
         terms.add(term3);
-        userModels = persistence.getUsersWithUserModel(terms, DEFAULT_USER_MODEL_TYPE);
+        userModels = persistence.getUsersWithUserModel(terms, DEFAULT_USER_MODEL_TYPE,
+                MatchMode.EXACT);
 
         Assert.assertEquals(3, userModels.size());
         Assert.assertTrue(userModels.contains(userModel1));
@@ -518,7 +522,8 @@ public class UserPersistenceTest {
         terms = new HashSet<Term>();
         terms.add(term1);
         terms.add(term4);
-        userModels = persistence.getUsersWithUserModel(terms, DEFAULT_USER_MODEL_TYPE);
+        userModels = persistence.getUsersWithUserModel(terms, DEFAULT_USER_MODEL_TYPE,
+                MatchMode.EXACT);
 
         Assert.assertEquals(3, userModels.size());
         Assert.assertTrue(userModels.contains(userModel1));
@@ -527,7 +532,8 @@ public class UserPersistenceTest {
 
         terms = new HashSet<Term>();
         terms.add(term4);
-        userModels = persistence.getUsersWithUserModel(terms, DEFAULT_USER_MODEL_TYPE);
+        userModels = persistence.getUsersWithUserModel(terms, DEFAULT_USER_MODEL_TYPE,
+                MatchMode.EXACT);
 
         Assert.assertEquals(1, userModels.size());
         Assert.assertTrue(userModels.contains(userModel3));

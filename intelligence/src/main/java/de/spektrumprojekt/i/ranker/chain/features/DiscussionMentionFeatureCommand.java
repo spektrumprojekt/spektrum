@@ -29,6 +29,7 @@ import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.i.datamodel.MessageFeature;
 import de.spektrumprojekt.i.ranker.MessageFeatureContext;
 import de.spektrumprojekt.i.ranker.UserSpecificMessageFeatureContext;
+import de.spektrumprojekt.i.ranker.feature.Feature;
 
 /**
  * Computes if the user is mentioned in the discussion of the message
@@ -64,10 +65,13 @@ public class DiscussionMentionFeatureCommand implements
         MessageFeatureContext messageFeatureContext = context.getMessageFeatureContext();
 
         // dont evaluate if it is a root message or the user is the author
-        if (!context.check(Feature.DISCUSSION_ROOT_FEATURE, 1)
+        if (!context.check(Feature.MESSAGE_ROOT_FEATURE, 1)
                 || !context.check(Feature.AUTHOR_FEATURE, 1)) {
 
-            MessageFeature feature = new MessageFeature(getFeatureId());
+            MessageFeature mentionDissFeature = new MessageFeature(getFeatureId());
+            MessageFeature noDissMentionFeature = new MessageFeature(
+                    Feature.DISCUSSION_NO_MENTION_FEATURE);
+            noDissMentionFeature.setValue(1f);
 
             MessageRelation relation = context.getMessageRelation();
             if (relation != null
@@ -76,18 +80,21 @@ public class DiscussionMentionFeatureCommand implements
                 for (Message message : messages.values()) {
                     // TODO message can be null if it is not in the persistence anymore
                     if (context.getMessage().getGlobalId().equals(message.getGlobalId())) {
-                        // TODO ignore message itself ?
+                        // ignore message itself
                         // TODO mention feature
                         continue;
                     }
                     if (MessageHelper.isMentioned(message, context.getUserGlobalId())) {
                         // actually we could also count the participation
-                        feature.setValue(1f);
+                        mentionDissFeature.setValue(1f);
+                        noDissMentionFeature.setValue(0f);
+                        break;
                     }
                 }
             }
 
-            context.addMessageFeature(feature);
+            context.addMessageFeature(mentionDissFeature);
+            context.addMessageFeature(noDissMentionFeature);
         }
 
     }

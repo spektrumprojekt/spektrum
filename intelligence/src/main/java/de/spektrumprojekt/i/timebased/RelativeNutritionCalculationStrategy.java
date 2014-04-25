@@ -16,10 +16,16 @@ import de.spektrumprojekt.persistence.Persistence;
 
 public class RelativeNutritionCalculationStrategy implements NutritionCalculationStrategy {
 
+    private static final Logger LOGGER = LoggerFactory
+            .getLogger(RelativeNutritionCalculationStrategy.class);
 
+    private final BinAggregatedUserModelEntryDecorator binAggregatedUserModelEntryDecorator;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RelativeNutritionCalculationStrategy.class);
-    
+    public RelativeNutritionCalculationStrategy(
+            BinAggregatedUserModelEntryDecorator binAggregatedUserModelEntryDecorator) {
+        this.binAggregatedUserModelEntryDecorator = binAggregatedUserModelEntryDecorator;
+    }
+
     @Override
     public float[] getNutrition(UserModelEntry entry, Persistence persistence) {
         if (persistence == null) {
@@ -34,17 +40,21 @@ public class RelativeNutritionCalculationStrategy implements NutritionCalculatio
         Map<Term, UserModelEntry> globalUserModelEntries = persistence.getUserModelEntriesForTerms(
                 userModel, terms);
         UserModelEntry globalUserModelEntry = globalUserModelEntries.get(term);
+        binAggregatedUserModelEntryDecorator.setEntry(globalUserModelEntry);
+        globalUserModelEntry = binAggregatedUserModelEntryDecorator;
         Collection<UserModelEntryTimeBin> userTimeBinEntries = entry.getTimeBinEntries();
         float[] result = new float[userTimeBinEntries.size()];
         int i = 0;
         for (UserModelEntryTimeBin userbin : userTimeBinEntries) {
             UserModelEntryTimeBin globalBin = globalUserModelEntry
                     .getUserModelEntryTimeBinByStartTime(userbin.getTimeBinStart());
-            if (globalBin == null){
-            	LOGGER.warn("globalBin was null!");
-            	result[i] = 0;
-            } else{
-            result[i] = userbin.getScoreSum() / globalBin.getScoreCount() * userbin.getScoreCount();}
+            if (globalBin == null) {
+                LOGGER.warn("globalBin was null!");
+                result[i] = 0;
+            } else {
+                result[i] = userbin.getScoreSum() / globalBin.getScoreCount()
+                        * userbin.getScoreCount();
+            }
             i++;
         }
         return result;

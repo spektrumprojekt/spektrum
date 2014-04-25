@@ -31,11 +31,11 @@ import de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
-import de.spektrumprojekt.datamodel.message.MessageRank;
 import de.spektrumprojekt.datamodel.message.MessageRelation;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.message.Term.TermCategory;
 import de.spektrumprojekt.datamodel.message.TermFrequency;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.observation.Observation;
 import de.spektrumprojekt.datamodel.observation.ObservationType;
 import de.spektrumprojekt.datamodel.source.Source;
@@ -185,7 +185,7 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public MessageRank getMessageRank(String userGlobalId, String messageGlobalId) {
+    public UserMessageScore getMessageScore(String userGlobalId, String messageGlobalId) {
         return this.messagePersistence.getMessageRank(userGlobalId, messageGlobalId);
     }
 
@@ -264,6 +264,27 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
+    public User getUserByGlobalId(String userGlobalId) {
+        return this.userPersistence.getUserByGlobalId(userGlobalId);
+    }
+
+    @Override
+    public Collection<UserModelEntry> getUserModelEntries(UserModel userModel,
+            Collection<String> termValuesToMatch, Collection<Long> messageGroupIdsToConsider,
+            MatchMode matchMode, boolean useMGFreeTermValue) {
+
+        return this.userPersistence.getUserModelEntries(userModel, termValuesToMatch,
+                messageGroupIdsToConsider, matchMode, useMGFreeTermValue);
+    }
+
+    @Override
+    public Collection<UserModelEntry> getUserModelEntries(UserModel userModel,
+            Collection<String> termValuesToMatch, MatchMode matchMode) {
+
+        return this.userPersistence.getUserModelEntries(userModel, termValuesToMatch, matchMode);
+    }
+
+    @Override
     public Map<String, String> getUserModelEntriesCountDescription() {
         Map<String, String> countDesc = new HashMap<String, String>();
         countDesc.put("N/A", "N/A");
@@ -297,8 +318,9 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public Collection<UserModel> getUsersWithUserModel(Collection<Term> terms, String userModelType) {
-        return this.userPersistence.getUsersWithUserModel(terms, userModelType);
+    public Collection<UserModel> getUsersWithUserModel(Collection<Term> terms,
+            String userModelType, MatchMode matchMode) {
+        return this.userPersistence.getUsersWithUserModel(terms, userModelType, matchMode);
     }
 
     @Override
@@ -357,7 +379,7 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public void storeMessageRanks(Collection<MessageRank> ranks) {
+    public void storeMessageRanks(Collection<UserMessageScore> ranks) {
         messagePersistence.storeMessageRanks(ranks);
     }
 
@@ -389,7 +411,7 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public void updateMessageRank(MessageRank rankToUpdate) {
+    public void updateMessageRank(UserMessageScore rankToUpdate) {
         this.messagePersistence.updateMessageRank(rankToUpdate);
 
     }

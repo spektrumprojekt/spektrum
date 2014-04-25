@@ -1,9 +1,9 @@
 package de.spektrumprojekt.persistence;
 
 import de.spektrumprojekt.datamodel.message.Message;
-import de.spektrumprojekt.datamodel.message.MessageRank;
+import de.spektrumprojekt.datamodel.message.UserMessageScore;
 
 public interface MessageRankVisitor {
 
-    public void visit(MessageRank messageRank, Message message) throws Exception;
+    public void visit(UserMessageScore messageRank, Message message) throws Exception;
 }

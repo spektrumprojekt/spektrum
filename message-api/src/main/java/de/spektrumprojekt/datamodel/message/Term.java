@@ -21,9 +21,12 @@ package de.spektrumprojekt.datamodel.message;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.PostLoad;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.persistence.annotations.Index;
 
 import de.spektrumprojekt.datamodel.identifiable.Identifiable;
@@ -34,29 +37,79 @@ import de.spektrumprojekt.datamodel.identifiable.Identifiable;
 public class Term extends Identifiable {
 
     public enum TermCategory {
-        // TODO or an entity for extensibility ?
         TERM, KEYPHRASE
     }
+
+    public static final String TERM_MESSAGE_GROUP_ID_SEPERATOR = "#";
 
     /**
      * 
      */
     private static final long serialVersionUID = 1L;
 
+    /**
+     * Split the name by the message group. if no message group is used the id will be null
+     * 
+     * @param termValue
+     * @return left: id of the message group, right: name without message group
+     */
+    public static Pair<Long, String> extractMessageGroupOfName(String termValue) {
+        int indexOfSplit = termValue.indexOf(TERM_MESSAGE_GROUP_ID_SEPERATOR);
+
+        if (indexOfSplit <= 0) {
+            return new ImmutablePair<Long, String>(null, termValue);
+        }
+        String id = termValue.substring(0, indexOfSplit);
+        String n = termValue.substring(indexOfSplit + 1);
+        return new ImmutablePair<Long, String>(Long.parseLong(id), n);
+
+    }
+
+    /**
+     * Get the term value with the message group id as prefix
+     * 
+     * @param mg
+     *            the mg, if null the given value is returned unchanged
+     * @param value
+     *            the term value to use
+     * @return the term value in the form of <code>12#term</code> for a message group with id '12'
+     *         and value 'term'
+     */
+    public static String getMessageGroupSpecificTermValue(MessageGroup mg, String value) {
+        return mg == null ? value : mg.getId() + TERM_MESSAGE_GROUP_ID_SEPERATOR + value;
+    }
+
     @Index
     private String value;
+
     private TermCategory category;
 
     @Column(name = "termcount")
     private int count;
+
+    private transient Long messageGroupId;
+    private transient String mgFreeValue;
 
     protected Term() {
         // constructor only for ORM.
     }
 
     public Term(TermCategory category, String value) {
+        if (value == null) {
+            throw new IllegalArgumentException("value cannot be null.");
+        }
         this.value = value;
         this.category = category;
+
+        // TODO better define message group id or relation per term ?
+        Pair<Long, String> mgNamePair = extractMessageGroupOfName(value);
+
+        this.messageGroupId = mgNamePair.getLeft();
+        this.mgFreeValue = mgNamePair.getRight();
+    }
+
+    public String extractMessageGroupFreeTermValue() {
+        return this.mgFreeValue;
     }
 
     public TermCategory getCategory() {
@@ -67,8 +120,17 @@ public class Term extends Identifiable {
         return count;
     }
 
+    public Long getMessageGroupId() {
+        return messageGroupId;
+    }
+
     public String getValue() {
         return value;
+    }
+
+    @PostLoad
+    private void postLoad() {
+        this.messageGroupId = extractMessageGroupOfName(value).getLeft();
     }
 
     public void setCount(int count) {

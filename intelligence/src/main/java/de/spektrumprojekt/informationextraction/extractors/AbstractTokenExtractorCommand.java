@@ -28,8 +28,9 @@ public abstract class AbstractTokenExtractorCommand implements
     }
 
     protected void addTokensToMessagePart(InformationExtractionContext context, List<String> tokens) {
+        MessageGroup messageGroup = getMessageGroupForToken(context);
+
         Bag tokenBag = new HashBag(tokens);
-        String tokenPrefix = getTokenPrefix(context);
         int highestCount = BagHelper.getHighestCount(tokenBag);
         for (Object tokenObj : tokenBag) {
             String token = (String) tokenObj;
@@ -37,11 +38,12 @@ public abstract class AbstractTokenExtractorCommand implements
                 continue;
             }
             float frequency = (float) tokenBag.getCount(token) / highestCount;
-            token = tokenPrefix + token;
             context.getMessagePart().addScoredTerm(
-                    new ScoredTerm(context.getPersistence().getOrCreateTerm(
-                            Term.TermCategory.TERM,
-                            token),
+                    new ScoredTerm(
+                            context.getPersistence().getOrCreateTerm(
+                                    Term.TermCategory.TERM,
+                                    Term.getMessageGroupSpecificTermValue(messageGroup, token)
+                                    ),
                             frequency));
         }
     }
@@ -66,6 +68,19 @@ public abstract class AbstractTokenExtractorCommand implements
 
     }
 
+    private MessageGroup getMessageGroupForToken(InformationExtractionContext context) {
+        if (this.useMessageGroupIdForToken) {
+            MessageGroup group = context.getMessage().getMessageGroup();
+            if (group == null && this.assertMessageGroup) {
+                throw new IllegalStateException("messagegroup not set for message="
+                        + context.getMessage());
+
+            }
+            return group;
+        }
+        return null;
+    }
+
     private String getTokenPrefix(InformationExtractionContext context) {
         String tokenPrefix = StringUtils.EMPTY;
         if (this.useMessageGroupIdForToken) {
@@ -76,7 +91,7 @@ public abstract class AbstractTokenExtractorCommand implements
                             + context.getMessage());
                 }
             } else {
-                tokenPrefix = group.getId() + "#";
+                tokenPrefix = group.getId() + Term.TERM_MESSAGE_GROUP_ID_SEPERATOR;
             }
         }
         return tokenPrefix;
