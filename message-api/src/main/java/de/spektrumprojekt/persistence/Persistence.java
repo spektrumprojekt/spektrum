@@ -297,7 +297,7 @@ public interface Persistence {
 
     void updateTerms(Collection<Term> termsChanged);
 
-    void visitAllMessageRanks(UserMessageScoreVisitor visitor, Date startDate, Date endDate)
+    void visitAllUserMessageScores(UserMessageScoreVisitor visitor, Date startDate, Date endDate)
             throws Exception;
 
 }

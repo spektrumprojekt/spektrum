@@ -7,12 +7,34 @@
 	<packaging>pom</packaging>
 	<name>SpektrumProjekt: Module Runner</name>
 	<description>This is the parent project for the SpektrumProjekt backend.</description>
-	<modules>
-		<module>parent</module>
-		<module>commons</module>
-		<module>message-api</module>
-		<module>persistence-jpa</module>
-		<module>aggregator</module>
-		<module>intelligence</module>
-	</modules>
+  
+  	<profiles>
+		<profile>
+			<id>default</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<modules>
+    		<module>parent</module>
+    		<module>commons</module>
+    		<module>message-api</module>
+    		<module>persistence-jpa</module>
+    		<module>aggregator</module>
+    		<module>intelligence</module>
+			</modules>
+		</profile>
+		<profile>
+			<id>all</id>
+			<modules>
+    		<module>parent</module>
+    		<module>commons</module>
+    		<module>message-api</module>
+    		<module>persistence-jpa</module>
+    		<module>aggregator</module>
+    		<module>intelligence</module>
+        <module>evaluation</module>
+			</modules>
+		</profile>
+	</profiles>
+  
 </project>

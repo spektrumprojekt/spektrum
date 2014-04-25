@@ -1,0 +1,255 @@
+package com.communote.plugins.mystream.evaluation.simulated;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+
+import org.personal.thesis.tlu.evaluation.data.CommunoteMessage;
+import org.personal.thesis.tlu.evaluation.data.CommunoteMessageRating;
+import org.personal.thesis.tlu.evaluation.data.CommunoteUser;
+import org.personal.thesis.tlu.evaluation.data.ImportanceRating;
+import org.personal.thesis.tlu.evaluation.evaluationgenerator.DiscussionBasedNoteRatingGenerator;
+import org.personal.thesis.tlu.evaluation.service.ServiceAccess;
+import org.personal.thesis.tlu.evaluation.setup.SimulatedEvaluationSetup;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.communote.plugins.mystream.evaluation.AbstractMessageDataSetProvider;
+import com.communote.plugins.mystream.evaluation.helper.SpektrumRating;
+
+import de.spektrumprojekt.datamodel.common.MimeType;
+import de.spektrumprojekt.datamodel.message.Message;
+import de.spektrumprojekt.datamodel.message.MessageGroup;
+import de.spektrumprojekt.datamodel.message.MessagePart;
+import de.spektrumprojekt.datamodel.message.MessageRelation;
+import de.spektrumprojekt.datamodel.message.MessageRelation.MessageRelationType;
+import de.spektrumprojekt.datamodel.message.MessageType;
+import de.spektrumprojekt.datamodel.subscription.status.StatusType;
+import de.spektrumprojekt.helper.MessageHelper;
+import de.spektrumprojekt.i.learner.Interest;
+
+public class SimulatedCommunoteMessageDatsetProvider extends AbstractMessageDataSetProvider {
+
+    private final static Logger LOGGER = LoggerFactory
+            .getLogger(SimulatedCommunoteMessageDatsetProvider.class);
+
+    private SimulatedEvaluationSetup setup;
+
+    private DiscussionBasedNoteRatingGenerator generator;
+
+    public void cleanUpSoft() {
+        this.setup = null;
+        this.generator = null;
+        this.messageGlobalIdToMessage = null;
+    }
+
+    private String convertToGlobalId(CommunoteUser user) {
+        return convertToGlobalId(user.getAlias());
+    }
+
+    private String convertToGlobalId(Long communoteMessageId) {
+        return "message/" + communoteMessageId;
+    }
+
+    private String convertToGlobalId(String userAlias) {
+        return "user/" + userAlias;
+    }
+
+    private Collection<String> convertToGlobalIds(Collection<String> userAliases) {
+        Collection<String> globalIds = new HashSet<String>();
+        for (String userAlias : userAliases) {
+            globalIds.add(convertToGlobalId(userAlias));
+        }
+        return globalIds;
+    }
+
+    private Interest convertToInterest(ImportanceRating importance) {
+        Interest interest;
+        switch (importance) {
+        case MUST_KNOW:
+            interest = Interest.EXTREME;
+            break;
+        case SHOULD_KNOW:
+            interest = Interest.HIGH;
+            break;
+        case GOOD_TO_KNOW:
+            interest = Interest.NORMAL;
+            break;
+        case TOO_MUCH_INFO:
+            interest = Interest.LOW;
+            break;
+        case NONE_OF_MY_BUSINESS:
+            interest = Interest.NONE;
+            break;
+        case SERENDIPTY:
+            interest = Interest.HIGH;
+            break;
+        default:
+            throw new IllegalArgumentException(importance + " is unknown.");
+        }
+
+        return interest;
+    }
+
+    private Message createMessage(CommunoteMessage communoteMessage) {
+        Message spektrumMessage = new Message(
+                convertToGlobalId(communoteMessage.getCommunoteMessageId()),
+                MessageType.CONTENT,
+                StatusType.OK, "subscription",
+                communoteMessage.getCreationDate());
+        spektrumMessage.setId(communoteMessage.getCommunoteMessageId());
+        MessagePart messagePart = new MessagePart(MimeType.TEXT_HTML,
+                communoteMessage.getContent());
+        spektrumMessage.addMessagePart(messagePart);
+        spektrumMessage.setAuthorGlobalId(convertToGlobalId(communoteMessage.getAuthorAlias()));
+
+        Collection<String> userGlobalIds = convertToGlobalIds(communoteMessage
+                .getUserAliasMentions());
+        spektrumMessage.addProperty(MessageHelper.createMentionProperty(userGlobalIds));
+
+        spektrumMessage.setMessageGroup(getMessageGroup(communoteMessage));
+
+        return spektrumMessage;
+    }
+
+    private MessageRelation createMessageRelation(CommunoteMessage communoteMessage) {
+        List<CommunoteMessage> discussionRelated = generator.getDiscussion(communoteMessage);
+        String[] globalIds = new String[discussionRelated.size()];
+        for (int i = 0; i < discussionRelated.size(); i++) {
+            globalIds[i] = this.convertToGlobalId(discussionRelated.get(i)
+                    .getCommunoteMessageId());
+        }
+        MessageRelation relation = new MessageRelation(MessageRelationType.DISCUSSION,
+                convertToGlobalId(communoteMessage.getDicussionId()), globalIds);
+        return relation;
+    }
+
+    @Override
+    protected synchronized void doInitalization() throws Exception {
+
+        try {
+            initalized = true;
+            LOGGER.debug("Setup Communote Messages ...");
+
+            setup = new SimulatedEvaluationSetup(ServiceAccess
+                    .getInstance()
+                    .getStorageAccess());
+
+            // setup.setMaximumMessages(3050);
+            setup.fill();
+
+            generator = new DiscussionBasedNoteRatingGenerator(setup.getMessages(),
+                    setup.getUsers());
+            generator.generateRatings();
+        } finally {
+            ServiceAccess.getInstance().close();
+        }
+
+        LOGGER.info("Setup Communote Messages successfull.");
+
+    }
+
+    @Override
+    public String getConfigurationDescription() {
+        return super.getConfigurationDescription() + " setup.getMaximumMessages: "
+                + setup.getMaximumMessages();
+    }
+
+    private MessageGroup getMessageGroup(CommunoteMessage communoteMessage) {
+        String topicGlobalId = "topic/" + communoteMessage.getCommunoteTopicAlias();
+        MessageGroup messageGroup = this.messageGroups.get(topicGlobalId);
+        if (messageGroup == null) {
+            messageGroup = new MessageGroup(topicGlobalId);
+            this.messageGroups.put(messageGroup.getGlobalId(), messageGroup);
+        }
+        return messageGroup;
+
+    }
+
+    public String getName() {
+        String max = setup.getMaximumMessages() == 0 ? "full" : setup.getMaximumMessages() + "";
+        return "Simulated-" + max;
+    }
+
+    @Override
+    protected void loadMessages() {
+        if (messages != null) {
+            return;
+        }
+        checkInit();
+
+        try {
+            List<CommunoteMessage> communoteMessages = setup.getMessages();
+            List<Message> spektrumMessages = new ArrayList<Message>(communoteMessages.size());
+            Map<String, MessageRelation> messageRelations = new HashMap<String, MessageRelation>();
+            this.messageGroups = new HashMap<String, MessageGroup>();
+            this.messageGlobalIdToMessage = new HashMap<String, Message>();
+
+            for (CommunoteMessage communoteMessage : communoteMessages) {
+                Message spektrumMessage = createMessage(communoteMessage);
+                MessageRelation messageRelation = createMessageRelation(communoteMessage);
+                messageRelations.put(spektrumMessage.getGlobalId(), messageRelation);
+                spektrumMessages.add(spektrumMessage);
+                this.messageGlobalIdToMessage.put(spektrumMessage.getGlobalId(), spektrumMessage);
+            }
+            this.messages = spektrumMessages;
+            this.messageGlobalIdToMessageRelation = messageRelations;
+        } finally {
+            if (this.messages == null) {
+                // there must be an error
+                this.messageGlobalIdToMessage = null;
+                this.messageGroups = null;
+            }
+        }
+    }
+
+    @Override
+    protected synchronized void loadRatings() {
+        if (messages == null) {
+            loadMessages();
+        }
+        if (ratings != null) {
+            return;
+        }
+        checkInit();
+
+        Collection<CommunoteMessageRating> communoteRatings = generator.getRatings();
+        List<SpektrumRating> ratings = new ArrayList<SpektrumRating>(communoteRatings.size());
+
+        for (CommunoteMessageRating communoteRating : communoteRatings) {
+            SpektrumRating spektrumRating = new SpektrumRating();
+            spektrumRating.setInterest(convertToInterest(communoteRating.getImportance()));
+            spektrumRating.setUserGlobalId(communoteRating.getIdentifier().getUserAlias());
+
+            Message message = this.messageGlobalIdToMessage.get(convertToGlobalId(communoteRating
+                    .getIdentifier().getMessageId()));
+            assert message != null;
+
+            spektrumRating.setMessage(message);
+
+            ratings.add(spektrumRating);
+        }
+
+        this.ratings = ratings;
+
+    }
+
+    @Override
+    protected synchronized void loadUsers() {
+        if (userGlobalIds != null) {
+            return;
+        }
+        checkInit();
+
+        Collection<CommunoteUser> users = setup.getUsers();
+        userGlobalIds = new HashSet<String>();
+
+        for (CommunoteUser user : users) {
+            userGlobalIds.add(convertToGlobalId(user));
+        }
+
+    }
+}

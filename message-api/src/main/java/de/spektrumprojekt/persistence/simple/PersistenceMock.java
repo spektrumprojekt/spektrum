@@ -367,7 +367,7 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
-    public void visitAllMessageRanks(UserMessageScoreVisitor visitor, Date startDate, Date endDate)
+    public void visitAllUserMessageScores(UserMessageScoreVisitor visitor, Date startDate, Date endDate)
             throws Exception {
     }
 

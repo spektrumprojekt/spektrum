@@ -863,7 +863,7 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
-    public void visitAllMessageRanks(UserMessageScoreVisitor visitor, Date startDate, Date endDate)
+    public void visitAllUserMessageScores(UserMessageScoreVisitor visitor, Date startDate, Date endDate)
             throws Exception {
         for (UserMessageScore messageRank : this.messageScores.values()) {
             Message message = this.getMessageByGlobalId(messageRank.getMessageGlobalId());
