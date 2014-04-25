@@ -7,3 +7,4 @@ bin
 
 */src/test/resources/relations/
 /aggregator/test-output
+/evaluation/eval.log
