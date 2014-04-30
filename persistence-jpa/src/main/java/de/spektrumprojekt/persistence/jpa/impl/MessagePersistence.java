@@ -331,6 +331,49 @@ public class MessagePersistence extends AbstractPersistenceLayer {
         return transaction.executeTransaction(getEntityManager());
     }
 
+    /**
+     * Return the user message score that is at the n-th position if only messages are considered
+     * that written after firstDate and that belong to the user, all sorted by the score descending.
+     * 
+     * If the returned score (if any) is used for filtering it will return at maximum n Elements for
+     * messages after the given date (and no new message is added in between).
+     * 
+     * @param userGlobalId
+     * @param n
+     * @param firstDate
+     * @return the user message score at the n-th position fulfilling the constraints.
+     */
+    public UserMessageScore getNthUserMessageScore(final String userGlobalId, final int n,
+            final Date firstDate) {
+        Transaction<UserMessageScore> transaction = new Transaction<UserMessageScore>() {
+
+            @Override
+            protected UserMessageScore doTransaction(EntityManager entityManager) {
+                TypedQuery<UserMessageScore> query = entityManager.createQuery(
+                        ""
+                                + "select ums "
+                                + "from " + UserMessageScore.class.getName() + " ums, "
+                                + Message.class.getName() + " m "
+                                + "where ums.messageGlobalId = m.globalId "
+                                + "and ums.userGlobalId = :userGlobalId "
+                                + "and m.publicationDate >= :minPublicationDate "
+                                + "order by ums.score desc ",
+                        UserMessageScore.class);
+                query.setParameter("userGlobalId", userGlobalId);
+                query.setParameter("minPublicationDate", firstDate);
+                query.setMaxResults(n);
+
+                List<UserMessageScore> scores = query.getResultList();
+                if (scores.size() == 0) {
+                    return null;
+                }
+                return scores.get(scores.size() - 1);
+            }
+        };
+
+        return transaction.executeTransaction(getEntityManager());
+    }
+
     public Collection<Observation> getObservations(final String userGlobalId,
             final String messageGlobalId, final ObservationType observationType) {
         Transaction<Collection<Observation>> transaction = new Transaction<Collection<Observation>>() {
@@ -465,21 +508,6 @@ public class MessagePersistence extends AbstractPersistenceLayer {
     }
 
     /**
-     * 
-     * @param ranks
-     *            store the ranks
-     */
-    public void storeMessageRanks(Collection<UserMessageScore> ranks) {
-        if (ranks == null) {
-            throw new IllegalArgumentException("ranks cannot be null.");
-        }
-        if (ranks.contains(null)) {
-            throw new IllegalArgumentException("ranks cannot contain a null value.");
-        }
-        this.saveAll(ranks);
-    }
-
-    /**
      * Stores the message relation
      * 
      * TODO do we need this ?
@@ -504,6 +532,21 @@ public class MessagePersistence extends AbstractPersistenceLayer {
         this.save(observation);
     }
 
+    /**
+     * 
+     * @param ranks
+     *            store the ranks
+     */
+    public void storeUserMessageScores(Collection<UserMessageScore> ranks) {
+        if (ranks == null) {
+            throw new IllegalArgumentException("ranks cannot be null.");
+        }
+        if (ranks.contains(null)) {
+            throw new IllegalArgumentException("ranks cannot contain a null value.");
+        }
+        this.saveAll(ranks);
+    }
+
     public void updateMessageRank(UserMessageScore rankToUpdate) {
         this.save(rankToUpdate);
     }
@@ -517,7 +560,8 @@ public class MessagePersistence extends AbstractPersistenceLayer {
         this.saveAll(termsChanged);
     }
 
-    public void visitAllMessageRanks(UserMessageScoreVisitor visitor, Date startDate, Date endDate) {
+    public void visitAllUserMessageScores(UserMessageScoreVisitor visitor, Date startDate,
+            Date endDate) {
         throw new UnsupportedOperationException("not yet implemented");
     }
 

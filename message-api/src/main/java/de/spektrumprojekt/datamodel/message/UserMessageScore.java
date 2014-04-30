@@ -72,6 +72,10 @@ public class UserMessageScore implements SpektrumEntity {
     }
 
     public UserMessageScore(String messageGlobalId, String userGlobalId) {
+        this(messageGlobalId, userGlobalId, 0);
+    }
+
+    public UserMessageScore(String messageGlobalId, String userGlobalId, float score) {
         if (messageGlobalId == null) {
             throw new IllegalArgumentException("messageGlobalId cannot be null.");
         }
@@ -80,6 +84,7 @@ public class UserMessageScore implements SpektrumEntity {
         }
         this.messageGlobalId = messageGlobalId;
         this.userGlobalId = userGlobalId;
+        this.score = score;
     }
 
     public InteractionLevel getInteractionLevel() {
@@ -110,28 +115,8 @@ public class UserMessageScore implements SpektrumEntity {
         return userGlobalId;
     }
 
-    /**
-     * is this still needed?
-     * 
-     * @return
-     */
-    @Deprecated
-    public boolean isAuthor() {
-        return author;
-    }
-
     public boolean isBasedOnAdaptedTerms() {
         return basedOnAdaptedTerms;
-    }
-
-    /**
-     * is this still needed?
-     * 
-     * @param author
-     */
-    @Deprecated
-    public void setAuthor(boolean author) {
-        this.author = author;
     }
 
     public void setBasedOnAdaptedTerms(boolean basedOnAdaptedTerms) {

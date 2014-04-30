@@ -135,17 +135,22 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
-    public UserMessageScore getMessageScore(String userGlobalId, String messageGlobalId) {
-        return null;
-    }
-
-    @Override
     public MessageRelation getMessageRelation(Message message) {
         return null;
     }
 
     @Override
     public List<Message> getMessages(MessageFilter messageFilter) {
+        return null;
+    }
+
+    @Override
+    public UserMessageScore getMessageScore(String userGlobalId, String messageGlobalId) {
+        return null;
+    }
+
+    @Override
+    public UserMessageScore getNthUserMessageScore(String userGlobalId, int n, Date firstDate) {
         return null;
     }
 
@@ -201,9 +206,10 @@ public class PersistenceMock implements Persistence {
     public List<Subscription> getSubscriptions(SubscriptionFilter subscriptionFilter) {
         return null;
     }
-    
+
     @Override
-    public List<SubscriptionSourceStatus> getSubscriptionsWithSourceStatus(SubscriptionFilter subscriptionFilter) {
+    public List<SubscriptionSourceStatus> getSubscriptionsWithSourceStatus(
+            SubscriptionFilter subscriptionFilter) {
         return null;
     }
 
@@ -311,7 +317,7 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
-    public void storeMessageRanks(Collection<UserMessageScore> ranks) {
+    public void storeUserMessageScores(Collection<UserMessageScore> ranks) {
     }
 
     @Override
@@ -367,7 +373,8 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
-    public void visitAllUserMessageScores(UserMessageScoreVisitor visitor, Date startDate, Date endDate)
+    public void visitAllUserMessageScores(UserMessageScoreVisitor visitor, Date startDate,
+            Date endDate)
             throws Exception {
     }
 

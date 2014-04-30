@@ -185,11 +185,6 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public UserMessageScore getMessageScore(String userGlobalId, String messageGlobalId) {
-        return this.messagePersistence.getMessageRank(userGlobalId, messageGlobalId);
-    }
-
-    @Override
     public MessageRelation getMessageRelation(Message message) {
         return messagePersistence.getMessageRelation(message);
     }
@@ -197,6 +192,28 @@ public class JPAPersistence implements Persistence {
     @Override
     public List<Message> getMessages(MessageFilter messageFilter) {
         return this.messagePersistence.getMessages(messageFilter);
+    }
+
+    @Override
+    public UserMessageScore getMessageScore(String userGlobalId, String messageGlobalId) {
+        return this.messagePersistence.getMessageRank(userGlobalId, messageGlobalId);
+    }
+
+    /**
+     * Return the user message score that is at the n-th position if only messages are considered
+     * that written after firstDate and that belong to the user, all sorted by the score descending.
+     * 
+     * If the returned score (if any) is used for filtering it will return at maximum n Elements for
+     * messages after the given date (and no new message is added in between).
+     * 
+     * @param userGlobalId
+     * @param n
+     * @param firstDate
+     * @return the user message score at the n-th position fulfilling the constraints.
+     */
+    public UserMessageScore getNthUserMessageScore(String userGlobalId, int n,
+            final Date firstDate) {
+        return this.messagePersistence.getNthUserMessageScore(userGlobalId, n, firstDate);
     }
 
     @Override
@@ -252,9 +269,10 @@ public class JPAPersistence implements Persistence {
     public List<Subscription> getSubscriptions(SubscriptionFilter subscriptionFilter) {
         return this.subscriptionPersistence.getSubscriptions(subscriptionFilter);
     }
-    
+
     @Override
-    public List<SubscriptionSourceStatus> getSubscriptionsWithSourceStatus(SubscriptionFilter subscriptionFilter) {
+    public List<SubscriptionSourceStatus> getSubscriptionsWithSourceStatus(
+            SubscriptionFilter subscriptionFilter) {
         return this.subscriptionPersistence.getSubscriptionsWithSourceStatus(subscriptionFilter);
     }
 
@@ -379,8 +397,8 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public void storeMessageRanks(Collection<UserMessageScore> ranks) {
-        messagePersistence.storeMessageRanks(ranks);
+    public void storeUserMessageScores(Collection<UserMessageScore> ranks) {
+        messagePersistence.storeUserMessageScores(ranks);
     }
 
     @Override
@@ -443,9 +461,9 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public void visitAllUserMessageScores(UserMessageScoreVisitor visitor, Date startDate, Date endDate) {
-        this.messagePersistence.visitAllMessageRanks(visitor, startDate, endDate);
+    public void visitAllUserMessageScores(UserMessageScoreVisitor visitor, Date startDate,
+            Date endDate) {
+        this.messagePersistence.visitAllUserMessageScores(visitor, startDate, endDate);
 
     }
-
 }

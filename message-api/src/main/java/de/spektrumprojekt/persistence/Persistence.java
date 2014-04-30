@@ -133,11 +133,26 @@ public interface Persistence {
      */
     MessageGroup getMessageGroupByGlobalId(String globalIdString);
 
-    UserMessageScore getMessageScore(String userGlobalId, String messageGlobalId);
-
     MessageRelation getMessageRelation(Message message);
 
     List<Message> getMessages(MessageFilter messageFilter);
+
+    UserMessageScore getMessageScore(String userGlobalId, String messageGlobalId);
+
+    /**
+     * Return the user message score that is at the n-th position if only messages are considered
+     * that written after firstDate and that belong to the user, all sorted by the score descending.
+     * 
+     * If the returned score (if any) is used for filtering it will return at maximum n Elements for
+     * messages after the given date (and no new message is added in between).
+     * 
+     * @param userGlobalId
+     * @param n
+     * @param firstDate
+     * @return the user message score at the n-th position fulfilling the constraints.
+     */
+    UserMessageScore getNthUserMessageScore(String userGlobalId, int n,
+            final Date firstDate);
 
     int getNumberOfSubscriptionsBySourceGlobalId(String globalId);
 
@@ -176,7 +191,9 @@ public interface Persistence {
             throws SubscriptionNotFoundException;
 
     List<Subscription> getSubscriptions(SubscriptionFilter subscriptionFilter);
-    List<SubscriptionSourceStatus> getSubscriptionsWithSourceStatus(SubscriptionFilter subscriptionFilter);
+
+    List<SubscriptionSourceStatus> getSubscriptionsWithSourceStatus(
+            SubscriptionFilter subscriptionFilter);
 
     TermFrequency getTermFrequency();
 
@@ -250,10 +267,10 @@ public interface Persistence {
 
     /**
      * 
-     * @param ranks
+     * @param userMessageScores
      *            store the ranks
      */
-    void storeMessageRanks(Collection<UserMessageScore> ranks);
+    void storeUserMessageScores(Collection<UserMessageScore> userMessageScores);
 
     /**
      * Stores the message relation

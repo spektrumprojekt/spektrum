@@ -76,7 +76,7 @@ public class StoreMessageScoreCommand implements Command<MessageFeatureContext> 
         }
 
         if (!ranks.isEmpty()) {
-            persistence.storeMessageRanks(ranks);
+            persistence.storeUserMessageScores(ranks);
         }
     }
 }

@@ -301,12 +301,6 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
-    public UserMessageScore getMessageScore(String userGlobalId, String messageGlobalId) {
-
-        return this.messageScores.get(new UserMessageIdentifier(userGlobalId, messageGlobalId));
-    }
-
-    @Override
     public MessageRelation getMessageRelation(Message message) {
         return messageRelations.get(message.getGlobalId());
     }
@@ -350,6 +344,18 @@ public class SimplePersistence implements Persistence {
             }
         }
         return filteredMessages;
+    }
+
+    @Override
+    public UserMessageScore getMessageScore(String userGlobalId, String messageGlobalId) {
+
+        return this.messageScores.get(new UserMessageIdentifier(userGlobalId, messageGlobalId));
+    }
+
+    @Override
+    public UserMessageScore getNthUserMessageScore(String userGlobalId, int n, Date firstDate) {
+
+        throw new UnsupportedOperationException("Not yet implemented.");
     }
 
     @Override
@@ -471,9 +477,10 @@ public class SimplePersistence implements Persistence {
     public List<Subscription> getSubscriptions(SubscriptionFilter subscriptionFilter) {
         throw new UnsupportedOperationException("Not implemented.");
     }
-    
+
     @Override
-    public List<SubscriptionSourceStatus> getSubscriptionsWithSourceStatus(SubscriptionFilter subscriptionFilter) {
+    public List<SubscriptionSourceStatus> getSubscriptionsWithSourceStatus(
+            SubscriptionFilter subscriptionFilter) {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
@@ -770,7 +777,7 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
-    public void storeMessageRanks(Collection<UserMessageScore> ranks) {
+    public void storeUserMessageScores(Collection<UserMessageScore> ranks) {
         for (UserMessageScore messageRank : ranks) {
             this.messageScores.put(new UserMessageIdentifier(messageRank.getUserGlobalId(),
                     messageRank.getMessageGlobalId()), messageRank);
@@ -863,7 +870,8 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
-    public void visitAllUserMessageScores(UserMessageScoreVisitor visitor, Date startDate, Date endDate)
+    public void visitAllUserMessageScores(UserMessageScoreVisitor visitor, Date startDate,
+            Date endDate)
             throws Exception {
         for (UserMessageScore messageRank : this.messageScores.values()) {
             Message message = this.getMessageByGlobalId(messageRank.getMessageGlobalId());
@@ -876,5 +884,4 @@ public class SimplePersistence implements Persistence {
             visitor.visit(messageRank, message);
         }
     }
-
 }

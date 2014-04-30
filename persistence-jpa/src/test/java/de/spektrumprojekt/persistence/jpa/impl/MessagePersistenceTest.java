@@ -193,6 +193,48 @@ public class MessagePersistenceTest {
     }
 
     @Test
+    public void testGetNthUserMessageScore() {
+
+        final int diff = 1000;
+        long cutOffDate = new Date().getTime() - diff * 10;
+
+        User user = this.persistence.getOrCreateUser("testGetNthUserMessageScoreUser");
+        Collection<UserMessageScore> scores = new HashSet<UserMessageScore>();
+        for (int i = 1; i <= 10; i++) {
+
+            Message m = this.createTestMessage("Young: BlaText" + i,
+                    new Date(cutOffDate + i * diff));
+            m.setAuthorGlobalId(user.getGlobalId());
+
+            scores.add(new UserMessageScore(m.getGlobalId(), user.getGlobalId(), i / 10f));
+            this.persistence.storeMessage(m);
+        }
+
+        for (int i = 1; i <= 10; i++) {
+
+            Message m = this.createTestMessage("Old: BlaText" + i, new Date(cutOffDate - i * diff));
+            m.setAuthorGlobalId(user.getGlobalId());
+
+            scores.add(new UserMessageScore(m.getGlobalId(), user.getGlobalId(), i / 10f));
+
+            this.persistence.storeMessage(m);
+        }
+
+        this.persistence.storeUserMessageScores(scores);
+
+        for (int n = 1; n <= 12; n++) {
+            UserMessageScore score = this.persistence.getNthUserMessageScore(
+                    user.getGlobalId(),
+                    n,
+                    new Date(cutOffDate - 1));
+
+            double exp = n > 10 ? 0.1 : 1 - (n - 1) / 10d;
+            Assert.assertNotNull(score);
+            Assert.assertEquals(exp, score.getScore(), 0.001);
+        }
+    }
+
+    @Test
     public void testGetOrCreateTerm() {
 
         Term term1 = persistence.getOrCreateTerm(TermCategory.TERM, "testterm1");
@@ -322,7 +364,7 @@ public class MessagePersistenceTest {
 
         ranks.add(rank1);
         ranks.add(rank2);
-        persistence.storeMessageRanks(ranks);
+        persistence.storeUserMessageScores(ranks);
 
         UserMessageScore rank1return = persistence.getMessageScore(user.getGlobalId(),
                 message1.getGlobalId());
