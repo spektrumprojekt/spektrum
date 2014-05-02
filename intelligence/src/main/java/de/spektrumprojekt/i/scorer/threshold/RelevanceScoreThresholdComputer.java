@@ -21,6 +21,8 @@ public class RelevanceScoreThresholdComputer implements Computer {
 
     private final Map<String, Float> userToThreshold = new HashMap<String, Float>();
 
+    private final float minimumRelevantThreshold = 0.1f;
+
     public RelevanceScoreThresholdComputer(Persistence persistence, int n) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
@@ -36,6 +38,7 @@ public class RelevanceScoreThresholdComputer implements Computer {
     public String getConfigurationDescription() {
         return RelevanceScoreThresholdComputer.class.getSimpleName()
                 + " n: " + n
+                + " minimumRelevantThreshold: " + minimumRelevantThreshold
                 + " timeIntervall (in days): " + timeIntervall / DateUtils.MILLIS_PER_DAY;
 
     }
@@ -53,7 +56,7 @@ public class RelevanceScoreThresholdComputer implements Computer {
 
             UserMessageScore ums = this.persistence.getNthUserMessageScore(user.getGlobalId(), n,
                     firstDate);
-            float score = ums == null ? 0 : ums.getScore();
+            float score = ums == null ? minimumRelevantThreshold : ums.getScore();
             userToThreshold.put(user.getGlobalId(), score);
 
         }
