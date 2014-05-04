@@ -100,8 +100,13 @@ public class TermBasedMessageGroupSimilarityComputer implements MessageGroupSimi
             MessageGroup mg2 = this.persistence.getMessageGroupById(messageGroupId2);
             timePrepare = time.getTime();
 
-            this.termVectorSimilarityComputer.getSimilarity(mg1.getGlobalId(), mg2.getGlobalId(),
+            float sim = this.termVectorSimilarityComputer.getSimilarity(mg1.getGlobalId(),
+                    mg2.getGlobalId(),
                     termsOfMG1, termsOfMG2);
+
+            result.setSim(sim);
+            result.setSet1Size(termsOfMG1.size());
+            result.setSet2Size(termsOfMG2.size());
         }
 
         time.stop();
