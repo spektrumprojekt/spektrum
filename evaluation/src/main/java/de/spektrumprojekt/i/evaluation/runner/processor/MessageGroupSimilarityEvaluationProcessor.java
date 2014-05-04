@@ -15,11 +15,14 @@ public class MessageGroupSimilarityEvaluationProcessor extends SimpleEvaluationP
     @Override
     public void afterSingleRun() throws EvaluationException {
 
-        TermBasedMessageGroupSimilarityComputer termBasedMessageGroupSimilarityComputer = new TermBasedMessageGroupSimilarityComputer(
-                getEvaluationExecutionProvider().getPersistence(),
-                getEvaluationExecutionProvider().getEvaluationExecuterConfiguration()
-                        .getScorerConfiguration().getUserModelAdapterConfiguration()
-                        .getMessageGroupSimilarityConfiguration());
+        TermBasedMessageGroupSimilarityComputer termBasedMessageGroupSimilarityComputer =
+                new TermBasedMessageGroupSimilarityComputer(
+                        getEvaluationExecutionProvider().getPersistence(),
+                        getEvaluationExecutionProvider().getEvaluationExecuterConfiguration()
+                                .getScorerConfiguration().getUserModelAdapterConfiguration()
+                                .getMessageGroupSimilarityConfiguration(),
+                        getEvaluationExecutionProvider().getScorer()
+                                .getTermVectorSimilarityComputer());
 
         try {
             termBasedMessageGroupSimilarityComputer.run();

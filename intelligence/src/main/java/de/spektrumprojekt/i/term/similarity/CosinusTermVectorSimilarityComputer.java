@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import de.spektrumprojekt.commons.time.TimeProviderHolder;
 import de.spektrumprojekt.datamodel.message.Term;
@@ -51,15 +52,16 @@ public class CosinusTermVectorSimilarityComputer extends TermWeightTermVectorSim
         float squareSum1 = 0;
         float squareSum2 = 0;
 
-        for (Term term : relevantEntries1.keySet()) {
+        Collection<Term> termsToIterate = new HashSet<Term>();
+        termsToIterate.addAll(relevantEntries1.keySet());
+        termsToIterate.addAll(relevantEntries2.keySet());
+
+        for (Term term : termsToIterate) {
             UserModelEntry entry1 = relevantEntries1.get(term);
             UserModelEntry entry2 = relevantEntries2.get(term);
 
-            if (entry2 == null) {
-                continue;
-            }
-            float entryScore1 = getEntryWeight(entry1);
-            float entryScore2 = getEntryWeight(entry2);
+            float entryScore1 = entry1 == null ? 0 : getEntryWeight(entry1);
+            float entryScore2 = entry2 == null ? 0 : getEntryWeight(entry2);
 
             sumTop += entryScore1 * entryScore2;
             squareSum1 += entryScore1 * entryScore1;
@@ -73,8 +75,10 @@ public class CosinusTermVectorSimilarityComputer extends TermWeightTermVectorSim
     }
 
     @Override
-    public Float getSimilarity(String messageGroupId,
-            Map<String, Map<Term, UserModelEntry>> allEntries, MergeValuesStrategy strategy,
+    public Float getSimilarity(
+            String messageGroupId,
+            Map<String, Map<Term, UserModelEntry>> allEntries,
+            MergeValuesStrategy strategy,
             Collection<Term> terms) {
         float sumTop = 0;
         float squareSum1 = 0;
@@ -140,6 +144,34 @@ public class CosinusTermVectorSimilarityComputer extends TermWeightTermVectorSim
             sumTop += termWeight * entryScore;
             squareSum1 += entryScore * entryScore;
             squareSum2 += termWeight * termWeight;
+        }
+
+        if (squareSum1 * squareSum2 == 0) {
+            return 0;
+        }
+        return (float) (sumTop / Math.sqrt(squareSum1 * squareSum2));
+    }
+
+    @Override
+    protected float internalGetSimilarity(String messageGroupGlobalId1,
+            String messageGroupGlobalId2,
+            Map<String, Term> termValuesOfMG1, Map<String, Term> termValuesOfMG2,
+            Set<String> termsForIteration) {
+        float sumTop = 0;
+        float squareSum1 = 0;
+        float squareSum2 = 0;
+
+        for (String termValue : termsForIteration) {
+            Term t1 = termValuesOfMG1.get(termValue);
+            Term t2 = termValuesOfMG2.get(termValue);
+            float termWeight1 = t1 == null ? 0 : getTermWeightComputer().determineTermWeight(
+                    messageGroupGlobalId1, t1);
+            float termWeight2 = t2 == null ? 0 : getTermWeightComputer().determineTermWeight(
+                    messageGroupGlobalId2, t2);
+
+            sumTop += termWeight2 * termWeight1;
+            squareSum1 += termWeight1 * termWeight1;
+            squareSum2 += termWeight2 * termWeight2;
         }
 
         if (squareSum1 * squareSum2 == 0) {

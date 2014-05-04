@@ -25,6 +25,7 @@ import de.spektrumprojekt.datamodel.message.MessageGroup;
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.helper.MessageHelper;
 import de.spektrumprojekt.i.similarity.set.SetSimilarityResult;
+import de.spektrumprojekt.i.term.similarity.TermVectorSimilarityComputer;
 import de.spektrumprojekt.persistence.Persistence;
 
 public class TermBasedMessageGroupSimilarityComputer implements MessageGroupSimilarityRetriever,
@@ -38,9 +39,12 @@ public class TermBasedMessageGroupSimilarityComputer implements MessageGroupSimi
 
     private final Map<Pair<Long, Long>, MessageGroupSimilarity> cachedSimilarites = new HashMap<Pair<Long, Long>, MessageGroupSimilarity>();
 
+    private TermVectorSimilarityComputer termVectorSimilarityComputer;
+
     public TermBasedMessageGroupSimilarityComputer(
             Persistence persistence,
-            MessageGroupSimilarityConfiguration messageGroupSimilarityConfiguration) {
+            MessageGroupSimilarityConfiguration messageGroupSimilarityConfiguration,
+            TermVectorSimilarityComputer termVectorSimilarityComputer) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
         }
@@ -48,9 +52,10 @@ public class TermBasedMessageGroupSimilarityComputer implements MessageGroupSimi
             throw new IllegalArgumentException(
                     "messageGroupSimilarityConfiguration cannot be null.");
         }
-        if (messageGroupSimilarityConfiguration.getSetSimilarity() == null) {
+        if (messageGroupSimilarityConfiguration.getSetSimilarity() == null
+                && termVectorSimilarityComputer == null) {
             throw new IllegalArgumentException(
-                    "messageGroupSimilarityConfiguration.getSetSimilarity() cannot be null if outputSimilarities=true.");
+                    "Either messageGroupSimilarityConfiguration.getSetSimilarity() or termVectorSimilarityComputer must be set!");
         }
         if (messageGroupSimilarityConfiguration.isReadMessageGroupSimilaritiesFromPrecomputedFile()
                 && messageGroupSimilarityConfiguration
@@ -60,6 +65,7 @@ public class TermBasedMessageGroupSimilarityComputer implements MessageGroupSimi
         }
         this.persistence = persistence;
         this.messageGroupSimilarityConfiguration = messageGroupSimilarityConfiguration;
+        this.termVectorSimilarityComputer = termVectorSimilarityComputer;
     }
 
     private SetSimilarityResult computeSimilarity(Long messageGroupId1, Long messageGroupId2) {
@@ -72,28 +78,43 @@ public class TermBasedMessageGroupSimilarityComputer implements MessageGroupSimi
         Date minPublicationDate = new Date(currentTime);
 
         Set<Term> termsOfMG1 = getTermsForMessageGroup(messageGroupId1, minPublicationDate);
-        Set<String> termValuesOfMG1 = getMGFreeTermValues(termsOfMG1);
         long timeToGetTerms1 = time.getTime();
 
         Set<Term> termsOfMG2 = getTermsForMessageGroup(messageGroupId2, minPublicationDate);
-        Set<String> termValuesOfMG2 = getMGFreeTermValues(termsOfMG2);
         long timeToGetTerms2 = time.getTime();
 
-        SetSimilarityResult result = this.messageGroupSimilarityConfiguration.getSetSimilarity()
-                .computeSimilarity(termValuesOfMG1, termValuesOfMG2);
+        long timePrepare;
+        SetSimilarityResult result;
+        if (this.messageGroupSimilarityConfiguration.getSetSimilarity() != null) {
+
+            Set<String> termValuesOfMG1 = getMGFreeTermValues(termsOfMG1);
+            Set<String> termValuesOfMG2 = getMGFreeTermValues(termsOfMG2);
+            timePrepare = time.getTime();
+
+            result = this.messageGroupSimilarityConfiguration.getSetSimilarity()
+                    .computeSimilarity(termValuesOfMG1, termValuesOfMG2);
+
+        } else {
+            result = new SetSimilarityResult();
+            MessageGroup mg1 = this.persistence.getMessageGroupById(messageGroupId1);
+            MessageGroup mg2 = this.persistence.getMessageGroupById(messageGroupId2);
+            timePrepare = time.getTime();
+
+            this.termVectorSimilarityComputer.getSimilarity(mg1.getGlobalId(), mg2.getGlobalId(),
+                    termsOfMG1, termsOfMG2);
+        }
 
         time.stop();
         long timeForAll = time.getTime();
-
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(
-                    "Message Group Similarity ({} and {} = {}) took {} ms. {} ms and {} ms for getting terms",
-                    new String[] {
+                    "Message Group Similarity ({} and {} = {}) took {} ms. {} ms and {} ms for getting terms, {} for preperation.",
+                    new Object[] {
                             "" + messageGroupId1, "" + messageGroupId2, "" + result.getSim(),
                             "" + timeForAll,
-                            ""
-                                    + timeToGetTerms1,
-                            "" + timeToGetTerms2 });
+                            "" + timeToGetTerms1,
+                            "" + timeToGetTerms2,
+                            "" + timePrepare });
         }
 
         return result;
@@ -102,7 +123,9 @@ public class TermBasedMessageGroupSimilarityComputer implements MessageGroupSimi
     @Override
     public String getConfigurationDescription() {
         return this.getClass().getSimpleName() + " messageGroupSimilarityConfiguration: "
-                + this.messageGroupSimilarityConfiguration.getConfigurationDescription();
+                + this.messageGroupSimilarityConfiguration.getConfigurationDescription()
+                + " termVectorSimilarityComputer: " + termVectorSimilarityComputer == null ? "null"
+                : termVectorSimilarityComputer.getConfigurationDescription();
     }
 
     @Override

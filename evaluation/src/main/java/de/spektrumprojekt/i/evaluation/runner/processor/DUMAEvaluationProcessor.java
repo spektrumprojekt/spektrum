@@ -169,10 +169,13 @@ public class DUMAEvaluationProcessor extends SimpleEvaluationProcessor {
                 .isAdaptFromMessageGroups()) {
             int intervallInDays = umaConf.getMessageGroupSimilarityConfiguration()
                     .getIntervallOfMGSimComputationInDays();
-            messageGroupSimilarityRetriever = new TermBasedMessageGroupSimilarityComputer(
-                    persistence,
-                    this.scorerConfiguration.getUserModelAdapterConfiguration()
-                            .getMessageGroupSimilarityConfiguration());
+            messageGroupSimilarityRetriever =
+                    new TermBasedMessageGroupSimilarityComputer(
+                            persistence,
+                            this.scorerConfiguration.getUserModelAdapterConfiguration()
+                                    .getMessageGroupSimilarityConfiguration(),
+                            this.getEvaluationExecutionProvider().getScorer()
+                                    .getTermVectorSimilarityComputer());
 
             this.getEvaluationExecutionProvider()
                     .getTaskRunner()
@@ -213,5 +216,4 @@ public class DUMAEvaluationProcessor extends SimpleEvaluationProcessor {
                 .registerMessageHandler(directUMAdapter);
 
     }
-
 }

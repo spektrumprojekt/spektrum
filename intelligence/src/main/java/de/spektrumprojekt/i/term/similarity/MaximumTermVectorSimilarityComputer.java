@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.spektrumprojekt.datamodel.message.Term;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
@@ -75,6 +76,30 @@ public class MaximumTermVectorSimilarityComputer extends TermWeightTermVectorSim
             max = Math.max(max, termWeight * entryScore);
 
         }
+        return max;
+    }
+
+    @Override
+    protected float internalGetSimilarity(
+            String messageGroupGlobalId1,
+            String messageGroupGlobalId2,
+            Map<String, Term> termValuesOfMG1,
+            Map<String, Term> termValuesOfMG2,
+            Set<String> termsForIteration) {
+
+        float max = 0;
+
+        for (String termValue : termsForIteration) {
+            Term t1 = termValuesOfMG1.get(termValue);
+            Term t2 = termValuesOfMG2.get(termValue);
+            float termWeight1 = t1 == null ? 0 : getTermWeightComputer().determineTermWeight(
+                    messageGroupGlobalId1, t1);
+            float termWeight2 = t2 == null ? 0 : getTermWeightComputer().determineTermWeight(
+                    messageGroupGlobalId2, t2);
+
+            max = Math.max(max, termWeight1 * termWeight2);
+        }
+
         return max;
     }
 }

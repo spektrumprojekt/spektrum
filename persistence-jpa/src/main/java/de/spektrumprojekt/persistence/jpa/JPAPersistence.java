@@ -49,9 +49,9 @@ import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
 import de.spektrumprojekt.exceptions.SubscriptionNotFoundException;
-import de.spektrumprojekt.persistence.UserMessageScoreVisitor;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.Statistics;
+import de.spektrumprojekt.persistence.UserMessageScoreVisitor;
 import de.spektrumprojekt.persistence.jpa.impl.DuplicationDetectionPersistence;
 import de.spektrumprojekt.persistence.jpa.impl.MessagePersistence;
 import de.spektrumprojekt.persistence.jpa.impl.SourcePersistence;
@@ -185,6 +185,11 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
+    public MessageGroup getMessageGroupById(Long messageGroupId) {
+        return this.messagePersistence.getMessageGroupById(messageGroupId);
+    }
+
+    @Override
     public MessageRelation getMessageRelation(Message message) {
         return messagePersistence.getMessageRelation(message);
     }
@@ -211,6 +216,7 @@ public class JPAPersistence implements Persistence {
      * @param firstDate
      * @return the user message score at the n-th position fulfilling the constraints.
      */
+    @Override
     public UserMessageScore getNthUserMessageScore(String userGlobalId, int n,
             final Date firstDate) {
         return this.messagePersistence.getNthUserMessageScore(userGlobalId, n, firstDate);
@@ -397,11 +403,6 @@ public class JPAPersistence implements Persistence {
     }
 
     @Override
-    public void storeUserMessageScores(Collection<UserMessageScore> ranks) {
-        messagePersistence.storeUserMessageScores(ranks);
-    }
-
-    @Override
     public void storeMessageRelation(Message message, MessageRelation relatedMessages) {
         messagePersistence.storeMessageRelation(message, relatedMessages);
     }
@@ -421,6 +422,11 @@ public class JPAPersistence implements Persistence {
     public Subscription storeSubscription(Subscription subscription) {
 
         return this.subscriptionPersistence.storeSubscription(subscription);
+    }
+
+    @Override
+    public void storeUserMessageScores(Collection<UserMessageScore> ranks) {
+        messagePersistence.storeUserMessageScores(ranks);
     }
 
     @Override

@@ -46,9 +46,9 @@ import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
-import de.spektrumprojekt.persistence.UserMessageScoreVisitor;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.Statistics;
+import de.spektrumprojekt.persistence.UserMessageScoreVisitor;
 
 /**
  * The Dummy Persistence is for test purpose only. It just does nothing and returns null.
@@ -131,6 +131,11 @@ public class PersistenceMock implements Persistence {
 
     @Override
     public MessageGroup getMessageGroupByGlobalId(String globalIdString) {
+        return null;
+    }
+
+    @Override
+    public MessageGroup getMessageGroupById(Long messageGroupId) {
         return null;
     }
 
@@ -317,10 +322,6 @@ public class PersistenceMock implements Persistence {
     }
 
     @Override
-    public void storeUserMessageScores(Collection<UserMessageScore> ranks) {
-    }
-
-    @Override
     public void storeMessageRelation(Message message, MessageRelation relatedMessages) {
     }
 
@@ -337,6 +338,10 @@ public class PersistenceMock implements Persistence {
     @Override
     public Subscription storeSubscription(Subscription subscription) {
         return null;
+    }
+
+    @Override
+    public void storeUserMessageScores(Collection<UserMessageScore> ranks) {
     }
 
     @Override

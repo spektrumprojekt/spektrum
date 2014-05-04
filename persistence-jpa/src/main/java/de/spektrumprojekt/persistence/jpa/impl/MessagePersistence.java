@@ -60,8 +60,8 @@ import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserModelEntryTimeBin;
-import de.spektrumprojekt.persistence.UserMessageScoreVisitor;
 import de.spektrumprojekt.persistence.Statistics;
+import de.spektrumprojekt.persistence.UserMessageScoreVisitor;
 import de.spektrumprojekt.persistence.jpa.JPAConfiguration;
 import de.spektrumprojekt.persistence.jpa.transaction.Transaction;
 
@@ -172,6 +172,10 @@ public class MessagePersistence extends AbstractPersistenceLayer {
      */
     public MessageGroup getMessageGroupByGlobalId(String messageGroupGlobalId) {
         return this.getEntityByGlobalId(MessageGroup.class, messageGroupGlobalId);
+    }
+
+    public MessageGroup getMessageGroupById(Long messageGroupId) {
+        return this.getEntityById(MessageGroup.class, messageGroupId);
     }
 
     public UserMessageScore getMessageRank(final String userGlobalId, final String messageGlobalId) {

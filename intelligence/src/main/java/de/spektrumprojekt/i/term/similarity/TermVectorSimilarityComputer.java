@@ -14,13 +14,20 @@ public interface TermVectorSimilarityComputer extends ConfigurationDescriptable 
     public float getSimilarity(Map<Term, UserModelEntry> relevantEntries1,
             Map<Term, UserModelEntry> relevantEntries2);
 
-    public Float getSimilarity(String messageGroupId,
+    public Float getSimilarity(
+            String messageGroupId,
             Map<String, Map<Term, UserModelEntry>> allEntries,
             MergeValuesStrategy strategy,
             Collection<Term> messageTerms);
 
     public float getSimilarity(String messageGroupId, Map<Term, UserModelEntry> relevantEntries,
             Collection<Term> terms);
+
+    public float getSimilarity(
+            String messageGroupGlobalId1,
+            String messageGroupGlobalId2,
+            Collection<Term> termsOfMG1,
+            Collection<Term> termsOfMG2);
 
     public TermWeightComputer getTermWeightComputer();
 }

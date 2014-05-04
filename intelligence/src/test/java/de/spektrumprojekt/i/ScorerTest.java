@@ -209,9 +209,11 @@ public class ScorerTest extends IntelligenceSpektrumTest {
                         getPersistence(),
                         scorer,
                         new UserSimilarityRetriever(getPersistence()),
-                        new TermBasedMessageGroupSimilarityComputer(getPersistence(),
+                        new TermBasedMessageGroupSimilarityComputer(
+                                getPersistence(),
                                 scorerConfiguration.getUserModelAdapterConfiguration()
-                                        .getMessageGroupSimilarityConfiguration()),
+                                        .getMessageGroupSimilarityConfiguration(),
+                                scorer.getTermVectorSimilarityComputer()),
                         scorerConfiguration.getUserModelAdapterConfiguration());
             } else {
                 adapter = new DirectedUserModelAdapter(

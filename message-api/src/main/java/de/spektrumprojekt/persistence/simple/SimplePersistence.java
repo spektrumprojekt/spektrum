@@ -55,9 +55,9 @@ import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.datamodel.user.UserModel;
 import de.spektrumprojekt.datamodel.user.UserModelEntry;
 import de.spektrumprojekt.datamodel.user.UserSimilarity;
-import de.spektrumprojekt.persistence.UserMessageScoreVisitor;
 import de.spektrumprojekt.persistence.Persistence;
 import de.spektrumprojekt.persistence.Statistics;
+import de.spektrumprojekt.persistence.UserMessageScoreVisitor;
 
 /**
  * This persistence maintains the data completly in memory and may (not yet implemented) load and
@@ -159,6 +159,8 @@ public class SimplePersistence implements Persistence {
 
     // key is global id of message group
     private final Map<String, MessageGroup> messageGroups = new HashMap<String, MessageGroup>();
+    // key is id of message group
+    private final Map<Long, MessageGroup> messageGroupsById = new HashMap<Long, MessageGroup>();
 
     private final Map<UserMessageIdentifier, UserMessageScore> messageScores = new HashMap<UserMessageIdentifier, UserMessageScore>();
 
@@ -298,6 +300,11 @@ public class SimplePersistence implements Persistence {
     @Override
     public MessageGroup getMessageGroupByGlobalId(String messageGroupGlobalId) {
         return this.messageGroups.get(messageGroupGlobalId);
+    }
+
+    @Override
+    public MessageGroup getMessageGroupById(Long messageGroupId) {
+        return this.messageGroupsById.get(messageGroupId);
     }
 
     @Override
@@ -762,6 +769,7 @@ public class SimplePersistence implements Persistence {
     public MessageGroup storeMessageGroup(MessageGroup messageGroup) {
         messageGroup.setId(idGenerator.getNextMessageGroupId());
         messageGroups.put(messageGroup.getGlobalId(), messageGroup);
+        messageGroupsById.put(messageGroup.getId(), messageGroup);
 
         return messageGroup;
     }
@@ -774,14 +782,6 @@ public class SimplePersistence implements Persistence {
             patternMessages.put(pattern, messages);
         }
         messages.add(message);
-    }
-
-    @Override
-    public void storeUserMessageScores(Collection<UserMessageScore> ranks) {
-        for (UserMessageScore messageRank : ranks) {
-            this.messageScores.put(new UserMessageIdentifier(messageRank.getUserGlobalId(),
-                    messageRank.getMessageGlobalId()), messageRank);
-        }
     }
 
     @Override
@@ -820,6 +820,14 @@ public class SimplePersistence implements Persistence {
     @Override
     public Subscription storeSubscription(Subscription subscription) {
         throw new UnsupportedOperationException("Implement me ...");
+    }
+
+    @Override
+    public void storeUserMessageScores(Collection<UserMessageScore> ranks) {
+        for (UserMessageScore messageRank : ranks) {
+            this.messageScores.put(new UserMessageIdentifier(messageRank.getUserGlobalId(),
+                    messageRank.getMessageGlobalId()), messageRank);
+        }
     }
 
     @Override

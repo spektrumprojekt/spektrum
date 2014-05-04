@@ -133,6 +133,8 @@ public interface Persistence {
      */
     MessageGroup getMessageGroupByGlobalId(String globalIdString);
 
+    MessageGroup getMessageGroupById(Long messageGroupId);
+
     MessageRelation getMessageRelation(Message message);
 
     List<Message> getMessages(MessageFilter messageFilter);
@@ -266,13 +268,6 @@ public interface Persistence {
     void storeMessagePattern(String pattern, Message message);
 
     /**
-     * 
-     * @param userMessageScores
-     *            store the ranks
-     */
-    void storeUserMessageScores(Collection<UserMessageScore> userMessageScores);
-
-    /**
      * Stores the message relation
      * 
      * TODO do we need this ?
@@ -299,6 +294,13 @@ public interface Persistence {
             Collection<UserModelEntry> changedEntries);
 
     Subscription storeSubscription(Subscription subscription);
+
+    /**
+     * 
+     * @param userMessageScores
+     *            store the ranks
+     */
+    void storeUserMessageScores(Collection<UserMessageScore> userMessageScores);
 
     void storeUserSimilarity(UserSimilarity stat);
 
