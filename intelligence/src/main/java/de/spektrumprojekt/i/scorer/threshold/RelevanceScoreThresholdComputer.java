@@ -56,7 +56,8 @@ public class RelevanceScoreThresholdComputer implements Computer {
 
             UserMessageScore ums = this.persistence.getNthUserMessageScore(user.getGlobalId(), n,
                     firstDate);
-            float score = ums == null ? minimumRelevantThreshold : ums.getScore();
+            float score = ums == null || ums.getScore() < minimumRelevantThreshold ? minimumRelevantThreshold
+                    : ums.getScore();
             userToThreshold.put(user.getGlobalId(), score);
 
         }

@@ -90,6 +90,10 @@ public class RunFilterAggregator {
 
                 "fth-uma-jdpc-var5-topSim0-wa-adRe-#IA#-4-iTh0-umgsim",
                 "fth-uma-jdpc-var5-topSim3-wa-adRe-#IA#-4-iTh0-umgsim",
+
+                "fth-uma-tvspc-var3-topSim3-wa-adRe-#IA#-4-iTh0-usim",
+                "fth-uma-tvspc-var4-topSim3-wa-adRe-#IA#-4-iTh0-mgsim",
+                "fth-uma-tvspc-var5-topSim3-wa-adRe-#IA#-4-iTh0-umgsim"
         };
 
         List<String> finals = new ArrayList<String>();
@@ -103,7 +107,7 @@ public class RunFilterAggregator {
     }
 
     public static void main(String[] args) throws Exception {
-        Date minDate = SIMPLE_DATE_FORMAT.parse("2014/02/06 23:00:00");
+        Date minDate = SIMPLE_DATE_FORMAT.parse("2014/05/05 1:00:00");
 
         RunFilterAggregator aggregator;
 
@@ -214,6 +218,7 @@ public class RunFilterAggregator {
     }
 
     public void init() throws IOException {
+        System.out.println("Using aggregator file=" + aggregatorFilename);
         rows = EvaluationAggregator.readAggregate(aggregatorFilename);
     }
 
