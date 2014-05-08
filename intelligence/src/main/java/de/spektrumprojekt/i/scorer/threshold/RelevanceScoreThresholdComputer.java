@@ -21,9 +21,14 @@ public class RelevanceScoreThresholdComputer implements Computer {
 
     private final Map<String, Float> userToThreshold = new HashMap<String, Float>();
 
-    private final float minimumRelevantThreshold = 0.1f;
+    private final float minimumRelevantThreshold;
 
     public RelevanceScoreThresholdComputer(Persistence persistence, int n) {
+        this(persistence, n, 0.1f);
+    }
+
+    public RelevanceScoreThresholdComputer(Persistence persistence, int n,
+            float minimumRelevantThreshold) {
         if (persistence == null) {
             throw new IllegalArgumentException("persistence cannot be null.");
         }
@@ -32,6 +37,7 @@ public class RelevanceScoreThresholdComputer implements Computer {
         }
         this.persistence = persistence;
         this.n = n;
+        this.minimumRelevantThreshold = minimumRelevantThreshold;
     }
 
     @Override
