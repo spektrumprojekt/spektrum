@@ -7,6 +7,7 @@ import java.util.Map;
 import org.apache.commons.lang3.time.DateUtils;
 
 import de.spektrumprojekt.commons.computer.Computer;
+import de.spektrumprojekt.datamodel.message.InteractionLevel;
 import de.spektrumprojekt.datamodel.message.UserMessageScore;
 import de.spektrumprojekt.datamodel.user.User;
 import de.spektrumprojekt.persistence.Persistence;
@@ -60,8 +61,10 @@ public class RelevanceScoreThresholdComputer implements Computer {
         userToThreshold.clear();
         for (User user : persistence.getAllUsers()) {
 
-            UserMessageScore ums = this.persistence.getNthUserMessageScore(user.getGlobalId(), n,
-                    firstDate);
+            UserMessageScore ums = this.persistence.getNthUserMessageScore(
+                    user.getGlobalId(), n,
+                    firstDate,
+                    new InteractionLevel[] { InteractionLevel.NONE });
             float score = ums == null || ums.getScore() < minimumRelevantThreshold ? minimumRelevantThreshold
                     : ums.getScore();
             userToThreshold.put(user.getGlobalId(), score);

@@ -45,6 +45,7 @@ public class UserMessageScore implements SpektrumEntity {
      */
     private static final long serialVersionUID = 1L;
 
+    @Index
     private float score;
 
     @Index
@@ -58,7 +59,7 @@ public class UserMessageScore implements SpektrumEntity {
     @Transient
     private boolean author;
 
-    @Transient
+    @Index
     private InteractionLevel interactionLevel = InteractionLevel.UNKNOWN;
 
     @Transient
@@ -76,6 +77,12 @@ public class UserMessageScore implements SpektrumEntity {
     }
 
     public UserMessageScore(String messageGlobalId, String userGlobalId, float score) {
+        this(messageGlobalId, userGlobalId, null, score);
+    }
+
+    public UserMessageScore(String messageGlobalId, String userGlobalId,
+            InteractionLevel interactionLevel, float score) {
+
         if (messageGlobalId == null) {
             throw new IllegalArgumentException("messageGlobalId cannot be null.");
         }
@@ -85,6 +92,36 @@ public class UserMessageScore implements SpektrumEntity {
         this.messageGlobalId = messageGlobalId;
         this.userGlobalId = userGlobalId;
         this.score = score;
+        this.interactionLevel = interactionLevel;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        UserMessageScore other = (UserMessageScore) obj;
+        if (messageGlobalId == null) {
+            if (other.messageGlobalId != null) {
+                return false;
+            }
+        } else if (!messageGlobalId.equals(other.messageGlobalId)) {
+            return false;
+        }
+        if (userGlobalId == null) {
+            if (other.userGlobalId != null) {
+                return false;
+            }
+        } else if (!userGlobalId.equals(other.userGlobalId)) {
+            return false;
+        }
+        return true;
     }
 
     public InteractionLevel getInteractionLevel() {
@@ -113,6 +150,15 @@ public class UserMessageScore implements SpektrumEntity {
      */
     public String getUserGlobalId() {
         return userGlobalId;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + (messageGlobalId == null ? 0 : messageGlobalId.hashCode());
+        result = prime * result + (userGlobalId == null ? 0 : userGlobalId.hashCode());
+        return result;
     }
 
     public boolean isBasedOnAdaptedTerms() {

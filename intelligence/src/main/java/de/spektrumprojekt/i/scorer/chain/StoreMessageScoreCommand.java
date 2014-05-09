@@ -63,10 +63,10 @@ public class StoreMessageScoreCommand implements Command<MessageFeatureContext> 
         if (context.isNoRankingOnlyLearning()) {
             return;
         }
-        Collection<UserMessageScore> ranks = new HashSet<UserMessageScore>();
+        Collection<UserMessageScore> scores = new HashSet<UserMessageScore>();
         for (UserSpecificMessageFeatureContext userContext : context.getUserContexts()) {
             if (userContext.getMessageScore() != null) {
-                ranks.add(userContext.getMessageScore());
+                scores.add(userContext.getMessageScore());
             }
 
             for (UserMessageScore rankToUpdate : userContext.getRanksToUpdate()) {
@@ -75,8 +75,8 @@ public class StoreMessageScoreCommand implements Command<MessageFeatureContext> 
             }
         }
 
-        if (!ranks.isEmpty()) {
-            persistence.storeUserMessageScores(ranks);
+        if (!scores.isEmpty()) {
+            persistence.storeUserMessageScores(scores);
         }
     }
 }

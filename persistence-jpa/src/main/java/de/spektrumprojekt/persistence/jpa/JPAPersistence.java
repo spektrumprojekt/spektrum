@@ -28,6 +28,7 @@ import java.util.Map;
 import de.spektrumprojekt.configuration.Configuration;
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate;
+import de.spektrumprojekt.datamodel.message.InteractionLevel;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
@@ -218,8 +219,9 @@ public class JPAPersistence implements Persistence {
      */
     @Override
     public UserMessageScore getNthUserMessageScore(String userGlobalId, int n,
-            final Date firstDate) {
-        return this.messagePersistence.getNthUserMessageScore(userGlobalId, n, firstDate);
+            final Date firstDate, InteractionLevel[] interactionLevels) {
+        return this.messagePersistence.getNthUserMessageScore(userGlobalId, n, firstDate,
+                interactionLevels);
     }
 
     @Override

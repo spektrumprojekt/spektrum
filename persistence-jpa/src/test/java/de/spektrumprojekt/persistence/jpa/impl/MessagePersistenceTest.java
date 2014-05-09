@@ -39,6 +39,7 @@ import org.junit.Test;
 import de.spektrumprojekt.configuration.properties.SimpleProperties;
 import de.spektrumprojekt.datamodel.common.MimeType;
 import de.spektrumprojekt.datamodel.common.Property;
+import de.spektrumprojekt.datamodel.message.InteractionLevel;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
@@ -206,7 +207,10 @@ public class MessagePersistenceTest {
                     new Date(cutOffDate + i * diff));
             m.setAuthorGlobalId(user.getGlobalId());
 
-            scores.add(new UserMessageScore(m.getGlobalId(), user.getGlobalId(), i / 10f));
+            InteractionLevel interactionLevel = i % 2 == 0 ? InteractionLevel.DIRECT
+                    : InteractionLevel.NONE;
+            scores.add(new UserMessageScore(m.getGlobalId(), user.getGlobalId(), interactionLevel,
+                    i / 10f));
             this.persistence.storeMessage(m);
         }
 
@@ -215,23 +219,45 @@ public class MessagePersistenceTest {
             Message m = this.createTestMessage("Old: BlaText" + i, new Date(cutOffDate - i * diff));
             m.setAuthorGlobalId(user.getGlobalId());
 
-            scores.add(new UserMessageScore(m.getGlobalId(), user.getGlobalId(), i / 10f));
+            scores.add(new UserMessageScore(m.getGlobalId(), user.getGlobalId(),
+                    InteractionLevel.NONE, i / 10f));
 
             this.persistence.storeMessage(m);
         }
 
         this.persistence.storeUserMessageScores(scores);
 
+        // check to only get new
         for (int n = 1; n <= 12; n++) {
             UserMessageScore score = this.persistence.getNthUserMessageScore(
                     user.getGlobalId(),
                     n,
-                    new Date(cutOffDate - 1));
+                    new Date(cutOffDate - 1),
+                    new InteractionLevel[] { InteractionLevel.NONE, InteractionLevel.DIRECT });
 
             double exp = n > 10 ? 0.1 : 1 - (n - 1) / 10d;
             Assert.assertNotNull(score);
             Assert.assertEquals(exp, score.getScore(), 0.001);
+
+            UserMessageScore score2 = this.persistence.getNthUserMessageScore(
+                    user.getGlobalId(),
+                    n,
+                    new Date(cutOffDate - 1),
+                    null);
+            Assert.assertEquals(score.getMessageGlobalId(), score2.getMessageGlobalId());
+            Assert.assertEquals(score.getUserGlobalId(), score2.getUserGlobalId());
+            Assert.assertEquals(score.getScore(), score2.getScore(), 0.0001);
+            Assert.assertEquals(score.getInteractionLevel(), score2.getInteractionLevel());
+
         }
+
+        UserMessageScore score = this.persistence.getNthUserMessageScore(
+                user.getGlobalId(),
+                3,
+                new Date(cutOffDate - 1),
+                new InteractionLevel[] { InteractionLevel.NONE });
+        Assert.assertNotNull(score);
+        Assert.assertEquals(0.5, score.getScore(), 0.001);
     }
 
     @Test
@@ -342,43 +368,6 @@ public class MessagePersistenceTest {
     }
 
     @Test
-    public void testMessageRanks() {
-        Collection<UserMessageScore> ranks = new HashSet<UserMessageScore>();
-
-        Message message1 = createTestMessage("hello, world!");
-        Message message2 = createTestMessage("hello, world!");
-
-        message1 = persistence.storeMessage(message1);
-        message2 = persistence.storeMessage(message2);
-
-        User user = persistence.getOrCreateUser("testUser");
-
-        Assert.assertNotNull(message1);
-        Assert.assertNotNull(message2);
-        Assert.assertNotNull(user);
-
-        UserMessageScore rank1 = new UserMessageScore(message1.getGlobalId(), user.getGlobalId());
-        rank1.setScore(0.25f);
-        UserMessageScore rank2 = new UserMessageScore(message2.getGlobalId(), user.getGlobalId());
-        rank2.setScore(0.75f);
-
-        ranks.add(rank1);
-        ranks.add(rank2);
-        persistence.storeUserMessageScores(ranks);
-
-        UserMessageScore rank1return = persistence.getMessageScore(user.getGlobalId(),
-                message1.getGlobalId());
-        UserMessageScore rank2return = persistence.getMessageScore(user.getGlobalId(),
-                message2.getGlobalId());
-
-        Assert.assertNotNull(rank1return);
-        Assert.assertEquals(rank1.getScore(), rank1return.getScore(), 0.0001);
-
-        Assert.assertNotNull(rank2return);
-        Assert.assertEquals(rank2.getScore(), rank2return.getScore(), 0.0001);
-    }
-
-    @Test
     public void testObservations() {
         Observation obs = new Observation("userId1", "messageId1", ObservationType.LIKE,
                 ObservationPriority.USER_FEEDBACK, null, new Date(), Interest.EXTREME);
@@ -412,6 +401,63 @@ public class MessagePersistenceTest {
             Assert.assertEquals(obs.getMessageGlobalId(), ob.getMessageGlobalId());
             Assert.assertEquals(obs.getObservationType(), ob.getObservationType());
         }
+    }
+
+    @Test
+    public void testStoreUserMessageScores() {
+        Collection<UserMessageScore> scores = new HashSet<UserMessageScore>();
+
+        Message message1 = createTestMessage("hello, world!");
+        Message message2 = createTestMessage("hello, world2!");
+
+        message1 = persistence.storeMessage(message1);
+        message2 = persistence.storeMessage(message2);
+
+        User user = persistence.getOrCreateUser("testUser");
+        User user2 = persistence.getOrCreateUser("testUser2");
+
+        Assert.assertNotNull(message1);
+        Assert.assertNotNull(message2);
+        Assert.assertNotNull(user);
+
+        UserMessageScore score1 = new UserMessageScore(message1.getGlobalId(), user.getGlobalId());
+        score1.setScore(0.25f);
+        score1.setInteractionLevel(InteractionLevel.NONE);
+        UserMessageScore score2 = new UserMessageScore(message2.getGlobalId(), user.getGlobalId());
+        score2.setScore(0.75f);
+        score2.setInteractionLevel(InteractionLevel.NONE);
+
+        scores.add(score1);
+        scores.add(score2);
+        persistence.storeUserMessageScores(scores);
+
+        UserMessageScore score1return = persistence.getMessageScore(user.getGlobalId(),
+                message1.getGlobalId());
+        UserMessageScore score2return = persistence.getMessageScore(user.getGlobalId(),
+                message2.getGlobalId());
+
+        Assert.assertNotNull(score1return);
+        Assert.assertEquals(score1.getScore(), score1return.getScore(), 0.0001);
+        Assert.assertEquals(score1.getInteractionLevel(), score1return.getInteractionLevel());
+
+        Assert.assertNotNull(score2return);
+        Assert.assertEquals(score2.getScore(), score2return.getScore(), 0.0001);
+        Assert.assertEquals(score2.getInteractionLevel(), score2return.getInteractionLevel());
+
+        UserMessageScore score3 = new UserMessageScore(message1.getGlobalId(), user2.getGlobalId());
+        score3.setScore(0.15f);
+        score3.setInteractionLevel(InteractionLevel.INDIRECT);
+
+        scores.clear();
+        scores.add(score3);
+        persistence.storeUserMessageScores(scores);
+
+        UserMessageScore score3return = persistence.getMessageScore(user2.getGlobalId(),
+                message1.getGlobalId());
+
+        Assert.assertNotNull(score3return);
+        Assert.assertEquals(score3.getScore(), score3return.getScore(), 0.0001);
+        Assert.assertEquals(score3.getInteractionLevel(), score3return.getInteractionLevel());
     }
 
     @Test

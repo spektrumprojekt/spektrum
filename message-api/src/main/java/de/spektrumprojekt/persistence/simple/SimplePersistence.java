@@ -33,6 +33,7 @@ import java.util.Set;
 
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate;
+import de.spektrumprojekt.datamodel.message.InteractionLevel;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
@@ -360,7 +361,8 @@ public class SimplePersistence implements Persistence {
     }
 
     @Override
-    public UserMessageScore getNthUserMessageScore(String userGlobalId, int n, Date firstDate) {
+    public UserMessageScore getNthUserMessageScore(String userGlobalId, int n, Date firstDate,
+            InteractionLevel[] interactionLevels) {
 
         throw new UnsupportedOperationException("Not yet implemented.");
     }

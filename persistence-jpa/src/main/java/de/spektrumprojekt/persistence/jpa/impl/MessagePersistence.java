@@ -20,6 +20,7 @@
 package de.spektrumprojekt.persistence.jpa.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -42,6 +43,7 @@ import javax.persistence.criteria.Root;
 import org.apache.commons.lang3.Validate;
 
 import de.spektrumprojekt.datamodel.identifiable.SpektrumEntity;
+import de.spektrumprojekt.datamodel.message.InteractionLevel;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageFilter.OrderDirection;
@@ -345,26 +347,36 @@ public class MessagePersistence extends AbstractPersistenceLayer {
      * @param userGlobalId
      * @param n
      * @param firstDate
+     * @param interactionLevels
      * @return the user message score at the n-th position fulfilling the constraints.
      */
     public UserMessageScore getNthUserMessageScore(final String userGlobalId, final int n,
-            final Date firstDate) {
+            final Date firstDate, final InteractionLevel[] interactionLevels) {
         Transaction<UserMessageScore> transaction = new Transaction<UserMessageScore>() {
 
             @Override
             protected UserMessageScore doTransaction(EntityManager entityManager) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(""
+                        + "select ums "
+                        + "from " + UserMessageScore.class.getName() + " ums, "
+                        + Message.class.getName() + " m "
+                        + "where ums.messageGlobalId = m.globalId "
+                        + "and ums.userGlobalId = :userGlobalId "
+                        + "and m.publicationDate >= :minPublicationDate ");
+                if (interactionLevels != null && interactionLevels.length > 0) {
+                    sb.append("and ums.interactionLevel IN :interactionLevels ");
+                }
+                sb.append("order by ums.score desc ");
+
                 TypedQuery<UserMessageScore> query = entityManager.createQuery(
-                        ""
-                                + "select ums "
-                                + "from " + UserMessageScore.class.getName() + " ums, "
-                                + Message.class.getName() + " m "
-                                + "where ums.messageGlobalId = m.globalId "
-                                + "and ums.userGlobalId = :userGlobalId "
-                                + "and m.publicationDate >= :minPublicationDate "
-                                + "order by ums.score desc ",
+                        sb.toString(),
                         UserMessageScore.class);
                 query.setParameter("userGlobalId", userGlobalId);
                 query.setParameter("minPublicationDate", firstDate);
+                if (interactionLevels != null && interactionLevels.length > 0) {
+                    query.setParameter("interactionLevels", Arrays.asList(interactionLevels));
+                }
                 query.setMaxResults(n);
 
                 List<UserMessageScore> scores = query.getResultList();
@@ -538,17 +550,17 @@ public class MessagePersistence extends AbstractPersistenceLayer {
 
     /**
      * 
-     * @param ranks
+     * @param scores
      *            store the ranks
      */
-    public void storeUserMessageScores(Collection<UserMessageScore> ranks) {
-        if (ranks == null) {
+    public void storeUserMessageScores(Collection<UserMessageScore> scores) {
+        if (scores == null) {
             throw new IllegalArgumentException("ranks cannot be null.");
         }
-        if (ranks.contains(null)) {
+        if (scores.contains(null)) {
             throw new IllegalArgumentException("ranks cannot contain a null value.");
         }
-        this.saveAll(ranks);
+        this.saveAll(scores);
     }
 
     public void updateMessageRank(UserMessageScore rankToUpdate) {

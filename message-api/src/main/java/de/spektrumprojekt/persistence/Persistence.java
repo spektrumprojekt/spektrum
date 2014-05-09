@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import de.spektrumprojekt.datamodel.common.Property;
 import de.spektrumprojekt.datamodel.duplicationdetection.HashWithDate;
+import de.spektrumprojekt.datamodel.message.InteractionLevel;
 import de.spektrumprojekt.datamodel.message.Message;
 import de.spektrumprojekt.datamodel.message.MessageFilter;
 import de.spektrumprojekt.datamodel.message.MessageGroup;
@@ -151,10 +152,11 @@ public interface Persistence {
      * @param userGlobalId
      * @param n
      * @param firstDate
+     * @param interactionLevels
      * @return the user message score at the n-th position fulfilling the constraints.
      */
     UserMessageScore getNthUserMessageScore(String userGlobalId, int n,
-            final Date firstDate);
+            final Date firstDate, InteractionLevel[] interactionLevels);
 
     int getNumberOfSubscriptionsBySourceGlobalId(String globalId);
 
